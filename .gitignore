@@ -1,0 +1,29 @@
+# Docker Configuration Files
+Dockerfile
+docker-compose.yml
+docker-artisan.sh
+docker-composer.sh
+nginx/
+php/
+.dockerignore
+
+# Environment Files
+.env
+.env.*
+
+# Node & Composer (Root dependencies if any)
+node_modules/
+vendor/
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS Files
+.DS_Store
+Thumbs.db
