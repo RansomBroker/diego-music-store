@@ -11,6 +11,6 @@ class CreateUser extends CreateRecord
 
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
-        return app(\App\Actions\CreateUser::class)->execute($data);
+        return app(\App\Actions\User\CreateUser::class)->execute($data);
     }
 }

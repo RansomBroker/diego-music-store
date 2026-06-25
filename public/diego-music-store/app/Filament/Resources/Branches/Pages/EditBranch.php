@@ -16,4 +16,9 @@ class EditBranch extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
+    {
+        return app(\App\Actions\Branch\UpdateBranch::class)->execute($record, $data);
+    }
 }

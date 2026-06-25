@@ -19,6 +19,6 @@ class EditUser extends EditRecord
 
     protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
     {
-        return app(\App\Actions\UpdateUser::class)->execute($record, $data);
+        return app(\App\Actions\User\UpdateUser::class)->execute($record, $data);
     }
 }
