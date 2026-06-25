@@ -7,12 +7,12 @@ Create the initial database schema, including the `branches` table, Laravel migr
 - **Role**: Architect / Developer
 - **Epic**: EPIC-001 - Master Data Setup & Basic Config
 - **Feature**: FEATURE-001 - Multi-Cabang & User RBAC Setup
-- **Status**: Analysis
+- **Status**: Done
 
 ## Acceptance Criteria
-- [ ] Database migration runs successfully without errors in the Docker container.
-- [ ] Many-to-Many relationship between `users` and `branches` is established via the `branch_user` pivot table.
-- [ ] Database schema natively supports multi-tenant branch isolation.
+- [x] Database migration runs successfully without errors in the Docker container.
+- [x] Many-to-Many relationship between `users` and `branches` is established via the `branch_user` pivot table.
+- [x] Database schema natively supports multi-tenant branch isolation.
 
 ## Assignee
 - Architect

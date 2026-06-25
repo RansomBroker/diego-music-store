@@ -9,4 +9,4 @@
   - [x] Create Laravel migration file for pivot `branch_user` table.
   - [x] Run `./docker-artisan.sh migrate` in container to apply new schema.
 - [ ] **Verification**:
-  - [ ] Inspect database using PHPMyAdmin or terminal to verify tables are created correctly.
+  - [x] Inspect database using PHPMyAdmin or terminal to verify tables are created correctly.
