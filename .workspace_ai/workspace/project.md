@@ -7,6 +7,7 @@ The ERP Diego Music Store is an all-in-one business management platform designed
 - **Backend Core**: Laravel 12 (PHP)
 - **Framework & UI Components**: Filament, Livewire
 - **Core Frontend**: HTML, Vanilla Javascript, Vanilla CSS
+- **Role-Based Access Control (RBAC)**: Spatie Laravel Permission (`spatie/laravel-permission`)
 - **Database**: MySQL (SQL)
 - **Command Executions**:
   - Artisan commands: `./docker-artisan.sh <command>`
