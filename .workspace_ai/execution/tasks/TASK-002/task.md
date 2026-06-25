@@ -7,13 +7,13 @@ Set up User management in Filament Backoffice, define standard Spatie Roles (Own
 - **Role**: Developer / Architect
 - **Epic**: EPIC-001 - Master Data Setup & Basic Config
 - **Feature**: FEATURE-001 - Multi-Cabang & User RBAC Setup
-- **Status**: Development
+- **Status**: Merged/Completed
 
 ## Acceptance Criteria
-- [ ] Spatie Roles (Owner, Admin, Cashier, Sales, Technician) are defined in a database seeder.
-- [ ] Filament `UserResource` is created to perform CRUD operations on users.
-- [ ] Users can be assigned to multiple branches in the User form using a relation manager or select field.
-- [ ] Users can be assigned to Spatie Roles in the User form.
+- [x] Spatie Roles (Owner, Admin, Cashier, Sales, Technician) are defined in a database seeder.
+- [x] Filament `UserResource` is created to perform CRUD operations on users.
+- [x] Users can be assigned to multiple branches in the User form using a relation manager or select field.
+- [x] Users can be assigned to Spatie Roles in the User form.
 
 ## Assignee
 - Developer
