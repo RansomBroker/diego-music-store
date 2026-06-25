@@ -2,8 +2,21 @@
 
 ## 1. PHP/Laravel Coding Standards
 - Follow **PSR-12** standards for code style.
-- Use explicit dependency injection inside Controllers and Service constructors.
-- Maintain separate **Service Layers** for complex business logic (e.g. accounting journal postings, commissions, API integrations).
+- Enforce **Action-Based Architecture** (Action Pattern) for all core business logic (e.g., creating sales, adjusting stock, posting journal entries, calculating payroll):
+  - Every action must reside under `app/Actions/{Domain}/` and represent a single, testable transaction/operation.
+  - Actions must have a single public entry point, typically named `execute()`.
+  - Actions can be injected using Laravel's container or resolved using `app(ActionName::class)->execute(...)`.
+  - Code Example:
+    ```php
+    namespace App\Actions\Inventory;
+
+    class DeductStockAction {
+        public function execute(int $productId, int $branchId, int $qty): void {
+            // Business validation and DB updates run here...
+        }
+    }
+    ```
+- Controllers, Livewire components, and Filament resources should only handle request validation, UI state, and delegation to Action classes.
 - All Eloquent models must define relationships clearly with foreign keys.
 
 ## 2. Database & SQL Standards
