@@ -137,11 +137,11 @@ if os.path.exists(tasks_dir):
         task_id = task_folder
 
         # Parse Status
-        status_match = re.search(r"-\s*\*\*Status\*\*:\s*(\w+)", content)
+        status_match = re.search(r"-\s*\*\*Status\*\*:\s*([^\n\r]+)", content)
         local_status = status_match.group(1).strip() if status_match else "Backlog"
 
         # Determine state
-        state = "closed" if local_status.lower() == "done" else "open"
+        state = "closed" if local_status.lower() in ["done", "completed", "merged/completed", "merged", "closed"] else "open"
         
         # Parse Linked Epic ID
         epic_match = re.search(r"-\s*\*\*Epic\*\*:\s*(EPIC-\d+)", content)
@@ -162,6 +162,16 @@ if os.path.exists(tasks_dir):
                 except Exception as e:
                     print(f"Error reading feature file {feature_file_path}: {e}")
 
+        # Parse Subtasks Checklist
+        subtasks_content = ""
+        subtasks_file = os.path.join(task_path, "subtasks.md")
+        if os.path.exists(subtasks_file):
+            try:
+                with open(subtasks_file, "r", encoding="utf-8") as sf:
+                    subtasks_content = sf.read()
+            except Exception as e:
+                print(f"Error reading subtasks file {subtasks_file}: {e}")
+
         # Find corresponding Milestone Number
         milestone_number = None
         if linked_epic_id:
@@ -171,7 +181,9 @@ if os.path.exists(tasks_dir):
                     break
 
         body = f"### Specification & Details\nLocal Task Source: `.workspace_ai/execution/tasks/{task_id}/task.md`\n\n"
-        body += "### Status label\n" + f"`status/{local_status.lower()}`"
+        body += "### Status label\n" + f"`status/{local_status.lower()}`\n\n"
+        if subtasks_content:
+            body += f"### Subtasks Checklist\n{subtasks_content}\n\n"
         if feature_details:
             body += feature_details
 
