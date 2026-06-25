@@ -16,4 +16,9 @@ class EditUser extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
+    {
+        return app(\App\Actions\UpdateUser::class)->execute($record, $data);
+    }
 }
