@@ -27,7 +27,7 @@ class BackofficePanelProvider extends PanelProvider
             ->default()
             ->id('backoffice')
             ->path('backoffice')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\CustomLogin::class)
             ->colors([
                 'primary' => Color::Amber,
             ])

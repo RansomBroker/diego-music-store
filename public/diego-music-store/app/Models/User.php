@@ -22,6 +22,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
     ];
@@ -55,5 +56,29 @@ class User extends Authenticatable
     public function branches(): BelongsToMany
     {
         return $this->belongsToMany(Branch::class, 'branch_user');
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            if (empty($user->username)) {
+                $baseUsername = strstr($user->email, '@', true) ?: strtolower(str_replace(' ', '', $user->name));
+                
+                // Ensure uniqueness
+                $username = $baseUsername;
+                $counter = 1;
+                while (static::where('username', $username)->exists()) {
+                    $username = $baseUsername . $counter;
+                    $counter++;
+                }
+                
+                $user->username = $username;
+            }
+        });
     }
 }
