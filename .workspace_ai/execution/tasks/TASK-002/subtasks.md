@@ -9,6 +9,7 @@
   - [x] Run the database seeder to populate roles.
   - [x] Edit `UserResource` form components to configure inputs and relationships for Roles and Branches.
   - [x] Edit `UserResource` table columns to display User details, assigned branches, and roles.
+  - [x] Create action classes `CreateUser.php` and `UpdateUser.php` to encapsulate logic.
 - [ ] **Verification**:
   - [ ] Verify that new users can be created with usernames, assigned to specific branches, and given roles.
   - [ ] Test logging in with a newly created user using their username and password.
