@@ -139,13 +139,28 @@ if os.path.exists(tasks_dir):
         # Parse Status
         status_match = re.search(r"-\s*\*\*Status\*\*:\s*(\w+)", content)
         local_status = status_match.group(1).strip() if status_match else "Backlog"
+
+        # Determine state
+        state = "closed" if local_status.lower() == "done" else "open"
         
         # Parse Linked Epic ID
         epic_match = re.search(r"-\s*\*\*Epic\*\*:\s*(EPIC-\d+)", content)
         linked_epic_id = epic_match.group(1).strip() if epic_match else None
+        
+        # Parse Linked Feature ID
+        feature_match = re.search(r"-\s*\*\*Feature\*\*:\s*(FEATURE-\d+)", content)
+        linked_feature_id = feature_match.group(1).strip() if feature_match else None
 
-        # Determine state
-        state = "closed" if local_status.lower() == "done" else "open"
+        feature_details = ""
+        if linked_feature_id:
+            feature_file_path = f".workspace_ai/workspace/features/{linked_feature_id}.md"
+            if os.path.exists(feature_file_path):
+                try:
+                    with open(feature_file_path, "r", encoding="utf-8") as ff:
+                        feature_content = ff.read()
+                    feature_details = f"\n\n<details>\n<summary><b>🔍 View Linked Feature Specs ({linked_feature_id})</b></summary>\n\n{feature_content}\n\n</details>"
+                except Exception as e:
+                    print(f"Error reading feature file {feature_file_path}: {e}")
 
         # Find corresponding Milestone Number
         milestone_number = None
@@ -157,6 +172,8 @@ if os.path.exists(tasks_dir):
 
         body = f"### Specification & Details\nLocal Task Source: `.workspace_ai/execution/tasks/{task_id}/task.md`\n\n"
         body += "### Status label\n" + f"`status/{local_status.lower()}`"
+        if feature_details:
+            body += feature_details
 
         labels = [f"status/{local_status.lower()}"]
 
