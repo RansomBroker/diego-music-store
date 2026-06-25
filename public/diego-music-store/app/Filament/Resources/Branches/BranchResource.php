@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\Branches;
 
-use App\Filament\Resources\Branches\Pages\CreateBranch;
-use App\Filament\Resources\Branches\Pages\EditBranch;
 use App\Filament\Resources\Branches\Pages\ListBranches;
 use App\Filament\Resources\Branches\Schemas\BranchForm;
 use App\Filament\Resources\Branches\Tables\BranchesTable;
@@ -22,7 +20,7 @@ class BranchResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return BranchForm::configure($schema);
+        return $schema;
     }
 
     public static function table(Table $table): Table
@@ -41,8 +39,6 @@ class BranchResource extends Resource
     {
         return [
             'index' => ListBranches::route('/'),
-            'create' => CreateBranch::route('/create'),
-            'edit' => EditBranch::route('/{record}/edit'),
         ];
     }
 }

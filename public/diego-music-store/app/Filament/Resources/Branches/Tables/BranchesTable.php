@@ -41,7 +41,9 @@ class BranchesTable
                 //
             ])
             ->actions([
-                EditAction::make(),
+                EditAction::make()
+                    ->steps(\App\Filament\Resources\Branches\Schemas\BranchForm::getWizardSteps())
+                    ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Branch\UpdateBranch::class)->execute($record, $data)),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

@@ -2,35 +2,45 @@
 
 namespace App\Filament\Resources\Branches\Schemas;
 
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Schema;
+use Filament\Forms\Components\Wizard\Step;
 
 class BranchForm
 {
-    public static function configure(Schema $schema): Schema
+    /**
+     * Get the wizard steps for Branch creation/edit.
+     *
+     * @return array<Step>
+     */
+    public static function getWizardSteps(): array
     {
-        return $schema
-            ->components([
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Branch Name'),
+        return [
+            Step::make('General Information')
+                ->schema([
+                    TextInput::make('name')
+                        ->required()
+                        ->maxLength(255)
+                        ->label('Branch Name'),
 
-                TextInput::make('phone')
-                    ->tel()
-                    ->maxLength(50)
-                    ->label('Phone Number'),
+                    TextInput::make('phone')
+                        ->tel()
+                        ->maxLength(50)
+                        ->label('Phone Number'),
+                ]),
 
-                Textarea::make('address')
-                    ->rows(3)
-                    ->maxLength(500)
-                    ->label('Address'),
+            Step::make('Location & Status')
+                ->schema([
+                    Textarea::make('address')
+                        ->rows(3)
+                        ->maxLength(500)
+                        ->label('Address'),
 
-                Toggle::make('is_active')
-                    ->label('Is Active')
-                    ->default(true),
-            ]);
+                    Toggle::make('is_active')
+                        ->label('Is Active')
+                        ->default(true),
+                ]),
+        ];
     }
 }
