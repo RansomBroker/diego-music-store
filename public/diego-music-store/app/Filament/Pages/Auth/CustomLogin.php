@@ -2,10 +2,9 @@
 
 namespace App\Filament\Pages\Auth;
 
-use Filament\Forms\Components\Component;
+use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Pages\Auth\Login as BaseLogin;
+use Filament\Schemas\Components\Component;
 
 class CustomLogin extends BaseLogin
 {
@@ -17,38 +16,23 @@ class CustomLogin extends BaseLogin
      */
     protected function getCredentialsFromFormData(array $data): array
     {
-        $loginType = filter_var($data['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        $loginType = filter_var($data['email'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         return [
-            $loginType => $data['login'],
+            $loginType => $data['email'],
             'password' => $data['password'],
         ];
     }
 
     /**
-     * Configure the login form schema.
+     * Overwrite email form component to accept both username and email.
      */
-    public function form(Form $form): Form
+    protected function getEmailFormComponent(): Component
     {
-        return $form
-            ->schema([
-                $this->getLoginFormComponent(),
-                $this->getPasswordFormComponent(),
-                $this->getRememberFormComponent(),
-            ])
-            ->statePath('data');
-    }
-
-    /**
-     * Create the username/email input component.
-     */
-    protected function getLoginFormComponent(): Component
-    {
-        return TextInput::make('login')
+        return TextInput::make('email')
             ->label('Username or Email')
             ->required()
             ->autocomplete()
-            ->autofocus()
-            ->extraInputAttributes(['tabindex' => 1]);
+            ->autofocus();
     }
 }
