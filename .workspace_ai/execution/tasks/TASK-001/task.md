@@ -1,7 +1,7 @@
-# Task: TASK-001 - Database Migration & Cabang Table Setup
+# Task: TASK-001 - Database Migration & Branch Table Setup
 
 ## Description
-Membuat rancangan basis data awal, termasuk tabel `cabang`, migration Laravel untuk tabel-tabel utama (users, cabang, cabang_user), dan implementasi pemisahan data (data isolation) menggunakan scope global.
+Create the initial database schema, including the `branches` table, Laravel migration for core relationship tables (`users`, `branches`, `branch_user`), and data isolation design using Eloquent global scopes.
 
 ## Technical Details
 - **Role**: Architect / Developer
@@ -10,9 +10,9 @@ Membuat rancangan basis data awal, termasuk tabel `cabang`, migration Laravel un
 - **Status**: Analysis
 
 ## Acceptance Criteria
-- [ ] Database migration berhasil dijalankan tanpa error di container Docker.
-- [ ] Relasi *Many-to-Many* antara `users` dan `cabang` terbentuk melalui pivot tabel `cabang_user`.
-- [ ] Skema database mendukung multi-tenant cabang secara modular.
+- [ ] Database migration runs successfully without errors in the Docker container.
+- [ ] Many-to-Many relationship between `users` and `branches` is established via the `branch_user` pivot table.
+- [ ] Database schema natively supports multi-tenant branch isolation.
 
 ## Assignee
 - Architect

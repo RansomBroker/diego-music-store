@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cabang_user', function (Blueprint $table) {
+        Schema::create('branch_user', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('cabang_id')->constrained('cabangs')->cascadeOnDelete();
+            $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
             $table->timestamps();
 
-            // Enforce unique relationship constraint
-            $table->unique(['user_id', 'cabang_id']);
+            // Enforce unique relationship
+            $table->unique(['user_id', 'branch_id']);
         });
     }
 
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cabang_user');
+        Schema::dropIfExists('branch_user');
     }
 };

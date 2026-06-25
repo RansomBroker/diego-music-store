@@ -1,13 +1,12 @@
-# Subtasks: TASK-001 - Database Migration & Cabang Table Setup
+# Subtasks: TASK-001 - Database Migration & Branch Table Setup
 
 ## Checklist
 - [ ] **Analysis & Design**:
-  - [ ] Rancang skema database tabel `cabang` (id, nama, alamat, telepon, is_active).
-  - [ ] Rancang tabel pivot `cabang_user` (user_id, cabang_id) untuk memetakan penugasan user ke cabang.
-  - [ ] Tambahkan kolom `cabang_id` di database tabel `users` (opsional: sebagai default_cabang_id).
+  - [x] Design database schema for `branches` table (id, name, address, phone, is_active).
+  - [x] Design pivot table `branch_user` (user_id, branch_id) to map user branch assignments.
 - [ ] **Implementation**:
-  - [x] Buat file migration Laravel untuk tabel `cabang`.
-  - [x] Buat file migration Laravel untuk tabel pivot `cabang_user`.
-  - [ ] Jalankan `./docker-artisan.sh migrate` di container untuk menerapkan skema baru.
+  - [x] Create Laravel migration file for `branches` table.
+  - [x] Create Laravel migration file for pivot `branch_user` table.
+  - [ ] Run `./docker-artisan.sh migrate` in container to apply new schema.
 - [ ] **Verification**:
-  - [ ] Periksa database menggunakan phpMyAdmin atau terminal untuk memastikan tabel berhasil dibuat.
+  - [ ] Inspect database using PHPMyAdmin or terminal to verify tables are created correctly.
