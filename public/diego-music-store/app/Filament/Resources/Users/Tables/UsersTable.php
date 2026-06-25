@@ -56,6 +56,11 @@ class UsersTable
             ])
             ->actions([
                 EditAction::make()
+                    ->mutateRecordDataUsing(function (\Illuminate\Database\Eloquent\Model $record, array $data): array {
+                        $data['branches'] = $record->branches->pluck('id')->toArray();
+                        $data['roles'] = $record->roles->pluck('id')->toArray();
+                        return $data;
+                    })
                     ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\User\UpdateUser::class)->execute($record, $data)),
             ])
             ->bulkActions([
