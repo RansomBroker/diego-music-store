@@ -55,7 +55,8 @@ class UsersTable
                 //
             ])
             ->actions([
-                EditAction::make(),
+                EditAction::make()
+                    ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\User\UpdateUser::class)->execute($record, $data)),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

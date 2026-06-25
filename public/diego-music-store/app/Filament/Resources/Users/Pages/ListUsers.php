@@ -13,7 +13,8 @@ class ListUsers extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->using(fn (array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\User\CreateUser::class)->execute($data)),
         ];
     }
 }
