@@ -18,6 +18,11 @@ class BranchResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Master Data';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema;

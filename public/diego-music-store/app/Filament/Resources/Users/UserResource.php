@@ -20,6 +20,11 @@ class UserResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Kelola User';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return UserForm::configure($schema);
