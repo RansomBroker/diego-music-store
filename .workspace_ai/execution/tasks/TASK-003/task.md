@@ -7,15 +7,15 @@ Buat skema database lengkap untuk mendukung katalog barang dinamis, termasuk tab
 - **Role**: Architect / Developer
 - **Epic**: EPIC-001 - Master Data Setup & Basic Config
 - **Feature**: FEATURE-002 - CRUD Master Barang & Varian (Bundling & Jasa)
-- **Status**: Ready
+- **Status**: Merged/Completed
 
 ## Acceptance Criteria
-- [ ] Migration untuk tabel `products` berhasil dibuat dan dijalankan.
-- [ ] Migration untuk tabel `product_variants` berhasil dibuat dan dijalankan.
-- [ ] Migration untuk tabel `pricing_tiers` berhasil dibuat dan dijalankan.
-- [ ] Migration untuk tabel `product_tier_prices` (pivot produk/varian dan pricing tier) berhasil dibuat dan dijalankan.
-- [ ] Migration untuk tabel `product_branch_prices` (pivot produk/varian dan cabang) berhasil dibuat dan dijalankan.
-- [ ] Migration untuk tabel `product_bundles` (komposisi produk bundling) berhasil dibuat dan dijalankan.
+- [x] Migration untuk tabel `products` berhasil dibuat dan dijalankan.
+- [x] Migration untuk tabel `product_variants` berhasil dibuat dan dijalankan.
+- [x] Migration untuk tabel `pricing_tiers` berhasil dibuat dan dijalankan.
+- [x] Migration untuk tabel `product_tier_prices` (pivot produk/varian dan pricing tier) berhasil dibuat dan dijalankan.
+- [x] Migration untuk tabel `product_branch_prices` (pivot produk/varian dan cabang) berhasil dibuat dan dijalankan.
+- [x] Migration untuk tabel `product_bundles` (komposisi produk bundling) berhasil dibuat dan dijalankan.
 
 ## Assignee
 - Architect
