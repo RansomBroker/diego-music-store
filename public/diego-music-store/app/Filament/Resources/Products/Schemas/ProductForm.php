@@ -328,7 +328,7 @@ class ProductForm
                                     ])
                                     ->columns(2)
                                     ->label('Daftar Item dalam Paket Bundling ini')
-                                    ->placeholder('Tambahkan item pembentuk paket...'),
+                                    ->emptyLabel('Tambahkan item pembentuk paket...'),
                             ]),
                     ]),
             ]);
