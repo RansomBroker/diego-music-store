@@ -20,13 +20,14 @@ Untuk menyelesaikan **Sprint 1**, ada dua fitur besar (Epic Master Data) yang pe
 Fokus pada pembangunan skema database dan antarmuka manajemen produk:
 *   **Item Pekerjaan**:
     1.  Tabel `products` (SKU/Barcode, tipe Fisik/Bundling/Jasa, HPP, Harga Beli).
-    2.  Tabel `product_variants` (Warna, Ukuran, dll.).
+    2.  Tabel `product_variants` (Warna, Ukuran, dll. dengan SKU dan stok tersendiri).
     3.  Tabel `product_bundles` (Relasi komposisi produk paket).
-    4.  Tabel `branch_product` (Harga dan stok khusus per cabang).
-    5.  Filament Resource untuk mengelola produk lengkap dengan form varian dan harga cabang.
+    4.  Tabel `pricing_tiers` (Definisi nama tingkatan harga dinamis seperti Emas, Perak).
+    5.  Tabel `product_tier_prices` & `product_branch_prices` (Penyimpan nominal harga per tier dan per cabang).
+    6.  Filament Resource untuk `PricingTier` dan `Product` (dengan form dinamis berdasarkan tier & cabang yang aktif).
 *   **Kenapa ini prioritas tinggi?** 
     *   **Bloking Transaksi**: Kita tidak bisa membangun modul Kasir / POS (Sprint 2) tanpa memiliki katalog barang yang siap dijual.
-    *   **Logika Bisnis Utama**: HPP, stok minimum, dan varian adalah jantung dari alur pergudangan dan kasir.
+    *   **Logika Bisnis Utama**: HPP, stok minimum, varian, dan pricing tiers adalah jantung dari alur pergudangan dan kasir.
 
 ### Opsi B: FEATURE-003 - CRUD Pelanggan, Supplier, & COA Dasar
 Fokus pada pengelolaan entitas luar dan pondasi keuangan:
@@ -46,19 +47,19 @@ Kami menyarankan untuk fokus pada **FEATURE-002 (Master Barang & Varian)** terle
 
 ```mermaid
 graph TD
-    A[Database Migration: Products, Variants, & Branch Stock] --> B[Model Setup: Eloquent Relationships & Bundling Logic]
-    B --> C[Filament ProductResource: Form, Tiers, & Variant Management]
+    A[Database Migration: Products, Variants, Tiers, & Branch Stock/Prices] --> B[Model Setup: Eloquent Relationships & Bundling Logic]
+    B --> C[Filament ProductResource: Form Dinamis Berbasis Tier & Cabang]
     C --> D[Next: FEATURE-003 Pelanggan, Supplier, COA]
 ```
 
 ### Rincian Sub-Task untuk FEATURE-002:
-1.  **TASK-003**: Migrasi Database (`products`, `product_variants`, `product_bundles`, `branch_product`).
+1.  **TASK-003**: Migrasi Database (`products`, `product_variants`, `product_bundles`, `pricing_tiers`, `product_tier_prices`, `product_branch_prices`).
 2.  **TASK-004**: Eloquent Models dengan logika dynamic stock untuk produk bundling dan flag unlimited untuk jasa.
-3.  **TASK-005**: Filament `ProductResource` yang memiliki form input dinamis (mendukung 5 tingkat harga, tab varian, dan pemilihan item bundling).
+3.  **TASK-005**: Filament `PricingTierResource` & `ProductResource` yang memiliki form input dinamis (mengambil semua tier & cabang aktif secara dinamis, tab varian, dan pemilihan item bundling).
 
 ---
 
 ## 4. Pertanyaan / Masukan dari User
 Sebelum kita memulai pembuatan migrasi dan resource produk:
 1.  Apakah Anda setuju kita lanjut ke **FEATURE-002 (Master Barang & Varian)** terlebih dahulu?
-2.  Apakah ada tingkatan harga khusus yang ingin disesuaikan dari 5 tingkat harga bawaan (Ritel, Member, Grosir, Agen, Distributor)?
+2.  Apakah ada properti tambahan di tingkat pricing tier (selain Nama dan Deskripsi) yang perlu kita simpan sejak awal?

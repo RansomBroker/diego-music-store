@@ -10,11 +10,14 @@ Fitur ini mencakup pembuatan katalog produk lengkap, yang mencakup barang fisik,
 1. **Master Barang**:
    - Kolom: SKU/Barcode (unik), Nama Barang, Deskripsi, Tipe Produk (Fisik, Bundling, Jasa), Harga Beli, HPP Awal, Gambar Produk, Stok Minimum, Status Aktif.
 2. **Pricing Tiers & Harga Cabang**:
-   - Menyimpan 5 tingkat harga: Ritel, Member, Grosir, Agen, Distributor.
-   - Menyimpan harga khusus per cabang (tabel pivot `branch_product` dengan kolom `harga_cabang`).
+   - **Tabel `pricing_tiers`**: Menyimpan nama tingkatan harga secara dinamis (misal: "Emas", "Perak", "Grosir") yang dapat ditambahkan/dikelola secara mandiri oleh Owner di menu terpisah.
+   - **Tabel `product_tier_prices`**: Menyimpan harga per produk untuk masing-masing tier yang aktif (relasi antara produk/varian dan `pricing_tiers`).
+   - **Tabel `product_branch_prices`**: Menyimpan harga khusus produk per cabang (relasi antara produk/varian dan `branches`).
+   - Di form input barang, sistem akan menarik data dari `pricing_tiers` dan `branches` yang aktif secara dinamis dan menampilkannya sebagai daftar kolom input harga (misal: "Harga Tier Emas: [input]", "Harga Cabang Depok: [input]").
 3. **Varian Produk**:
    - Hubungan One-to-Many dari produk utama ke varian (misal: Gitar Yamaha C40 -> Varian: Hitam, Natural).
-   - Setiap varian memiliki SKU/Barcode, stok, dan harga tersendiri.
+   - Setiap varian memiliki SKU/Barcode, stok, dan harga dasar tersendiri.
+   - Penentuan harga tier dan harga cabang dapat diatur pada level varian (atau produk utama jika tidak ada varian).
 4. **Produk Bundling**:
    - Relasi ke beberapa produk fisik penyusunnya (misal: Paket Pemula Gitar = 1x Gitar + 1x Gigbag + 3x Pick).
    - Stok bundling dihitung dinamis berdasarkan stok terkecil dari produk fisiknya.
@@ -22,12 +25,15 @@ Fitur ini mencakup pembuatan katalog produk lengkap, yang mencakup barang fisik,
    - Tipe produk jasa (misal: Les Musik, Reparasi) memiliki stok tidak terbatas (flag `is_unlimited` atau abaikan pengurangan stok).
 
 ## Acceptance Criteria
-- [ ] Database tabel `products`, `product_variants`, `product_bundles`, dan `branch_product` telah didefinisikan dengan migration.
-- [ ] Tersedia CRUD Produk di Filament Backoffice dengan form yang mendukung tipe Fisik, Bundling, dan Jasa.
-- [ ] Form edit produk mendukung pengelolaan varian dan harga khusus per cabang.
+- [ ] Database tabel `products`, `product_variants`, `pricing_tiers`, `product_tier_prices`, `product_branch_prices`, dan `product_bundles` telah didefinisikan dengan migration.
+- [ ] Tersedia CRUD `PricingTierResource` terpisah untuk mengelola nama-nama tingkatan harga.
+- [ ] Tersedia CRUD `ProductResource` di Filament Backoffice dengan form yang mendukung tipe Fisik, Bundling, dan Jasa.
+- [ ] Di dalam form input produk, muncul field input dinamis untuk seluruh `pricing_tiers` dan `branches` aktif untuk mengisi harga masing-masing.
+- [ ] Form edit produk mendukung pengelolaan varian dan produk bundling.
 - [ ] Input SKU/Barcode divalidasi keunikan datanya.
 
 ## Technical Implementation Details
 - Buat migration untuk tabel terkait.
+- Gunakan field Filament seperti `Repeater` atau generate fields dinamis secara programatik (mengambil data `PricingTier::all()` dan `Branch::all()`) di dalam skema form `ProductResource`.
 - Implementasikan form Filament menggunakan tab atau wizard agar mudah menginput varian dan komponen bundling.
 - Implementasikan logic model Eloquent untuk kalkulasi dinamis stok bundling.
