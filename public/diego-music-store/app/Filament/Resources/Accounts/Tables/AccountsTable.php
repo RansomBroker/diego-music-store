@@ -57,7 +57,8 @@ class AccountsTable
                 //
             ])
             ->actions([
-                EditAction::make(),
+                EditAction::make()
+                    ->modalWidth('md'),
                 DeleteAction::make(),
             ])
             ->bulkActions([

@@ -13,7 +13,8 @@ class ListAccounts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->modalWidth('md'),
         ];
     }
 }

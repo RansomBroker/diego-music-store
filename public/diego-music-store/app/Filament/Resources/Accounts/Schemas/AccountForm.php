@@ -14,8 +14,10 @@ class AccountForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 Section::make('Detail Akun Keuangan')
+                    ->columnSpan('full')
                     ->schema([
                         TextInput::make('code')
                             ->required()
