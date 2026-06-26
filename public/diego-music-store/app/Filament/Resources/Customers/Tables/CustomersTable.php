@@ -53,7 +53,9 @@ class CustomersTable
                 //
             ])
             ->actions([
-                EditAction::make(),
+                EditAction::make()
+                    ->modalWidth('2xl')
+                    ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Customer\UpdateCustomer::class)->execute($record, $data)),
                 DeleteAction::make(),
             ])
             ->bulkActions([

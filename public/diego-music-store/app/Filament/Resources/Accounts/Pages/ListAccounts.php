@@ -14,7 +14,8 @@ class ListAccounts extends ListRecords
     {
         return [
             CreateAction::make()
-                ->modalWidth('md'),
+                ->modalWidth('md')
+                ->using(fn (array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Account\CreateAccount::class)->execute($data)),
         ];
     }
 }

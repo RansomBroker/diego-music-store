@@ -30,7 +30,7 @@ class CustomerLabelsTable
             ])
             ->actions([
                 EditAction::make()
-                    ->modalWidth('md'),
+                    ->modalWidth('lg'),
                 DeleteAction::make(),
             ])
             ->bulkActions([

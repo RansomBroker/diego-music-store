@@ -14,7 +14,7 @@ class ListCustomerLabels extends ListRecords
     {
         return [
             CreateAction::make()
-                ->modalWidth('md'),
+                ->modalWidth('lg'),
         ];
     }
 }

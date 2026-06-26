@@ -33,4 +33,21 @@ class Customer extends Model
     {
         return $this->belongsTo(CustomerLabel::class, 'customer_label_id');
     }
+
+    protected static function booted()
+    {
+        static::saving(function ($customer) {
+            if ($customer->customer_label_id && !is_numeric($customer->customer_label_id)) {
+                $labelName = $customer->customer_label_id;
+                $key = \Illuminate\Support\Str::slug($labelName);
+
+                $label = CustomerLabel::firstOrCreate(
+                    ['key' => $key],
+                    ['name' => $labelName]
+                );
+
+                $customer->customer_label_id = $label->id;
+            }
+        });
+    }
 }

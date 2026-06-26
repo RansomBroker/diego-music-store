@@ -50,7 +50,8 @@ class AccountsTable
             ])
             ->actions([
                 EditAction::make()
-                    ->modalWidth('md'),
+                    ->modalWidth('md')
+                    ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Account\UpdateAccount::class)->execute($record, $data)),
                 DeleteAction::make(),
             ])
             ->bulkActions([
