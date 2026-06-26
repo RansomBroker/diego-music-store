@@ -25,12 +25,12 @@ Fitur ini mencakup pembuatan katalog produk lengkap, yang mencakup barang fisik,
    - Tipe produk jasa (misal: Les Musik, Reparasi) memiliki stok tidak terbatas (flag `is_unlimited` atau abaikan pengurangan stok).
 
 ## Acceptance Criteria
-- [ ] Database tabel `products`, `product_variants`, `pricing_tiers`, `product_tier_prices`, `product_branch_prices`, dan `product_bundles` telah didefinisikan dengan migration.
-- [ ] Tersedia CRUD `PricingTierResource` terpisah untuk mengelola nama-nama tingkatan harga.
-- [ ] Tersedia CRUD `ProductResource` di Filament Backoffice dengan form yang mendukung tipe Fisik, Bundling, dan Jasa.
-- [ ] Di dalam form input produk, muncul field input dinamis untuk seluruh `pricing_tiers` dan `branches` aktif untuk mengisi harga masing-masing.
-- [ ] Form edit produk mendukung pengelolaan varian dan produk bundling.
-- [ ] Input SKU/Barcode divalidasi keunikan datanya.
+- [x] Database tabel `products`, `product_variants`, `pricing_tiers`, `product_tier_prices`, `product_branch_prices`, dan `product_bundles` telah didefinisikan dengan migration.
+- [x] Tersedia CRUD `PricingTierResource` terpisah untuk mengelola nama-nama tingkatan harga.
+- [x] Tersedia CRUD `ProductResource` di Filament Backoffice dengan form yang mendukung tipe Fisik, Bundling, dan Jasa.
+- [x] Di dalam form input produk, muncul field input dinamis untuk seluruh `pricing_tiers` dan `branches` aktif untuk mengisi harga masing-masing.
+- [x] Form edit produk mendukung pengelolaan varian dan produk bundling.
+- [x] Input SKU/Barcode divalidasi keunikan datanya.
 
 ## Technical Implementation Details
 - Buat migration untuk tabel terkait.
