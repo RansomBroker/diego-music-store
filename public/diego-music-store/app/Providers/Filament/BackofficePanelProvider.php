@@ -32,6 +32,7 @@ class BackofficePanelProvider extends PanelProvider
             ->id('backoffice')
             ->path('backoffice')
             ->login(\App\Filament\Pages\Auth\CustomLogin::class)
+            ->maxContentWidth('full')
             ->colors([
                 'primary' => Color::Blue,
             ])
@@ -46,6 +47,9 @@ class BackofficePanelProvider extends PanelProvider
                     ->label('Master Data'),
                 NavigationGroup::make()
                     ->label('Kelola User'),
+                NavigationGroup::make()
+                     ->label('Akuntansi')
+                     ->icon('heroicon-o-calculator'),
                 NavigationGroup::make()
                     ->label(fn (): string => __('navigation.settings'))
                     ->icon('heroicon-o-cog-6-tooth')

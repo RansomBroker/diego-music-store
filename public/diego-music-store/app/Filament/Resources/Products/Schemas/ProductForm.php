@@ -15,8 +15,10 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Forms\Get;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Support\Enums\Width;
 use Filament\Schemas\Schema;
+use App\Helpers\ProductHelper;
 
 class ProductForm
 {
@@ -35,25 +37,17 @@ class ProductForm
                 ->prefix('Rp');
         }
 
-        // 3. Generate fields for branch prices (default / single variant)
-        $branchPriceFields = [];
-        foreach ($branches as $branch) {
-            $branchPriceFields[] = TextInput::make('branch_prices.' . $branch->id)
-                ->numeric()
-                ->label('Harga Cabang: ' . $branch->name)
-                ->prefix('Rp');
-        }
-
-        // 4. Generate fields for branch stocks (default / single variant)
+        // 3. Generate fields for branch stocks (default / single variant)
         $branchStockFields = [];
         foreach ($branches as $branch) {
             $branchStockFields[] = TextInput::make('branch_stocks.' . $branch->id)
                 ->numeric()
                 ->label('Stok Cabang: ' . $branch->name)
+                ->disabled(fn (string $context): bool => $context === 'edit')
                 ->default(0);
         }
 
-        // 5. Generate variant-specific tier, price, and stock fields for repeater
+        // 4. Generate variant-specific tier and stock fields for repeater
         $variantTierFields = [];
         foreach ($pricingTiers as $tier) {
             $variantTierFields[] = TextInput::make('tier_prices.' . $tier->id)
@@ -62,25 +56,21 @@ class ProductForm
                 ->prefix('Rp');
         }
 
-        $variantBranchPriceFields = [];
-        foreach ($branches as $branch) {
-            $variantBranchPriceFields[] = TextInput::make('branch_prices.' . $branch->id)
-                ->numeric()
-                ->label('Harga Cabang: ' . $branch->name)
-                ->prefix('Rp');
-        }
-
         $variantBranchStockFields = [];
         foreach ($branches as $branch) {
             $variantBranchStockFields[] = TextInput::make('branch_stocks.' . $branch->id)
                 ->numeric()
                 ->label('Stok Cabang: ' . $branch->name)
+                ->disabled(fn (string $context): bool => $context === 'edit')
                 ->default(0);
         }
 
         return $schema
+            ->columns(1)
             ->components([
                 Tabs::make('Product Details')
+                    ->columnSpan('full')
+                    ->maxWidth(Width::Full)
                     ->tabs([
                         Tab::make('Informasi Umum')
                             ->schema([
@@ -138,13 +128,15 @@ class ProductForm
 
                                                 TextInput::make('sku')
                                                     ->unique(ProductVariant::class, 'sku', ignoreRecord: true)
+                                                    ->default(fn () => ProductHelper::generateUniqueSku())
                                                     ->label('SKU (Barcode/Kode Varian)'),
 
                                                 TextInput::make('barcode')
+                                                    ->default(fn () => ProductHelper::generateUniqueBarcode())
                                                     ->label('Barcode EAN/UPC'),
                                             ]),
 
-                                        Grid::make(3)
+                                        Grid::make(4)
                                             ->schema([
                                                 TextInput::make('price')
                                                     ->numeric()
@@ -156,26 +148,32 @@ class ProductForm
                                                     ->numeric()
                                                     ->required()
                                                     ->prefix('Rp')
+                                                    ->reactive()
+                                                    ->afterStateUpdated(fn (Get $get, $set) => $set('hpp', (int)$get('cost_price') + (int)$get('estimated_shipping')))
                                                     ->label('Harga Beli Dasar'),
+
+                                                TextInput::make('estimated_shipping')
+                                                    ->numeric()
+                                                    ->prefix('Rp')
+                                                    ->reactive()
+                                                    ->afterStateUpdated(fn (Get $get, $set) => $set('hpp', (int)$get('cost_price') + (int)$get('estimated_shipping')))
+                                                    ->dehydrated(false)
+                                                    ->default(0)
+                                                    ->label('Estimasi Ongkir per Unit'),
 
                                                 TextInput::make('hpp')
                                                     ->numeric()
                                                     ->prefix('Rp')
-                                                    ->label('HPP Awal setelah Ongkir')
-                                                    ->placeholder('Bila kosong, disamakan dengan harga beli'),
+                                                    ->label('HPP Awal setelah Ongkir'),
                                             ]),
 
                                         Section::make('Harga Tingkatan (Tier Prices) untuk Varian Ini')
-                                            ->schema($variantTierFields)
-                                            ->collapsed(),
-
-                                        Section::make('Harga Khusus Cabang untuk Varian Ini')
-                                            ->schema($variantBranchPriceFields)
-                                            ->collapsed(),
+                                            ->description(count($pricingTiers) === 0 ? 'Belum ada tingkatan harga terdaftar. Silakan tambahkan tingkatan harga terlebih dahulu.' : null)
+                                            ->schema($variantTierFields),
 
                                         Section::make('Stok Gudang per Cabang untuk Varian Ini')
-                                            ->schema($variantBranchStockFields)
-                                            ->collapsed(),
+                                            ->description(count($branches) === 0 ? 'Belum ada cabang terdaftar. Silakan tambahkan cabang terlebih dahulu.' : null)
+                                            ->schema($variantBranchStockFields),
                                     ])
                                     ->columns(1)
                                     ->label('Daftar Varian Produk'),
@@ -186,9 +184,11 @@ class ProductForm
                                     ->schema([
                                         TextInput::make('sku')
                                             ->unique(ProductVariant::class, 'sku', ignoreRecord: true)
+                                            ->default(fn () => ProductHelper::generateUniqueSku())
                                             ->label('SKU (Barcode/Kode Barang)'),
 
                                         TextInput::make('barcode')
+                                            ->default(fn () => ProductHelper::generateUniqueBarcode())
                                             ->label('Barcode EAN/UPC'),
 
                                         TextInput::make('price')
@@ -201,29 +201,34 @@ class ProductForm
                                             ->numeric()
                                             ->required(fn (Get $get): bool => ! $get('has_variants'))
                                             ->prefix('Rp')
+                                            ->reactive()
+                                            ->afterStateUpdated(fn (Get $get, $set) => $set('hpp', (int)$get('cost_price') + (int)$get('estimated_shipping')))
                                             ->label('Harga Beli Dasar'),
+
+                                        TextInput::make('estimated_shipping')
+                                            ->numeric()
+                                            ->prefix('Rp')
+                                            ->reactive()
+                                            ->afterStateUpdated(fn (Get $get, $set) => $set('hpp', (int)$get('cost_price') + (int)$get('estimated_shipping')))
+                                            ->dehydrated(false)
+                                            ->default(0)
+                                            ->label('Estimasi Ongkir per Unit'),
 
                                         TextInput::make('hpp')
                                             ->numeric()
                                             ->prefix('Rp')
-                                            ->label('HPP Awal setelah Ongkir')
-                                            ->placeholder('Bila kosong, disamakan dengan harga beli'),
+                                            ->label('HPP Awal setelah Ongkir'),
                                     ]),
 
                                 Section::make('Harga Tingkatan (Tier Prices)')
-                                    ->visible(fn (Get $get): bool => ! $get('has_variants'))
-                                    ->schema($tierFields)
-                                    ->collapsed(),
-
-                                Section::make('Harga Khusus Cabang')
-                                    ->visible(fn (Get $get): bool => ! $get('has_variants'))
-                                    ->schema($branchPriceFields)
-                                    ->collapsed(),
+                                     ->visible(fn (Get $get): bool => ! $get('has_variants'))
+                                     ->description(count($pricingTiers) === 0 ? 'Belum ada tingkatan harga terdaftar. Silakan tambahkan tingkatan harga terlebih dahulu.' : null)
+                                     ->schema($tierFields),
 
                                 Section::make('Stok Gudang per Cabang')
-                                    ->visible(fn (Get $get): bool => ! $get('has_variants'))
-                                    ->schema($branchStockFields)
-                                    ->collapsed(),
+                                     ->visible(fn (Get $get): bool => ! $get('has_variants'))
+                                     ->description(count($branches) === 0 ? 'Belum ada cabang terdaftar. Silakan tambahkan cabang terlebih dahulu.' : null)
+                                     ->schema($branchStockFields),
                             ]),
 
                         Tab::make('Detail Jasa')
@@ -233,9 +238,11 @@ class ProductForm
                                     ->schema([
                                         TextInput::make('sku')
                                             ->unique(ProductVariant::class, 'sku', ignoreRecord: true)
+                                            ->default(fn () => ProductHelper::generateUniqueSku())
                                             ->label('SKU (Kode Jasa)'),
 
                                         TextInput::make('barcode')
+                                            ->default(fn () => ProductHelper::generateUniqueBarcode())
                                             ->label('Barcode EAN/UPC'),
 
                                         TextInput::make('price')
@@ -258,10 +265,6 @@ class ProductForm
                                 Section::make('Harga Tingkatan (Tier Prices) untuk Jasa')
                                     ->schema($tierFields)
                                     ->collapsed(),
-
-                                Section::make('Harga Khusus Cabang untuk Jasa')
-                                    ->schema($branchPriceFields)
-                                    ->collapsed(),
                             ]),
 
                         Tab::make('Komponen Bundling')
@@ -271,9 +274,11 @@ class ProductForm
                                     ->schema([
                                         TextInput::make('sku')
                                             ->unique(ProductVariant::class, 'sku', ignoreRecord: true)
+                                            ->default(fn () => ProductHelper::generateUniqueSku())
                                             ->label('SKU Paket (Bundling)'),
 
                                         TextInput::make('barcode')
+                                            ->default(fn () => ProductHelper::generateUniqueBarcode())
                                             ->label('Barcode EAN/UPC'),
 
                                         TextInput::make('price')
@@ -295,10 +300,6 @@ class ProductForm
 
                                 Section::make('Harga Tingkatan (Tier Prices) untuk Paket')
                                     ->schema($tierFields)
-                                    ->collapsed(),
-
-                                Section::make('Harga Khusus Cabang untuk Paket')
-                                    ->schema($branchPriceFields)
                                     ->collapsed(),
 
                                 Repeater::make('bundle_items')
@@ -327,8 +328,7 @@ class ProductForm
                                             ->label('Jumlah Qty'),
                                     ])
                                     ->columns(2)
-                                    ->label('Daftar Item dalam Paket Bundling ini')
-                                    ->emptyLabel('Tambahkan item pembentuk paket...'),
+                                    ->label('Daftar Item dalam Paket Bundling ini'),
                             ]),
                     ]),
             ]);

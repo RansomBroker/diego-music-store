@@ -7,13 +7,13 @@ Buat Filament Resources: `CustomerResource`, `SupplierResource`, dan `AccountRes
 - **Role**: Developer
 - **Epic**: EPIC-001 - Master Data Setup & Basic Config
 - **Feature**: FEATURE-003 - CRUD Pelanggan, Supplier, & COA Dasar
-- **Status**: Ready
+- **Status**: Done
 
 ## Acceptance Criteria
-- [ ] CRUD `CustomerResource` dapat digunakan untuk mengelola data pelanggan (termasuk status member loyalty dan input minimal loyalty point).
-- [ ] CRUD `SupplierResource` dapat digunakan untuk mengelola supplier.
-- [ ] CRUD `AccountResource` (COA) dapat digunakan untuk mengelola Chart of Accounts, terdaftar di bawah navigasi Master Data atau Settings.
-- [ ] Database seeder `AccountSeeder` berisi minimal akun: Kas, Bank, Piutang Dagang, Persediaan Barang, Hutang Dagang, Modal, Pendapatan Penjualan, HPP, Biaya Operasional.
+- [x] CRUD `CustomerResource` dapat digunakan untuk mengelola data pelanggan (termasuk status member loyalty dan input minimal loyalty point).
+- [x] CRUD `SupplierResource` dapat digunakan untuk mengelola supplier.
+- [x] CRUD `AccountResource` (COA) dapat digunakan untuk mengelola Chart of Accounts, terdaftar di bawah navigasi Master Data atau Settings.
+- [x] Database seeder `AccountSeeder` berisi minimal akun: Kas, Bank, Piutang Dagang, Persediaan Barang, Hutang Dagang, Modal, Pendapatan Penjualan, HPP, Biaya Operasional.
 
 ## Assignee
 - Developer

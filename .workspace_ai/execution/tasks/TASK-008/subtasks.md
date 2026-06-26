@@ -1,12 +1,12 @@
 # Subtasks: TASK-008 - Filament Resources & Seeder
 
 ## Checklist
-- [ ] **Analysis & Design**:
-  - [ ] Desain skema form & tabel Filament untuk Pelanggan, Supplier, dan COA.
-- [ ] **Implementation**:
-  - [ ] Buat dan configure `CustomerResource`.
-  - [ ] Buat dan configure `SupplierResource`.
-  - [ ] Buat dan configure `AccountResource` (COA).
-  - [ ] Buat database seeder `AccountSeeder` dengan data akun awal standar.
-- [ ] **Verification**:
-  - [ ] Jalankan database seeder `AccountSeeder` dan periksa menu-menu CRUD di dashboard admin.
+- [x] **Analysis & Design**:
+  - [x] Desain skema form & tabel Filament untuk Pelanggan, Supplier, dan COA.
+- [x] **Implementation**:
+  - [x] Buat dan configure `CustomerResource`.
+  - [x] Buat dan configure `SupplierResource`.
+  - [x] Buat dan configure `AccountResource` (COA).
+  - [x] Buat database seeder `AccountSeeder` dengan data akun awal standar.
+- [x] **Verification**:
+  - [x] Jalankan database seeder `AccountSeeder` dan periksa menu-menu CRUD di dashboard admin.

@@ -5,8 +5,8 @@ Epic ini adalah fondasi awal sistem ERP Diego Music Store. Tujuannya adalah meny
 
 ## User Stories / Features
 - [x] **FEATURE-001: Multi-Cabang & User RBAC Setup**
-- [ ] **FEATURE-002: CRUD Master Barang & Varian (Bundling & Jasa)**
-- [ ] **FEATURE-003: CRUD Pelanggan, Supplier, & COA Dasar**
+- [x] **FEATURE-002: CRUD Master Barang & Varian (Bundling & Jasa)**
+- [x] **FEATURE-003: CRUD Pelanggan, Supplier, & COA Dasar**
 
 ## Technical Roadmap & Dependencies
 - Tergantung pada: Project Setup (Laravel 12 & Docker)
@@ -15,8 +15,8 @@ Epic ini adalah fondasi awal sistem ERP Diego Music Store. Tujuannya adalah meny
 ## Acceptance Criteria
 - [x] Database memiliki pemisahan `cabang_id` di setiap data transaksi/operasional.
 - [x] Pengguna hanya dapat mengakses cabang yang ditugaskan kepada mereka.
-- [ ] CRUD untuk data master dasar (Cabang, Barang, Varian, Pelanggan, Supplier, COA) dapat dilakukan dengan benar.
+- [x] CRUD untuk data master dasar (Cabang, Barang, Varian, Pelanggan, Supplier, COA) dapat dilakukan dengan benar.
 
 ## Status
-- **Status**: Active
-- **Progress**: 33%
+- **Status**: Done
+- **Progress**: 100%
