@@ -17,10 +17,10 @@ Fitur ini mencakup pengelolaan entitas eksternal (Pelanggan dan Supplier) serta 
    - Seeder COA standar akuntansi Indonesia (Kas, Bank, Piutang Dagang, Persediaan Barang, Hutang Dagang, Modal, Pendapatan Penjualan, HPP, Biaya Operasional, dll.).
 
 ## Acceptance Criteria
-- [ ] Database tabel `customers`, `suppliers`, dan `accounts` (COA) telah didefinisikan dengan migration.
-- [ ] Seeder untuk daftar akun COA dasar berhasil dijalankan.
-- [ ] Tersedia CRUD untuk Pelanggan, Supplier, dan COA di Filament Backoffice.
-- [ ] Validasi keunikan nomor telepon pelanggan dan kode akun COA.
+- [x] Database tabel `customers`, `suppliers`, dan `accounts` (COA) telah didefinisikan dengan migration.
+- [x] Seeder untuk daftar akun COA dasar berhasil dijalankan.
+- [x] Tersedia CRUD untuk Pelanggan, Supplier, dan COA di Filament Backoffice.
+- [x] Validasi keunikan nomor telepon pelanggan dan kode akun COA.
 
 ## Technical Implementation Details
 - Buat migration dan seeder.

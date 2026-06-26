@@ -34,28 +34,7 @@ class AccountForm
 
                         CreatableSelect::make('classification')
                             ->required()
-                            ->options(function () {
-                                $defaults = [
-                                    'asset' => 'Aset / Harta',
-                                    'liability' => 'Kewajiban / Hutang',
-                                    'equity' => 'Ekuitas / Modal',
-                                    'revenue' => 'Pendapatan / Penjualan',
-                                    'expense' => 'Beban / Biaya',
-                                ];
-
-                                $existing = \App\Models\Account::query()
-                                    ->distinct()
-                                    ->pluck('classification', 'classification')
-                                    ->toArray();
-
-                                foreach ($existing as $key => $val) {
-                                    if (!isset($defaults[$key])) {
-                                        $defaults[$key] = $val;
-                                    }
-                                }
-
-                                return $defaults;
-                            })
+                            ->options(fn () => \App\Models\AccountClassification::pluck('name', 'key')->toArray())
                             ->label('Klasifikasi Akun'),
 
                         Toggle::make('is_active')
