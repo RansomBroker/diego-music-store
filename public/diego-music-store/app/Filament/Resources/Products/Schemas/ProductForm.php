@@ -5,15 +5,16 @@ namespace App\Filament\Resources\Products\Schemas;
 use App\Models\Branch;
 use App\Models\PricingTier;
 use App\Models\ProductVariant;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Tabs;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Forms\Get;
 use Filament\Schemas\Schema;
 
@@ -81,7 +82,7 @@ class ProductForm
             ->components([
                 Tabs::make('Product Details')
                     ->tabs([
-                        Tabs\Tab::make('Informasi Umum')
+                        Tab::make('Informasi Umum')
                             ->schema([
                                 Grid::make(2)
                                     ->schema([
@@ -117,7 +118,7 @@ class ProductForm
                                     ->label('Deskripsi Produk'),
                             ]),
 
-                        Tabs\Tab::make('Varian / Spesifikasi')
+                        Tab::make('Varian / Spesifikasi')
                             ->visible(fn (Get $get): bool => $get('type') === 'physical')
                             ->schema([
                                 Toggle::make('has_variants')
@@ -225,7 +226,7 @@ class ProductForm
                                     ->collapsed(),
                             ]),
 
-                        Tabs\Tab::make('Detail Jasa')
+                        Tab::make('Detail Jasa')
                             ->visible(fn (Get $get): bool => $get('type') === 'service')
                             ->schema([
                                 Grid::make(3)
@@ -263,7 +264,7 @@ class ProductForm
                                     ->collapsed(),
                             ]),
 
-                        Tabs\Tab::make('Komponen Bundling')
+                        Tab::make('Komponen Bundling')
                             ->visible(fn (Get $get): bool => $get('type') === 'bundle')
                             ->schema([
                                 Grid::make(3)
