@@ -7,12 +7,12 @@ Buat model Eloquent (`Product`, `ProductVariant`, `PricingTier`, `ProductTierPri
 - **Role**: Developer
 - **Epic**: EPIC-001 - Master Data Setup & Basic Config
 - **Feature**: FEATURE-002 - CRUD Master Barang & Varian (Bundling & Jasa)
-- **Status**: Ready
+- **Status**: Merged/Completed
 
 ## Acceptance Criteria
-- [ ] Model Eloquent terdefinisi dengan relasi lengkap (hasMany, belongsTo, belongsToMany).
-- [ ] Logika penentuan stok tipe jasa bernilai tak terbatas/unlimited (misal: return value `999999` atau abaikan pengurangan stok).
-- [ ] Logika penghitungan stok produk bundling dihitung otomatis dari stok terkecil produk fisik penyusunnya.
+- [x] Model Eloquent terdefinisi dengan relasi lengkap (hasMany, belongsTo, belongsToMany).
+- [x] Logika penentuan stok tipe jasa bernilai tak terbatas/unlimited (misal: return value `999999` atau abaikan pengurangan stok).
+- [x] Logika penghitungan stok produk bundling dihitung otomatis dari stok terkecil produk fisik penyusunnya.
 
 ## Assignee
 - Developer
