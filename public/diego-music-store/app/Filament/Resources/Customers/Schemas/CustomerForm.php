@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Customers\Schemas;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
@@ -35,6 +37,26 @@ class CustomerForm
                                     ->maxLength(255)
                                     ->label('Email'),
 
+                                DatePicker::make('date_of_birth')
+                                    ->label('Tanggal Lahir'),
+
+                                Select::make('customer_label_id')
+                                    ->relationship('label', 'name')
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->label('Nama Label'),
+                                    ])
+                                    ->createOptionUsing(function (array $data) {
+                                        $key = \Illuminate\Support\Str::slug($data['name']);
+                                        return \App\Models\CustomerLabel::create([
+                                            'key' => $key,
+                                            'name' => $data['name'],
+                                        ])->id;
+                                    })
+                                    ->label('Label Pelanggan'),
+
                                 Textarea::make('address')
                                     ->maxLength(500)
                                     ->rows(3)
@@ -42,7 +64,7 @@ class CustomerForm
                             ])
                             ->columnSpan(1),
 
-                        Section::make('Loyalty & Deposit')
+                        Section::make('Program Loyalty')
                             ->schema([
                                 Toggle::make('is_loyalty_member')
                                     ->label('Loyalty Member')
@@ -52,12 +74,6 @@ class CustomerForm
                                     ->numeric()
                                     ->default(0)
                                     ->label('Poin Belanja'),
-
-                                TextInput::make('deposit_balance')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->default(0.00)
-                                    ->label('Saldo Deposit'),
                             ])
                             ->columnSpan(1),
                     ])

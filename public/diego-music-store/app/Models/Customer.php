@@ -14,14 +14,23 @@ class Customer extends Model
         'phone',
         'email',
         'address',
+        'date_of_birth',
+        'customer_label_id',
         'is_loyalty_member',
         'loyalty_points',
-        'deposit_balance',
     ];
 
     protected $casts = [
         'is_loyalty_member' => 'boolean',
         'loyalty_points' => 'integer',
-        'deposit_balance' => 'decimal:2',
+        'date_of_birth' => 'date',
     ];
+
+    /**
+     * Get the customer's label.
+     */
+    public function label()
+    {
+        return $this->belongsTo(CustomerLabel::class, 'customer_label_id');
+    }
 }

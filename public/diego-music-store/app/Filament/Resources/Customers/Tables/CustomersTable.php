@@ -29,6 +29,16 @@ class CustomersTable
                     ->searchable()
                     ->label('Email'),
 
+                TextColumn::make('label.name')
+                    ->badge()
+                    ->color('info')
+                    ->label('Label'),
+
+                TextColumn::make('date_of_birth')
+                    ->date()
+                    ->sortable()
+                    ->label('Tgl Lahir'),
+
                 IconColumn::make('is_loyalty_member')
                     ->boolean()
                     ->sortable()
@@ -38,11 +48,6 @@ class CustomersTable
                     ->numeric()
                     ->sortable()
                     ->label('Poin'),
-
-                TextColumn::make('deposit_balance')
-                    ->money('idr')
-                    ->sortable()
-                    ->label('Saldo Deposit'),
             ])
             ->filters([
                 //

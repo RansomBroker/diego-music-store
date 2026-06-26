@@ -19,9 +19,9 @@ Fitur ini mengimplementasikan isolasi data multi-cabang (multi-tenant di level d
    - **Teknisi**: Akses papan Kanban servis instrumen dan input sparepart.
 
 ## Acceptance Criteria
-- [ ] Database tabel `cabang` dan kolom `cabang_id` di tabel relasional telah terbuat.
-- [ ] Pengguna dengan role `Kasir` cabang A tidak bisa melihat stok atau transaksi cabang B.
-- [ ] Opsi cabang muncul saat login jika user ditugaskan di lebih dari satu cabang.
+- [x] Database tabel `cabang` dan kolom `cabang_id` di tabel relasional telah terbuat.
+- [x] Pengguna dengan role `Kasir` cabang A tidak bisa melihat stok atau transaksi cabang B.
+- [x] Opsi cabang muncul saat login jika user ditugaskan di lebih dari satu cabang.
 
 ## Technical Implementation Details
 - Buat migration untuk tabel `cabang` dan pivot tabel `cabang_user`.
