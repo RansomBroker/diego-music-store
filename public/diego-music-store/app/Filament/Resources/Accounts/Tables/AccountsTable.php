@@ -27,21 +27,21 @@ class AccountsTable
                     ->label('Nama Akun'),
 
                 TextColumn::make('classification')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'asset' => 'Aset / Harta',
-                        'liability' => 'Kewajiban / Hutang',
-                        'equity' => 'Ekuitas / Modal',
-                        'revenue' => 'Pendapatan / Penjualan',
-                        'expense' => 'Beban / Biaya',
+                    ->formatStateUsing(fn (string $state): string => match (strtolower($state)) {
+                        'asset', 'aset / harta' => 'Aset / Harta',
+                        'liability', 'kewajiban / hutang' => 'Kewajiban / Hutang',
+                        'equity', 'ekuitas / modal' => 'Ekuitas / Modal',
+                        'revenue', 'pendapatan / penjualan' => 'Pendapatan / Penjualan',
+                        'expense', 'beban / biaya' => 'Beban / Biaya',
                         default => $state,
                     })
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'asset' => 'info',
-                        'liability' => 'warning',
-                        'equity' => 'success',
-                        'revenue' => 'primary',
-                        'expense' => 'danger',
+                    ->color(fn (string $state): string => match (strtolower($state)) {
+                        'asset', 'aset / harta' => 'info',
+                        'liability', 'kewajiban / hutang' => 'warning',
+                        'equity', 'ekuitas / modal' => 'success',
+                        'revenue', 'pendapatan / penjualan' => 'primary',
+                        'expense', 'beban / biaya' => 'danger',
                         default => 'gray',
                     })
                     ->searchable()

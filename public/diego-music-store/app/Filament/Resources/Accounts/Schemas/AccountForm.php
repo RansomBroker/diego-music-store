@@ -7,6 +7,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use App\Filament\Components\CreatableSelect;
 
 class AccountForm
 {
@@ -29,9 +30,8 @@ class AccountForm
                             ->label('Nama Akun')
                             ->placeholder('e.g., Kas Utama, Piutang Dagang'),
 
-                        Select::make('classification')
+                        CreatableSelect::make('classification')
                             ->required()
-                            ->searchable()
                             ->options(function () {
                                 $defaults = [
                                     'asset' => 'Aset / Harta',
@@ -53,15 +53,6 @@ class AccountForm
                                 }
 
                                 return $defaults;
-                            })
-                            ->createOptionForm([
-                                TextInput::make('classification')
-                                    ->required()
-                                    ->label('Klasifikasi Baru')
-                                    ->placeholder('e.g., Pendapatan Lain-lain'),
-                            ])
-                            ->createOptionUsing(function (array $data) {
-                                return $data['classification'];
                             })
                             ->label('Klasifikasi Akun'),
 

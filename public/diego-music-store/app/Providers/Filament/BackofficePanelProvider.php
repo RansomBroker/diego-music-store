@@ -44,12 +44,14 @@ class BackofficePanelProvider extends PanelProvider
                     ->label('Blog')
                     ->icon('heroicon-o-pencil'),
                 NavigationGroup::make()
-                    ->label('Master Data'),
+                    ->label('Master Data')
+                    ->icon('heroicon-o-circle-stack'),
                 NavigationGroup::make()
-                    ->label('Kelola User'),
+                    ->label('Kelola User')
+                    ->icon('heroicon-o-users'),
                 NavigationGroup::make()
                      ->label('Akuntansi')
-                     ->icon('heroicon-o-calculator'),
+                     ->icon('heroicon-o-banknotes'),
                 NavigationGroup::make()
                     ->label(fn (): string => __('navigation.settings'))
                     ->icon('heroicon-o-cog-6-tooth')
@@ -86,7 +88,8 @@ class BackofficePanelProvider extends PanelProvider
     {
         FilamentView::registerRenderHook(
             PanelsRenderHook::STYLES_AFTER,
-            fn (): HtmlString => new HtmlString('
+            fn (): HtmlString => new HtmlString(
+                \Illuminate\Support\Facades\Blade::render("@vite('resources/css/app.css')") . '
                 <style>
                     /* Custom Sidebar Styles */
                     .fi-sidebar {
@@ -105,7 +108,8 @@ class BackofficePanelProvider extends PanelProvider
                         border-bottom: 1px solid rgb(30, 41, 59) !important;
                     }
                 </style>
-            '),
+            '
+            ),
         );
     }
 }
