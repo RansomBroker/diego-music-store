@@ -87,13 +87,11 @@ class BackofficePanelProvider extends PanelProvider
                     /* Custom Sidebar Styles */
                     .fi-sidebar {
                         border-right: 1px solid rgb(226, 232, 240) !important;
-                        background-color: rgb(241, 245, 249) !important;
                         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02) !important;
                         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
                     }
                     .dark .fi-sidebar {
                         border-right: 1px solid rgb(30, 41, 59) !important;
-                        background-color: rgb(15, 23, 42) !important;
                         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2) !important;
                     }
                     .fi-sidebar-header {
