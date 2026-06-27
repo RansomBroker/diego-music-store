@@ -1,23 +1,23 @@
-# Epic: EPIC-002 - Front Desk & POS Dasar
+# Epic: EPIC-002 - Back Office Procurement & Inventory
 
 ## Description
-Epic ini mencakup pembangunan modul Point of Sale (POS) utama untuk operasional kasir sehari-hari di cabang. Ini mencakup manajemen laci kas harian (sesi kasir), antarmuka penjualan kasir (POS), pencetakan struk penjualan, penanganan piutang pelanggan, dan laporan kasir harian (Z-Report).
+Epic ini mencakup pembangunan modul rantai pasok (Procurement) dan pengelolaan stok (Inventory) di tingkat Back Office. Ini mencakup manajemen Satuan Produk (UoM), Purchase Order (PO) ke supplier, Delivery Order (DO) / penerimaan barang masuk ke gudang, mutasi barang antar-cabang, stok opname, serta kalkulasi otomatis HPP Rata-rata Terbobot (Weighted Average) teratribusi ongkos kirim.
 
 ## User Stories / Features
-- [ ] **FEATURE-004: Sesi Kasir Harian & Laci Kas (Daily Cash Session)**
-- [ ] **FEATURE-005: Core POS (Point of Sale)**
-- [ ] **FEATURE-006: Pelunasan Piutang & Laporan POS**
+- [ ] **FEATURE-004: Satuan Produk & Pengelolaan PO/DO**
+- [ ] **FEATURE-005: Mutasi Barang & Stok Opname**
 
 ## Technical Roadmap & Dependencies
-- Tergantung pada: EPIC-001 - Master Data Setup & Basic Config (khususnya data cabang, produk/barang, pelanggan, dan COA)
+- Tergantung pada: EPIC-001 - Master Data Setup & Basic Config (khususnya data produk/barang, supplier, cabang, dan COA dasar)
 - Target Waktu: Sprint 2 (Hari 13 - 26)
 
 ## Acceptance Criteria
-- [ ] Sistem kasir memiliki siklus Buka Sesi (modal awal) dan Tutup Sesi (blind count, hitung selisih kas, Z-Report).
-- [ ] Antarmuka POS mendukung pencarian barcode, keranjang belanja, pemilihan sales representative, dan cetak struk thermal.
-- [ ] Sistem membatasi transaksi POS di luar sesi kasir yang aktif.
-- [ ] Dapat mengelola pelunasan piutang pelanggan secara parsial maupun lunas.
+- [x] Tersedia CRUD Satuan Produk (Unit) di Back Office dan terintegrasi ke form input barang.
+- [ ] Pembuatan PO ke supplier dan verifikasi penerimaan fisik barang melalui DO.
+- [ ] Nilai HPP Rata-rata Terbobot (Weighted Average) terhitung otomatis saat DO disimpan dengan memperhitungkan ongkos kirim.
+- [ ] Mendukung mutasi barang antar-cabang dengan pelacak status (In-Transit).
+- [ ] Form Stok Opname (fisik vs sistem) menghasilkan jurnal penyesuaian otomatis.
 
 ## Status
-- **Status**: Todo
-- **Progress**: 0%
+- **Status**: In Progress
+- **Progress**: 33%

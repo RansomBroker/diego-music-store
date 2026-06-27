@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RoleAndPermissionSeeder::class);
+        $this->call(UnitSeeder::class);
 
         // Seed default branch (Back Office / Cabang Pusat)
         if (Branch::count() === 0) {

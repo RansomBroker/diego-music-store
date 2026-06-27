@@ -42,6 +42,10 @@ class ProductsTable
                     })
                     ->label('Tipe'),
 
+                TextColumn::make('unit.name')
+                    ->label('Satuan')
+                    ->toggleable(),
+
                 TextColumn::make('sku')
                     ->getStateUsing(function ($record) {
                         $variants = $record->variants;

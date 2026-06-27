@@ -5,8 +5,8 @@ Buat validasi sesi kasir aktif. Cegah kasir melakukan transaksi POS atau membuka
 
 ## Technical Details
 - **Role**: Developer
-- **Epic**: EPIC-002 - Front Desk & POS Dasar
-- **Feature**: FEATURE-004 - Sesi Kasir Harian & Laci Kas
+- **Epic**: EPIC-003 - Front Desk & POS Dasar
+- **Feature**: FEATURE-006 - Sesi Kasir Harian & Laci Kas (Daily Cash Session)
 - **Status**: Ready
 
 ## Acceptance Criteria

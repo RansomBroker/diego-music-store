@@ -52,3 +52,9 @@ Setiap tugas baru akan dibuat di bawah `execution/tasks/TASK-XXX/` dengan sub-fi
 Untuk menjalankan perintah Composer dan Laravel Artisan, gunakan script pembungkus Docker berikut agar permission file tetap sinkron dengan user host:
 - **Artisan Command**: Jalankan `./docker-artisan.sh <perintah>` (Contoh: `./docker-artisan.sh migrate` atau `./docker-artisan.sh make:livewire`)
 - **Composer Command**: Jalankan `./docker-composer.sh <perintah>` (Contoh: `./docker-composer.sh install` atau `./docker-composer.sh require livewire/livewire`)
+
+
+## 5. Style dan kode patern
+1. gunakan action pattern semua terkait logika bisnis buat di App\Action\{nama_feature}
+2. kode resource harus clean jika ada satu kode yang terindikasi akan digunakan di tempat lain buat sebagai helper dan taruh di App\Helper
+3. jika dimungkinkan 1 form resource maupuan penyajian datanya 1 file tidak lebih dari 1K line

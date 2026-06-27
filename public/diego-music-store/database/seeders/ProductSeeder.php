@@ -9,6 +9,7 @@ use App\Models\ProductVariant;
 use App\Models\ProductTierPrice;
 use App\Models\ProductBranchStock;
 use App\Models\ProductBundle;
+use App\Models\Unit;
 use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
@@ -53,12 +54,16 @@ class ProductSeeder extends Seeder
             ]);
         }
 
+        $unitPcs = Unit::where('code', 'pcs')->first()?->id;
+        $unitSet = Unit::where('code', 'set')->first()?->id;
+
         // 3. Create 1 Physical Product with 2 Variants
         $physicalVariants = [];
         if (!Product::where('name', 'Gitar Akustik Yamaha FS800')->exists()) {
             $physicalProduct = Product::create([
                 'name' => 'Gitar Akustik Yamaha FS800',
                 'type' => 'physical',
+                'unit_id' => $unitPcs,
                 'description' => 'Gitar akustik berkualitas tinggi dengan solid spruce top.',
                 'image_path' => null,
                 'is_active' => true,
@@ -128,6 +133,7 @@ class ProductSeeder extends Seeder
             $serviceProduct = Product::create([
                 'name' => 'Setup & Stem Gitar',
                 'type' => 'service',
+                'unit_id' => $unitPcs,
                 'description' => 'Jasa kalibrasi truss rod, saddle, nut, dan tuning senar.',
                 'image_path' => null,
                 'is_active' => true,
@@ -160,6 +166,7 @@ class ProductSeeder extends Seeder
             $bundleProduct = Product::create([
                 'name' => 'Paket Siap Konser Yamaha FS800',
                 'type' => 'bundle',
+                'unit_id' => $unitSet,
                 'description' => 'Paket bundling Gitar Yamaha FS800 Natural + Jasa Setup profesional.',
                 'image_path' => null,
                 'is_active' => true,

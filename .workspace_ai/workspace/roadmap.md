@@ -18,16 +18,16 @@ gantt
     Master Data & Basic Config    :active, sp1, 2026-06-25, 12d
     
     section Sprint 2
-    Front Desk & POS Dasar        :sp2, after sp1, 14d
+    BO Procurement & Inventory    :sp2, after sp1, 14d
     
     section Sprint 3
-    POS Lanjutan, Servis, & CRM   :sp3, after sp2, 16d
+    Front Desk & POS Dasar        :sp3, after sp2, 14d
     
     section Sprint 4
-    HR, Absensi & Penggajian      :sp4, after sp3, 16d
+    POS Lanjutan, Servis, & CRM   :sp4, after sp3, 16d
     
     section Sprint 5
-    Accounting & Inventory API    :sp5, after sp4, 16d
+    HR, Absensi, Payroll & Accounting :sp5, after sp4, 16d
     
     section Final Phase
     Testing & Go-Live (7 Hari)    :crit, test, after sp5, 7d
@@ -39,13 +39,21 @@ gantt
 - Master Barang & Varian, Loyalty member.
 - Shop header/footer struk template.
 
-### Sprint 2: Front Desk & POS Dasar (Hari 13 - 26)
-- Sesi Kasir Harian (Open/Close cash, laci, blind count, cancel sesion).
+### Sprint 2: Back Office Procurement & Inventory (Hari 13 - 26)
+- CRUD Satuan Produk (UoM) & integrasi form input barang.
+- Purchase Order (PO) & Delivery Order (DO) / Penerimaan Barang.
+- Perhitungan HPP Rata-rata Terbobot (Weighted Average) teratribusi ongkir.
+- Mutasi Stok antar-cabang dengan pelacak status (In-Transit).
+- Stok Opname (Fisik vs Sistem) & penyesuaian selisih otomatis.
+- Kartu Stok per barang per gudang cabang.
+
+### Sprint 3: Front Desk & POS Dasar (Hari 27 - 40)
+- Sesi Kasir Harian (Open/Close cash, laci, blind count, cancel session).
 - Core POS (Single payment, thermal receipt, hold/recall).
 - Pelunasan Piutang & POS Reports.
 - Info/bar absensi kasir.
 
-### Sprint 3: POS Lanjutan, Servis, & CRM (Hari 27 - 42)
+### Sprint 4: POS Lanjutan, Servis, & CRM (Hari 41 - 56)
 - Mix Payment & Pricing tier.
 - Downpayment/Booking inden.
 - Partial returns.
@@ -53,21 +61,17 @@ gantt
 - WhatsApp Gateway (Invoice WA, reminders, broadcasts).
 - Offline mode (Service Workers + IndexedDB FIFO).
 
-### Sprint 4: HR, Absensi & Penggajian (Hari 43 - 58)
+### Sprint 5: HR, Absensi, Penggajian & Accounting (Hari 57 - 72)
 - Attendance integration (Fingerprint, photo geotagging).
 - Kasbon / Cash Advance & cycle deduction.
 - Penalty Points & auto deduction.
 - Sales Commissions (flat/tier) & KPI.
 - Auto Payroll calculations, bank transfer exports, and WA Slip delivery.
-
-### Sprint 5: Inventaris, Akuntansi Double-Entry, & Integrasi API (Hari 59 - 74)
-- Procurement (PO/DO verification), branch inventory mutations.
-- Weighted Average HPP tracking.
 - Double-entry engine: auto posting POS/PO/Payroll journal, General Ledger, Neraca, Laba Rugi.
 - Marketplace Sync (Shopee & Tokopedia).
 - Owner Dashboard charts.
 
-### Phase 6: Testing & Go-Live (Hari 75 - 81)
+### Phase 6: Testing & Go-Live (Hari 73 - 79)
 - SIT (System Integration Testing) & Offline sync failover.
 - UAT (User Acceptance Testing) with Owner, cashier, technicians.
 - Load testing & SQL indexing tuning.

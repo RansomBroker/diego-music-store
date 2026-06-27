@@ -91,6 +91,13 @@ class ProductForm
                                             ->reactive()
                                             ->label('Tipe Produk'),
 
+                                        Select::make('unit_id')
+                                            ->relationship('unit', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true))
+                                            ->required()
+                                            ->searchable()
+                                            ->preload()
+                                            ->label('Satuan Produk'),
+
                                         FileUpload::make('image_path')
                                             ->image()
                                             ->directory('products')
