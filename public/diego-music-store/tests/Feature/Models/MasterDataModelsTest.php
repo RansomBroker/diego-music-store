@@ -21,14 +21,12 @@ class MasterDataModelsTest extends TestCase
             'address' => 'Denpasar',
             'is_loyalty_member' => true,
             'loyalty_points' => 120,
-            'deposit_balance' => 150000.50,
         ]);
 
         $this->assertInstanceOf(Customer::class, $customer);
         $this->assertEquals('John Doe', $customer->name);
         $this->assertTrue($customer->is_loyalty_member);
         $this->assertEquals(120, $customer->loyalty_points);
-        $this->assertEquals(150000.50, $customer->deposit_balance);
     }
 
     public function test_it_can_create_supplier(): void

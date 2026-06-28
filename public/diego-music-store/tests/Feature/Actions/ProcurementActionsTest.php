@@ -4,14 +4,15 @@ namespace Tests\Feature\Actions;
 
 use App\Actions\Procurement\CreatePurchaseOrder;
 use App\Actions\Procurement\UpdatePurchaseOrder;
-use App\Actions\Procurement\CreateDeliveryOrder;
-use App\Actions\Procurement\UpdateDeliveryOrder;
+use App\Actions\Procurement\CreatePurchaseTransaction;
+use App\Actions\Procurement\UpdatePurchaseTransaction;
+use App\Actions\Procurement\PostPurchaseTransaction;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\ProductBranchStock;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
-use App\Models\DeliveryOrder;
+use App\Models\PurchaseTransaction;
 use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -32,6 +33,7 @@ class ProcurementActionsTest extends TestCase
             'name' => 'Yamaha Supplier',
             'phone' => '08123456780',
             'address' => 'Jakarta',
+            'outstanding_debt' => 0,
         ]);
 
         $this->branch = Branch::create([
@@ -100,6 +102,7 @@ class ProcurementActionsTest extends TestCase
         ];
 
         $updatedPo = app(UpdatePurchaseOrder::class)->execute($po, $updateData);
+        $updatedPo->refresh();
 
         $this->assertEquals('PO-TEST-001-REV', $updatedPo->po_number);
         $this->assertEquals(13500000, $updatedPo->total_amount); // 15 * 900,000
@@ -108,7 +111,7 @@ class ProcurementActionsTest extends TestCase
         $this->assertEquals(15, $updatedPo->items->first()->quantity);
     }
 
-    public function test_it_calculates_weighted_average_hpp_when_do_is_received(): void
+    public function test_it_calculates_weighted_average_hpp_when_transaction_is_posted(): void
     {
         // Setup PO approved
         $po = PurchaseOrder::create([
@@ -133,28 +136,32 @@ class ProcurementActionsTest extends TestCase
             'hpp' => 800000, // 5 units at HPP of 800k
         ]);
 
-        // Create DO (status draft)
-        $doData = [
-            'purchase_order_id' => $po->id,
+        // Create transaction (status draft)
+        $txData = [
+            'po_id' => $po->id,
             'branch_id' => $this->branch->id,
-            'do_number' => 'DO-TEST-002',
-            'received_date' => '2026-06-28',
+            'warehouse_id' => $this->branch->id,
+            'supplier_id' => $this->supplier->id,
+            'purchase_type' => 'Tunai',
+            'transaction_date' => '2026-06-28',
             'shipping_cost' => 100000, // total shipping cost is 100k
             'status' => 'draft',
-            'notes' => 'DO draft',
             'items' => [
                 [
                     'product_variant_id' => $this->variant->id,
-                    'quantity_ordered' => 10,
-                    'quantity_received' => 10, // received 10 units
+                    'qty_po' => 10,
+                    'qty_received' => 10, // received 10 units
+                    'price' => 1000000,
+                    'discount' => 0,
+                    'tax_rate' => 0,
                 ]
             ]
         ];
 
-        $do = app(CreateDeliveryOrder::class)->execute($doData);
+        $pt = app(CreatePurchaseTransaction::class)->execute($txData);
 
-        $this->assertInstanceOf(DeliveryOrder::class, $do);
-        $this->assertEquals('draft', $do->status);
+        $this->assertInstanceOf(PurchaseTransaction::class, $pt);
+        $this->assertEquals('draft', $pt->status);
 
         // Stock and HPP should not change yet
         $stockRecord = ProductBranchStock::where('product_variant_id', $this->variant->id)
@@ -163,11 +170,10 @@ class ProcurementActionsTest extends TestCase
         $this->assertEquals(5, $stockRecord->stock);
         $this->assertEquals(800000, $stockRecord->hpp);
 
-        // Update DO status to received
-        $doData['status'] = 'received';
-        $updatedDo = app(UpdateDeliveryOrder::class)->execute($do, $doData);
+        // Post transaction
+        app(PostPurchaseTransaction::class)->execute($pt);
 
-        $this->assertEquals('received', $updatedDo->status);
+        $this->assertEquals('posted', $pt->fresh()->status);
 
         // Verify stock incremented
         $stockRecord->refresh();

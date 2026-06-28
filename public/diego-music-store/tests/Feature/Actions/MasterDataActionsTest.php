@@ -27,7 +27,6 @@ class MasterDataActionsTest extends TestCase
             'address' => 'Denpasar',
             'is_loyalty_member' => true,
             'loyalty_points' => 50,
-            'deposit_balance' => 200000,
         ];
 
         $customer = app(CreateCustomer::class)->execute($createData);
@@ -43,7 +42,6 @@ class MasterDataActionsTest extends TestCase
             'address' => 'Kuta',
             'is_loyalty_member' => false,
             'loyalty_points' => 0,
-            'deposit_balance' => 150000,
         ];
 
         $updated = app(UpdateCustomer::class)->execute($customer, $updateData);
@@ -52,7 +50,6 @@ class MasterDataActionsTest extends TestCase
         $this->assertEquals('alice.new@example.com', $updated->email);
         $this->assertFalse($updated->is_loyalty_member);
         $this->assertEquals(0, $updated->loyalty_points);
-        $this->assertEquals(150000, $updated->deposit_balance);
     }
 
     public function test_supplier_actions(): void

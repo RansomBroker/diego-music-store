@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\DeliveryOrders\Pages;
 
 use App\Filament\Resources\DeliveryOrders\DeliveryOrderResource;
-use App\Actions\Procurement\CreateDeliveryOrder as CreateDeliveryOrderAction;
+use App\Actions\DeliveryOrder\CreateDeliveryOrder as CreateDeliveryOrderAction;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Support\Enums\Width;
 

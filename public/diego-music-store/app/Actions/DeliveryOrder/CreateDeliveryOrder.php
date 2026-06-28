@@ -19,6 +19,12 @@ class CreateDeliveryOrder
             $items = $data['items'] ?? [];
             unset($data['items']);
 
+            $doNumber = $data['do_number'] ?? null;
+            if (empty($doNumber)) {
+                $doNumber = DeliveryOrder::generateDoNumber();
+            }
+            $data['do_number'] = $doNumber;
+
             // Create DO
             $deliveryOrder = DeliveryOrder::create($data);
 

@@ -61,7 +61,7 @@ Fitur-fitur dikelompokkan berdasarkan estimasi tingkat kesulitan teknis dan depe
 | :--- | :--- | :--- | :--- |
 | **Mudah (Easy)** | Data Master, CRUD Dasar, & Konfigurasi | - CRUD Pelanggan, User, Supplier, Gudang, Satuan<br>- CRUD Barang & Varian (Master stok dasar)<br>- Registrasi Cabang & Akses Cabang<br>- Setting Informasi Toko & Template Struk<br>- Tampilan Bar Absensi Kasir (Read-only) | Skema Database Inti |
 | **Sedang (Medium)** | POS Dasar, Absensi, Kasbon, & Dashboard Dasar | - Sesi Kasir Harian (Buka/Tutup Kas, Modal Awal)<br>- Core POS (Scan barcode, add to cart, cash payment)<br>- Pelunasan Piutang Pelanggan<br>- Check-in Absensi Foto (Geotagging) & Face Lock<br>- Pengajuan Kasbon & Cicilan Karyawan<br>- Dashboard Sales & Leaderboard sederhana | - Data Master<br>- Database Sesi Kasir |
-| **Sulit (Hard)** | POS Lanjutan, Akuntansi, Rantai Pasok, Payroll, Servis, Offline, & API | - POS: Mix Payment, Dynamic Pricing Tier, PPN otomatis<br>- Deposit Pelanggan (DP/Booking)<br>- Retur Penjualan Parsial/Total & Jurnal Retur<br>- Servis Musik: Alur Kanban, Sparepart HPP, POS integration<br>- Accounting: Jurnal Otomatis POS/PO/Payroll, Buku Besar, Neraca, Laba Rugi per Cabang & Konsolidasi, Depresiasi Aset<br>- Procurement & Stock: PO/DO Matching, Mutasi Antar-Cabang (In-Transit), Stok Opname & Auto-Journal Selisih, Average Weighted HPP<br>- Payroll: Rekap Gaji + KPI + Potongan Penalty Point Denda Telat, Komisi Sales Bertingkat, Slip PDF & WA Auto-send<br>- Integrasi: WA Gateway API, Shopee & Tokopedia Sync, Offline Mode (Service Worker + IndexedDB) | - Integrasi API Eksternal<br>- Jurnal Accounting Engine<br>- Browser Service Worker |
+| **Sulit (Hard)** | POS Lanjutan, Akuntansi, Rantai Pasok, Payroll, Servis, Offline, & API | - POS: Mix Payment, Dynamic Pricing Tier, PPN otomatis<br>- Deposit Pelanggan (DP/Booking)<br>- Retur Penjualan Parsial/Total & Jurnal Retur<br>- Servis Musik: Alur Kanban, Sparepart HPP, POS integration<br>- Accounting: Jurnal Otomatis POS/PO/Payroll, Buku Besar, Neraca, Laba Rugi per Cabang & Konsolidasi, Depresiasi Aset<br>- Procurement & Stock: PO & Transaksi Pembelian, Mutasi Antar-Cabang (In-Transit), Stok Opname & Auto-Journal Selisih, Average Weighted HPP<br>- Payroll: Rekap Gaji + KPI + Potongan Penalty Point Denda Telat, Komisi Sales Bertingkat, Slip PDF & WA Auto-send<br>- Integrasi: WA Gateway API, Shopee & Tokopedia Sync, Offline Mode (Service Worker + IndexedDB) | - Integrasi API Eksternal<br>- Jurnal Accounting Engine<br>- Browser Service Worker |
 
 ---
 
@@ -85,11 +85,11 @@ Fitur-fitur dikelompokkan berdasarkan estimasi tingkat kesulitan teknis dan depe
 
 ### Sprint 2: Back Office Procurement & Inventory (Hari 13 - 26)
 *Fokus pada modul pengelolaan rantai pasok (pembelian dari supplier), mutasi stok antar-cabang, dan perhitungan HPP berbasis data pembelian rill.*
-- **Hari 13 - 19: Satuan Produk & Pengelolaan PO/DO**
+- **Hari 13 - 19: Satuan Produk & Pengelolaan PO & Transaksi Pembelian (Purchase Transaction)**
   - CRUD Satuan Produk (UoM) di Filament Back Office dan integrasi Select UoM ke dalam form input barang (`ProductResource`).
   - Pembuatan dokumen Purchase Order (PO) ke supplier dengan status penguncian (*Approved*).
-  - Pembuatan Delivery Order (DO) / Penerimaan Barang untuk verifikasi jumlah fisik barang masuk vs PO.
-  - Penambahan stok fisik di cabang penerima secara otomatis saat DO diselesaikan.
+  - Modul Transaksi Pembelian (Purchase Transaction) yang mendukung rujukan dokumen PO (partial receive) maupun pembelian langsung.
+  - Penambahan stok fisik di cabang penerima, pencatatan utang supplier (jika kredit), dan penyiapan jurnal akuntansi secara otomatis saat transaksi di-Posting.
 - **Hari 20 - 26: Mutasi Cabang, Stok Opname, & Perhitungan HPP**
   - Mutasi barang antar-cabang dengan tracker status pengiriman (*In-Transit*).
   - Formulir Stok Opname (fisik vs sistem) dengan jurnal penyesuaian selisih otomatis.

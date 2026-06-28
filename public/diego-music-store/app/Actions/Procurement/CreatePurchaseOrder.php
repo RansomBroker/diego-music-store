@@ -22,12 +22,17 @@ class CreatePurchaseOrder
             $taxMode = $data['tax_mode'] ?? 'ITEM';
             $globalTaxRate = intval($data['tax_rate'] ?? 0);
             
+            $poNumber = $data['po_number'] ?? null;
+            if (empty($poNumber)) {
+                $poNumber = PurchaseOrder::generatePoNumber();
+            }
+
             // 1. First, create the PO with empty totals so we get the ID
             $po = PurchaseOrder::create([
                 'supplier_id' => $data['supplier_id'],
                 'branch_id' => $data['branch_id'] ?? null,
                 'created_by_id' => Auth::id(), // set current logged in user as creator
-                'po_number' => $data['po_number'] ?? null,
+                'po_number' => $poNumber,
                 'currency' => $data['currency'] ?? 'IDR',
                 'payment_term' => $data['payment_term'] ?? null,
                 'order_date' => $data['order_date'],

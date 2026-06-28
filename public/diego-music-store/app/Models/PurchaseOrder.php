@@ -80,9 +80,9 @@ class PurchaseOrder extends Model
         return $this->hasMany(PurchaseOrderItem::class);
     }
 
-    public function deliveryOrders(): HasMany
+    public function purchaseTransactions(): HasMany
     {
-        return $this->hasMany(DeliveryOrder::class);
+        return $this->hasMany(PurchaseTransaction::class, 'po_id');
     }
 
     public function branch(): BelongsTo

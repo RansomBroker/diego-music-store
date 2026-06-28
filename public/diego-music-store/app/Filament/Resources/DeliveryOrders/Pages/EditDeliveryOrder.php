@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\DeliveryOrders\Pages;
 
 use App\Filament\Resources\DeliveryOrders\DeliveryOrderResource;
-use App\Actions\Procurement\UpdateDeliveryOrder as UpdateDeliveryOrderAction;
+use App\Actions\DeliveryOrder\UpdateDeliveryOrder as UpdateDeliveryOrderAction;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Enums\Width;

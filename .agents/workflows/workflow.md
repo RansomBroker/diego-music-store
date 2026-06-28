@@ -10,7 +10,7 @@ description: Diego Music Store Workflow
 
 selelau read folder ./workspace_ai
 
-Selamat datang di Workspace AI. Sistem ini didesain agar pengembangan proyek berjalan secara terstruktur menggunakan file lokal sebagai **source of truth** (sumber kebenaran tunggal), sementara GitHub digunakan sebagai proyeksi eksternal untuk klien.
+Selamat datang di Workspace AI. Sistem ini didesain agar pengembangan proyek berjalan secara terstruktur menggunakan file lokal sebagai **source of truth** (sumber kebenaran tunggal), sementara GitHub digunakan sebagai proyeksi eksternal untuk klien. Jika ada blocker kerjakan dulu blocker nya tapi tetap buat task, feature dsb sesuai workl
 
 ---
 

@@ -8,8 +8,8 @@ use App\Models\ProductBranchStock;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
-use App\Models\DeliveryOrder;
-use App\Models\DeliveryOrderItem;
+use App\Models\PurchaseTransaction;
+use App\Models\PurchaseTransactionDetail;
 use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -70,7 +70,7 @@ class ProcurementModelsTest extends TestCase
         $this->assertEquals($variant->id, $po->items->first()->product_variant_id);
     }
 
-    public function test_it_can_create_delivery_order_and_items(): void
+    public function test_it_can_create_purchase_transaction_and_details(): void
     {
         $supplier = Supplier::create([
             'name' => 'Yamaha Music Indonesia',
@@ -78,29 +78,23 @@ class ProcurementModelsTest extends TestCase
             'address' => 'Jakarta',
         ]);
 
-        $po = PurchaseOrder::create([
+        $branch = Branch::create([
+            'name' => 'Cabang Denpasar',
+            'address' => 'Denpasar',
+            'phone' => '0361-12345',
+            'is_active' => true,
+        ]);
+
+        $pt = PurchaseTransaction::create([
             'supplier_id' => $supplier->id,
-            'po_number' => 'PO-2026-0001',
-            'order_date' => '2026-06-28',
-            'status' => 'approved',
-            'total_amount' => 15000000,
-        ]);
-
-        $branch = Branch::create([
-            'name' => 'Cabang Denpasar',
-            'address' => 'Denpasar',
-            'phone' => '0361-12345',
-            'is_active' => true,
-        ]);
-
-        $do = DeliveryOrder::create([
-            'purchase_order_id' => $po->id,
             'branch_id' => $branch->id,
-            'do_number' => 'DO-YMH-12345',
-            'received_date' => '2026-06-28',
+            'warehouse_id' => $branch->id,
+            'transaction_no' => 'PT-20260628-0001',
+            'transaction_date' => '2026-06-28',
+            'purchase_type' => 'Kredit',
             'status' => 'draft',
-            'shipping_cost' => 150000,
-            'notes' => 'Barang mulus',
+            'subtotal' => 10000000,
+            'grand_total' => 10000000,
         ]);
 
         $product = Product::create([
@@ -120,55 +114,17 @@ class ProcurementModelsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $item = DeliveryOrderItem::create([
-            'delivery_order_id' => $do->id,
+        $detail = PurchaseTransactionDetail::create([
+            'purchase_transaction_id' => $pt->id,
             'product_variant_id' => $variant->id,
-            'quantity_ordered' => 10,
-            'quantity_received' => 10,
+            'qty_received' => 5,
+            'price' => 1200000,
+            'subtotal' => 6000000,
         ]);
 
-        $this->assertInstanceOf(DeliveryOrder::class, $do);
-        $this->assertEquals('DO-YMH-12345', $do->do_number);
-        $this->assertEquals(150000, $do->shipping_cost);
-        $this->assertCount(1, $do->items);
-        $this->assertEquals(10, $do->items->first()->quantity_received);
-    }
-
-    public function test_product_branch_stock_can_have_hpp(): void
-    {
-        $branch = Branch::create([
-            'name' => 'Cabang Denpasar',
-            'address' => 'Denpasar',
-            'phone' => '0361-12345',
-            'is_active' => true,
-        ]);
-
-        $product = Product::create([
-            'name' => 'Yamaha Guitar C40',
-            'type' => 'physical',
-            'is_active' => true,
-        ]);
-
-        $variant = ProductVariant::create([
-            'product_id' => $product->id,
-            'sku' => 'YMH-C40-BLK',
-            'barcode' => '888123456',
-            'name' => 'Hitam',
-            'price' => 1500000,
-            'cost_price' => 1200000,
-            'hpp' => 1200000,
-            'is_active' => true,
-        ]);
-
-        $stock = ProductBranchStock::create([
-            'product_variant_id' => $variant->id,
-            'branch_id' => $branch->id,
-            'stock' => 5,
-            'hpp' => 1150000,
-        ]);
-
-        $this->assertInstanceOf(ProductBranchStock::class, $stock);
-        $this->assertEquals(5, $stock->stock);
-        $this->assertEquals(1150000, $stock->hpp);
+        $this->assertInstanceOf(PurchaseTransaction::class, $pt);
+        $this->assertEquals('PT-20260628-0001', $pt->transaction_no);
+        $this->assertCount(1, $pt->details);
+        $this->assertEquals(5, $pt->details->first()->qty_received);
     }
 }

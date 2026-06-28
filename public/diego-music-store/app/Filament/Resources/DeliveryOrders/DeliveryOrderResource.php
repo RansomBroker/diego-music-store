@@ -18,9 +18,15 @@ class DeliveryOrderResource extends Resource
 {
     protected static ?string $model = DeliveryOrder::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;
 
     protected static ?string $recordTitleAttribute = 'do_number';
+
+    protected static ?string $navigationLabel = 'Penerimaan Barang (DO)';
+
+    protected static ?string $modelLabel = 'Penerimaan Barang (DO)';
+
+    protected static ?string $pluralModelLabel = 'Penerimaan Barang (DO)';
 
     public static function getNavigationGroup(): ?string
     {
