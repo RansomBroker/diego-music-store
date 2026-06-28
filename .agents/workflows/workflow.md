@@ -2,6 +2,10 @@
 description: Diego Music Store Workflow
 ---
 
+---
+description: Diego Music Store Workflow
+---
+
 # Instruksi Awal: Workspace AI
 
 selelau read folder ./workspace_ai
@@ -58,3 +62,10 @@ Untuk menjalankan perintah Composer dan Laravel Artisan, gunakan script pembungk
 1. gunakan action pattern semua terkait logika bisnis buat di App\Action\{nama_feature}
 2. kode resource harus clean jika ada satu kode yang terindikasi akan digunakan di tempat lain buat sebagai helper dan taruh di App\Helper
 3. jika dimungkinkan 1 form resource maupuan penyajian datanya 1 file tidak lebih dari 1K line
+
+
+## 6. Pengelolaan Software Requirements Specification (SRS)
+Untuk menjaga agar spesifikasi sistem tetap rapi dan mudah dirujuk di masa mendatang:
+1. **Source of Truth pada Level Feature**: Dokumen SRS diletakkan pada level **Feature** (`workspace/features/FEATURE-XXX.md` atau `workspace/features/FEATURE-XXX/srs.md` jika sangat kompleks). Hindari menulis detail SRS di level Task karena Task bersifat sementara (*short-lived*).
+2. **Referensi pada Task**: File Task (`execution/tasks/TASK-XXX/task.md`) tidak perlu menulis ulang detail spesifikasi, melainkan cukup menautkan **referensi/link** ke Feature terkait dan berfokus pada *Acceptance Criteria* teknis spesifik untuk task tersebut.
+3. **Template Standar**: Gunakan template standar di `.workspace_ai/templates/srs-template.md` sebagai acuan untuk mendefinisikan detail kebutuhan fitur.
