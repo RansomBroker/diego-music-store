@@ -47,6 +47,9 @@ class BackofficePanelProvider extends PanelProvider
                     ->label('Master Data')
                     ->icon('heroicon-o-circle-stack'),
                 NavigationGroup::make()
+                     ->label('Pembelian')
+                     ->icon('heroicon-o-shopping-bag'),
+                NavigationGroup::make()
                     ->label('Kelola User')
                     ->icon('heroicon-o-users'),
                 NavigationGroup::make()

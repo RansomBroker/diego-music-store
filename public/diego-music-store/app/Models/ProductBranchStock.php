@@ -14,10 +14,12 @@ class ProductBranchStock extends Model
         'product_variant_id',
         'branch_id',
         'stock',
+        'hpp',
     ];
 
     protected $casts = [
         'stock' => 'integer',
+        'hpp' => 'integer',
     ];
 
     /**

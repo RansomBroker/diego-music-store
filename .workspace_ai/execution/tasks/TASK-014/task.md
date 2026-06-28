@@ -7,13 +7,13 @@ Buat skema database dan model Eloquent untuk modul pemesanan barang ke supplier 
 - **Role**: Developer / Architect
 - **Epic**: EPIC-002 - Back Office Procurement & Inventory
 - **Feature**: FEATURE-004 - Satuan Produk & Pengelolaan PO/DO
-- **Status**: Ready
+- **Status**: Done
 
 ## Acceptance Criteria
-- [ ] Migration untuk tabel `purchase_orders` (`id`, `supplier_id`, `po_number`, `order_date`, `status` [enum: draft, approved, closed], `total_amount`, `notes`, `timestamps`) dan `purchase_order_items` (`id`, `purchase_order_id`, `product_variant_id`, `quantity`, `price`, `timestamps`) berhasil dibuat dan dijalankan.
-- [ ] Migration untuk tabel `delivery_orders` (`id`, `purchase_order_id`, `branch_id`, `do_number`, `received_date`, `status` [enum: draft, received], `shipping_cost` [ongkos kirim], `notes`, `timestamps`) dan `delivery_order_items` (`id`, `delivery_order_id`, `product_variant_id`, `quantity_ordered`, `quantity_received`, `timestamps`) berhasil dibuat dan dijalankan.
-- [ ] Migration untuk menambahkan kolom `hpp` (bigint, default 0) pada tabel `product_branch_stocks` berhasil dijalankan.
-- [ ] Model Eloquent (`PurchaseOrder`, `PurchaseOrderItem`, `DeliveryOrder`, `DeliveryOrderItem`) dan relasi-relasinya terdefinisi dengan lengkap.
+- [x] Migration untuk tabel `purchase_orders` (`id`, `supplier_id`, `po_number`, `order_date`, `status` [enum: draft, approved, closed], `total_amount`, `notes`, `timestamps`) dan `purchase_order_items` (`id`, `purchase_order_id`, `product_variant_id`, `quantity`, `price`, `timestamps`) berhasil dibuat dan dijalankan.
+- [x] Migration untuk tabel `delivery_orders` (`id`, `purchase_order_id`, `branch_id`, `do_number`, `received_date`, `status` [enum: draft, received], `shipping_cost` [ongkos kirim], `notes`, `timestamps`) dan `delivery_order_items` (`id`, `delivery_order_id`, `product_variant_id`, `quantity_ordered`, `quantity_received`, `timestamps`) berhasil dibuat dan dijalankan.
+- [x] Migration untuk menambahkan kolom `hpp` (bigint, default 0) pada tabel `product_branch_stocks` berhasil dijalankan.
+- [x] Model Eloquent (`PurchaseOrder`, `PurchaseOrderItem`, `DeliveryOrder`, `DeliveryOrderItem`) dan relasi-relasinya terdefinisi dengan lengkap.
 
 ## Assignee
 - Developer

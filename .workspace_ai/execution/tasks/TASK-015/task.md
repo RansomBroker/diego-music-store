@@ -7,7 +7,7 @@ Buat Filament Resource untuk mengelola pembelian barang (`PurchaseOrderResource`
 - **Role**: Developer
 - **Epic**: EPIC-002 - Back Office Procurement & Inventory
 - **Feature**: FEATURE-004 - Satuan Produk & Pengelolaan PO/DO
-- **Status**: Ready
+- **Status**: Development
 
 ## Acceptance Criteria
 - [ ] CRUD `PurchaseOrderResource` dapat digunakan untuk mengelola data PO (Draft, Approved), serta input item PO dan harganya.
