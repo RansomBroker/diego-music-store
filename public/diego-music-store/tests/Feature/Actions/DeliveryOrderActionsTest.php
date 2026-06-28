@@ -5,12 +5,11 @@ namespace Tests\Feature\Actions;
 use App\Actions\DeliveryOrder\CreateDeliveryOrder;
 use App\Actions\DeliveryOrder\UpdateDeliveryOrder;
 use App\Models\Branch;
+use App\Models\Customer;
 use App\Models\DeliveryOrder;
 use App\Models\Product;
 use App\Models\ProductBranchStock;
 use App\Models\ProductVariant;
-use App\Models\PurchaseOrder;
-use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +17,7 @@ class DeliveryOrderActionsTest extends TestCase
 {
     use RefreshDatabase;
 
-    private Supplier $supplier;
+    private Customer $customer;
     private Branch $branch;
     private ProductVariant $variant;
 
@@ -26,11 +25,10 @@ class DeliveryOrderActionsTest extends TestCase
     {
         parent::setUp();
 
-        $this->supplier = Supplier::create([
-            'name' => 'Yamaha Supplier',
+        $this->customer = Customer::create([
+            'name' => 'John Doe Customer',
             'phone' => '08123456780',
-            'address' => 'Jakarta',
-            'outstanding_debt' => 0,
+            'address' => 'Denpasar',
         ]);
 
         $this->branch = Branch::create([
@@ -58,44 +56,28 @@ class DeliveryOrderActionsTest extends TestCase
         ]);
     }
 
-    public function test_it_can_create_and_update_delivery_order_and_calculate_hpp(): void
+    public function test_it_can_create_and_update_delivery_order_and_reduce_stock(): void
     {
-        // 1. Setup Purchase Order (must be approved status for DO to refer)
-        $po = PurchaseOrder::create([
-            'supplier_id' => $this->supplier->id,
-            'po_number' => 'PO-TEST-100',
-            'order_date' => '2026-06-28',
-            'status' => 'approved',
-            'total_amount' => 10000000,
-        ]);
-
-        $po->items()->create([
-            'product_variant_id' => $this->variant->id,
-            'quantity' => 10,
-            'price' => 1000000,
-        ]);
-
-        // Pre-fill initial branch stock and HPP
+        // Pre-fill initial branch stock
         ProductBranchStock::create([
             'product_variant_id' => $this->variant->id,
             'branch_id' => $this->branch->id,
-            'stock' => 5,
+            'stock' => 15,
             'hpp' => 800000,
         ]);
 
-        // 2. Test Create DO with draft status (stock shouldn't change)
+        // 1. Test Create DO with draft status (stock shouldn't change)
         $createData = [
-            'purchase_order_id' => $po->id,
+            'customer_id' => $this->customer->id,
             'branch_id' => $this->branch->id,
-            'received_date' => '2026-06-28',
+            'shipping_date' => '2026-06-28',
             'shipping_cost' => 100000,
             'status' => 'draft',
             'notes' => 'DO notes',
             'items' => [
                 [
                     'product_variant_id' => $this->variant->id,
-                    'quantity_ordered' => 10,
-                    'quantity_received' => 10,
+                    'quantity' => 10,
                 ]
             ]
         ];
@@ -106,44 +88,34 @@ class DeliveryOrderActionsTest extends TestCase
         $this->assertEquals('draft', $do->status);
         $this->assertCount(1, $do->items);
 
-        // Verify stock is still 5
+        // Verify stock is still 15
         $stockRecord = ProductBranchStock::where('product_variant_id', $this->variant->id)
             ->where('branch_id', $this->branch->id)
             ->first();
-        $this->assertEquals(5, $stockRecord->stock);
-        $this->assertEquals(800000, $stockRecord->hpp);
+        $this->assertEquals(15, $stockRecord->stock);
 
-        // 3. Test Update DO status to received (stock and HPP should be updated)
+        // 2. Test Update DO status to shipped (stock should decrease)
         $updateData = [
-            'purchase_order_id' => $po->id,
+            'customer_id' => $this->customer->id,
             'branch_id' => $this->branch->id,
-            'received_date' => '2026-06-28',
+            'shipping_date' => '2026-06-28',
             'shipping_cost' => 100000,
-            'status' => 'received',
-            'notes' => 'DO received notes',
+            'status' => 'shipped',
+            'notes' => 'DO shipped notes',
             'items' => [
                 [
                     'product_variant_id' => $this->variant->id,
-                    'quantity_ordered' => 10,
-                    'quantity_received' => 10,
+                    'quantity' => 10,
                 ]
             ]
         ];
 
         $updatedDo = app(UpdateDeliveryOrder::class)->execute($do, $updateData);
 
-        $this->assertEquals('received', $updatedDo->status);
+        $this->assertEquals('shipped', $updatedDo->status);
 
-        // Verify stock is now 15
+        // Verify stock decreases to 5
         $stockRecord->refresh();
-        $this->assertEquals(15, $stockRecord->stock);
-
-        // Verify HPP calculation
-        // Shipping cost per unit = 100k / 10 = 10k
-        // Effective unit cost = 1M + 10k = 1.01M
-        // Total cost old = 5 * 800k = 4M
-        // Total cost new = 10 * 1.01M = 10.1M
-        // New HPP = (4M + 10.1M) / 15 = 14.1M / 15 = 940k
-        $this->assertEquals(940000, $stockRecord->hpp);
+        $this->assertEquals(5, $stockRecord->stock);
     }
 }

@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use App\Actions\DeliveryOrder\CreateDeliveryOrder;
 use App\Models\Branch;
+use App\Models\Customer;
 use App\Models\ProductVariant;
-use App\Models\PurchaseOrder;
 use Illuminate\Database\Seeder;
 
 class DeliveryOrderSeeder extends Seeder
@@ -15,36 +15,35 @@ class DeliveryOrderSeeder extends Seeder
      */
     public function run(): void
     {
-        $po = PurchaseOrder::where('status', 'approved')->first();
-        $branch = Branch::first();
-
-        if (!$po || !$branch) {
-            return;
+        $customer = Customer::first();
+        if (!$customer) {
+            $customer = Customer::create([
+                'name' => 'General Customer',
+                'phone' => '081234567890',
+                'address' => 'Denpasar',
+            ]);
         }
 
-        // Find the variant used in the PO if possible, otherwise use first
-        $poItem = $po->items->first();
-        $variantId = $poItem ? $poItem->product_variant_id : ProductVariant::first()?->id;
-        $qtyOrdered = $poItem ? $poItem->quantity : 5;
+        $branch = Branch::first();
+        $variant = ProductVariant::first();
 
-        if (!$variantId) {
+        if (!$branch || !$variant) {
             return;
         }
 
         $createDoAction = app(CreateDeliveryOrder::class);
 
         $createDoAction->execute([
-            'purchase_order_id' => $po->id,
+            'customer_id' => $customer->id,
             'branch_id' => $branch->id,
-            'received_date' => now()->format('Y-m-d'),
+            'shipping_date' => now()->format('Y-m-d'),
             'shipping_cost' => 50000,
             'status' => 'draft',
-            'notes' => 'Seeded draft Delivery Order',
+            'notes' => 'Seeded draft customer Delivery Order (Surat Jalan)',
             'items' => [
                 [
-                    'product_variant_id' => $variantId,
-                    'quantity_ordered' => $qtyOrdered,
-                    'quantity_received' => $qtyOrdered,
+                    'product_variant_id' => $variant->id,
+                    'quantity' => 2,
                 ]
             ]
         ]);

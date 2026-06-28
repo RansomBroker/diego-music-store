@@ -12,17 +12,17 @@ class DeliveryOrder extends Model
     use HasFactory;
 
     protected $fillable = [
-        'purchase_order_id',
+        'customer_id',
         'branch_id',
         'do_number',
-        'received_date',
-        'status', // draft, received
+        'shipping_date',
+        'status', // draft, shipped, delivered, cancelled
         'shipping_cost',
         'notes',
     ];
 
     protected $casts = [
-        'received_date' => 'date',
+        'shipping_date' => 'date',
         'shipping_cost' => 'integer',
     ];
 
@@ -54,9 +54,9 @@ class DeliveryOrder extends Model
         return $prefix . $nextNum;
     }
 
-    public function purchaseOrder(): BelongsTo
+    public function customer(): BelongsTo
     {
-        return $this->belongsTo(PurchaseOrder::class);
+        return $this->belongsTo(Customer::class);
     }
 
     public function branch(): BelongsTo

@@ -20,20 +20,20 @@ class DeliveryOrdersTable
                     ->sortable()
                     ->label('Nomor DO'),
 
-                TextColumn::make('purchaseOrder.po_number')
+                TextColumn::make('customer.name')
                     ->searchable()
                     ->sortable()
-                    ->label('Nomor PO Referensi'),
+                    ->label('Pelanggan'),
 
                 TextColumn::make('branch.name')
                     ->searchable()
                     ->sortable()
-                    ->label('Cabang Penerima'),
+                    ->label('Cabang Pengirim'),
 
-                TextColumn::make('received_date')
+                TextColumn::make('shipping_date')
                     ->date()
                     ->sortable()
-                    ->label('Tanggal Terima'),
+                    ->label('Tanggal Kirim'),
 
                 TextColumn::make('shipping_cost')
                     ->money('IDR', locale: 'id')
@@ -44,7 +44,9 @@ class DeliveryOrdersTable
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'draft' => 'gray',
-                        'received' => 'success',
+                        'shipped' => 'warning',
+                        'delivered' => 'success',
+                        'cancelled' => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
@@ -62,11 +64,11 @@ class DeliveryOrdersTable
             ->actions([
                 EditAction::make()
                     ->disabled(fn (\Illuminate\Database\Eloquent\Model $record): bool => 
-                        $record->status === 'received' // Disable edit button in table if already received
+                        in_array($record->status, ['shipped', 'delivered', 'cancelled'])
                     ),
                 DeleteAction::make()
                     ->disabled(fn (\Illuminate\Database\Eloquent\Model $record): bool => 
-                        $record->status === 'received'
+                        in_array($record->status, ['shipped', 'delivered', 'cancelled'])
                     ),
             ])
             ->bulkActions([

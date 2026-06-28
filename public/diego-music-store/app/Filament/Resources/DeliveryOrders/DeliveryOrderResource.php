@@ -22,15 +22,15 @@ class DeliveryOrderResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'do_number';
 
-    protected static ?string $navigationLabel = 'Penerimaan Barang (DO)';
+    protected static ?string $navigationLabel = 'Surat Jalan (DO)';
 
-    protected static ?string $modelLabel = 'Penerimaan Barang (DO)';
+    protected static ?string $modelLabel = 'Surat Jalan (DO)';
 
-    protected static ?string $pluralModelLabel = 'Penerimaan Barang (DO)';
+    protected static ?string $pluralModelLabel = 'Surat Jalan (DO)';
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Pembelian';
+        return 'Penjualan';
     }
 
     public static function form(Schema $schema): Schema

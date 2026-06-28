@@ -22,7 +22,7 @@ class EditDeliveryOrder extends EditRecord
     {
         return [
             DeleteAction::make()
-                ->disabled(fn (): bool => $this->record->status === 'received'), // Cannot delete if already received
+                ->disabled(fn (): bool => in_array($this->record->status, ['shipped', 'delivered', 'cancelled'])), // Cannot delete if processed
         ];
     }
 
@@ -34,8 +34,7 @@ class EditDeliveryOrder extends EditRecord
         foreach ($do->items as $item) {
             $data['items'][] = [
                 'product_variant_id' => $item->product_variant_id,
-                'quantity_ordered' => $item->quantity_ordered,
-                'quantity_received' => $item->quantity_received,
+                'quantity' => $item->quantity,
             ];
         }
         

@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('delivery_orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('purchase_order_id')->constrained()->onDelete('restrict');
+            $table->foreignId('customer_id')->constrained()->onDelete('restrict');
             $table->foreignId('branch_id')->constrained()->onDelete('restrict');
             $table->string('do_number')->unique();
-            $table->date('received_date');
-            $table->string('status')->default('draft'); // draft, received
+            $table->date('shipping_date');
+            $table->string('status')->default('draft'); // draft, shipped, delivered, cancelled
             $table->bigInteger('shipping_cost')->default(0);
             $table->text('notes')->nullable();
             $table->timestamps();

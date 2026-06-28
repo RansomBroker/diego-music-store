@@ -32,14 +32,13 @@ class CreateDeliveryOrder
             foreach ($items as $item) {
                 $deliveryOrder->items()->create([
                     'product_variant_id' => $item['product_variant_id'],
-                    'quantity_ordered' => $item['quantity_ordered'],
-                    'quantity_received' => $item['quantity_received'] ?? 0,
+                    'quantity' => $item['quantity'],
                 ]);
             }
 
-            // If DO status is received, process stock and HPP updates
-            if ($deliveryOrder->status === 'received') {
-                app(ProcessDeliveryOrderReceived::class)->execute($deliveryOrder);
+            // If DO status is shipped or delivered, process stock updates
+            if (in_array($deliveryOrder->status, ['shipped', 'delivered'])) {
+                app(ProcessDeliveryOrderShipped::class)->execute($deliveryOrder);
             }
 
             return $deliveryOrder;

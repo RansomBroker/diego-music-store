@@ -13,13 +13,11 @@ class DeliveryOrderItem extends Model
     protected $fillable = [
         'delivery_order_id',
         'product_variant_id',
-        'quantity_ordered',
-        'quantity_received',
+        'quantity',
     ];
 
     protected $casts = [
-        'quantity_ordered' => 'integer',
-        'quantity_received' => 'integer',
+        'quantity' => 'integer',
     ];
 
     public function deliveryOrder(): BelongsTo

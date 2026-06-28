@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('delivery_order_id')->constrained()->onDelete('cascade');
             $table->foreignId('product_variant_id')->constrained()->onDelete('restrict');
-            $table->integer('quantity_ordered');
-            $table->integer('quantity_received')->default(0);
+            $table->integer('quantity');
             $table->timestamps();
         });
     }
