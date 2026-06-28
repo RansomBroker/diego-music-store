@@ -2,12 +2,12 @@
 
 namespace App\Filament\Resources\PurchaseOrders\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 
 class PurchaseOrdersTable
 {
@@ -16,26 +16,28 @@ class PurchaseOrdersTable
         return $table
             ->columns([
                 TextColumn::make('po_number')
+                    ->label('Nomor PO')
                     ->searchable()
                     ->sortable()
-                    ->label('Nomor PO'),
+                    ->weight('bold'),
 
                 TextColumn::make('supplier.name')
+                    ->label('Supplier')
                     ->searchable()
-                    ->sortable()
-                    ->label('Supplier / Vendor'),
+                    ->sortable(),
+
+                TextColumn::make('branch.name')
+                    ->label('Cabang')
+                    ->searchable()
+                    ->sortable(),
 
                 TextColumn::make('order_date')
-                    ->date()
-                    ->sortable()
-                    ->label('Tanggal Order'),
-
-                TextColumn::make('total_amount')
-                    ->money('IDR', locale: 'id')
-                    ->sortable()
-                    ->label('Total Belanja'),
+                    ->label('Tanggal Order')
+                    ->date('d M Y')
+                    ->sortable(),
 
                 TextColumn::make('status')
+                    ->label('Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'draft' => 'gray',
@@ -43,21 +45,21 @@ class PurchaseOrdersTable
                         'closed' => 'success',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
-                    ->label('Status'),
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
 
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Dibuat Pada'),
-            ])
-            ->filters([
-                //
+                TextColumn::make('grand_total')
+                    ->label('Grand Total')
+                    ->money('idr')
+                    ->sortable(),
             ])
             ->actions([
                 EditAction::make(),
-                DeleteAction::make(),
+                Action::make('print')
+                    ->label('Cetak')
+                    ->icon('heroicon-o-printer')
+                    ->color('info')
+                    ->url(fn ($record) => route('backoffice.purchase-orders.print', $record))
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

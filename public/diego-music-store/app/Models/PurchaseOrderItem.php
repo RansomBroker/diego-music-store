@@ -15,24 +15,27 @@ class PurchaseOrderItem extends Model
         'product_variant_id',
         'quantity',
         'price',
+        'discount_amount',
+        'tax_rate',
+        'tax_amount',
+        'subtotal',
+        'notes',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'price' => 'integer',
+        'discount_amount' => 'integer',
+        'tax_rate' => 'integer',
+        'tax_amount' => 'integer',
+        'subtotal' => 'integer',
     ];
 
-    /**
-     * Get the parent purchase order.
-     */
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
     }
 
-    /**
-     * Get the product variant.
-     */
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);

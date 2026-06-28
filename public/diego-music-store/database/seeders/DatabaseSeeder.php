@@ -113,5 +113,7 @@ class DatabaseSeeder extends Seeder
                 $supplier
             );
         }
+
+        $this->call(PurchaseOrderSeeder::class);
     }
 }

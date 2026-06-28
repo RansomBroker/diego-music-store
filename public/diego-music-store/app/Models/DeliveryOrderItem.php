@@ -22,17 +22,11 @@ class DeliveryOrderItem extends Model
         'quantity_received' => 'integer',
     ];
 
-    /**
-     * Get the parent delivery order.
-     */
     public function deliveryOrder(): BelongsTo
     {
         return $this->belongsTo(DeliveryOrder::class);
     }
 
-    /**
-     * Get the product variant.
-     */
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);

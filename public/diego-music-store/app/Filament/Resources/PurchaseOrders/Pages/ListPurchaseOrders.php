@@ -13,8 +13,7 @@ class ListPurchaseOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()
-                ->label('Buat PO Baru'),
+            CreateAction::make(),
         ];
     }
 }

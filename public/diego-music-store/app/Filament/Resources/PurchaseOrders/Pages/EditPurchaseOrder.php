@@ -3,20 +3,14 @@
 namespace App\Filament\Resources\PurchaseOrders\Pages;
 
 use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
-use App\Actions\Procurement\UpdatePurchaseOrder as UpdatePurchaseOrderAction;
-use Filament\Actions\DeleteAction;
+use App\Actions\PurchaseOrder\UpdatePurchaseOrder as UpdatePurchaseOrderAction;
 use Filament\Resources\Pages\EditRecord;
-use Filament\Support\Enums\Width;
+use Filament\Actions\DeleteAction;
 use Illuminate\Database\Eloquent\Model;
 
 class EditPurchaseOrder extends EditRecord
 {
     protected static string $resource = PurchaseOrderResource::class;
-
-    public function getMaxContentWidth(): Width | string | null
-    {
-        return Width::Full;
-    }
 
     protected function getHeaderActions(): array
     {
@@ -27,17 +21,18 @@ class EditPurchaseOrder extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $po = $this->record;
-        
+        $purchaseOrder = $this->record;
         $data['items'] = [];
-        foreach ($po->items as $item) {
+        foreach ($purchaseOrder->items as $item) {
             $data['items'][] = [
                 'product_variant_id' => $item->product_variant_id,
                 'quantity' => $item->quantity,
                 'price' => $item->price,
+                'discount_amount' => $item->discount_amount,
+                'tax_rate' => $item->tax_rate,
+                'notes' => $item->notes,
             ];
         }
-        
         return $data;
     }
 

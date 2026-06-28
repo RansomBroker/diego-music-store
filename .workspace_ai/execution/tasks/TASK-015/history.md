@@ -3,3 +3,4 @@
 ## History Logs
 - **2026-06-28**: Task updated by PM to focus on Filament PO/DO resources and per-branch HPP calculation based on user feedback.
 - **2026-06-28**: Task status updated to **Development** by Developer.
+- **2026-06-28**: Task completed by Developer. Added auto-generate po_number inside model booted method, created custom print view template and controller, registered route in web.php, added print actions to PurchaseOrdersTable, and secured po_number inside create/update actions.

@@ -60,7 +60,7 @@ Untuk menjalankan perintah Composer dan Laravel Artisan, gunakan script pembungk
 
 ## 5. Style dan kode patern
 1. gunakan action pattern semua terkait logika bisnis buat di App\Action\{nama_feature}
-2. kode resource harus clean jika ada satu kode yang terindikasi akan digunakan di tempat lain buat sebagai helper dan taruh di App\Helper
+2. kode resource harus clean jika ada satu kode yang terindikasi akan digunakan di tempat lain buat sebagai helpers dan taruh di App\Helper
 3. jika dimungkinkan 1 form resource maupuan penyajian datanya 1 file tidak lebih dari 1K line
 
 

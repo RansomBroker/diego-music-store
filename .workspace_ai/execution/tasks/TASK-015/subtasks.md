@@ -11,5 +11,5 @@
   - [x] Tulis service / event handler untuk transisi status DO ke *Received*.
   - [x] Implementasikan penambahan stok fisik cabang otomatis berdasarkan data item DO.
   - [x] Implementasikan penghitungan HPP rata-rata terbobot per cabang teratribusi ongkir, lalu update kolom `hpp` di tabel `product_branch_stocks` untuk cabang tersebut.
-- [ ] **Verification**:
-  - [ ] Uji alur pembuatan PO, pencatatan DO penerimaan, dan verifikasi stok fisik cabang beserta HPP baru di tabel `product_branch_stocks`.
+- [x] **Verification**:
+  - [x] Uji alur pembuatan PO, pencatatan DO penerimaan, dan verifikasi stok fisik cabang beserta HPP baru di tabel `product_branch_stocks`.

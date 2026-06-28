@@ -16,7 +16,7 @@ class DeliveryOrder extends Model
         'branch_id',
         'do_number',
         'received_date',
-        'status',
+        'status', // draft, received
         'shipping_cost',
         'notes',
     ];
@@ -26,25 +26,44 @@ class DeliveryOrder extends Model
         'shipping_cost' => 'integer',
     ];
 
-    /**
-     * Get the parent purchase order.
-     */
+    protected static function booted()
+    {
+        static::creating(function ($deliveryOrder) {
+            if (empty($deliveryOrder->do_number)) {
+                $deliveryOrder->do_number = static::generateDoNumber();
+            }
+        });
+    }
+
+    public static function generateDoNumber(): string
+    {
+        $date = now()->format('Ymd');
+        $prefix = 'DO-' . $date . '-';
+
+        $lastDo = static::where('do_number', 'like', $prefix . '%')
+            ->orderBy('do_number', 'desc')
+            ->first();
+
+        if ($lastDo) {
+            $lastNum = intval(substr($lastDo->do_number, strlen($prefix)));
+            $nextNum = str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $nextNum = '0001';
+        }
+
+        return $prefix . $nextNum;
+    }
+
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
     }
 
-    /**
-     * Get the branch receiving the order.
-     */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    /**
-     * Get the delivery order items.
-     */
     public function items(): HasMany
     {
         return $this->hasMany(DeliveryOrderItem::class);
