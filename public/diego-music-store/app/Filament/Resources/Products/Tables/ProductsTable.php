@@ -10,6 +10,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use App\Filament\Resources\StockMovements\StockMovementResource;
 
 class ProductsTable
 {
@@ -86,6 +87,13 @@ class ProductsTable
             ])
             ->actions([
                 EditAction::make(),
+                \Filament\Actions\Action::make('kartu_stok')
+                    ->label('Kartu Stok')
+                    ->icon('heroicon-o-queue-list')
+                    ->color('info')
+                    ->url(fn ($record) => StockMovementResource::getUrl('index', [
+                        'tableFilters[product_id][value]' => $record->id,
+                    ])),
                 DeleteAction::make(),
             ])
             ->bulkActions([

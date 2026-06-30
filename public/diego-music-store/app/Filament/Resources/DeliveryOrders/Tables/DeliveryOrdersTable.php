@@ -8,6 +8,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Filament\Resources\StockMovements\StockMovementResource;
 
 class DeliveryOrdersTable
 {
@@ -66,6 +67,15 @@ class DeliveryOrdersTable
                     ->disabled(fn (\Illuminate\Database\Eloquent\Model $record): bool => 
                         in_array($record->status, ['shipped', 'delivered', 'cancelled'])
                     ),
+                \Filament\Actions\Action::make('kartu_stok')
+                    ->label('Kartu Stok')
+                    ->icon('heroicon-o-queue-list')
+                    ->color('info')
+                    ->visible(fn ($record) => in_array($record->status, ['shipped', 'delivered']))
+                    ->url(fn ($record) => StockMovementResource::getUrl('index', [
+                        'reference_type' => 'DO',
+                        'reference_id' => $record->id,
+                    ])),
                 DeleteAction::make()
                     ->disabled(fn (\Illuminate\Database\Eloquent\Model $record): bool => 
                         in_array($record->status, ['shipped', 'delivered', 'cancelled'])

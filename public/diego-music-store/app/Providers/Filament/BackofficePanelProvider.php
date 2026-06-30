@@ -50,6 +50,12 @@ class BackofficePanelProvider extends PanelProvider
                      ->label('Pembelian')
                      ->icon('heroicon-o-shopping-bag'),
                 NavigationGroup::make()
+                     ->label('Penjualan')
+                     ->icon('heroicon-o-credit-card'),
+                NavigationGroup::make()
+                     ->label('Inventori')
+                     ->icon('heroicon-o-archive-box'),
+                NavigationGroup::make()
                     ->label('Kelola User')
                     ->icon('heroicon-o-users'),
                 NavigationGroup::make()

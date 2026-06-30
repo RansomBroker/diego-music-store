@@ -10,6 +10,7 @@ use App\Models\DeliveryOrder;
 use App\Models\Product;
 use App\Models\ProductBranchStock;
 use App\Models\ProductVariant;
+use App\Models\StockMovement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -117,5 +118,16 @@ class DeliveryOrderActionsTest extends TestCase
         // Verify stock decreases to 5
         $stockRecord->refresh();
         $this->assertEquals(5, $stockRecord->stock);
+
+        // Verify StockMovement is logged
+        $movement = StockMovement::where([
+            'branch_id' => $this->branch->id,
+            'product_variant_id' => $this->variant->id,
+            'type' => 'out',
+            'reference_type' => 'DO',
+            'reference_id' => $updatedDo->id,
+        ])->first();
+        $this->assertNotNull($movement);
+        $this->assertEquals(10, $movement->quantity);
     }
 }

@@ -55,7 +55,7 @@ class PurchaseTransactionSeeder extends Seeder
                 'shipping_cost' => 50000,
                 'other_cost' => 0,
                 'pph_amount' => 0,
-                'status' => 'draft', // DRAF
+                'status' => 'posted', // POSTED (Triggers stock increase, HPP calculation, and stock movement)
                 'items' => [
                     [
                         'product_variant_id' => $variant1->id,

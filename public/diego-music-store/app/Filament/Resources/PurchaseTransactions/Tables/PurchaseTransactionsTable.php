@@ -80,6 +80,13 @@ class PurchaseTransactionsTable
                     ->action(function ($record) {
                         app(\App\Actions\Procurement\PostPurchaseTransaction::class)->execute($record);
                     }),
+
+                Action::make('kartu_stok')
+                    ->label('Kartu Stok')
+                    ->icon('heroicon-o-document-magnifying-glass')
+                    ->color('info')
+                    ->url(fn ($record) => "/admin/stock-movements?reference_type=Purchase&reference_id={$record->id}")
+                    ->visible(fn ($record) => $record->status === 'posted'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

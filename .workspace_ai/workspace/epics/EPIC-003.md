@@ -17,6 +17,7 @@ Epic ini mencakup pembangunan modul Point of Sale (POS) utama untuk operasional 
 - [ ] Antarmuka POS mendukung pencarian barcode, keranjang belanja, pemilihan sales representative, dan cetak struk thermal.
 - [ ] Sistem membatasi transaksi POS di luar sesi kasir yang aktif.
 - [ ] Dapat mengelola pelunasan piutang pelanggan secara parsial maupun lunas.
+- [ ] Integrasi transaksi POS dengan jurnal otomatis (Debit Kas/Piutang, Kredit Pendapatan; Debit HPP, Kredit Persediaan) menggunakan pemetaan akun produk.
 
 ## Status
 - **Status**: Todo

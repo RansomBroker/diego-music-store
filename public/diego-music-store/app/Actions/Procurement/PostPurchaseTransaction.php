@@ -99,6 +99,16 @@ class PostPurchaseTransaction
                     'hpp' => $newHpp,
                 ]);
 
+                // Create StockMovement IN record
+                \App\Models\StockMovement::create([
+                    'product_variant_id' => $detail->product_variant_id,
+                    'branch_id' => $destinationBranchId,
+                    'type' => 'in',
+                    'quantity' => $detail->qty_received,
+                    'reference_type' => 'Purchase',
+                    'reference_id' => $pt->id,
+                ]);
+
                 // Also sync HPP back to product variant master if destination is Central/Backoffice branch
                 $centralBranch = \App\Models\Branch::where('name', 'like', '%Pusat%')
                     ->orWhere('name', 'like', '%Back Office%')

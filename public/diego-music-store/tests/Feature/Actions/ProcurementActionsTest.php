@@ -14,6 +14,7 @@ use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseTransaction;
 use App\Models\Supplier;
+use App\Models\StockMovement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -186,5 +187,16 @@ class ProcurementActionsTest extends TestCase
         // Total cost new = 10 * 1.01M = 10.1M
         // New HPP = (4M + 10.1M) / 15 = 14.1M / 15 = 940k
         $this->assertEquals(940000, $stockRecord->hpp);
+
+        // Verify StockMovement logged
+        $movement = StockMovement::where([
+            'branch_id' => $this->branch->id,
+            'product_variant_id' => $this->variant->id,
+            'type' => 'in',
+            'reference_type' => 'Purchase',
+            'reference_id' => $pt->id,
+        ])->first();
+        $this->assertNotNull($movement);
+        $this->assertEquals(10, $movement->quantity);
     }
 }

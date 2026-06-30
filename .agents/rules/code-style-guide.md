@@ -121,3 +121,43 @@ Setiap kali Anda bekerja pada kode program:
 1. Pastikan Anda memahami status task di `.workspace_ai/execution/tasks/`.
 2. Selalu gunakan helper docker scripts agar permission file di workspace tetap konsisten.
 3. Selalu perbarui status tugas dan tulis dokumentasi secara teratur setelah implementasi selesai.
+
+---
+
+## 🎨 5. Pemisahan Tampilan Kustom (Custom View) Filament (Wajib Blade View)
+
+Jika membuat komponen presentasi atau tampilan kustom di Filament (seperti render HTML kustom di dalam Form Placeholder, custom page, atau custom cell Table), **dilarang keras menulis tag HTML secara mentah (*raw HTML string*) di dalam file PHP**. Seluruh markup presentasi harus diisolasi ke dalam berkas **Blade View** terpisah.
+
+### 💡 Mengapa Menggunakan Blade View?
+* **Clean Code:** Menghindari menumpuknya kode tag HTML di dalam logika file PHP.
+* **Syntax Highlighting & Formatting:** Memudahkan penyuntingan markup HTML dan CSS/Tailwind di dalam template engine `.blade.php`.
+* **Separation of Concerns:** Memisahkan logika presentasi (Blade) dari konfigurasi skema data Filament (PHP).
+
+### 📐 Aturan & Struktur:
+* Buat file blade terpisah di dalam direktori `resources/views/` (misal: `resources/views/backoffice/products/stock-movements-table.blade.php`).
+* Panggil view tersebut dari komponen Filament menggunakan helper `view('nama-view', $data)`.
+
+### 📝 Contoh Kode Filament PHP:
+```php
+Placeholder::make('stock_history')
+    ->label('Riwayat Stok')
+    ->content(fn ($record) => view('backoffice.products.stock-movements-table', [
+        'movements' => $record->movements,
+    ]))
+
+---
+
+## 🧪 6. Kewajiban Menulis Unit / Integration Test
+
+Setiap kali mengimplementasikan fitur baru, mengedit logika bisnis, atau membuat *Action Class*, developer **wajib** menulis berkas pengujian (*Unit Test* atau *Integration Test*) untuk memvalidasi fungsionalitas tersebut secara otomatis.
+
+### 💡 Mengapa Menulis Unit Test?
+* **Mencegah Regresi:** Memastikan perubahan kode di masa depan tidak merusak fitur yang sudah berjalan dengan benar.
+* **Dokumentasi Hidup:** Test case bertindak sebagai dokumentasi teknis mengenai perilaku sistem yang diharapkan.
+* **Kepercayaan Kode:** Membantu memvalidasi skenario batas (*edge cases*) dan penanganan eror (*error handling*).
+
+### 📐 Aturan & Struktur:
+* Letakkan file pengujian di folder `tests/Unit/` (untuk logika terisolasi tanpa interaksi database) atau `tests/Feature/` (untuk integrasi database, request HTTP, atau alur multi-step).
+* Penamaan file test harus menggunakan akhiran `Test.php` (misal: `CreateInventoryMutationTest.php`).
+* Gunakan framework testing yang sudah terpasang (Pest PHP / PHPUnit) untuk menjalankan pengujian.
+```

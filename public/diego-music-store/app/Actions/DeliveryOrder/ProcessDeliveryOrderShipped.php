@@ -4,6 +4,7 @@ namespace App\Actions\DeliveryOrder;
 
 use App\Models\DeliveryOrder;
 use App\Models\ProductBranchStock;
+use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
 
 class ProcessDeliveryOrderShipped
@@ -33,6 +34,16 @@ class ProcessDeliveryOrderShipped
                 // Update stock (decrease because we are shipping out to customer)
                 $branchStock->update([
                     'stock' => $stockLama - $qty,
+                ]);
+
+                // Record stock movement
+                StockMovement::create([
+                    'product_variant_id' => $item->product_variant_id,
+                    'branch_id' => $deliveryOrder->branch_id,
+                    'type' => 'out',
+                    'quantity' => $qty,
+                    'reference_type' => 'DO',
+                    'reference_id' => $deliveryOrder->id,
                 ]);
             }
         });

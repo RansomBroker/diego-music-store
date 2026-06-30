@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\Width;
 use Filament\Schemas\Schema;
 use App\Helpers\ProductHelper;
+use Filament\Forms\Components\Placeholder;
 
 class ProductForm
 {
@@ -336,6 +337,29 @@ class ProductForm
                                     ])
                                     ->columns(2)
                                     ->label('Daftar Item dalam Paket Bundling ini'),
+                            ]),
+                        Tab::make('Kartu Stok')
+                            ->visible(fn (string $context): bool => $context === 'edit')
+                            ->schema([
+                                Placeholder::make('stock_movement_history')
+                                    ->label('Riwayat Pergerakan Stok (Kartu Stok)')
+                                    ->content(function ($record) {
+                                        if (!$record) return 'Belum ada data.';
+
+                                        $variantIds = $record->variants()->pluck('id')->toArray();
+                                        $movements = \App\Models\StockMovement::whereIn('product_variant_id', $variantIds)
+                                            ->with(['productVariant', 'branch'])
+                                            ->latest()
+                                            ->get();
+
+                                        if ($movements->isEmpty()) {
+                                            return 'Belum ada riwayat pergerakan stok untuk produk ini.';
+                                        }
+
+                                        return view('backoffice.products.stock-movements-table', [
+                                            'movements' => $movements,
+                                        ]);
+                                    })
                             ]),
                     ]),
             ]);
