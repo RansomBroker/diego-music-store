@@ -338,6 +338,32 @@ class ProductForm
                                     ->columns(2)
                                     ->label('Daftar Item dalam Paket Bundling ini'),
                             ]),
+                        Tab::make('Akuntansi')
+                            ->schema([
+                                Grid::make(3)
+                                    ->schema([
+                                        Select::make('inventory_account_id')
+                                            ->label('Akun Persediaan')
+                                            ->relationship('inventoryAccount', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->where('is_header', false))
+                                            ->placeholder('Pilih Akun Persediaan (Default: 1-1300)')
+                                            ->searchable()
+                                            ->preload(),
+
+                                        Select::make('sales_account_id')
+                                            ->label('Akun Penjualan')
+                                            ->relationship('salesAccount', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->where('is_header', false))
+                                            ->placeholder('Pilih Akun Penjualan (Default: 4-1000)')
+                                            ->searchable()
+                                            ->preload(),
+
+                                        Select::make('cogs_account_id')
+                                            ->label('Akun HPP')
+                                            ->relationship('cogsAccount', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->where('is_header', false))
+                                            ->placeholder('Pilih Akun HPP (Default: 5-1000)')
+                                            ->searchable()
+                                            ->preload(),
+                                    ]),
+                            ]),
                         Tab::make('Kartu Stok')
                             ->visible(fn (string $context): bool => $context === 'edit')
                             ->schema([

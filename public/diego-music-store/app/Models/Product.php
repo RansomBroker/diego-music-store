@@ -18,6 +18,9 @@ class Product extends Model
         'unit_id',
         'image_path',
         'is_active',
+        'inventory_account_id',
+        'sales_account_id',
+        'cogs_account_id',
     ];
 
     protected $casts = [
@@ -38,6 +41,30 @@ class Product extends Model
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    /**
+     * Get the mapped inventory account.
+     */
+    public function inventoryAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'inventory_account_id');
+    }
+
+    /**
+     * Get the mapped sales account.
+     */
+    public function salesAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'sales_account_id');
+    }
+
+    /**
+     * Get the mapped COGS account.
+     */
+    public function cogsAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'cogs_account_id');
     }
 
     /**

@@ -37,6 +37,22 @@ class AccountForm
                             ->options(fn () => \App\Models\AccountClassification::pluck('name', 'key')->toArray())
                             ->label('Klasifikasi Akun'),
 
+                        Toggle::make('is_header')
+                            ->label('Akun Header / Induk')
+                            ->default(false)
+                            ->helperText('Jika aktif, akun ini bertindak sebagai folder kategori dan tidak bisa dipilih untuk transaksi langsung.'),
+
+                        Select::make('parent_id')
+                            ->label('Akun Induk (Parent)')
+                            ->options(fn ($record) => \App\Models\Account::where('is_header', true)
+                                ->when($record, fn($q) => $q->where('id', '!=', $record->id))
+                                ->get()
+                                ->mapWithKeys(fn($acc) => [$acc->id => "{$acc->code} - {$acc->name}"])
+                                ->toArray())
+                            ->placeholder('Tanpa Induk (Tingkat Atas / Root)')
+                            ->searchable()
+                            ->preload(),
+
                         Toggle::make('is_active')
                             ->default(true)
                             ->label('Status Aktif'),

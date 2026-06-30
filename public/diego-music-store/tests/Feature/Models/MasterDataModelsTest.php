@@ -63,4 +63,42 @@ class MasterDataModelsTest extends TestCase
         $this->assertEquals('asset', $account->classification);
         $this->assertTrue($account->is_active);
     }
+
+    public function test_it_supports_account_hierarchy_and_recursive_balance(): void
+    {
+        // 1. Create parent header account
+        $parent = Account::create([
+            'code' => '1-0000',
+            'name' => 'ASET',
+            'classification' => 'asset',
+            'is_header' => true,
+            'is_active' => true,
+        ]);
+
+        // 2. Create child detail accounts
+        $child1 = Account::create([
+            'code' => '1-1000',
+            'name' => 'Kas Utama',
+            'classification' => 'asset',
+            'parent_id' => $parent->id,
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $child2 = Account::create([
+            'code' => '1-1100',
+            'name' => 'Bank Utama',
+            'classification' => 'asset',
+            'parent_id' => $parent->id,
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $this->assertTrue($parent->is_header);
+        $this->assertFalse($child1->is_header);
+        
+        $this->assertEquals($parent->id, $child1->parent->id);
+        $this->assertCount(2, $parent->children);
+        $this->assertEquals('1-1000', $parent->children->first()->code);
+    }
 }

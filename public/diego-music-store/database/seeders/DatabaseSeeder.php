@@ -40,11 +40,11 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // Seed default products
-        $this->call(ProductSeeder::class);
-
         // Seed Chart of Accounts
         $this->call(AccountSeeder::class);
+
+        // Seed default products
+        $this->call(ProductSeeder::class);
 
         // Seed Customers (Pontianak / Kalbar addresses)
         $customers = [

@@ -6,7 +6,7 @@ Epic ini mencakup pembangunan modul rantai pasok (Procurement) dan pengelolaan s
 ## User Stories / Features
 - [x] **FEATURE-004: Satuan Produk & Pengelolaan PO/DO**
 - [x] **FEATURE-005: Mutasi Barang & Stok Opname**
-- [ ] **FEATURE-005B: Integrasi Akuntansi Persediaan (Jurnal Umum & Otomatis)**
+- [x] **FEATURE-005B: Integrasi Akuntansi Persediaan (Jurnal Umum & Otomatis)**
 
 ## Technical Roadmap & Dependencies
 - Tergantung pada: EPIC-001 - Master Data Setup & Basic Config (khususnya data produk/barang, supplier, cabang, dan COA dasar)
@@ -18,11 +18,11 @@ Epic ini mencakup pembangunan modul rantai pasok (Procurement) dan pengelolaan s
 - [x] Nilai HPP Rata-rata Terbobot (Weighted Average) terhitung otomatis saat DO disimpan dengan memperhitungkan ongkos kirim.
 - [x] Mendukung mutasi barang antar-cabang dengan pelacak status (In-Transit).
 - [x] Form Stok Opname (fisik vs sistem) menghasilkan penyesuaian stok.
-- [ ] Pemetaan Chart of Accounts (Akun Persediaan, Penjualan, HPP) pada data master Produk.
-- [ ] Skema database & model Eloquent untuk `journal_entries` dan `journal_items` (Buku Besar).
-- [ ] Filament Resource Jurnal Umum dengan validasi balance Debit/Kredit sebelum disimpan.
-- [ ] Posting jurnal otomatis saat Transaksi Pembelian di-posted dan Stok Opname diselesaikan.
+- [x] Pemetaan Chart of Accounts (Akun Persediaan, Penjualan, HPP) pada data master Produk.
+- [x] Skema database & model Eloquent untuk `journal_entries` dan `journal_items` (Buku Besar).
+- [x] Filament Resource Jurnal Umum dengan validasi balance Debit/Kredit sebelum disimpan.
+- [x] Posting jurnal otomatis saat Transaksi Pembelian di-posted dan Stok Opname diselesaikan.
 
 ## Status
-- **Status**: In Progress
-- **Progress**: 70%
+- **Status**: Done
+- **Progress**: 100%

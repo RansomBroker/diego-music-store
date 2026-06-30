@@ -151,6 +151,131 @@ class PostPurchaseTransaction
                 }
             }
 
+            // Create automatic journal entry
+            $journalEntry = \App\Models\JournalEntry::create([
+                'branch_id' => $pt->branch_id,
+                'entry_no' => $journalNo,
+                'date' => $pt->transaction_date,
+                'description' => "Pembelian otomatis: No. Transaksi {$pt->transaction_no}",
+                'reference_type' => 'Purchase',
+                'reference_id' => $pt->id,
+                'status' => 'posted',
+                'created_by' => \Illuminate\Support\Facades\Auth::id() ?? $pt->created_by,
+                'posted_at' => now(),
+                'posted_by' => \Illuminate\Support\Facades\Auth::id() ?? $pt->created_by,
+            ]);
+
+            // Resolve Account IDs helper
+            $resolveAccount = function($code, $defaultName = 'Default Account') {
+                return \App\Models\Account::firstOrCreate(
+                    ['code' => $code],
+                    [
+                        'name' => $defaultName,
+                        'classification' => str_starts_with($code, '1') ? 'Asset' : (str_starts_with($code, '2') ? 'Liability' : 'Expense'),
+                        'is_active' => true,
+                    ]
+                )->id;
+            };
+
+            // 1. Debits: Persediaan
+            foreach ($details as $detail) {
+                if ($detail->qty_received <= 0) continue;
+                
+                $inventoryAccId = $detail->productVariant->product->inventory_account_id 
+                    ?? $resolveAccount('1-1300', 'Persediaan Barang Dagang');
+
+                $detailBaseCost = ($detail->qty_received * $detail->price) - $detail->discount;
+
+                \App\Models\JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $inventoryAccId,
+                    'debit' => $detailBaseCost,
+                    'credit' => 0,
+                    'notes' => "Persediaan untuk " . $detail->productVariant->sku,
+                ]);
+            }
+
+            // 2. Debit: Tax (if tax_amount > 0)
+            if ($pt->tax_amount > 0) {
+                $taxAccId = \App\Models\Account::where('code', '1-1500')
+                    ->orWhere('name', 'like', '%PPN%')
+                    ->first()?->id ?? $resolveAccount('1-1500', 'PPN Masukan');
+
+                \App\Models\JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $taxAccId,
+                    'debit' => $pt->tax_amount,
+                    'credit' => 0,
+                    'notes' => "PPN Masukan Pembelian",
+                ]);
+            }
+
+            // 3. Debit: Shipping cost (if shipping_cost > 0)
+            if ($pt->shipping_cost > 0) {
+                $shippingAccId = $resolveAccount('6-1000', 'Beban Operasional');
+                \App\Models\JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $shippingAccId,
+                    'debit' => $pt->shipping_cost,
+                    'credit' => 0,
+                    'notes' => "Biaya Pengiriman Pembelian",
+                ]);
+            }
+
+            // 4. Debit: Other cost (if other_cost > 0)
+            if ($pt->other_cost > 0) {
+                $otherAccId = $resolveAccount('6-1000', 'Beban Operasional');
+                \App\Models\JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $otherAccId,
+                    'debit' => $pt->other_cost,
+                    'credit' => 0,
+                    'notes' => "Biaya Lain-lain Pembelian",
+                ]);
+            }
+
+            // 5. Credit: Discount (if discount > 0)
+            if ($pt->discount > 0) {
+                $discountAccId = $resolveAccount('6-1000', 'Beban Operasional');
+                \App\Models\JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $discountAccId,
+                    'debit' => 0,
+                    'credit' => $pt->discount,
+                    'notes' => "Potongan Pembelian (Header)",
+                ]);
+            }
+
+            // 6. Credit: PPh amount (if pph_amount > 0)
+            if ($pt->pph_amount > 0) {
+                $pphAccId = \App\Models\Account::where('code', '2-1100')
+                    ->orWhere('name', 'like', '%PPh%')
+                    ->first()?->id ?? $resolveAccount('2-1100', 'Hutang PPh');
+
+                \App\Models\JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $pphAccId,
+                    'debit' => 0,
+                    'credit' => $pt->pph_amount,
+                    'notes' => "Hutang PPh Pembelian",
+                ]);
+            }
+
+            // 7. Credit: Kas/Bank or Hutang Dagang (Net Grand Total)
+            if ($pt->purchase_type === 'Kredit') {
+                $payAccId = $resolveAccount('2-1000', 'Hutang Dagang');
+            } else {
+                $payAccId = $resolveAccount('1-1000', 'Kas Utama');
+            }
+
+            \App\Models\JournalItem::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $payAccId,
+                'debit' => 0,
+                'credit' => $pt->grand_total,
+                'notes' => $pt->purchase_type === 'Kredit' ? "Hutang Supplier" : "Kas/Bank Tunai",
+            ]);
+
             return $pt;
         });
     }
