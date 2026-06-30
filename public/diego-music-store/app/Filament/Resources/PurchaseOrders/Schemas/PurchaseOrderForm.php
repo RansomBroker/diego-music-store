@@ -158,6 +158,7 @@ class PurchaseOrderForm
                                                     ->orWhere('product_variants.name', 'like', "%{$search}%")
                                                     ->orWhere('product_variants.sku', 'like', "%{$search}%")
                                                     ->select('product_variants.id', 'products.name as product_name', 'product_variants.name as variant_name', 'product_variants.sku')
+                                                    ->limit(50)
                                                     ->get()
                                                     ->mapWithKeys(fn ($v) => [
                                                         $v->id => "[{$v->sku}] {$v->product_name}" . ($v->variant_name ? " - {$v->variant_name}" : "")
@@ -169,6 +170,17 @@ class PurchaseOrderForm
                                                     ? "[{$v->sku}] {$v->product->name}" . ($v->name ? " - {$v->name}" : "") 
                                                     : null
                                             )
+                                            ->options(function (): array {
+                                                return ProductVariant::query()
+                                                    ->join('products', 'products.id', '=', 'product_variants.product_id')
+                                                    ->select('product_variants.id', 'products.name as product_name', 'product_variants.name as variant_name', 'product_variants.sku')
+                                                    ->limit(50)
+                                                    ->get()
+                                                    ->mapWithKeys(fn ($v) => [
+                                                        $v->id => "[{$v->sku}] {$v->product_name}" . ($v->variant_name ? " - {$v->variant_name}" : "")
+                                                    ])
+                                                    ->toArray();
+                                            })
                                             ->reactive()
                                             ->afterStateUpdated(function ($state, callable $set) {
                                                 if ($state) {

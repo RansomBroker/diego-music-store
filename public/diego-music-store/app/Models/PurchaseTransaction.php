@@ -107,4 +107,28 @@ class PurchaseTransaction extends Model
     {
         return $this->hasMany(PurchaseTransactionDetail::class);
     }
+
+    public function supplierPaymentItems(): HasMany
+    {
+        return $this->hasMany(SupplierPaymentItem::class);
+    }
+
+    /**
+     * Get the remaining unpaid balance for this credit purchase transaction.
+     */
+    public function getRemainingUnpaidAmount(): int
+    {
+        if ($this->purchase_type !== 'Kredit') {
+            return 0;
+        }
+
+        // Sum up all payments made for this purchase from POSTED payments
+        $paid = $this->supplierPaymentItems()
+            ->whereHas('supplierPayment', function ($query) {
+                $query->where('status', 'posted');
+            })
+            ->sum('amount_paid');
+
+        return max(0, $this->grand_total - $paid);
+    }
 }

@@ -24,4 +24,9 @@ class Supplier extends Model
     protected $casts = [
         'outstanding_debt' => 'decimal:2',
     ];
+
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SupplierPayment::class);
+    }
 }

@@ -8,6 +8,8 @@ use App\Actions\Procurement\PostPurchaseTransaction;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 
 class EditPurchaseTransaction extends EditRecord
@@ -52,6 +54,28 @@ class EditPurchaseTransaction extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
-        return app(UpdateAction::class)->execute($record, $data);
+        try {
+            return app(UpdateAction::class)->execute($record, $data);
+        } catch (\InvalidArgumentException $e) {
+            Notification::make()
+                ->title('Tidak dapat menyimpan perubahan')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+
+            throw new Halt();
+        }
+    }
+
+    /**
+     * Hide the Save button when the transaction is no longer a draft.
+     */
+    protected function getFormActions(): array
+    {
+        if ($this->record->status !== 'draft') {
+            return [];
+        }
+
+        return parent::getFormActions();
     }
 }
