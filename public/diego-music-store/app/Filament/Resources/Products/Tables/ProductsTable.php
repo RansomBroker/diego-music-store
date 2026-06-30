@@ -91,8 +91,12 @@ class ProductsTable
                     ->label('Kartu Stok')
                     ->icon('heroicon-o-queue-list')
                     ->color('info')
-                    ->url(fn ($record) => StockMovementResource::getUrl('index', [
-                        'tableFilters[product_id][value]' => $record->id,
+                    ->modalWidth('7xl')
+                    ->modalHeading('Kartu Riwayat Pergerakan Stok')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(fn ($record) => view('backoffice.products.stock-card-modal', [
+                        'product' => $record,
                     ])),
                 DeleteAction::make(),
             ])

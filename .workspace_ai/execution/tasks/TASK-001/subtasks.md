@@ -1,4 +1,4 @@
-# Subtasks: TASK-001 - Database Migration & Branch Table Setup
+.# Subtasks: TASK-001 - Database Migration & Branch Table Setup
 
 ## Checklist
 - [ ] **Analysis & Design**:
