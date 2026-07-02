@@ -2,7 +2,10 @@
 
 namespace App\Helpers;
 
+use App\Models\Branch;
+use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\StockMovement;
 use Illuminate\Support\Str;
 
 class ProductHelper
@@ -29,5 +32,55 @@ class ProductHelper
         } while (ProductVariant::where('barcode', $barcode)->exists());
 
         return $barcode;
+    }
+
+    /**
+     * Retrieve stock card data for a product.
+     *
+     * @param  Product  $product
+     * @return array<string, mixed>
+     */
+    public static function getStockCardData(Product $product): array
+    {
+        $branches = Branch::where('is_active', true)->get();
+        
+        $bundleItems = collect();
+        $childMovements = [];
+        $physicalMovements = [];
+
+        if ($product->isBundle()) {
+            $defaultVariant = $product->variants->first();
+            if ($defaultVariant) {
+                $bundleItems = $defaultVariant->bundleItems()
+                    ->with(['childVariant.product', 'childVariant.branchStocks'])
+                    ->get();
+
+                foreach ($bundleItems as $item) {
+                    $childVariant = $item->childVariant;
+                    if ($childVariant) {
+                        $childMovements[$childVariant->id] = StockMovement::where('product_variant_id', $childVariant->id)
+                            ->with('branch')
+                            ->orderBy('created_at', 'desc')
+                            ->take(50)
+                            ->get();
+                    }
+                }
+            }
+        } else {
+            foreach ($product->variants as $variant) {
+                $physicalMovements[$variant->id] = StockMovement::where('product_variant_id', $variant->id)
+                    ->with('branch')
+                    ->orderBy('created_at', 'desc')
+                    ->take(50)
+                    ->get();
+            }
+        }
+
+        return [
+            'branches' => $branches,
+            'bundleItems' => $bundleItems,
+            'childMovements' => $childMovements,
+            'physicalMovements' => $physicalMovements,
+        ];
     }
 }

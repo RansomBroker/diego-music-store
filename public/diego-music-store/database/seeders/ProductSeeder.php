@@ -21,18 +21,18 @@ class ProductSeeder extends Seeder
         if (!$branchPusat) {
             $branchPusat = Branch::create([
                 'name' => 'Cabang Pusat (Back Office)',
-                'address' => 'Jl. Bypass Ngurah Rai No. 123, Denpasar, Bali',
-                'phone' => '081234567890',
+                'address' => 'Jl. Gajah Mada No. 21-22, Pontianak, Kalimantan Barat',
+                'phone' => '0561-734567',
                 'is_active' => true,
             ]);
         }
 
-        $branchKuta = Branch::where('name', 'Cabang Kuta')->first();
-        if (!$branchKuta) {
-            $branchKuta = Branch::create([
-                'name' => 'Cabang Kuta',
-                'address' => 'Jl. Raya Kuta No. 45, Badung, Bali',
-                'phone' => '081234567891',
+        $branchSiantan = Branch::where('name', 'Cabang Siantan')->first();
+        if (!$branchSiantan) {
+            $branchSiantan = Branch::create([
+                'name' => 'Cabang Siantan',
+                'address' => 'Jl. Khatulistiwa No. 12, Siantan, Pontianak, Kalimantan Barat',
+                'phone' => '0561-881234',
                 'is_active' => true,
             ]);
         }
@@ -124,7 +124,7 @@ class ProductSeeder extends Seeder
                 ]);
                 ProductBranchStock::create([
                     'product_variant_id' => $variant->id,
-                    'branch_id' => $branchKuta->id,
+                    'branch_id' => $branchSiantan->id,
                     'stock' => 5,
                 ]);
             }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Actions\Product;
 
 use App\Actions\Product\CreateProduct;
 use App\Actions\Product\UpdateProduct;
+use App\Actions\Product\DuplicateProduct;
 use App\Models\Branch;
 use App\Models\PricingTier;
 use App\Models\Product;
@@ -54,7 +55,7 @@ class ProductActionsTest extends TestCase
         ]);
     }
 
-    public function test_it_can_create_physical_product_with_variants_and_tier_prices_and_branch_stocks(): void
+    public function test_it_can_create_physical_product_with_variants_and_tier_prices(): void
     {
         $data = [
             'name' => 'Gitar Akustik Yamaha FS800',
@@ -74,10 +75,6 @@ class ProductActionsTest extends TestCase
                     'tier_prices' => [
                         $this->tierGrosir->id => 3000000,
                     ],
-                    'branch_stocks' => [
-                        $this->branchPusat->id => 10,
-                        $this->branchKuta->id => 5,
-                    ],
                 ],
                 [
                     'name' => 'Sunburst',
@@ -88,10 +85,6 @@ class ProductActionsTest extends TestCase
                     'hpp' => 2200000,
                     'tier_prices' => [
                         $this->tierGrosir->id => 3100000,
-                    ],
-                    'branch_stocks' => [
-                        $this->branchPusat->id => 8,
-                        $this->branchKuta->id => 4,
                     ],
                 ],
             ],
@@ -120,13 +113,6 @@ class ProductActionsTest extends TestCase
             ->first();
         $this->assertNotNull($naturalTierPrice);
         $this->assertEquals(3000000, $naturalTierPrice->price);
-
-        // Assert branch stocks
-        $pusatStock = ProductBranchStock::where('product_variant_id', $naturalVariant->id)
-            ->where('branch_id', $this->branchPusat->id)
-            ->first();
-        $this->assertNotNull($pusatStock);
-        $this->assertEquals(10, $pusatStock->stock);
     }
 
     public function test_it_can_create_physical_product_without_variants(): void
@@ -146,9 +132,6 @@ class ProductActionsTest extends TestCase
             'tier_prices' => [
                 $this->tierGrosir->id => 1400000,
             ],
-            'branch_stocks' => [
-                $this->branchPusat->id => 20,
-            ],
         ];
 
         /** @var CreateProduct $action */
@@ -162,10 +145,6 @@ class ProductActionsTest extends TestCase
         $this->assertNull($defaultVariant->name);
         $this->assertEquals('SKU-BASO123', $defaultVariant->sku);
         $this->assertEquals(1050000, $defaultVariant->hpp);
-
-        $this->assertEquals(20, ProductBranchStock::where('product_variant_id', $defaultVariant->id)
-            ->where('branch_id', $this->branchPusat->id)
-            ->first()->stock);
     }
 
     public function test_it_can_create_service_product(): void
@@ -276,9 +255,6 @@ class ProductActionsTest extends TestCase
                     'cost_price' => 750000,
                     'hpp' => 750000,
                     'tier_prices' => [],
-                    'branch_stocks' => [
-                        $this->branchPusat->id => 5,
-                    ]
                 ]
             ]
         ];
@@ -296,5 +272,56 @@ class ProductActionsTest extends TestCase
         $this->assertEquals('SKU-GITA-RED', $newVariant->sku);
 
         $this->assertFalse(ProductVariant::where('id', $initialVariant->id)->exists());
+    }
+
+    public function test_it_can_duplicate_product(): void
+    {
+        // 1. Create a product with variant and tier price
+        $product = Product::create([
+            'name' => 'Original Product',
+            'type' => 'physical',
+            'is_active' => true,
+        ]);
+
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'SKU-ORIGINAL',
+            'barcode' => '1234567890',
+            'price' => 500000,
+            'cost_price' => 300000,
+            'hpp' => 310000,
+            'is_active' => true,
+        ]);
+
+        ProductTierPrice::create([
+            'product_variant_id' => $variant->id,
+            'pricing_tier_id' => $this->tierGrosir->id,
+            'price' => 450000,
+        ]);
+
+        // 2. Duplicate the product
+        /** @var DuplicateProduct $action */
+        $action = app(DuplicateProduct::class);
+        $duplicatedProduct = $action->execute($product);
+
+        // 3. Assertions
+        $this->assertNotEquals($product->id, $duplicatedProduct->id);
+        $this->assertEquals('Original Product - Copy', $duplicatedProduct->name);
+
+        $this->assertCount(1, $duplicatedProduct->variants);
+        $duplicatedVariant = $duplicatedProduct->variants->first();
+
+        $this->assertNotEquals($variant->id, $duplicatedVariant->id);
+        $this->assertNotEquals('SKU-ORIGINAL', $duplicatedVariant->sku);
+        $this->assertNotEquals('1234567890', $duplicatedVariant->barcode);
+        $this->assertEquals(500000, $duplicatedVariant->price);
+        $this->assertEquals(310000, $duplicatedVariant->hpp);
+
+        // Assert tier price was copied
+        $copiedTierPrice = ProductTierPrice::where('product_variant_id', $duplicatedVariant->id)
+            ->where('pricing_tier_id', $this->tierGrosir->id)
+            ->first();
+        $this->assertNotNull($copiedTierPrice);
+        $this->assertEquals(450000, $copiedTierPrice->price);
     }
 }

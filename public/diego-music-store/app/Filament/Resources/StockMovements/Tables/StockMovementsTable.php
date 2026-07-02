@@ -62,6 +62,24 @@ class StockMovementsTable
                     ->color(fn ($record) => $record->type === 'in' ? 'success' : 'danger')
                     ->formatStateUsing(fn ($state, $record) => ($record->type === 'in' ? '+' : '-') . number_format($state)),
 
+                TextColumn::make('unit_cost')
+                    ->label('Harga Satuan')
+                    ->money('idr')
+                    ->alignRight()
+                    ->sortable(),
+
+                TextColumn::make('hpp')
+                    ->label('HPP Berjalan')
+                    ->money('idr')
+                    ->alignRight()
+                    ->sortable(),
+
+                TextColumn::make('total_value')
+                    ->label('Total Nilai')
+                    ->state(fn ($record) => $record->quantity * $record->unit_cost)
+                    ->money('idr')
+                    ->alignRight(),
+
                 TextColumn::make('reference_label')
                     ->label('Referensi Dokumen')
                     ->searchable(query: function (Builder $query, string $search): Builder {

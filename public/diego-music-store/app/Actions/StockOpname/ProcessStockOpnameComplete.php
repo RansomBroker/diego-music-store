@@ -44,11 +44,14 @@ class ProcessStockOpnameComplete
                 // Log discrepancy to stock movements
                 $diff = $item->difference;
                 if ($diff !== 0) {
+                    $hpp = $branchStock->hpp;
                     StockMovement::create([
                         'product_variant_id' => $item->product_variant_id,
                         'branch_id' => $opname->branch_id,
                         'type' => $diff > 0 ? 'in' : 'out',
                         'quantity' => abs($diff),
+                        'unit_cost' => $hpp,
+                        'hpp' => $hpp,
                         'reference_type' => 'Opname',
                         'reference_id' => $opname->id,
                     ]);

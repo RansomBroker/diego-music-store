@@ -72,16 +72,7 @@ class CreateProduct
                         }
                     }
 
-                    // Save branch stocks
-                    if (!empty($variantData['branch_stocks'])) {
-                        foreach ($variantData['branch_stocks'] as $branchId => $stock) {
-                            ProductBranchStock::create([
-                                'product_variant_id' => $variant->id,
-                                'branch_id' => $branchId,
-                                'stock' => $stock ?? 0,
-                            ]);
-                        }
-                    }
+
                 }
             } else {
                 // 3. Create a single default variant
@@ -122,16 +113,7 @@ class CreateProduct
                     }
                 }
 
-                // Save branch stocks (only if physical)
-                if ($product->isPhysical() && !empty($data['branch_stocks'])) {
-                    foreach ($data['branch_stocks'] as $branchId => $stock) {
-                        ProductBranchStock::create([
-                            'product_variant_id' => $variant->id,
-                            'branch_id' => $branchId,
-                            'stock' => $stock ?? 0,
-                        ]);
-                    }
-                }
+
 
                 // Save bundle components (only if bundle)
                 if ($product->isBundle() && !empty($data['bundle_items'])) {

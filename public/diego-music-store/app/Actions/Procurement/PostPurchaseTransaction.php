@@ -105,6 +105,8 @@ class PostPurchaseTransaction
                     'branch_id' => $destinationBranchId,
                     'type' => 'in',
                     'quantity' => $detail->qty_received,
+                    'unit_cost' => $unitCost,
+                    'hpp' => $newHpp,
                     'reference_type' => 'Purchase',
                     'reference_id' => $pt->id,
                 ]);

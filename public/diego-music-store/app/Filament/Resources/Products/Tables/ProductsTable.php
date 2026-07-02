@@ -87,6 +87,23 @@ class ProductsTable
             ])
             ->actions([
                 EditAction::make(),
+                \Filament\Actions\Action::make('copy_product')
+                    ->label('Copy Produk')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Copy Produk')
+                    ->modalDescription('Apakah Anda yakin ingin menyalin produk ini? Semua varian dan harga tingkatan akan disalin dengan SKU dan Barcode baru.')
+                    ->action(function ($record) {
+                        $duplicateAction = app(\App\Actions\Product\DuplicateProduct::class);
+                        $newProduct = $duplicateAction->execute($record);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Produk Berhasil Disalin')
+                            ->body('Produk baru: ' . $newProduct->name)
+                            ->success()
+                            ->send();
+                    }),
                 \Filament\Actions\Action::make('kartu_stok')
                     ->label('Kartu Stok')
                     ->icon('heroicon-o-queue-list')
@@ -95,9 +112,10 @@ class ProductsTable
                     ->modalHeading('Kartu Riwayat Pergerakan Stok')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
-                    ->modalContent(fn ($record) => view('backoffice.products.stock-card-modal', [
-                        'product' => $record,
-                    ])),
+                    ->modalContent(fn ($record) => view('backoffice.products.stock-card-modal', array_merge(
+                        ['product' => $record],
+                        \App\Helpers\ProductHelper::getStockCardData($record)
+                    ))),
                 DeleteAction::make(),
             ])
             ->bulkActions([

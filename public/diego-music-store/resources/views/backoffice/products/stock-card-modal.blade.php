@@ -52,21 +52,11 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Klik pada setiap produk komponen di bawah untuk melihat rincian riwayat kartu stoknya</p>
             </div>
 
-            @php
-                $defaultVariant = $product->variants->first();
-                $bundleItems = $defaultVariant ? $defaultVariant->bundleItems()->with(['childVariant.product', 'childVariant.branchStocks'])->get() : collect();
-                $branches = \App\Models\Branch::where('is_active', true)->get();
-            @endphp
-
             @forelse($bundleItems as $index => $item)
                 @php
                     $childVariant = $item->childVariant;
                     $childProduct = $childVariant->product;
-                    $childMovements = \App\Models\StockMovement::where('product_variant_id', $childVariant->id)
-                        ->with('branch')
-                        ->orderBy('created_at', 'desc')
-                        ->take(50)
-                        ->get();
+                    $movements = $childMovements[$childVariant->id] ?? collect();
                 @endphp
 
                 <div x-data="{ open: false }" class="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-900 transition-all hover:border-gray-305 dark:hover:border-gray-700">
@@ -125,11 +115,14 @@
                                             <th class="px-4 py-2.5 font-bold">Cabang</th>
                                             <th class="px-4 py-2.5 font-bold text-center">Tipe</th>
                                             <th class="px-4 py-2.5 font-bold text-right">Jumlah</th>
+                                            <th class="px-4 py-2.5 font-bold text-right">Harga Satuan</th>
+                                            <th class="px-4 py-2.5 font-bold text-right">HPP Berjalan</th>
+                                            <th class="px-4 py-2.5 font-bold text-right">Total Nilai</th>
                                             <th class="px-4 py-2.5 font-bold">Keterangan / Referensi</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-                                        @forelse($childMovements as $mv)
+                                        @forelse($movements as $mv)
                                             <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                                                 <td class="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-400">
                                                     {{ $mv->created_at->format('d/m/Y H:i') }}
@@ -152,6 +145,15 @@
                                                 </td>
                                                 <td class="px-4 py-2.5 text-right font-mono font-bold text-gray-900 dark:text-gray-200">
                                                     {{ number_format($mv->quantity, 0, ',', '.') }}
+                                                </td>
+                                                <td class="px-4 py-2.5 text-right font-mono text-gray-900 dark:text-white">
+                                                    Rp {{ number_format($mv->unit_cost, 0, ',', '.') }}
+                                                </td>
+                                                <td class="px-4 py-2.5 text-right font-mono text-gray-900 dark:text-white">
+                                                    Rp {{ number_format($mv->hpp, 0, ',', '.') }}
+                                                </td>
+                                                <td class="px-4 py-2.5 text-right font-mono text-gray-900 dark:text-white">
+                                                    Rp {{ number_format($mv->quantity * $mv->unit_cost, 0, ',', '.') }}
                                                 </td>
                                                 <td class="px-4 py-2.5 text-gray-800 dark:text-gray-300 font-medium">
                                                     {{ $mv->reference_label }}
@@ -179,10 +181,6 @@
 
     <!-- Product Type: PHYSICAL -->
     @else
-        @php
-            $branches = \App\Models\Branch::where('is_active', true)->get();
-        @endphp
-
         @foreach($product->variants as $vIndex => $variant)
             <div class="space-y-4">
                 @if($product->variants->count() > 1)
@@ -213,11 +211,7 @@
                 </div>
 
                 @php
-                    $movements = \App\Models\StockMovement::where('product_variant_id', $variant->id)
-                        ->with('branch')
-                        ->orderBy('created_at', 'desc')
-                        ->take(50)
-                        ->get();
+                    $movements = $physicalMovements[$variant->id] ?? collect();
                 @endphp
 
                 <!-- Stock Movements Table for Physical Product -->
@@ -230,6 +224,9 @@
                                     <th class="px-4 py-3 font-bold">Cabang</th>
                                     <th class="px-4 py-3 font-bold text-center">Tipe</th>
                                     <th class="px-4 py-3 font-bold text-right">Jumlah</th>
+                                    <th class="px-4 py-3 font-bold text-right">Harga Satuan</th>
+                                    <th class="px-4 py-3 font-bold text-right">HPP Berjalan</th>
+                                    <th class="px-4 py-3 font-bold text-right">Total Nilai</th>
                                     <th class="px-4 py-3 font-bold">Keterangan / Referensi</th>
                                 </tr>
                             </thead>
@@ -257,6 +254,15 @@
                                         </td>
                                         <td class="px-4 py-3 text-right font-mono font-bold text-gray-900 dark:text-gray-200">
                                             {{ number_format($mv->quantity, 0, ',', '.') }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right font-mono text-gray-900 dark:text-white">
+                                            Rp {{ number_format($mv->unit_cost, 0, ',', '.') }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right font-mono text-gray-900 dark:text-white">
+                                            Rp {{ number_format($mv->hpp, 0, ',', '.') }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right font-mono text-gray-900 text-gray-900 dark:text-white">
+                                            Rp {{ number_format($mv->quantity * $mv->unit_cost, 0, ',', '.') }}
                                         </td>
                                         <td class="px-4 py-3 text-gray-800 dark:text-gray-300 font-medium">
                                             {{ $mv->reference_label }}

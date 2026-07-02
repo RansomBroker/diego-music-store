@@ -51,6 +51,8 @@ class ProcessInventoryMutationTransit
                     'branch_id' => $mutation->sender_branch_id,
                     'type' => 'out',
                     'quantity' => $item->quantity,
+                    'unit_cost' => $senderStock->hpp,
+                    'hpp' => $senderStock->hpp,
                     'reference_type' => 'Mutation',
                     'reference_id' => $mutation->id,
                 ]);

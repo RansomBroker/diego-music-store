@@ -7,6 +7,9 @@
                 <th scope="col" class="px-6 py-3">Cabang</th>
                 <th scope="col" class="px-6 py-3">Tipe</th>
                 <th scope="col" class="px-6 py-3 text-right">Qty</th>
+                <th scope="col" class="px-6 py-3 text-right">Harga Satuan</th>
+                <th scope="col" class="px-6 py-3 text-right">HPP Berjalan</th>
+                <th scope="col" class="px-6 py-3 text-right">Total Nilai</th>
                 <th scope="col" class="px-6 py-3">Dokumen Referensi</th>
             </tr>
         </thead>
@@ -35,6 +38,15 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right font-bold {{ $movement->type === 'in' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
                         {{ $movement->type === 'in' ? '+' : '-' }}{{ number_format($movement->quantity) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-gray-900 dark:text-white">
+                        Rp {{ number_format($movement->unit_cost, 0, ',', '.') }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-gray-900 dark:text-white">
+                        Rp {{ number_format($movement->hpp, 0, ',', '.') }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-gray-900 dark:text-white">
+                        Rp {{ number_format($movement->quantity * $movement->unit_cost, 0, ',', '.') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-700 dark:text-gray-300">
                         {{ $movement->reference_label }}

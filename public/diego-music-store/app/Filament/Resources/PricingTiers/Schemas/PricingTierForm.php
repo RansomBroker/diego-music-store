@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PricingTiers\Schemas;
 
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class PricingTierForm
@@ -23,6 +24,10 @@ class PricingTierForm
                     ->rows(3)
                     ->label('Description')
                     ->placeholder('Enter pricing tier description...'),
+
+                Toggle::make('price_follows_hpp')
+                    ->label('Harga mengikuti HPP Awal Setelah Ongkir')
+                    ->default(false),
             ]);
     }
 }

@@ -44,8 +44,21 @@ class ProcessInventoryMutationReceived
                     'hpp' => $senderHpp ?: ($item->productVariant->hpp ?? 0),
                 ]);
 
-                // Increment stock in receiver branch
-                $receiverStock->increment('stock', $item->quantity);
+                $oldStock = $receiverStock->stock;
+                $oldHpp = $receiverStock->hpp;
+                $newStockQty = $oldStock + $item->quantity;
+
+                if ($newStockQty > 0) {
+                    $newHpp = (int) round((($oldStock * $oldHpp) + ($item->quantity * $senderHpp)) / $newStockQty);
+                } else {
+                    $newHpp = $senderHpp;
+                }
+
+                // Update stock and HPP in receiver branch
+                $receiverStock->update([
+                    'stock' => $newStockQty,
+                    'hpp' => $newHpp,
+                ]);
 
                 // Create StockMovement in record
                 StockMovement::create([
@@ -53,6 +66,8 @@ class ProcessInventoryMutationReceived
                     'branch_id' => $mutation->receiver_branch_id,
                     'type' => 'in',
                     'quantity' => $item->quantity,
+                    'unit_cost' => $senderHpp,
+                    'hpp' => $newHpp,
                     'reference_type' => 'Mutation',
                     'reference_id' => $mutation->id,
                 ]);

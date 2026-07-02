@@ -15,12 +15,16 @@ class StockMovement extends Model
         'branch_id',
         'type', // in, out
         'quantity',
+        'unit_cost',
+        'hpp',
         'reference_type', // DO, Mutation, Opname, POS
         'reference_id',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
+        'unit_cost' => 'integer',
+        'hpp' => 'integer',
         'reference_id' => 'integer',
     ];
 

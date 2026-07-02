@@ -26,8 +26,8 @@ class DatabaseSeeder extends Seeder
         if (Branch::count() === 0) {
             Branch::create([
                 'name' => 'Cabang Pusat (Back Office)',
-                'address' => 'Jl. Bypass Ngurah Rai No. 123, Denpasar, Bali',
-                'phone' => '081234567890',
+                'address' => 'Jl. Gajah Mada No. 21-22, Pontianak, Kalimantan Barat',
+                'phone' => '0561-734567',
                 'is_active' => true,
             ]);
         }

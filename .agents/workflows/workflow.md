@@ -35,7 +35,12 @@ Setiap folder memiliki fungsi khusus dalam siklus pengembangan:
 
 - **`workspace/`**: Berisi dokumen dasar proyek (`project.md`, `prd.md`, `roadmap.md`), folder `epics/`, `features/`, dan `decisions/` (arsitektur).
 - **`execution/`**: Berisi `backlog/` tugas, folder `sprints/` aktif, tugas individual di `tasks/`, dan laporan kemajuan.
-- **`roles/`**: Definisi alur kerja dari **Product Manager** (Analysis) $\rightarrow$ **Architect** (Ready) $\rightarrow$ **Developer** (Development) $\rightarrow$ **Reviewer** (Review) $\rightarrow$ **Documentation Writer** (Done).
+- **`roles/`**: Definisi alur kerja peran yang sesuai dalam siklus pengembangan:
+  - [Product Manager](file:///home/skylantern/Projects/diego-music-store-project/.workspace_ai/roles/product-manager.md) (Analysis)
+  - [Architect](file:///home/skylantern/Projects/diego-music-store-project/.workspace_ai/roles/architect.md) (Ready)
+  - [Developer](file:///home/skylantern/Projects/diego-music-store-project/.workspace_ai/roles/developer.md) (Development)
+  - [Reviewer](file:///home/skylantern/Projects/diego-music-store-project/.workspace_ai/roles/reviewer.md) (Review)
+  - [Documentation Writer](file:///home/skylantern/Projects/diego-music-store-project/.workspace_ai/roles/documentation-writer.md) (Done)
 - **`templates/`**: Template standar untuk memudahkan pembuatan PRD, Epic, Feature, Task, Review, dan Sprint baru.
 
 ---

@@ -42,6 +42,8 @@ class ProcessDeliveryOrderShipped
                     'branch_id' => $deliveryOrder->branch_id,
                     'type' => 'out',
                     'quantity' => $qty,
+                    'unit_cost' => $branchStock->hpp,
+                    'hpp' => $branchStock->hpp,
                     'reference_type' => 'DO',
                     'reference_id' => $deliveryOrder->id,
                 ]);

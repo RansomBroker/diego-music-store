@@ -46,7 +46,6 @@ class EditProduct extends EditRecord
                     'cost_price' => $variant->cost_price,
                     'hpp' => $variant->hpp,
                     'tier_prices' => $variant->tierPrices()->pluck('price', 'pricing_tier_id')->toArray(),
-                    'branch_stocks' => $variant->branchStocks()->pluck('stock', 'branch_id')->toArray(),
                 ];
             }
         } else {
@@ -59,7 +58,6 @@ class EditProduct extends EditRecord
                 $data['hpp'] = $firstVariant->hpp;
                 
                 $data['tier_prices'] = $firstVariant->tierPrices()->pluck('price', 'pricing_tier_id')->toArray();
-                $data['branch_stocks'] = $firstVariant->branchStocks()->pluck('stock', 'branch_id')->toArray();
                 
                 if ($product->isBundle()) {
                     $data['bundle_items'] = [];

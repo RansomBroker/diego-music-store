@@ -13,6 +13,11 @@ class PricingTier extends Model
     protected $fillable = [
         'name',
         'description',
+        'price_follows_hpp',
+    ];
+
+    protected $casts = [
+        'price_follows_hpp' => 'boolean',
     ];
 
     /**

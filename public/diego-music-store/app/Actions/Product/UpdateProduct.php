@@ -91,17 +91,7 @@ class UpdateProduct
                         }
                     }
 
-                    // Sync Branch Stocks
-                    ProductBranchStock::where('product_variant_id', $variant->id)->delete();
-                    if (!empty($variantData['branch_stocks'])) {
-                        foreach ($variantData['branch_stocks'] as $branchId => $stock) {
-                            ProductBranchStock::create([
-                                'product_variant_id' => $variant->id,
-                                'branch_id' => $branchId,
-                                'stock' => $stock ?? 0,
-                            ]);
-                        }
-                    }
+
                 }
             } else {
                 // Single default variant or bundle/service
@@ -164,17 +154,7 @@ class UpdateProduct
                     }
                 }
 
-                // Sync Branch Stocks (only if physical)
-                ProductBranchStock::where('product_variant_id', $variant->id)->delete();
-                if ($product->isPhysical() && !empty($data['branch_stocks'])) {
-                    foreach ($data['branch_stocks'] as $branchId => $stock) {
-                        ProductBranchStock::create([
-                            'product_variant_id' => $variant->id,
-                            'branch_id' => $branchId,
-                            'stock' => $stock ?? 0,
-                        ]);
-                    }
-                }
+
 
                 // Sync Bundle Components (only if bundle)
                 ProductBundle::where('parent_variant_id', $variant->id)->delete();
