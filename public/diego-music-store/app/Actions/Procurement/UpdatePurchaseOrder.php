@@ -74,13 +74,18 @@ class UpdatePurchaseOrder
             // Calculate grand total and update PO
             $discHeader = intval($data['discount_amount'] ?? 0);
             $otherCost = intval($data['other_cost'] ?? 0); // Ongkir / biaya lain
+            $shippingBorneBy = $data['shipping_borne_by'] ?? 'self_direct';
+            $shippingCarrierName = $data['shipping_carrier_name'] ?? null;
             
-            $grandTotal = $totalAmount - $discHeader + $totalTaxAmount + $otherCost;
+            $shippingCostInGrandTotal = ($shippingBorneBy === 'self_direct') ? $otherCost : 0;
+            $grandTotal = $totalAmount - $discHeader + $totalTaxAmount + $shippingCostInGrandTotal;
 
             $po->update([
                 'total_amount' => $totalAmount,
                 'discount_amount' => $discHeader,
                 'other_cost' => $otherCost,
+                'shipping_borne_by' => $shippingBorneBy,
+                'shipping_carrier_name' => $shippingCarrierName,
                 'tax_mode' => $taxMode,
                 'tax_rate' => $taxMode === 'GLOBAL' ? $globalTaxRate : 0,
                 'tax_amount' => $totalTaxAmount,

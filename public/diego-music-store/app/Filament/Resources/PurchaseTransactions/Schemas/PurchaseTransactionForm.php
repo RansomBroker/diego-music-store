@@ -130,17 +130,10 @@ class PurchaseTransactionForm
 
                 Section::make('Biaya & Potongan Tambahan')
                     ->schema([
-                        Grid::make(4)
+                        Grid::make(3)
                             ->schema([
                                 TextInput::make('discount')
                                     ->label('Diskon Global')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->reactive(),
-
-                                TextInput::make('shipping_cost')
-                                    ->label('Biaya Kirim (Ongkir)')
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('Rp')
@@ -158,6 +151,45 @@ class PurchaseTransactionForm
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('Rp')
+                                    ->reactive(),
+                            ]),
+                    ])
+                    ->columnSpanFull(),
+
+                Section::make('Informasi Pengiriman (Logistik)')
+                    ->schema([
+                        Grid::make(3)
+                            ->schema([
+                                Select::make('shipping_borne_by')
+                                    ->label('Pembebanan Ongkir')
+                                    ->options([
+                                        'self_direct' => 'Langsung (Ditagih Supplier)',
+                                        'third_party' => 'Pihak Ke-3 (Ekspedisi)',
+                                        'supplier' => 'Ditanggung Supplier (Free Ongkir)',
+                                    ])
+                                    ->default('self_direct')
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        if ($state === 'supplier') {
+                                            $set('shipping_cost', 0);
+                                            $set('shipping_carrier_name', null);
+                                        }
+                                    }),
+
+                                TextInput::make('shipping_carrier_name')
+                                    ->label('Nama Ekspedisi (Pihak Ke-3)')
+                                    ->placeholder('Misal: JNE, J&T, GoSend')
+                                    ->required(fn ($get) => $get('shipping_borne_by') === 'third_party')
+                                    ->visible(fn ($get) => $get('shipping_borne_by') === 'third_party'),
+
+                                TextInput::make('shipping_cost')
+                                    ->label('Biaya Kirim (Ongkir)')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->prefix('Rp')
+                                    ->required(fn ($get) => $get('shipping_borne_by') !== 'supplier')
+                                    ->visible(fn ($get) => $get('shipping_borne_by') !== 'supplier')
                                     ->reactive(),
                             ]),
                     ])
@@ -310,8 +342,10 @@ class PurchaseTransactionForm
                                 $shippingCost = intval($get('shipping_cost') ?? 0);
                                 $otherCost = intval($get('other_cost') ?? 0);
                                 $pphAmount = intval($get('pph_amount') ?? 0);
+                                $shippingBorneBy = $get('shipping_borne_by') ?? 'self_direct';
                                 
-                                $grandTotal = $subtotal - $discount + $taxAmount + $shippingCost + $otherCost - $pphAmount;
+                                $shippingCostInGrandTotal = ($shippingBorneBy === 'self_direct') ? $shippingCost : 0;
+                                $grandTotal = $subtotal - $discount + $taxAmount + $shippingCostInGrandTotal + $otherCost - $pphAmount;
                                 
                                 return view('backoffice.purchase-transactions.summary-placeholder', [
                                     'subtotal' => $subtotal,
@@ -320,6 +354,7 @@ class PurchaseTransactionForm
                                     'shippingCost' => $shippingCost,
                                     'otherCost' => $otherCost,
                                     'pphAmount' => $pphAmount,
+                                    'shippingBorneBy' => $shippingBorneBy,
                                     'grandTotal' => $grandTotal,
                                 ]);
                             })

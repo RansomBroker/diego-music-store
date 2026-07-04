@@ -49,9 +49,11 @@ class PostPurchaseTransaction
             $destinationBranchId = $pt->warehouse_id ?? $pt->branch_id;
             $details = $pt->details;
 
-            // Total quantity received in this document to distribute header costs
-            $totalQtyReceived = $details->sum('qty_received');
-            $headerCostToAttribute = $pt->shipping_cost + $pt->other_cost - $pt->discount;
+            // Total goods subtotal (DPP) to distribute header costs proportionally by value
+            $totalGoodsSubtotal = $details->sum(fn($d) => ($d->qty_received * $d->price) - $d->discount);
+            
+            $shippingCostToAttribute = (($pt->shipping_borne_by ?? 'self_direct') !== 'supplier') ? $pt->shipping_cost : 0;
+            $headerCostToAttribute = $shippingCostToAttribute + $pt->other_cost - $pt->discount;
 
             foreach ($details as $detail) {
                 if ($detail->qty_received <= 0) {
@@ -73,9 +75,10 @@ class PostPurchaseTransaction
                 $oldStock = $stock->stock;
                 $oldHpp = $stock->hpp;
 
-                // Attribute header costs proportionally
-                $attributedHeaderCost = ($totalQtyReceived > 0)
-                    ? (int) round(($headerCostToAttribute / $totalQtyReceived) * $detail->qty_received)
+                // Attribute header costs proportionally based on value
+                $detailValue = ($detail->qty_received * $detail->price) - $detail->discount;
+                $attributedHeaderCost = ($totalGoodsSubtotal > 0)
+                    ? (int) round(($detailValue / $totalGoodsSubtotal) * $headerCostToAttribute)
                     : 0;
 
                 // Net cost for this line item (inclusive of tax & discount + attributed header cost)
@@ -187,11 +190,15 @@ class PostPurchaseTransaction
                     ?? $resolveAccount('1-1300', 'Persediaan Barang Dagang');
 
                 $detailBaseCost = ($detail->qty_received * $detail->price) - $detail->discount;
+                $detailValue = ($detail->qty_received * $detail->price) - $detail->discount;
+                $attributedHeaderCost = ($totalGoodsSubtotal > 0)
+                    ? (int) round(($detailValue / $totalGoodsSubtotal) * $headerCostToAttribute)
+                    : 0;
 
                 \App\Models\JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id' => $inventoryAccId,
-                    'debit' => $detailBaseCost,
+                    'debit' => $detailBaseCost + $attributedHeaderCost,
                     'credit' => 0,
                     'notes' => "Persediaan untuk " . $detail->productVariant->sku,
                 ]);
@@ -212,43 +219,19 @@ class PostPurchaseTransaction
                 ]);
             }
 
-            // 3. Debit: Shipping cost (if shipping_cost > 0)
-            if ($pt->shipping_cost > 0) {
-                $shippingAccId = $resolveAccount('6-1000', 'Beban Operasional');
+            // 3. Credit: Hutang Biaya Kirim Belum Ditagih (if third-party logistics and shipping_cost > 0)
+            if (($pt->shipping_borne_by ?? 'self_direct') === 'third_party' && $pt->shipping_cost > 0) {
+                $shippingAccId = $resolveAccount('2-1500', 'Hutang Biaya Kirim Belum Ditagih');
                 \App\Models\JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id' => $shippingAccId,
-                    'debit' => $pt->shipping_cost,
-                    'credit' => 0,
-                    'notes' => "Biaya Pengiriman Pembelian",
-                ]);
-            }
-
-            // 4. Debit: Other cost (if other_cost > 0)
-            if ($pt->other_cost > 0) {
-                $otherAccId = $resolveAccount('6-1000', 'Beban Operasional');
-                \App\Models\JournalItem::create([
-                    'journal_entry_id' => $journalEntry->id,
-                    'account_id' => $otherAccId,
-                    'debit' => $pt->other_cost,
-                    'credit' => 0,
-                    'notes' => "Biaya Lain-lain Pembelian",
-                ]);
-            }
-
-            // 5. Credit: Discount (if discount > 0)
-            if ($pt->discount > 0) {
-                $discountAccId = $resolveAccount('6-1000', 'Beban Operasional');
-                \App\Models\JournalItem::create([
-                    'journal_entry_id' => $journalEntry->id,
-                    'account_id' => $discountAccId,
                     'debit' => 0,
-                    'credit' => $pt->discount,
-                    'notes' => "Potongan Pembelian (Header)",
+                    'credit' => $pt->shipping_cost,
+                    'notes' => "Akrual Ongkir Pihak Ke-3: " . ($pt->shipping_carrier_name ?? 'Ekspedisi'),
                 ]);
             }
 
-            // 6. Credit: PPh amount (if pph_amount > 0)
+            // 4. Credit: PPh amount (if pph_amount > 0)
             if ($pt->pph_amount > 0) {
                 $pphAccId = \App\Models\Account::where('code', '2-1100')
                     ->orWhere('name', 'like', '%PPh%')
@@ -263,7 +246,7 @@ class PostPurchaseTransaction
                 ]);
             }
 
-            // 7. Credit: Kas/Bank or Hutang Dagang (Net Grand Total)
+            // 5. Credit: Kas/Bank or Hutang Dagang (Net Grand Total)
             if ($pt->purchase_type === 'Kredit') {
                 $payAccId = $resolveAccount('2-1000', 'Hutang Dagang');
             } else {

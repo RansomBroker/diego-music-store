@@ -18,6 +18,13 @@
         <div class="text-sm text-gray-500 dark:text-gray-400">Biaya Kirim (Ongkir):</div>
         <div class="text-sm font-semibold text-right text-gray-800 dark:text-gray-200">
             Rp {{ number_format($otherCost, 0, ',', '.') }}
+            @if(($shippingBorneBy ?? 'self_direct') === 'third_party')
+                <span class="text-xs text-gray-400 block font-normal">(Pihak Ke-3 - Tidak Ditagih Supplier)</span>
+            @elseif(($shippingBorneBy ?? 'self_direct') === 'supplier')
+                <span class="text-xs text-green-500 block font-normal">(Ditanggung Supplier)</span>
+            @else
+                <span class="text-xs text-gray-400 block font-normal">(Ditagih Supplier)</span>
+            @endif
         </div>
 
         <div class="col-span-2 border-t border-gray-200 dark:border-gray-600 my-1"></div>

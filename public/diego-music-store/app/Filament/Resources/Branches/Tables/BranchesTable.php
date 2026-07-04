@@ -21,6 +21,11 @@ class BranchesTable
                     ->sortable()
                     ->label('Branch Name'),
 
+                TextColumn::make('store_name')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Store / Shop Name'),
+
                 TextColumn::make('phone')
                     ->searchable()
                     ->label('Phone'),

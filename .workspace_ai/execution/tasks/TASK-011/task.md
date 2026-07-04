@@ -7,12 +7,12 @@ Buat validasi sesi kasir aktif. Cegah kasir melakukan transaksi POS atau membuka
 - **Role**: Developer
 - **Epic**: EPIC-003 - Front Desk & POS Dasar
 - **Feature**: FEATURE-006 - Sesi Kasir Harian & Laci Kas (Daily Cash Session)
-- **Status**: Ready
+- **Status**: Completed
 
 ## Acceptance Criteria
-- [ ] Implementasikan pemeriksaan keaktifan sesi kasir (middleware atau page validation) sebelum menampilkan halaman POS.
-- [ ] Pengguna diarahkan ke halaman "Sesi Kasir" untuk membuka sesi kasir jika mencoba mengakses POS tanpa sesi aktif.
-- [ ] Menambahkan banner status sesi kasir di bagian atas panel dashboard jika memungkinkan (info/bar absensi kasir).
+- [x] Implementasikan pemeriksaan keaktifan sesi kasir (middleware atau page validation) sebelum menampilkan halaman POS.
+- [x] Pengguna diarahkan ke halaman "Sesi Kasir" untuk membuka sesi kasir jika mencoba mengakses POS tanpa sesi aktif.
+- [x] Menambahkan banner status sesi kasir di bagian atas panel dashboard jika memungkinkan (info/bar absensi kasir).
 
 ## Assignee
 - Developer

@@ -60,6 +60,12 @@ class CustomerForm
                             ->numeric()
                             ->default(0)
                             ->label('Poin Belanja'),
+
+                        \Filament\Forms\Components\Select::make('pricing_tier_id')
+                            ->relationship('pricingTier', 'name')
+                            ->label('Tingkat Harga Default')
+                            ->placeholder('Pilih tingkat harga...')
+                            ->nullable(),
                     ])
                     ->columnSpan(1),
             ]);

@@ -11,6 +11,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Placeholder;
+use Filament\Schemas\Components\Group;
 use App\Models\Supplier;
 use App\Models\ProductVariant;
 
@@ -88,7 +89,7 @@ class PurchaseOrderForm
 
                 Section::make('Pajak & Biaya Tambahan (Header)')
                     ->schema([
-                        Grid::make(4)
+                        Grid::make(3)
                             ->schema([
                                 Select::make('tax_mode')
                                     ->label('Mode PPN')
@@ -129,12 +130,44 @@ class PurchaseOrderForm
                                     ->default(0)
                                     ->prefix('Rp')
                                     ->reactive(),
+                            ]),
+                    ])
+                    ->columnSpanFull(),
+
+                Section::make('Informasi Pengiriman (Logistik)')
+                    ->schema([
+                        Grid::make(3)
+                            ->schema([
+                                Select::make('shipping_borne_by')
+                                    ->label('Pembebanan Ongkir')
+                                    ->options([
+                                        'self_direct' => 'Langsung (Ditagih Supplier)',
+                                        'third_party' => 'Pihak Ke-3 (Ekspedisi)',
+                                        'supplier' => 'Ditanggung Supplier (Free Ongkir)',
+                                    ])
+                                    ->default('self_direct')
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        if ($state === 'supplier') {
+                                            $set('other_cost', 0);
+                                            $set('shipping_carrier_name', null);
+                                        }
+                                    }),
+
+                                TextInput::make('shipping_carrier_name')
+                                    ->label('Nama Ekspedisi (Pihak Ke-3)')
+                                    ->placeholder('Misal: JNE, J&T, GoSend')
+                                    ->required(fn ($get) => $get('shipping_borne_by') === 'third_party')
+                                    ->visible(fn ($get) => $get('shipping_borne_by') === 'third_party'),
 
                                 TextInput::make('other_cost')
                                     ->label('Biaya Kirim (Ongkir)')
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('Rp')
+                                    ->required(fn ($get) => $get('shipping_borne_by') !== 'supplier')
+                                    ->visible(fn ($get) => $get('shipping_borne_by') !== 'supplier')
                                     ->reactive(),
                             ]),
                     ])
@@ -142,13 +175,21 @@ class PurchaseOrderForm
 
                 Section::make('Daftar Barang')
                     ->schema([
-                        Repeater::make('items')
-                            ->label('Daftar Barang PO')
-                            ->schema([
-                                Grid::make(6)
-                                    ->schema([
+                        Group::make([
+                            Placeholder::make('items_headers')
+                                ->hiddenLabel()
+                                ->content(fn () => view('backoffice.purchase-orders.items-table-header'))
+                                ->extraAttributes([
+                                    'style' => 'min-width: 920px;'
+                                ]),
+
+                            Repeater::make('items')
+                                ->hiddenLabel()
+                                ->schema([
+                                    Group::make([
                                         Select::make('product_variant_id')
-                                            ->label('Produk / Varian')
+                                            ->hiddenLabel()
+                                            ->placeholder('Pilih Produk / Varian')
                                             ->required()
                                             ->searchable()
                                             ->getSearchResultsUsing(function (string $search): array {
@@ -189,32 +230,35 @@ class PurchaseOrderForm
                                                         $set('price', $variant->cost_price ?? 0);
                                                     }
                                                 }
-                                            })
-                                            ->columnSpan(2),
+                                            }),
 
                                         TextInput::make('quantity')
-                                            ->label('Qty')
+                                            ->hiddenLabel()
+                                            ->placeholder('Qty')
                                             ->numeric()
                                             ->required()
                                             ->default(1)
                                             ->reactive(),
 
                                         TextInput::make('price')
-                                            ->label('Harga Beli')
+                                            ->hiddenLabel()
+                                            ->placeholder('Harga Beli')
                                             ->numeric()
                                             ->required()
                                             ->prefix('Rp')
                                             ->reactive(),
 
                                         TextInput::make('discount_amount')
-                                            ->label('Diskon Item')
+                                            ->hiddenLabel()
+                                            ->placeholder('Diskon Item')
                                             ->numeric()
                                             ->default(0)
                                             ->prefix('Rp')
                                             ->reactive(),
 
                                         TextInput::make('tax_rate')
-                                            ->label('Pajak PPN')
+                                            ->hiddenLabel()
+                                            ->placeholder('Pajak PPN')
                                             ->numeric()
                                             ->default(0)
                                             ->suffix('%')
@@ -223,7 +267,7 @@ class PurchaseOrderForm
                                             ->reactive(),
 
                                         Placeholder::make('item_subtotal')
-                                            ->label('Subtotal')
+                                            ->hiddenLabel()
                                             ->content(function ($get) {
                                                 $qty = intval($get('quantity') ?? 0);
                                                 $price = intval($get('price') ?? 0);
@@ -235,12 +279,22 @@ class PurchaseOrderForm
                                                 $subtotal = $subtotalBeforeTax + $taxAmount;
                                                 
                                                 return 'Rp ' . number_format($subtotal, 0, ',', '.');
-                                            })
-                                            ->columnSpan(1),
-                                    ]),
-                            ])
-                            ->minItems(1)
-                            ->columnSpanFull(),
+                                            }),
+                                    ])
+                                    ->columns(1)
+                                    ->extraAttributes([
+                                        'class' => 'po-items-grid'
+                                    ])
+                                ])
+                                ->minItems(1)
+                                ->extraAttributes([
+                                    'style' => 'min-width: 920px;'
+                                ]),
+                        ])
+                        ->extraAttributes([
+                            'class' => 'overflow-x-auto pb-4 po-items-table-container',
+                            'style' => 'width: 100%;'
+                        ]),
                     ])
                     ->columnSpanFull(),
 
@@ -271,13 +325,17 @@ class PurchaseOrderForm
                                 
                                 $discHeader = intval($get('discount_amount') ?? 0);
                                 $otherCost = intval($get('other_cost') ?? 0);
-                                $grandTotal = $totalAmount - $discHeader + $totalTax + $otherCost;
+                                $shippingBorneBy = $get('shipping_borne_by') ?? 'self_direct';
+                                
+                                $shippingCostInGrandTotal = ($shippingBorneBy === 'self_direct') ? $otherCost : 0;
+                                $grandTotal = $totalAmount - $discHeader + $totalTax + $shippingCostInGrandTotal;
                                 
                                 return view('backoffice.purchase-orders.summary-placeholder', [
                                     'totalAmount' => $totalAmount,
                                     'taxAmount' => $totalTax,
                                     'discountAmount' => $discHeader,
                                     'otherCost' => $otherCost,
+                                    'shippingBorneBy' => $shippingBorneBy,
                                     'grandTotal' => $grandTotal,
                                 ]);
                             })

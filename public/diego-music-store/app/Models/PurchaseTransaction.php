@@ -31,6 +31,8 @@ class PurchaseTransaction extends Model
         'pph_amount', // PPh
         'grand_total',
         'status', // draft, posted, cancelled
+        'shipping_borne_by',
+        'shipping_carrier_name',
         'posted_at',
         'journal_no',
         'created_by',

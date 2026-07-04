@@ -9,6 +9,9 @@ class CustomerSeeder extends Seeder
 {
     public function run(): void
     {
+        $tierRetail = \App\Models\PricingTier::where('name', 'like', '%retail%')->orWhere('name', 'like', '%umum%')->first();
+        $tierGrosir = \App\Models\PricingTier::where('name', 'like', '%grosir%')->orWhere('name', 'like', '%reseller%')->first();
+
         $customers = [
             [
                 'name' => 'Budi Setiawan',
@@ -18,6 +21,7 @@ class CustomerSeeder extends Seeder
                 'is_loyalty_member' => true,
                 'loyalty_points' => 120,
                 'deposit_balance' => 150000.00,
+                'pricing_tier_id' => $tierRetail?->id,
             ],
             [
                 'name' => 'Siti Rahmawati',
@@ -27,6 +31,7 @@ class CustomerSeeder extends Seeder
                 'is_loyalty_member' => true,
                 'loyalty_points' => 50,
                 'deposit_balance' => 0.00,
+                'pricing_tier_id' => $tierGrosir?->id,
             ],
             [
                 'name' => 'Hendry Wijaya',
@@ -36,6 +41,7 @@ class CustomerSeeder extends Seeder
                 'is_loyalty_member' => false,
                 'loyalty_points' => 0,
                 'deposit_balance' => 500000.00,
+                'pricing_tier_id' => $tierRetail?->id,
             ],
         ];
 

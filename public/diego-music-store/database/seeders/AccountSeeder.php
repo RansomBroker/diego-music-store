@@ -41,8 +41,20 @@ class AccountSeeder extends Seeder
                 'parent_code' => '1-0000',
             ],
             [
+                'code' => '1-1010',
+                'name' => 'Kas Kecil',
+                'classification' => 'asset',
+                'parent_code' => '1-0000',
+            ],
+            [
                 'code' => '1-1100',
                 'name' => 'Bank Utama',
+                'classification' => 'asset',
+                'parent_code' => '1-0000',
+            ],
+            [
+                'code' => '1-1110',
+                'name' => 'Bank BCA',
                 'classification' => 'asset',
                 'parent_code' => '1-0000',
             ],

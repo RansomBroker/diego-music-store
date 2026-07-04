@@ -34,6 +34,9 @@ class SuppliersTable
                 TextColumn::make('bank_name')
                     ->label('Bank'),
 
+                TextColumn::make('bank_account_number')
+                    ->label('No. Rekening'),
+
                 TextColumn::make('outstanding_debt')
                     ->money('idr')
                     ->sortable()

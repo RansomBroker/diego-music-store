@@ -28,6 +28,8 @@ class PurchaseOrder extends Model
         'tax_rate',
         'tax_amount',
         'grand_total',
+        'shipping_borne_by',
+        'shipping_carrier_name',
         'notes',
     ];
 

@@ -7,12 +7,12 @@ Buat tabel database `cash_sessions` untuk menampung data sesi kasir harian beser
 - **Role**: Developer
 - **Epic**: EPIC-003 - Front Desk & POS Dasar
 - **Feature**: FEATURE-006 - Sesi Kasir Harian & Laci Kas (Daily Cash Session)
-- **Status**: Ready
+- **Status**: Completed
 
 ## Acceptance Criteria
-- [ ] Migration untuk tabel `cash_sessions` berhasil dibuat dan dijalankan.
-- [ ] Kolom-kolom minimal di `cash_sessions`: `id`, `user_id`, `cabang_id`, `opened_at`, `closed_at`, `opening_cash` (modal awal), `expected_cash` (ekspektasi kas), `actual_cash` (fisik kas), `difference` (selisih), `status` (enum: open, closed), `closed_by_user_id`, `notes`.
-- [ ] Model `CashSession` memiliki relasi `belongsTo` ke `User` (kasir), `Branch` (cabang), dan `closedBy` (supervisor yang menutup/menyetujui selisih jika diperlukan).
+- [x] Migration untuk tabel `cash_sessions` berhasil dibuat dan dijalankan.
+- [x] Kolom-kolom minimal di `cash_sessions`: `id`, `user_id`, `cabang_id`, `opened_at`, `closed_at`, `opening_cash` (modal awal), `expected_cash` (ekspektasi kas), `actual_cash` (fisik kas), `difference` (selisih), `status` (enum: open, closed), `closed_by_user_id`, `notes`.
+- [x] Model `CashSession` memiliki relasi `belongsTo` ke `User` (kasir), `Branch` (cabang), dan `closedBy` (supervisor yang menutup/menyetujui selisih jika diperlukan).
 
 ## Assignee
 - Developer

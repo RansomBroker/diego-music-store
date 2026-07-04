@@ -67,6 +67,13 @@ class BackofficePanelProvider extends PanelProvider
                     ->collapsed(),
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->navigationItems([
+                \Filament\Navigation\NavigationItem::make('Point of Sale')
+                    ->url('/pos')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->group('Penjualan')
+                    ->sort(1),
+            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

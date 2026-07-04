@@ -78,14 +78,19 @@ class CreatePurchaseTransaction
             $shippingCost = intval($data['shipping_cost'] ?? 0);
             $otherCost = intval($data['other_cost'] ?? 0);
             $pphAmount = intval($data['pph_amount'] ?? 0); // PPh amount is passed or calculated
+            $shippingBorneBy = $data['shipping_borne_by'] ?? 'self_direct';
+            $shippingCarrierName = $data['shipping_carrier_name'] ?? null;
 
-            $grandTotal = $subtotal - $discount + $taxAmount + $shippingCost + $otherCost - $pphAmount;
+            $shippingCostInGrandTotal = ($shippingBorneBy === 'self_direct') ? $shippingCost : 0;
+            $grandTotal = $subtotal - $discount + $taxAmount + $shippingCostInGrandTotal + $otherCost - $pphAmount;
 
             $pt->update([
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'shipping_cost' => $shippingCost,
                 'other_cost' => $otherCost,
+                'shipping_borne_by' => $shippingBorneBy,
+                'shipping_carrier_name' => $shippingCarrierName,
                 'tax_amount' => $taxAmount,
                 'pph_amount' => $pphAmount,
                 'grand_total' => $grandTotal,

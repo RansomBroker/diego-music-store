@@ -16,6 +16,7 @@ class Customer extends Model
         'address',
         'date_of_birth',
         'customer_label_id',
+        'pricing_tier_id',
         'is_loyalty_member',
         'loyalty_points',
     ];
@@ -32,6 +33,14 @@ class Customer extends Model
     public function label()
     {
         return $this->belongsTo(CustomerLabel::class, 'customer_label_id');
+    }
+
+    /**
+     * Get the customer's pricing tier.
+     */
+    public function pricingTier()
+    {
+        return $this->belongsTo(PricingTier::class, 'pricing_tier_id');
     }
 
     protected static function booted()

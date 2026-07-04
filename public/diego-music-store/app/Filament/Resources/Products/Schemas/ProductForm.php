@@ -14,6 +14,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\Width;
 use Filament\Schemas\Schema;
@@ -50,7 +51,8 @@ class ProductForm
         foreach ($pricingTiers as $tier) {
             $variantTierFields[] = TextInput::make('tier_prices.' . $tier->id)
                 ->numeric()
-                ->label('Harga Tier: ' . $tier->name)
+                ->hiddenLabel()
+                ->placeholder($tier->name)
                 ->prefix('Rp')
                 ->readOnly($tier->price_follows_hpp);
         }
@@ -114,32 +116,42 @@ class ProductForm
                                     ->dehydrated(false),
 
                                 // If has_variants = true
-                                Repeater::make('variants')
-                                    ->visible(fn (Get $get): bool => (bool) $get('has_variants'))
-                                    ->schema([
-                                        Grid::make(3)
-                                            ->schema([
+                                Group::make([
+                                    Placeholder::make('variant_headers')
+                                        ->hiddenLabel()
+                                        ->content(fn () => view('backoffice.products.variant-table-header', [
+                                            'pricingTiers' => $pricingTiers,
+                                        ]))
+                                        ->extraAttributes([
+                                            'style' => 'min-width: ' . (990 + (130 * count($pricingTiers))) . 'px;'
+                                        ]),
+
+                                    Repeater::make('variants')
+                                        ->hiddenLabel()
+                                        ->schema([
+                                            Group::make([
                                                 TextInput::make('name')
                                                     ->required()
-                                                    ->label('Nama Varian (misal: Hitam, Natural)'),
+                                                    ->hiddenLabel()
+                                                    ->placeholder('Nama Varian'),
 
                                                 TextInput::make('sku')
                                                     ->unique(ProductVariant::class, 'sku', ignoreRecord: false, modifyRuleUsing: $skuUniqueRule)
                                                     ->default(fn () => ProductHelper::generateUniqueSku())
-                                                    ->label('SKU (Barcode/Kode Varian)'),
+                                                    ->hiddenLabel()
+                                                    ->placeholder('SKU'),
 
                                                 TextInput::make('barcode')
                                                     ->default(fn () => ProductHelper::generateUniqueBarcode())
-                                                    ->label('Barcode EAN/UPC'),
-                                            ]),
+                                                    ->hiddenLabel()
+                                                    ->placeholder('Barcode'),
 
-                                        Grid::make(4)
-                                            ->schema([
                                                 TextInput::make('price')
                                                     ->numeric()
                                                     ->required()
                                                     ->prefix('Rp')
-                                                    ->label('Harga Jual Dasar'),
+                                                    ->hiddenLabel()
+                                                    ->placeholder('Harga Jual'),
 
                                                 TextInput::make('cost_price')
                                                     ->numeric()
@@ -155,7 +167,8 @@ class ProductForm
                                                             }
                                                         }
                                                     })
-                                                    ->label('Harga Beli Dasar'),
+                                                    ->hiddenLabel()
+                                                    ->placeholder('Harga Beli'),
 
                                                 TextInput::make('estimated_shipping')
                                                     ->numeric()
@@ -163,21 +176,33 @@ class ProductForm
                                                     ->readOnly()
                                                     ->dehydrated(false)
                                                     ->default(0)
-                                                    ->label('Estimasi Ongkir per Unit'),
+                                                    ->hiddenLabel()
+                                                    ->placeholder('Ongkir'),
 
                                                 TextInput::make('hpp')
                                                     ->numeric()
                                                     ->prefix('Rp')
                                                     ->readOnly()
-                                                    ->label('HPP Awal setelah Ongkir'),
-                                            ]),
+                                                    ->hiddenLabel()
+                                                    ->placeholder('HPP'),
 
-                                        Section::make('Harga Tingkatan (Tier Prices) untuk Varian Ini')
-                                            ->description(count($pricingTiers) === 0 ? 'Belum ada tingkatan harga terdaftar. Silakan tambahkan tingkatan harga terlebih dahulu.' : null)
-                                            ->schema($variantTierFields),
-                                    ])
-                                    ->columns(1)
-                                    ->label('Daftar Varian Produk'),
+                                                ...$variantTierFields
+                                            ])
+                                            ->columns(1)
+                                            ->extraAttributes([
+                                                'class' => 'variant-grid'
+                                            ])
+                                        ])
+                                        ->columns(1)
+                                        ->extraAttributes([
+                                            'style' => 'min-width: ' . (990 + (130 * count($pricingTiers))) . 'px;'
+                                        ]),
+                                ])
+                                ->visible(fn (Get $get): bool => (bool) $get('has_variants'))
+                                ->extraAttributes([
+                                    'class' => 'overflow-x-auto pb-4 variant-table-container',
+                                    'style' => 'width: 100%;'
+                                ]),
 
                                 // If has_variants = false
                                 Grid::make(3)
@@ -306,33 +331,57 @@ class ProductForm
                                     ->schema($tierFields)
                                     ->collapsed(),
 
-                                Repeater::make('bundle_items')
-                                    ->schema([
-                                        Select::make('child_variant_id')
-                                            ->required()
-                                            ->options(function () {
-                                                return ProductVariant::whereHas('product', function ($q) {
-                                                    $q->whereIn('type', ['physical', 'service']);
-                                                })
-                                                ->get()
-                                                ->mapWithKeys(function ($v) {
-                                                    $name = $v->product->name . ($v->name ? ' (' . $v->name . ')' : '');
-                                                    return [$v->id => $name . ' [' . ($v->sku ?? 'No SKU') . ']'];
-                                                });
-                                            })
-                                            ->searchable()
-                                            ->preload()
-                                            ->label('Pilih Produk Fisik/Jasa'),
+                                Group::make([
+                                    Placeholder::make('bundle_headers')
+                                        ->hiddenLabel()
+                                        ->content(fn () => view('backoffice.products.bundle-table-header'))
+                                        ->extraAttributes([
+                                            'style' => 'min-width: 420px;'
+                                        ]),
 
-                                        TextInput::make('quantity')
-                                            ->numeric()
-                                            ->required()
-                                            ->default(1)
-                                            ->minValue(1)
-                                            ->label('Jumlah Qty'),
-                                    ])
-                                    ->columns(2)
-                                    ->label('Daftar Item dalam Paket Bundling ini'),
+                                    Repeater::make('bundle_items')
+                                        ->hiddenLabel()
+                                        ->schema([
+                                            Group::make([
+                                                Select::make('child_variant_id')
+                                                    ->required()
+                                                    ->options(function () {
+                                                        return ProductVariant::whereHas('product', function ($q) {
+                                                            $q->whereIn('type', ['physical', 'service']);
+                                                        })
+                                                        ->get()
+                                                        ->mapWithKeys(function ($v) {
+                                                            $name = $v->product->name . ($v->name ? ' (' . $v->name . ')' : '');
+                                                            return [$v->id => $name . ' [' . ($v->sku ?? 'No SKU') . ']'];
+                                                        });
+                                                    })
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->hiddenLabel()
+                                                    ->placeholder('Pilih Produk Fisik/Jasa'),
+
+                                                TextInput::make('quantity')
+                                                    ->numeric()
+                                                    ->required()
+                                                    ->default(1)
+                                                    ->minValue(1)
+                                                    ->hiddenLabel()
+                                                    ->placeholder('Qty'),
+                                            ])
+                                            ->columns(1)
+                                            ->extraAttributes([
+                                                'class' => 'bundle-grid'
+                                            ])
+                                        ])
+                                        ->columns(1)
+                                        ->extraAttributes([
+                                            'style' => 'min-width: 420px;'
+                                        ]),
+                                ])
+                                ->extraAttributes([
+                                    'class' => 'overflow-x-auto pb-4 bundle-table-container',
+                                    'style' => 'width: 100%;'
+                                ]),
                             ]),
                         Tab::make('Akuntansi')
                             ->schema([

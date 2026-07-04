@@ -56,12 +56,6 @@ class SupplierForm
                         TextInput::make('bank_account_name')
                             ->maxLength(255)
                             ->label('Atas Nama Rekening'),
-
-                        TextInput::make('outstanding_debt')
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->default(0.00)
-                            ->label('Saldo Hutang Berjalan'),
                     ])
                     ->columnSpan(1),
             ]);

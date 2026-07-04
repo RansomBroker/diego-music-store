@@ -199,4 +199,87 @@ class ProcurementActionsTest extends TestCase
         $this->assertNotNull($movement);
         $this->assertEquals(10, $movement->quantity);
     }
+
+    public function test_it_handles_different_shipping_borne_by_options_and_calculates_hpp_proportionately(): void
+    {
+        // Setup PO approved
+        $po = PurchaseOrder::create([
+            'supplier_id' => $this->supplier->id,
+            'po_number' => 'PO-SHIPPING-TEST',
+            'order_date' => '2026-06-28',
+            'status' => 'approved',
+            'total_amount' => 10000000,
+        ]);
+
+        $po->items()->create([
+            'product_variant_id' => $this->variant->id,
+            'quantity' => 10,
+            'price' => 1000000,
+        ]);
+
+        // Pre-fill initial branch stock and HPP
+        ProductBranchStock::create([
+            'product_variant_id' => $this->variant->id,
+            'branch_id' => $this->branch->id,
+            'stock' => 0,
+            'hpp' => 0,
+        ]);
+
+        $txData = [
+            'po_id' => $po->id,
+            'branch_id' => $this->branch->id,
+            'warehouse_id' => $this->branch->id,
+            'supplier_id' => $this->supplier->id,
+            'purchase_type' => 'Kredit',
+            'transaction_date' => '2026-06-28',
+            'shipping_cost' => 100000,
+            'shipping_borne_by' => 'third_party',
+            'shipping_carrier_name' => 'JNE',
+            'status' => 'draft',
+            'items' => [
+                [
+                    'product_variant_id' => $this->variant->id,
+                    'qty_po' => 10,
+                    'qty_received' => 10,
+                    'price' => 1000000,
+                    'discount' => 0,
+                    'tax_rate' => 0,
+                ]
+            ]
+        ];
+
+        $pt = app(CreatePurchaseTransaction::class)->execute($txData);
+
+        // Under third_party, grand_total should NOT include shipping_cost
+        $this->assertEquals(10000000, $pt->grand_total);
+        $this->assertEquals('third_party', $pt->shipping_borne_by);
+        $this->assertEquals('JNE', $pt->shipping_carrier_name);
+
+        // Post transaction to verify journal entry and HPP
+        app(PostPurchaseTransaction::class)->execute($pt);
+
+        $stockRecord = ProductBranchStock::where('product_variant_id', $this->variant->id)
+            ->where('branch_id', $this->branch->id)
+            ->first();
+
+        // New HPP should still include shipping cost (capitalized!)
+        // 10 units * 1M + 100k shipping = 10.1M total cost. HPP = 1.01M
+        $this->assertEquals(1010000, $stockRecord->hpp);
+
+        // Verify Journal Entry created
+        $journal = \App\Models\JournalEntry::where('reference_type', 'Purchase')
+            ->where('reference_id', $pt->id)
+            ->first();
+
+        $this->assertNotNull($journal);
+
+        // Credit to Hutang Dagang should be grand_total (10,000,000)
+        $payableItem = $journal->items()->where('account_id', \App\Models\Account::where('code', '2-1000')->first()->id)->first();
+        $this->assertEquals(10000000, $payableItem->credit);
+
+        // Credit to Hutang Biaya Kirim Belum Ditagih (2-1500) should be 100,000
+        $accruedShippingItem = $journal->items()->where('account_id', \App\Models\Account::where('code', '2-1500')->first()->id)->first();
+        $this->assertNotNull($accruedShippingItem);
+        $this->assertEquals(100000, $accruedShippingItem->credit);
+    }
 }
