@@ -43,7 +43,7 @@ jobs:
             CLEAN_REPO="${CLEAN_REPO#https://github.com/}"
             CLEAN_REPO="${CLEAN_REPO%.git}"
             REPO_URL="https://${{ secrets.GH_TOKEN }}@github.com/${CLEAN_REPO}.git"
-            LARAVEL_DIR="$TARGET_DIR/public/sim-smp-muhammadiyah-ptk"
+            LARAVEL_DIR="$TARGET_DIR/public/diego-music-store"
 
             echo "Checking directory..."
             if [ ! -d "$TARGET_DIR/.git" ]; then
