@@ -37,7 +37,10 @@ jobs:
               php "$HOME/composer.phar" "$@"
             }
 
-            TARGET_DIR="${{ secrets.DIR }}"
+            # Ensure target directory exists and resolve its absolute path
+            mkdir -p "${{ secrets.DIR }}"
+            TARGET_DIR=$(cd "${{ secrets.DIR }}" && pwd)
+
             RAW_REPO="${{ secrets.GH_REPOSITORY }}"
             CLEAN_REPO="${RAW_REPO#git@github.com:}"
             CLEAN_REPO="${CLEAN_REPO#https://github.com/}"
@@ -48,7 +51,6 @@ jobs:
             echo "Checking directory..."
             if [ ! -d "$TARGET_DIR/.git" ]; then
               echo "Repository not found. Setup first-time clone..."
-              mkdir -p "$TARGET_DIR"
               cd "$TARGET_DIR"
               git init
               git remote add origin "$REPO_URL"
