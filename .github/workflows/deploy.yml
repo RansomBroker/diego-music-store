@@ -1,0 +1,145 @@
+name: Deploy to Production via SSH Commands
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Production Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Execute Deployment Commands on Server
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: 45022
+          script: |
+            # Exit immediately if a command exits with a non-zero status
+            set -e
+
+            export RAYON_NUM_THREADS=1
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+            
+            # Load user profiles and common paths for non-interactive shells
+            export PATH="$HOME/.config/composer/vendor/bin:$HOME/.local/bin:$HOME/bin:/usr/local/bin:/usr/bin:$PATH"
+            [ -s "$HOME/.profile" ] && source "$HOME/.profile"
+            [ -s "$HOME/.bash_profile" ] && source "$HOME/.bash_profile"
+
+            # Define composer function since it is an alias on the server
+            composer() {
+              php "$HOME/composer.phar" "$@"
+            }
+
+            TARGET_DIR="${{ secrets.DIR }}"
+            RAW_REPO="${{ secrets.GH_REPOSITORY }}"
+            CLEAN_REPO="${RAW_REPO#git@github.com:}"
+            CLEAN_REPO="${CLEAN_REPO#https://github.com/}"
+            CLEAN_REPO="${CLEAN_REPO%.git}"
+            REPO_URL="https://${{ secrets.GH_TOKEN }}@github.com/${CLEAN_REPO}.git"
+            LARAVEL_DIR="$TARGET_DIR/public/sim-smp-muhammadiyah-ptk"
+
+            echo "Checking directory..."
+            if [ ! -d "$TARGET_DIR/.git" ]; then
+              echo "Repository not found. Setup first-time clone..."
+              mkdir -p "$TARGET_DIR"
+              cd "$TARGET_DIR"
+              git init
+              git remote add origin "$REPO_URL"
+              git fetch origin
+              git checkout -f main
+            else
+              echo "Repository found. Pulling latest changes..."
+              cd "$TARGET_DIR"
+              git remote set-url origin "$REPO_URL"
+              git pull origin main
+            fi
+
+            # Check and setup .env in the Laravel directory
+            if [ ! -f "$LARAVEL_DIR/.env" ]; then
+              echo "Creating .env from .env.example..."
+              cp "$LARAVEL_DIR/.env.example" "$LARAVEL_DIR/.env"
+            fi
+
+            # Check if APP_KEY is empty or not set in .env
+            APP_KEY_VAL=$(grep "^APP_KEY=" "$LARAVEL_DIR/.env" | cut -d'=' -f2-)
+            if [ -z "$APP_KEY_VAL" ]; then
+              echo "APP_KEY is empty or missing. Marking for key generation..."
+              NEEDS_KEY_GEN=true
+            else
+              echo "APP_KEY is already set."
+              NEEDS_KEY_GEN=false
+            fi
+
+            # Move to the Laravel subfolder for Laravel-specific operations
+            cd "$LARAVEL_DIR"
+
+            echo "Installing Composer dependencies..."
+            composer install --no-interaction --prefer-dist --optimize-autoloader
+
+            if [ "$NEEDS_KEY_GEN" = true ]; then
+              echo "Generating app key..."
+              php artisan key:generate --force
+            fi
+
+            echo "Installing Node.js LTS version..."
+            nvm install --lts
+            nvm use --lts
+
+            echo "Installing NPM dependencies..."
+            npm ci --legacy-peer-deps
+
+            echo "Building assets..."
+            npm run build
+
+            if [ "$NEEDS_KEY_GEN" = true ]; then
+              echo "====================================================================="
+              echo "⚠️  WARNING: FIRST-TIME SETUP DETECTED!"
+              echo " .env file was created and APP_KEY has been generated."
+              echo " Please configure your database credentials in:"
+              echo "   $LARAVEL_DIR/.env"
+              echo "====================================================================="
+              echo "Skipping database migrations and application optimization..."
+            else
+              echo "Running database migrations..."
+              php artisan migrate --force
+
+              echo "Optimizing application..."
+              php artisan optimize
+              php artisan config:clear
+              php artisan cache:clear
+              php artisan view:clear
+              php artisan route:clear
+            fi
+
+            echo "Creating storage link manually (shared hosting workaround)..."
+            cd public
+            if [ ! -L "storage" ] && [ ! -d "storage" ]; then
+              ln -s ../storage/app/public storage
+              echo "✓ Storage symlink created: public/storage -> storage/app/public"
+            else
+              echo "✓ Storage link already exists"
+            fi
+            cd ..
+
+            echo "Setting file permissions..."
+            chmod -R 775 storage bootstrap/cache
+
+            if [ "$NEEDS_KEY_GEN" = true ]; then
+              echo "====================================================================="
+              echo "⚠️  DEPLOYMENT COMPLETED WITH PENDING CONFIGURATION!"
+              echo " The project has been successfully cloned and set up."
+              echo " Please log in to your server and configure your database credentials"
+              echo " inside: $LARAVEL_DIR/.env"
+              echo " Once configured, run 'php artisan migrate' and 'php artisan optimize'"
+              echo " manually or trigger a new deployment to complete the setup."
+              echo "====================================================================="
+            else
+              echo "Deployment finished successfully!"
+            fi
