@@ -7,10 +7,6 @@ nginx/
 php/
 .dockerignore
 
-# Environment Files
-.env
-.env.*
-
 # Node & Composer (Root dependencies if any)
 node_modules/
 vendor/
