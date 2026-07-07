@@ -25,7 +25,7 @@ class JournalEntryStats extends BaseWidget
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
                 
-            Stat::make('Total Nilai Transaksi', 'Rp ' . number_format($totalPostedAmount, 0, ',', '.'))
+            Stat::make('Total Nilai Transaksi', \App\Helpers\FormatHelper::rupiah($totalPostedAmount))
                 ->description('Akumulasi nominal debit yang sudah ter-posting')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('info'),

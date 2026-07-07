@@ -306,7 +306,7 @@ class PurchaseTransactionForm
                                                 $taxAmount = (int) round($subtotalBeforeTax * ($taxRate / 100));
                                                 $subtotal = $subtotalBeforeTax + $taxAmount;
                                                 
-                                                return 'Rp ' . number_format($subtotal, 0, ',', '.');
+                                                return \App\Helpers\FormatHelper::rupiah($subtotal);
                                             })
                                             ->columnSpan(1),
                                     ]),

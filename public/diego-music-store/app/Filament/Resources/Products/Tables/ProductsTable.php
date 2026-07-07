@@ -64,12 +64,12 @@ class ProductsTable
                             $min = $variants->min('price');
                             $max = $variants->max('price');
                             if ($min === $max) {
-                                return 'Rp ' . number_format($min, 0, ',', '.');
+                                return \App\Helpers\FormatHelper::rupiah($min);
                             }
-                            return 'Rp ' . number_format($min, 0, ',', '.') . ' - Rp ' . number_format($max, 0, ',', '.');
+                            return \App\Helpers\FormatHelper::rupiah($min) . ' - ' . \App\Helpers\FormatHelper::rupiah($max);
                         }
                         $price = $variants->first()?->price ?? 0;
-                        return 'Rp ' . number_format($price, 0, ',', '.');
+                        return \App\Helpers\FormatHelper::rupiah($price);
                     })
                     ->label('Harga Jual Dasar'),
 
