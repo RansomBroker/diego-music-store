@@ -58,6 +58,7 @@ class CreatePOSSale
                     'unit_price' => $unitPrice,
                     'discount_amount' => $itemDiscount,
                     'total_price' => $itemTotal,
+                    'notes' => $item['notes'] ?? null,
                 ];
             }
 
@@ -93,6 +94,7 @@ class CreatePOSSale
                     'unit_price' => $pi['unit_price'],
                     'discount_amount' => $pi['discount_amount'],
                     'total_price' => $pi['total_price'],
+                    'notes' => $pi['notes'],
                 ]);
 
                 // Check and handle physical inventory deductions

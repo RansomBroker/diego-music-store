@@ -89,6 +89,7 @@ class POSActionsTest extends TestCase
                     'qty' => 2,
                     'price' => 2000000,
                     'discount_amount' => 10000, // item discount
+                    'notes' => 'Custom setup notes',
                 ]
             ]
         ];
@@ -102,9 +103,9 @@ class POSActionsTest extends TestCase
             'id' => $sale->id,
             'branch_id' => $branch->id,
             'customer_id' => $customer->id,
-            'subtotal' => 3980000, // (2,000,000 * 2) - 10,000 discount = 3,980,000
+            'subtotal' => 3990000, // (2,000,000 * 2) - 10,000 discount = 3,990,000
             'discount_amount' => 50000,
-            'grand_total' => 3930000, // 3,980,000 - 50,000 = 3,930,000
+            'grand_total' => 3940000, // 3,990,000 - 50,000 = 3,940,000
             'status' => 'completed',
         ]);
 
@@ -114,7 +115,8 @@ class POSActionsTest extends TestCase
             'quantity' => 2,
             'unit_price' => 2000000,
             'discount_amount' => 10000,
-            'total_price' => 3980000,
+            'total_price' => 3990000,
+            'notes' => 'Custom setup notes',
         ]);
 
         // Check stock depleted to 3 (5 - 2)
@@ -143,20 +145,20 @@ class POSActionsTest extends TestCase
         $this->assertEquals('posted', $journal->status);
 
         // Check Journal Items
-        // Debit Kas Utama = 3,930,000
+        // Debit Kas Utama = 3,940,000
         $this->assertDatabaseHas('journal_items', [
             'journal_entry_id' => $journal->id,
             'account_id' => Account::where('code', '1-1000')->first()->id,
-            'debit' => 3930000,
+            'debit' => 3940000,
             'credit' => 0,
         ]);
 
-        // Credit Pendapatan Penjualan = 3,930,000
+        // Credit Pendapatan Penjualan = 3,940,000
         $this->assertDatabaseHas('journal_items', [
             'journal_entry_id' => $journal->id,
             'account_id' => Account::where('code', '4-1000')->first()->id,
             'debit' => 0,
-            'credit' => 3930000,
+            'credit' => 3940000,
         ]);
 
         // Debit COGS = 2,500,000 (1,250,000 HPP * 2)

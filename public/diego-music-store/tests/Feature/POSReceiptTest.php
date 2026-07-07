@@ -56,7 +56,7 @@ class POSReceiptTest extends TestCase
 
         $response = $this->get(route('pos.receipt', $sale->id));
 
-        $response->assertStatus(403);
+        $response->assertRedirect(route('pos.login'));
     }
 
     public function test_authenticated_user_can_access_receipt_page(): void

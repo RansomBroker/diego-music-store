@@ -7,6 +7,7 @@ use App\Models\ProductVariant;
 use App\Models\Customer;
 use App\Models\Branch;
 use App\Actions\Sales\CreatePOSSale;
+use App\Actions\Customer\CreateCustomer;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 
@@ -22,6 +23,14 @@ class POS extends Component
     public $selectedCustomerId = null;
     public $selectedCustomerName = 'Umum / Walk-in';
     public $isLoyaltyMember = false;
+
+    // Create Customer Modal State
+    public $showCreateCustomerModal = false;
+    public $newCustomerName = '';
+    public $newCustomerPhone = '';
+    public $newCustomerEmail = '';
+    public $newCustomerPricingTierId = null;
+    public $newCustomerIsLoyaltyMember = false;
 
     // Payment state
     public $paymentMethod = 'cash';
@@ -97,10 +106,16 @@ class POS extends Component
 
     public function updatedSelectedPricingTierId($value)
     {
+        if ($value === 'custom') {
+            return;
+        }
+
         foreach ($this->cart as $variantId => $item) {
             $variant = ProductVariant::find($variantId);
             if ($variant) {
-                $this->cart[$variantId]['price'] = $variant->priceForTier($this->selectedPricingTierId);
+                $this->cart[$variantId]['pricing_tier_id'] = $value;
+                $this->cart[$variantId]['price'] = $variant->priceForTier($value);
+                $this->recalculateItemDiscountAmount($variantId);
             }
         }
     }
@@ -234,6 +249,52 @@ class POS extends Component
         $this->updatedSelectedPricingTierId($this->selectedPricingTierId);
     }
 
+    public function openCreateCustomerModal()
+    {
+        $this->newCustomerName = $this->customerSearch;
+        $this->newCustomerPhone = '';
+        $this->newCustomerEmail = '';
+        
+        $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
+            ->orWhere('name', 'like', '%umum%')
+            ->first() ?? \App\Models\PricingTier::first();
+        $this->newCustomerPricingTierId = $defaultTier ? $defaultTier->id : null;
+        $this->newCustomerIsLoyaltyMember = false;
+        
+        $this->showCreateCustomerModal = true;
+    }
+
+    public function createCustomer(CreateCustomer $createCustomerAction)
+    {
+        $this->validate([
+            'newCustomerName' => 'required|string|max:255',
+            'newCustomerPhone' => 'nullable|string|max:255',
+            'newCustomerEmail' => 'nullable|email|max:255',
+            'newCustomerPricingTierId' => 'nullable|exists:pricing_tiers,id',
+        ], [
+            'newCustomerName.required' => 'Nama pelanggan wajib diisi.',
+            'newCustomerEmail.email' => 'Format email tidak valid.',
+        ]);
+
+        $customer = $createCustomerAction->execute([
+            'name' => $this->newCustomerName,
+            'phone' => $this->newCustomerPhone,
+            'email' => $this->newCustomerEmail,
+            'pricing_tier_id' => $this->newCustomerPricingTierId,
+            'is_loyalty_member' => $this->newCustomerIsLoyaltyMember,
+            'loyalty_points' => 0,
+        ]);
+
+        Notification::make()
+            ->title('Pelanggan Berhasil Didaftarkan')
+            ->body("Pelanggan {$customer->name} telah berhasil disimpan dan terpilih.")
+            ->success()
+            ->send();
+
+        $this->selectCustomer($customer->id, $customer->name, $customer->is_loyalty_member);
+        $this->showCreateCustomerModal = false;
+    }
+
     public function setCategory($category)
     {
         $this->activeCategory = $category;
@@ -265,13 +326,24 @@ class POS extends Component
             if ($variant->name) {
                 $name .= ' (' . $variant->name . ')';
             }
+            $tierId = $this->selectedPricingTierId;
+            if ($tierId === 'custom') {
+                $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')->first() ?? \App\Models\PricingTier::first();
+                $tierId = $defaultTier ? $defaultTier->id : null;
+            }
+
             $this->cart[$variantId] = [
                 'variant_id' => $variant->id,
                 'name' => $name,
-                'price' => $variant->priceForTier($this->selectedPricingTierId),
+                'price' => $variant->priceForTier($tierId),
                 'qty' => 1,
                 'type' => $variant->product->type,
                 'emoji' => $variant->product->isService() ? '🛠️' : ($variant->product->isBundle() ? '📦' : '🎸'),
+                'notes' => '',
+                'discount_value' => 0,
+                'discount_type' => 'fixed',
+                'discount_amount' => 0,
+                'pricing_tier_id' => $tierId,
             ];
         }
     }
@@ -304,6 +376,61 @@ class POS extends Component
         }
 
         $this->cart[$variantId]['qty'] = $newQty;
+        $this->recalculateItemDiscountAmount($variantId);
+    }
+
+    public function updateItemNote($variantId, $note)
+    {
+        if (isset($this->cart[$variantId])) {
+            $this->cart[$variantId]['notes'] = $note;
+        }
+    }
+
+    public function updateItemPricingTier($variantId, $tierId)
+    {
+        if (isset($this->cart[$variantId])) {
+            $variant = ProductVariant::find($variantId);
+            if ($variant) {
+                $this->cart[$variantId]['pricing_tier_id'] = $tierId;
+                $this->cart[$variantId]['price'] = $variant->priceForTier($tierId);
+                $this->recalculateItemDiscountAmount($variantId);
+                $this->selectedPricingTierId = 'custom';
+            }
+        }
+    }
+
+    public function updateItemDiscountValue($variantId, $value)
+    {
+        if (isset($this->cart[$variantId])) {
+            $this->cart[$variantId]['discount_value'] = max(0, intval($value));
+            $this->recalculateItemDiscountAmount($variantId);
+        }
+    }
+
+    public function toggleItemDiscountType($variantId)
+    {
+        if (isset($this->cart[$variantId])) {
+            $currentType = $this->cart[$variantId]['discount_type'] ?? 'fixed';
+            $this->cart[$variantId]['discount_type'] = $currentType === 'fixed' ? 'percent' : 'fixed';
+            $this->recalculateItemDiscountAmount($variantId);
+        }
+    }
+
+    protected function recalculateItemDiscountAmount($variantId)
+    {
+        if (isset($this->cart[$variantId])) {
+            $item = &$this->cart[$variantId];
+            $value = intval($item['discount_value'] ?? 0);
+            $type = $item['discount_type'] ?? 'fixed';
+            $price = intval($item['price'] ?? 0);
+            $qty = intval($item['qty'] ?? 1);
+
+            if ($type === 'percent') {
+                $item['discount_amount'] = intval(($price * $qty) * ($value / 100));
+            } else {
+                $item['discount_amount'] = $value;
+            }
+        }
     }
 
     // Calculations helper
@@ -311,7 +438,8 @@ class POS extends Component
     {
         $sum = 0;
         foreach ($this->cart as $item) {
-            $sum += $item['price'] * $item['qty'];
+            $itemDiscount = intval($item['discount_amount'] ?? 0);
+            $sum += ($item['price'] * $item['qty']) - $itemDiscount;
         }
         return $sum;
     }
@@ -380,7 +508,8 @@ class POS extends Component
                     'variant_id' => $c['variant_id'],
                     'qty' => $c['qty'],
                     'price' => $c['price'],
-                    'discount_amount' => 0,
+                    'discount_amount' => $c['discount_amount'] ?? 0,
+                    'notes' => $c['notes'] ?? null,
                 ];
             }
 

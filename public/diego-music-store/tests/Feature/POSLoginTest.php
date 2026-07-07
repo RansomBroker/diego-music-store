@@ -56,6 +56,24 @@ class POSLoginTest extends TestCase
     }
 
     /** @test */
+    public function it_authenticates_user_with_correct_username_credentials()
+    {
+        $user = User::factory()->create([
+            'username' => 'cashier_diego',
+            'email' => 'cashier@diegomusic.com',
+            'password' => bcrypt('password123'),
+        ]);
+
+        Livewire::test('App\Livewire\POSLogin')
+            ->set('email', 'cashier_diego')
+            ->set('password', 'password123')
+            ->call('login')
+            ->assertRedirect('/pos');
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    /** @test */
     public function it_fails_authentication_with_wrong_password()
     {
         $user = User::factory()->create([

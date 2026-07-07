@@ -25,16 +25,16 @@
         <form wire:submit.prevent="login" class="space-y-6">
             <!-- Email Field -->
             <div>
-                <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Alamat Email</label>
+                <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Username atau Alamat Email</label>
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                         <i class="ph-bold ph-envelope text-lg"></i>
                     </span>
                     <input 
                         wire:model.defer="email" 
-                        type="email" 
+                        type="text" 
                         id="email" 
-                        placeholder="nama@diegomusic.com" 
+                        placeholder="Username atau email" 
                         class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-primary dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-primaryLight rounded-2xl outline-none transition-all text-sm font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400"
                         required
                     >

@@ -15,13 +15,12 @@ class POSLogin extends Component
     public $remember = false;
 
     protected $rules = [
-        'email' => 'required|email',
+        'email' => 'required|string',
         'password' => 'required|min:4',
     ];
 
     protected $messages = [
-        'email.required' => 'Email wajib diisi.',
-        'email.email' => 'Format email tidak valid.',
+        'email.required' => 'Username atau email wajib diisi.',
         'password.required' => 'Password wajib diisi.',
         'password.min' => 'Password minimal terdiri dari 4 karakter.',
     ];
@@ -45,7 +44,9 @@ class POSLogin extends Component
             return;
         }
 
-        if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+        $loginType = filter_var($this->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        if (Auth::attempt([$loginType => $this->email, 'password' => $this->password], $this->remember)) {
             RateLimiter::clear($throttleKey);
             session()->regenerate();
 

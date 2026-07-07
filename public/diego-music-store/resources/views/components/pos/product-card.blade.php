@@ -15,7 +15,7 @@
         $emoji = '🔌';
     }
 
-    $price = $selectedPricingTierId ? $variant->priceForTier($selectedPricingTierId) : $variant->price;
+    $price = ($selectedPricingTierId && is_numeric($selectedPricingTierId)) ? $variant->priceForTier((int)$selectedPricingTierId) : $variant->price;
 @endphp
 
 <div wire:click="addToCart({{ $variant->id }})" class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md hover:border-primaryLight dark:hover:border-slate-600 transition-all cursor-pointer group flex flex-col justify-between">

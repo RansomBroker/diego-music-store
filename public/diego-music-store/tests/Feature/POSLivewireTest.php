@@ -166,4 +166,66 @@ class POSLivewireTest extends TestCase
             ->assertSet('taxAmount', 0)
             ->assertSet('grandTotal', 2000000);
     }
+
+    /** @test */
+    public function it_calculates_item_discounts_supporting_both_fixed_and_percentage_types()
+    {
+        Livewire::test('App\Livewire\POS')
+            ->call('addToCart', $this->variant->id)
+            ->call('updateItemDiscountValue', $this->variant->id, 50000)
+            ->assertSet('cart.' . $this->variant->id . '.discount_amount', 50000)
+            ->assertSet('subtotal', 1950000)
+            ->call('updateItemDiscountValue', $this->variant->id, 10)
+            ->call('toggleItemDiscountType', $this->variant->id)
+            ->assertSet('cart.' . $this->variant->id . '.discount_amount', 200000)
+            ->assertSet('subtotal', 1800000)
+            ->call('updateQty', $this->variant->id, 1)
+            ->assertSet('cart.' . $this->variant->id . '.discount_amount', 400000)
+            ->assertSet('subtotal', 3600000);
+    }
+
+    /** @test */
+    public function it_updates_global_pricing_tier_when_item_tier_changes_and_vice_versa()
+    {
+        Livewire::test('App\Livewire\POS')
+            ->call('addToCart', $this->variant->id)
+            ->assertSet('selectedPricingTierId', $this->retailTier->id)
+            ->assertSet('cart.' . $this->variant->id . '.pricing_tier_id', $this->retailTier->id)
+            
+            // 1. Changing an item's pricing tier should set the global tier to 'custom'
+            ->call('updateItemPricingTier', $this->variant->id, $this->grosirTier->id)
+            ->assertSet('selectedPricingTierId', 'custom')
+            ->assertSet('cart.' . $this->variant->id . '.pricing_tier_id', $this->grosirTier->id)
+            ->assertSet('cart.' . $this->variant->id . '.price', 1800000)
+            
+            // 2. Setting the global pricing tier should sync all items in the cart
+            ->call('setPricingTier', $this->retailTier->id)
+            ->assertSet('selectedPricingTierId', $this->retailTier->id)
+            ->assertSet('cart.' . $this->variant->id . '.pricing_tier_id', $this->retailTier->id)
+            ->assertSet('cart.' . $this->variant->id . '.price', 2000000);
+    }
+
+    /** @test */
+    public function it_can_quickly_register_and_select_a_new_customer()
+    {
+        Livewire::test('App\Livewire\POS')
+            ->set('customerSearch', 'Joko Susilo')
+            ->call('openCreateCustomerModal')
+            ->assertSet('showCreateCustomerModal', true)
+            ->assertSet('newCustomerName', 'Joko Susilo')
+            ->set('newCustomerPhone', '0855667788')
+            ->set('newCustomerPricingTierId', $this->grosirTier->id)
+            ->set('newCustomerIsLoyaltyMember', true)
+            ->call('createCustomer')
+            ->assertSet('showCreateCustomerModal', false)
+            ->assertSet('selectedCustomerName', 'Joko Susilo')
+            ->assertSet('selectedPricingTierId', $this->grosirTier->id);
+
+        $this->assertDatabaseHas('customers', [
+            'name' => 'Joko Susilo',
+            'phone' => '0855667788',
+            'pricing_tier_id' => $this->grosirTier->id,
+            'is_loyalty_member' => true,
+        ]);
+    }
 }

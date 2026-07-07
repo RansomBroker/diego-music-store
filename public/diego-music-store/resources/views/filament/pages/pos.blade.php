@@ -53,4 +53,15 @@
         :grandTotal="$this->grandTotal"
         :amountPaid="$amountPaid"
     />
+
+    <!-- Create Customer Modal -->
+    <x-pos.create-customer-modal 
+        :showCreateCustomerModal="$showCreateCustomerModal"
+        :newCustomerName="$newCustomerName"
+        :newCustomerPhone="$newCustomerPhone"
+        :newCustomerEmail="$newCustomerEmail"
+        :newCustomerPricingTierId="$newCustomerPricingTierId"
+        :newCustomerIsLoyaltyMember="$newCustomerIsLoyaltyMember"
+        :pricingTiers="$pricingTiers"
+    />
 </div>
