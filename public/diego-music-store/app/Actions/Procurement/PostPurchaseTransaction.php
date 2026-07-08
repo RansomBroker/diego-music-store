@@ -56,9 +56,15 @@ class PostPurchaseTransaction
             $headerCostToAttribute = $shippingCostToAttribute + $pt->other_cost - $pt->discount;
 
             foreach ($details as $detail) {
-                if ($detail->qty_received <= 0) {
+                $totalQty = $detail->qty_received + ($detail->qty_bonus ?? 0);
+                if ($totalQty <= 0) {
                     continue;
                 }
+
+                // Fetch conversion factor for chosen unit
+                $unit = $detail->unit;
+                $conversionFactor = ($unit && $unit->base_unit_id) ? $unit->conversion_factor : 1;
+                $baseQtyReceived = $totalQty * $conversionFactor;
 
                 // Find or create branch stock record
                 $stock = ProductBranchStock::firstOrCreate(
@@ -84,14 +90,14 @@ class PostPurchaseTransaction
                 // Net cost for this line item (inclusive of tax & discount + attributed header cost)
                 $itemNetCost = $detail->subtotal + $attributedHeaderCost;
                 
-                // Unit cost for this transaction line
-                $unitCost = (int) round($itemNetCost / $detail->qty_received);
+                // Unit cost for this transaction line (converted to base unit cost)
+                $unitCost = (int) round($itemNetCost / $baseQtyReceived);
 
                 // Compute new weighted average HPP
-                $newStockQty = $oldStock + $detail->qty_received;
+                $newStockQty = $oldStock + $baseQtyReceived;
                 
                 if ($newStockQty > 0) {
-                    $newHpp = (int) round((($oldStock * $oldHpp) + ($detail->qty_received * $unitCost)) / $newStockQty);
+                    $newHpp = (int) round((($oldStock * $oldHpp) + ($baseQtyReceived * $unitCost)) / $newStockQty);
                 } else {
                     $newHpp = $unitCost;
                 }
@@ -102,12 +108,35 @@ class PostPurchaseTransaction
                     'hpp' => $newHpp,
                 ]);
 
+                // Update master cost price & pricing tiers if update_cost_price checkbox is checked
+                if ($detail->update_cost_price) {
+                    $detail->productVariant->update([
+                        'cost_price' => $detail->price,
+                        'hpp' => $detail->price,
+                    ]);
+
+                    $followingTiers = \App\Models\PricingTier::where('price_follows_hpp', true)->get();
+                    foreach ($followingTiers as $tier) {
+                        $tierPrice = \App\Models\ProductTierPrice::firstOrCreate([
+                            'product_variant_id' => $detail->product_variant_id,
+                            'pricing_tier_id' => $tier->id,
+                        ], [
+                            'price' => 0
+                        ]);
+                        $tierPrice->update([
+                            'price' => $detail->price,
+                        ]);
+                    }
+                }
+
                 // Create StockMovement IN record
                 \App\Models\StockMovement::create([
                     'product_variant_id' => $detail->product_variant_id,
                     'branch_id' => $destinationBranchId,
                     'type' => 'in',
-                    'quantity' => $detail->qty_received,
+                    'quantity' => $baseQtyReceived,
+                    'original_quantity' => $totalQty,
+                    'unit_id' => $detail->unit_id,
                     'unit_cost' => $unitCost,
                     'hpp' => $newHpp,
                     'reference_type' => 'Purchase',
@@ -134,18 +163,24 @@ class PostPurchaseTransaction
             if ($pt->po_id && ($po = $pt->purchaseOrder)) {
                 // Determine if PO is fully received.
                 // Sum all qty_received from POSTED transactions for this PO.
-                $receivedQuantities = PurchaseTransactionDetail::whereHas('purchaseTransaction', function ($query) use ($po) {
+                $receivedDetails = PurchaseTransactionDetail::whereHas('purchaseTransaction', function ($query) use ($po) {
                         $query->where('po_id', $po->id)->where('status', 'posted');
-                    })
-                    ->groupBy('product_variant_id')
-                    ->select('product_variant_id', DB::raw('SUM(qty_received) as total_received'))
-                    ->pluck('total_received', 'product_variant_id')
-                    ->toArray();
+                    })->get();
+
+                $receivedBaseQuantities = [];
+                foreach ($receivedDetails as $recDetail) {
+                    $cFactor = ($recDetail->unit && $recDetail->unit->base_unit_id) ? $recDetail->unit->conversion_factor : 1;
+                    $recBaseQty = $recDetail->qty_received * $cFactor;
+                    $receivedBaseQuantities[$recDetail->product_variant_id] = ($receivedBaseQuantities[$recDetail->product_variant_id] ?? 0) + $recBaseQty;
+                }
 
                 $isFullyReceived = true;
                 foreach ($po->items as $item) {
-                    $received = $receivedQuantities[$item->product_variant_id] ?? 0;
-                    if ($received < $item->quantity) {
+                    $itemCFactor = ($item->unit && $item->unit->base_unit_id) ? $item->unit->conversion_factor : 1;
+                    $poItemBaseQty = $item->quantity * $itemCFactor;
+                    
+                    $receivedBase = $receivedBaseQuantities[$item->product_variant_id] ?? 0;
+                    if ($receivedBase < $poItemBaseQty) {
                         $isFullyReceived = false;
                         break;
                     }

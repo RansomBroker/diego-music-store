@@ -18,19 +18,26 @@ class PurchaseTransactionDetail extends Model
         'unit_id',
         'price',
         'discount',
+        'discount_type',
+        'discount_value',
         'tax_rate',
         'tax_amount',
         'subtotal',
+        'update_cost_price',
+        'qty_bonus',
     ];
 
     protected $casts = [
         'qty_po' => 'integer',
         'qty_received' => 'integer',
+        'qty_bonus' => 'integer',
         'price' => 'integer',
         'discount' => 'integer',
+        'discount_value' => 'integer',
         'tax_rate' => 'integer',
         'tax_amount' => 'integer',
         'subtotal' => 'integer',
+        'update_cost_price' => 'boolean',
     ];
 
     public function purchaseTransaction(): BelongsTo

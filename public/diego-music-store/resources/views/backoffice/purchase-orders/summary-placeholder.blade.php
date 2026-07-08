@@ -1,5 +1,17 @@
 <div class="p-4 rounded-lg bg-gray-50 border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
     <div class="grid grid-cols-2 gap-4 max-w-md ml-auto">
+        <div class="text-sm text-gray-500 dark:text-gray-400">Total Qty (Satuan Pilihan):</div>
+        <div class="text-sm font-semibold text-right text-gray-800 dark:text-gray-200">
+            {{ $physicalQtyString }}
+        </div>
+
+        <div class="text-sm text-gray-500 dark:text-gray-400">Total Qty (Satuan Terkecil):</div>
+        <div class="text-sm font-semibold text-right text-gray-800 dark:text-gray-200">
+            {{ $smallestQtyString }}
+        </div>
+
+        <div class="col-span-2 border-t border-gray-200 dark:border-gray-600 my-1"></div>
+
         <div class="text-sm text-gray-500 dark:text-gray-400">Total Sebelum Pajak (Subtotal):</div>
         <div class="text-sm font-semibold text-right text-gray-800 dark:text-gray-200">
             Rp {{ number_format($totalAmount, 0, ',', '.') }}

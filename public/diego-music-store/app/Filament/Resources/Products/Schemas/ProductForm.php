@@ -87,7 +87,7 @@ class ProductForm
                                             ->label('Tipe Produk'),
 
                                         Select::make('unit_id')
-                                            ->relationship('unit', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true))
+                                            ->relationship('unit', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereNull('base_unit_id'))
                                             ->required()
                                             ->searchable()
                                             ->preload()
@@ -111,7 +111,7 @@ class ProductForm
                             ]),
 
                         Tab::make('Varian / Spesifikasi')
-                            ->visible(fn (Get $get): bool => $get('type') === 'physical')
+                            ->visible(fn ($get): bool => $get('type') === 'physical')
                             ->schema([
                                 Toggle::make('has_variants')
                                     ->label('Produk ini memiliki beberapa varian (warna, ukuran, dll.)')
@@ -162,7 +162,7 @@ class ProductForm
                                                     ->required()
                                                     ->prefix('Rp')
                                                     ->reactive()
-                                                    ->afterStateUpdated(function (Get $get, $set) use ($pricingTiers) {
+                                                    ->afterStateUpdated(function ($get, $set) use ($pricingTiers) {
                                                         $hpp = (int)$get('cost_price') + (int)$get('estimated_shipping');
                                                         $set('hpp', $hpp);
                                                         foreach ($pricingTiers as $tier) {
@@ -202,15 +202,17 @@ class ProductForm
                                             'style' => 'min-width: ' . (1210 + (140 * count($pricingTiers)) + 56) . 'px;'
                                         ]),
                                 ])
-                                ->visible(fn (Get $get): bool => (bool) $get('has_variants'))
+                                ->visible(fn ($get): bool => (bool) $get('has_variants'))
                                 ->extraAttributes([
                                     'class' => 'overflow-x-auto pb-4 variant-table-container',
-                                    'style' => 'width: 100%;'
+                                    'style' => 'width: 100%;',
+                                    'x-data' => '{}',
+                                    'x-on:scroll' => "\$el.querySelectorAll('[data-frozen-header]').forEach(function(el){ el.style.transform = 'translateX(' + \$el.scrollLeft + 'px)'; })",
                                 ]),
 
                                 // If has_variants = false
                                 Grid::make(3)
-                                    ->visible(fn (Get $get): bool => ! $get('has_variants'))
+                                    ->visible(fn ($get): bool => ! $get('has_variants'))
                                     ->schema([
                                         TextInput::make('sku')
                                             ->unique(ProductVariant::class, 'sku', ignoreRecord: false, modifyRuleUsing: $skuUniqueRule)
@@ -223,16 +225,16 @@ class ProductForm
 
                                         TextInput::make('price')
                                             ->numeric()
-                                            ->required(fn (Get $get): bool => ! $get('has_variants'))
+                                            ->required(fn ($get): bool => ! $get('has_variants'))
                                             ->prefix('Rp')
                                             ->label('Harga Jual Dasar'),
 
                                         TextInput::make('cost_price')
                                             ->numeric()
-                                            ->required(fn (Get $get): bool => ! $get('has_variants'))
+                                            ->required(fn ($get): bool => ! $get('has_variants'))
                                             ->prefix('Rp')
                                             ->reactive()
-                                            ->afterStateUpdated(function (Get $get, $set) use ($pricingTiers) {
+                                            ->afterStateUpdated(function ($get, $set) use ($pricingTiers) {
                                                 $hpp = (int)$get('cost_price') + (int)$get('estimated_shipping');
                                                 $set('hpp', $hpp);
                                                 foreach ($pricingTiers as $tier) {
@@ -265,11 +267,11 @@ class ProductForm
                                     Grid::make(3)
                                         ->schema($tierFields),
                                 ])
-                                ->visible(fn (Get $get): bool => ! $get('has_variants')),
+                                ->visible(fn ($get): bool => ! $get('has_variants')),
                             ]),
 
                         Tab::make('Detail Jasa')
-                            ->visible(fn (Get $get): bool => $get('type') === 'service')
+                            ->visible(fn ($get): bool => $get('type') === 'service')
                             ->schema([
                                 Grid::make(3)
                                     ->schema([
@@ -284,7 +286,7 @@ class ProductForm
 
                                         TextInput::make('price')
                                             ->numeric()
-                                            ->required(fn (Get $get): bool => $get('type') === 'service')
+                                            ->required(fn ($get): bool => $get('type') === 'service')
                                             ->prefix('Rp')
                                             ->label('Harga Jual Dasar'),
 
@@ -305,7 +307,7 @@ class ProductForm
                             ]),
 
                         Tab::make('Komponen Bundling')
-                            ->visible(fn (Get $get): bool => $get('type') === 'bundle')
+                            ->visible(fn ($get): bool => $get('type') === 'bundle')
                             ->schema([
                                 Grid::make(3)
                                     ->schema([
@@ -320,7 +322,7 @@ class ProductForm
 
                                         TextInput::make('price')
                                             ->numeric()
-                                            ->required(fn (Get $get): bool => $get('type') === 'bundle')
+                                            ->required(fn ($get): bool => $get('type') === 'bundle')
                                             ->prefix('Rp')
                                             ->label('Harga Jual Paket'),
 
@@ -387,7 +389,9 @@ class ProductForm
                                 ])
                                 ->extraAttributes([
                                     'class' => 'bundle-table-container',
-                                    'style' => 'width: 100%;'
+                                    'style' => 'width: 100%;',
+                                    'x-data' => '{}',
+                                    'x-on:scroll' => "\$el.querySelectorAll('[data-frozen-header]').forEach(function(el){ el.style.transform = 'translateX(' + \$el.scrollLeft + 'px)'; })",
                                 ]),
                             ]),
                         Tab::make('Akuntansi')

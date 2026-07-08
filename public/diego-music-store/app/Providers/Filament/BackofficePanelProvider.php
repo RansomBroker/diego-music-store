@@ -123,6 +123,8 @@ class BackofficePanelProvider extends PanelProvider
                     .dark .fi-sidebar-header {
                         border-bottom: 1px solid rgb(30, 41, 59) !important;
                     }
+
+
                 </style>
             '
             ),

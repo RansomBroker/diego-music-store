@@ -25,6 +25,8 @@ class PurchaseTransaction extends Model
         'due_date',
         'subtotal',
         'discount',
+        'discount_type',
+        'discount_value',
         'shipping_cost',
         'other_cost',
         'tax_amount', // PPN
@@ -36,6 +38,10 @@ class PurchaseTransaction extends Model
         'posted_at',
         'journal_no',
         'created_by',
+        'enable_tax',
+        'enable_item_discount',
+        'item_discount_type',
+        'tax_invoice_no',
     ];
 
     protected $casts = [
@@ -45,11 +51,14 @@ class PurchaseTransaction extends Model
         'posted_at' => 'datetime',
         'subtotal' => 'integer',
         'discount' => 'integer',
+        'discount_value' => 'integer',
         'shipping_cost' => 'integer',
         'other_cost' => 'integer',
         'tax_amount' => 'integer',
         'pph_amount' => 'integer',
         'grand_total' => 'integer',
+        'enable_tax' => 'boolean',
+        'enable_item_discount' => 'boolean',
     ];
 
     protected static function booted()

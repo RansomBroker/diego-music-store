@@ -37,6 +37,8 @@ class EditPurchaseTransaction extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $pt = $this->record;
+        $data['discount_type'] = $pt->discount_type ?? 'fixed';
+        $data['discount_value'] = $pt->discount_value ?? 0;
         $data['items'] = [];
         foreach ($pt->details as $item) {
             $data['items'][] = [
@@ -45,7 +47,8 @@ class EditPurchaseTransaction extends EditRecord
                 'qty_received' => $item->qty_received,
                 'unit_id' => $item->unit_id,
                 'price' => $item->price,
-                'discount' => $item->discount,
+                'discount_type' => $item->discount_type ?? 'fixed',
+                'discount_value' => $item->discount_value ?? 0,
                 'tax_rate' => $item->tax_rate,
             ];
         }

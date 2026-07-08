@@ -28,6 +28,15 @@ class UnitsTable
                     ->sortable()
                     ->label('Kode Satuan'),
 
+                TextColumn::make('baseUnit.name')
+                    ->label('Satuan Dasar')
+                    ->placeholder('-'),
+
+                TextColumn::make('conversion_factor')
+                    ->label('Faktor Konversi')
+                    ->alignCenter()
+                    ->formatStateUsing(fn ($state, $record) => $record->base_unit_id ? "1 {$record->code} = {$state} {$record->baseUnit?->code}" : '-'),
+
                 ToggleColumn::make('is_active')
                     ->label('Status Aktif'),
             ])

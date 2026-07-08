@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\PurchaseOrders\Pages;
 
-use App\Actions\PurchaseOrder\CreatePurchaseOrder as CreatePurchaseOrderAction;
+use App\Actions\Procurement\CreatePurchaseOrder as CreatePurchaseOrderAction;
 use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;

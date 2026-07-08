@@ -15,6 +15,8 @@ class StockMovement extends Model
         'branch_id',
         'type', // in, out
         'quantity',
+        'original_quantity',
+        'unit_id',
         'unit_cost',
         'hpp',
         'reference_type', // DO, Mutation, Opname, POS
@@ -23,6 +25,8 @@ class StockMovement extends Model
 
     protected $casts = [
         'quantity' => 'integer',
+        'original_quantity' => 'integer',
+        'unit_id' => 'integer',
         'unit_cost' => 'integer',
         'hpp' => 'integer',
         'reference_id' => 'integer',
@@ -36,6 +40,11 @@ class StockMovement extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     /**

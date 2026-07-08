@@ -10,10 +10,14 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Hidden;
+use Filament\Schemas\Components\Group;
 use App\Models\PurchaseOrder;
 use App\Models\ProductVariant;
 use App\Models\Unit;
 use App\Helpers\FormatHelper;
+use Filament\Forms\Get;
 
 class PurchaseTransactionForm
 {
@@ -35,7 +39,14 @@ class PurchaseTransactionForm
                                 DatePicker::make('transaction_date')
                                     ->label('Tanggal Transaksi')
                                     ->default(now())
-                                    ->required(),
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, $set, $get) {
+                                        $tempo = $get('tempo_days');
+                                        if ($tempo !== null && $state) {
+                                            $set('due_date', \Carbon\Carbon::parse($state)->addDays(intval($tempo))->format('Y-m-d'));
+                                        }
+                                    }),
 
                                 Select::make('po_id')
                                     ->label('Rujukan Purchase Order (PO)')
@@ -47,22 +58,44 @@ class PurchaseTransactionForm
                                     ->searchable()
                                     ->placeholder('Pilih PO jika ada')
                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set) {
+                                    ->afterStateUpdated(function ($state, $set, $get) {
                                         if ($state) {
                                             $po = PurchaseOrder::with('items.productVariant.product')->find($state);
                                             if ($po) {
                                                 $set('supplier_id', $po->supplier_id);
                                                 $set('branch_id', $po->branch_id);
+                                                $set('enable_tax', $po->enable_tax);
+                                                $set('tax_rate', $po->tax_rate);
+                                                $set('discount_type', $po->discount_type);
+                                                $set('discount_value', $po->discount_value);
+                                                $set('item_discount_type', $po->item_discount_type);
+                                                $set('shipping_borne_by', $po->shipping_borne_by);
+                                                $set('shipping_carrier_name', $po->shipping_carrier_name);
+                                                $set('shipping_cost', $po->other_cost);
                                                 
+                                                // Auto-populate purchase type, tempo, and due date
+                                                $poTerm = $po->payment_term;
+                                                if ($poTerm && preg_match('/(\d+)\s*Hari/i', $poTerm, $matches)) {
+                                                    $days = intval($matches[1]);
+                                                    $set('purchase_type', 'Kredit');
+                                                    $set('tempo_days', $days);
+                                                    $txDate = $get('transaction_date') ?? now()->format('Y-m-d');
+                                                    $set('due_date', \Carbon\Carbon::parse($txDate)->addDays($days)->format('Y-m-d'));
+                                                } else {
+                                                    $set('purchase_type', 'Tunai');
+                                                    $set('tempo_days', null);
+                                                    $set('due_date', null);
+                                                }
+
                                                 $items = [];
                                                 foreach ($po->items as $item) {
                                                     $items[] = [
                                                         'product_variant_id' => $item->product_variant_id,
                                                         'qty_po' => $item->quantity,
                                                         'qty_received' => $item->quantity, // default to full PO qty
-                                                        'unit_id' => $item->productVariant->product->unit_id,
+                                                        'unit_id' => $item->unit_id ?? $item->productVariant->product->unit_id,
                                                         'price' => $item->price,
-                                                        'discount' => $item->discount_amount,
+                                                        'discount_value' => $item->discount_value,
                                                         'tax_rate' => $item->tax_rate,
                                                     ];
                                                 }
@@ -100,7 +133,13 @@ class PurchaseTransactionForm
                                     ])
                                     ->default('Tunai')
                                     ->required()
-                                    ->reactive(),
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, $set) {
+                                        if ($state === 'Tunai') {
+                                            $set('tempo_days', null);
+                                            $set('due_date', null);
+                                        }
+                                    }),
 
                                 TextInput::make('invoice_number')
                                     ->label('No. Invoice Supplier'),
@@ -108,13 +147,47 @@ class PurchaseTransactionForm
                                 TextInput::make('delivery_note_number')
                                     ->label('No. Surat Jalan'),
 
+                                TextInput::make('tax_invoice_no')
+                                    ->label('No. Faktur Pajak'),
+
                                 DatePicker::make('invoice_date')
                                     ->label('Tanggal Invoice'),
 
-                                DatePicker::make('due_date')
-                                    ->label('Jatuh Tempo')
+                                TextInput::make('tempo_days')
+                                    ->label('Durasi Jatuh Tempo')
+                                    ->numeric()
+                                    ->suffix('Hari')
                                     ->visible(fn ($get) => $get('purchase_type') === 'Kredit')
-                                    ->required(fn ($get) => $get('purchase_type') === 'Kredit'),
+                                    ->required(fn ($get) => $get('purchase_type') === 'Kredit')
+                                    ->reactive()
+                                    ->dehydrated(false)
+                                    ->afterStateHydrated(function ($component, $state, $get, $set) {
+                                        $due = $get('due_date');
+                                        $tx = $get('transaction_date');
+                                        if ($due && $tx) {
+                                            $diff = \Carbon\Carbon::parse($tx)->diffInDays(\Carbon\Carbon::parse($due), false);
+                                            $set('tempo_days', $diff > 0 ? $diff : 0);
+                                        }
+                                    })
+                                    ->afterStateUpdated(function ($state, $set, $get) {
+                                        $txDate = $get('transaction_date');
+                                        if ($txDate && $state !== null) {
+                                            $set('due_date', \Carbon\Carbon::parse($txDate)->addDays(intval($state))->format('Y-m-d'));
+                                        }
+                                    }),
+
+                                DatePicker::make('due_date')
+                                    ->label('Tanggal Jatuh Tempo')
+                                    ->visible(fn ($get) => $get('purchase_type') === 'Kredit')
+                                    ->required(fn ($get) => $get('purchase_type') === 'Kredit')
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, $set, $get) {
+                                        $txDate = $get('transaction_date');
+                                        if ($txDate && $state) {
+                                            $diff = \Carbon\Carbon::parse($txDate)->diffInDays(\Carbon\Carbon::parse($state), false);
+                                            $set('tempo_days', $diff > 0 ? $diff : 0);
+                                        }
+                                    }),
 
                                 Select::make('status')
                                     ->label('Status')
@@ -126,19 +199,67 @@ class PurchaseTransactionForm
                                     ->default('draft')
                                     ->disabled()
                                     ->dehydrated(),
+
+                                Toggle::make('enable_tax')
+                                    ->label('Aktifkan Pajak')
+                                    ->inline(false)
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                                        if (!$state) {
+                                            $set('discount', 0);
+                                            $set('other_cost', 0);
+                                            $set('pph_amount', 0);
+                                            
+                                            // Reset tax_rate on all items in repeater
+                                            $items = $get('items') ?? [];
+                                            foreach ($items as $key => $item) {
+                                                $set("items.{$key}.tax_rate", 0);
+                                            }
+                                        }
+                                    }),
+
+                                Select::make('item_discount_type')
+                                    ->label('Tipe Diskon Item')
+                                    ->options([
+                                        'fixed' => 'Nominal (Rp)',
+                                        'percent' => 'Persentase (%)',
+                                    ])
+                                    ->default('fixed')
+                                    ->selectablePlaceholder(false)
+                                    ->live(),
                             ]),
                     ])
                     ->columnSpanFull(),
 
-                Section::make('Biaya & Potongan Tambahan')
+                Section::make('Pajak & Diskon Global (Header)')
                     ->schema([
+                        Hidden::make('tax_mode')->default('GLOBAL'),
                         Grid::make(3)
                             ->schema([
-                                TextInput::make('discount')
+                                Select::make('discount_type')
+                                    ->label('Tipe Diskon Global')
+                                    ->options([
+                                        'fixed' => 'Nominal (Rp)',
+                                        'percent' => 'Persentase (%)',
+                                    ])
+                                    ->default('fixed')
+                                    ->selectablePlaceholder(false)
+                                    ->live(),
+
+                                TextInput::make('discount_value')
                                     ->label('Diskon Global')
                                     ->numeric()
                                     ->default(0)
-                                    ->prefix('Rp')
+                                    ->prefix(fn ($get) => $get('discount_type') === 'percent' ? null : 'Rp')
+                                    ->suffix(fn ($get) => $get('discount_type') === 'percent' ? '%' : null)
+                                    ->reactive(),
+
+                                TextInput::make('tax_rate')
+                                    ->label('PPN Global (%)')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->suffix('%')
+                                    ->visible(fn ($get) => $get('enable_tax'))
                                     ->reactive(),
 
                                 TextInput::make('other_cost')
@@ -146,6 +267,7 @@ class PurchaseTransactionForm
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('Rp')
+                                    ->visible(fn ($get) => $get('enable_tax'))
                                     ->reactive(),
 
                                 TextInput::make('pph_amount')
@@ -153,6 +275,7 @@ class PurchaseTransactionForm
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('Rp')
+                                    ->visible(fn ($get) => $get('enable_tax'))
                                     ->reactive(),
                             ]),
                     ])
@@ -197,15 +320,25 @@ class PurchaseTransactionForm
                     ])
                     ->columnSpanFull(),
 
-                Section::make('Daftar Barang Transaksi')
+                 Section::make('Daftar Barang Transaksi')
                     ->schema([
-                        Repeater::make('items')
-                            ->label('Item Barang')
-                            ->schema([
-                                Grid::make(8)
-                                    ->schema([
+
+                        Group::make([
+                            Placeholder::make('items_headers')
+                                ->hiddenLabel()
+                                ->content(fn () => view('backoffice.purchase-transactions.items-table-header'))
+                                ->extraAttributes([
+                                    'style' => 'min-width: 1800px;'
+                                ]),
+
+                            Repeater::make('items')
+                                ->hiddenLabel()
+                                ->reorderable(false)
+                                ->schema([
+                                    Group::make([
                                         Select::make('product_variant_id')
-                                            ->label('Produk / Varian')
+                                            ->hiddenLabel()
+                                            ->placeholder('Pilih Produk / Varian')
                                             ->required()
                                             ->searchable()
                                             ->getSearchResultsUsing(function (string $search): array {
@@ -219,7 +352,7 @@ class PurchaseTransactionForm
                                                     ->get()
                                                     ->mapWithKeys(fn ($v) => [
                                                         $v->id => "[{$v->sku}] {$v->product_name}" . ($v->variant_name ? " - {$v->variant_name}" : "")
-                                                    ])
+                                                     ])
                                                     ->toArray();
                                             })
                                             ->getOptionLabelUsing(fn ($value): ?string => 
@@ -238,83 +371,229 @@ class PurchaseTransactionForm
                                                     ])
                                                     ->toArray();
                                             })
-                                            ->reactive()
-                                            ->afterStateUpdated(function ($state, callable $set) {
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, callable $set, $get) {
                                                 if ($state) {
                                                     $variant = ProductVariant::find($state);
                                                     if ($variant) {
                                                         $set('price', $variant->cost_price ?? 0);
-                                                        $set('unit_id', $variant->product->unit_id);
+                                                        $unitId = $variant->product?->unit_id;
+                                                        $set('unit_id', $unitId);
+
+                                                        $qty = floatval($get('qty_received') ?? 0) + floatval($get('qty_bonus') ?? 0);
+                                                        if ($unitId) {
+                                                            $unit = Unit::find($unitId);
+                                                            if ($unit) {
+                                                                $factor = $unit->conversion_factor ?? 1;
+                                                                $set('qty_base', round($qty * $factor, 2));
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }),
+
+                                        Select::make('unit_id')
+                                            ->hiddenLabel()
+                                            ->placeholder('Satuan')
+                                            ->required()
+                                            ->options(function ($get) {
+                                                $variantId = $get('product_variant_id');
+                                                if (!$variantId) {
+                                                    return [];
+                                                }
+                                                $variant = ProductVariant::find($variantId);
+                                                if (!$variant || !$variant->product) {
+                                                    return [];
+                                                }
+                                                $productUnit = $variant->product->unit;
+                                                if (!$productUnit) {
+                                                    return [];
+                                                }
+                                                
+                                                $baseUnitId = $productUnit->base_unit_id ?: $productUnit->id;
+                                                
+                                                $units = Unit::query()
+                                                    ->where(function ($query) use ($baseUnitId) {
+                                                        $query->where('id', $baseUnitId)
+                                                              ->orWhere('base_unit_id', $baseUnitId);
+                                                    })
+                                                    ->where('is_active', true)
+                                                    ->get();
+                                                    
+                                                return $units->mapWithKeys(function ($unit) {
+                                                    $label = $unit->name;
+                                                    if ($unit->base_unit_id) {
+                                                        $label .= " (isi {$unit->conversion_factor})";
+                                                    }
+                                                    return [$unit->id => $label];
+                                                })->toArray();
+                                            })
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, $get, $set) {
+                                                $qty = floatval($get('qty_received') ?? 0) + floatval($get('qty_bonus') ?? 0);
+                                                if ($state && $qty) {
+                                                    $unit = Unit::find($state);
+                                                    if ($unit) {
+                                                        $factor = $unit->conversion_factor ?? 1;
+                                                        $set('qty_base', round($qty * $factor, 2));
                                                     }
                                                 }
                                             })
-                                            ->columnSpan(2),
+                                            ->dehydrated(),
 
                                         TextInput::make('qty_po')
-                                            ->label('Qty PO')
+                                            ->hiddenLabel()
+                                            ->placeholder('Qty PO')
                                             ->numeric()
                                             ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(1),
+                                            ->dehydrated(),
 
                                         TextInput::make('qty_received')
-                                            ->label('Qty Diterima')
+                                            ->hiddenLabel()
+                                            ->placeholder('Qty Terima')
                                             ->numeric()
                                             ->required()
                                             ->default(1)
-                                            ->reactive()
-                                            ->columnSpan(1),
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, $get, $set) {
+                                                $unitId = $get('unit_id');
+                                                if ($state && $unitId) {
+                                                    $unit = Unit::find($unitId);
+                                                    if ($unit) {
+                                                        $factor = $unit->conversion_factor ?? 1;
+                                                        $calculatedBase = intval(round((intval($state ?? 0) + intval($get('qty_bonus') ?? 0)) * $factor));
+                                                        if (intval($get('qty_base')) !== $calculatedBase) {
+                                                            $set('qty_base', $calculatedBase);
+                                                        }
+                                                    }
+                                                }
+                                            }),
 
-                                        Select::make('unit_id')
-                                            ->label('Satuan')
-                                            ->options(Unit::pluck('name', 'id')->toArray())
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(1),
+                                         TextInput::make('qty_bonus')
+                                             ->hiddenLabel()
+                                             ->placeholder('Qty Bonus')
+                                             ->numeric()
+                                             ->default(0)
+                                             ->live()
+                                             ->afterStateUpdated(function ($state, $get, $set) {
+                                                 $unitId = $get('unit_id');
+                                                 if ($unitId) {
+                                                     $unit = Unit::find($unitId);
+                                                     if ($unit) {
+                                                         $factor = $unit->conversion_factor ?? 1;
+                                                         $totalQty = intval($get('qty_received') ?? 0) + intval($state ?? 0);
+                                                         $calculatedBase = intval(round($totalQty * $factor));
+                                                         if (intval($get('qty_base')) !== $calculatedBase) {
+                                                             $set('qty_base', $calculatedBase);
+                                                         }
+                                                     }
+                                                 }
+                                             }),
+
+                                        TextInput::make('qty_base')
+                                            ->hiddenLabel()
+                                            ->placeholder('Qty Terkecil')
+                                            ->numeric()
+                                            ->live()
+                                            ->suffix(function ($get) {
+                                                $unitId = $get('unit_id');
+                                                if ($unitId) {
+                                                    $unit = Unit::find($unitId);
+                                                    return $unit?->baseUnit?->code ?: $unit?->code;
+                                                }
+                                                return null;
+                                            })
+                                            ->afterStateUpdated(function ($state, $get, $set) {
+                                                $unitId = $get('unit_id');
+                                                if ($state && $unitId) {
+                                                    $unit = Unit::find($unitId);
+                                                    if ($unit) {
+                                                        $factor = $unit->conversion_factor ?? 1;
+                                                        $calculatedQty = intval(ceil($state / $factor));
+                                                        if (intval($get('qty_received')) !== $calculatedQty) {
+                                                            $set('qty_received', $calculatedQty);
+                                                        }
+                                                    }
+                                                }
+                                            })
+                                            ->afterStateHydrated(function ($set, $get) {
+                                                $qty = floatval($get('qty_received') ?? 0) + floatval($get('qty_bonus') ?? 0);
+                                                $unitId = $get('unit_id');
+                                                if ($qty > 0 && $unitId) {
+                                                    $unit = Unit::find($unitId);
+                                                    if ($unit) {
+                                                        $factor = $unit->conversion_factor ?? 1;
+                                                        $set('qty_base', intval(round($qty * $factor)));
+                                                    }
+                                                }
+                                            }),
 
                                         TextInput::make('price')
-                                            ->label('Harga Beli')
+                                            ->hiddenLabel()
+                                            ->placeholder('Harga Beli')
                                             ->numeric()
                                             ->required()
                                             ->prefix('Rp')
                                             ->reactive()
-                                            ->columnSpan(1),
+                                            ->readOnly(fn ($get) => !$get('update_cost_price'))
+                                            ->suffixAction(
+                                                \Filament\Actions\Action::make('view_pricing_tiers')
+                                                    ->icon('heroicon-m-information-circle')
+                                                    ->color('info')
+                                                    ->tooltip('Lihat Perbandingan Tiers Harga')
+                                                    ->modalHeading('Detail Perbandingan & Pricing Tiers')
+                                                    ->modalSubmitAction(false)
+                                                    ->modalCancelActionLabel('Tutup')
+                                                    ->modalContent(fn ($get) => view('backoffice.purchase-transactions.pricing-tiers-comparison', [
+                                                        'variantId' => $get('product_variant_id'),
+                                                        'newPrice' => intval($get('price') ?? 0),
+                                                    ]))
+                                            ),
 
-                                        TextInput::make('discount')
-                                            ->label('Diskon Item')
+                                        Toggle::make('update_cost_price')
+                                             ->hiddenLabel()
+                                             ->default(false)
+                                             ->live(),
+
+                                        TextInput::make('discount_value')
+                                            ->hiddenLabel()
+                                            ->placeholder('0')
                                             ->numeric()
                                             ->default(0)
-                                            ->prefix('Rp')
-                                            ->reactive()
-                                            ->columnSpan(1),
-
-                                        TextInput::make('tax_rate')
-                                            ->label('PPN (%)')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->suffix('%')
-                                            ->reactive()
-                                            ->columnSpan(1),
+                                            ->prefix(fn ($get) => $get('../../item_discount_type') === 'percent' ? null : 'Rp')
+                                            ->suffix(fn ($get) => $get('../../item_discount_type') === 'percent' ? '%' : null)
+                                            ->reactive(),
 
                                         Placeholder::make('item_subtotal')
-                                            ->label('Subtotal')
+                                            ->hiddenLabel()
                                             ->content(function ($get) {
                                                 $qty = intval($get('qty_received') ?? 0);
                                                 $price = intval($get('price') ?? 0);
-                                                $disc = intval($get('discount') ?? 0);
-                                                $taxRate = intval($get('tax_rate') ?? 0);
+                                                $discType = $get('../../item_discount_type') ?? 'fixed';
+                                                $discVal = intval($get('discount_value') ?? 0);
+                                                $disc = $discType === 'percent' ? (int) round(($qty * $price) * ($discVal / 100)) : $discVal;
                                                 
-                                                $subtotalBeforeTax = ($qty * $price) - $disc;
-                                                $taxAmount = (int) round($subtotalBeforeTax * ($taxRate / 100));
-                                                $subtotal = $subtotalBeforeTax + $taxAmount;
+                                                $subtotal = ($qty * $price) - $disc;
                                                 
                                                 return FormatHelper::rupiah($subtotal);
-                                            })
-                                            ->columnSpan(1),
-                                    ]),
-                            ])
-                            ->minItems(1)
-                            ->columnSpanFull(),
+                                            }),
+                                    ])
+                                    ->columns(1)
+                                    ->extraAttributes([
+                                        'class' => 'pt-items-grid'
+                                    ])
+                                ])
+                                ->minItems(1)
+                                ->extraAttributes([
+                                    'style' => 'min-width: 1800px;'
+                                ]),
+                        ])
+                        ->extraAttributes([
+                            'class' => 'overflow-x-auto pb-4 pt-items-table-container',
+                            'style' => 'width: 100%;',
+                            'x-data' => '{}',
+                            'x-on:scroll' => "\$el.querySelectorAll('[data-frozen-header]').forEach(function(el){ el.style.transform = 'translateX(' + \$el.scrollLeft + 'px)'; })",
+                        ]),
                     ])
                     ->columnSpanFull(),
 
@@ -324,23 +603,44 @@ class PurchaseTransactionForm
                             ->label('')
                             ->content(function ($get) {
                                 $items = $get('items') ?? [];
+                                $globalTaxRate = intval($get('tax_rate') ?? 0);
                                 $subtotal = 0;
                                 $taxAmount = 0;
+                                $uomTotals = [];
+                                $baseUnitTotals = [];
                                 
                                 foreach ($items as $item) {
                                     $qty = intval($item['qty_received'] ?? 0);
                                     $price = intval($item['price'] ?? 0);
-                                    $disc = intval($item['discount'] ?? 0);
-                                    $taxRate = intval($item['tax_rate'] ?? 0);
+                                    $itemDiscType = $get('item_discount_type') ?? 'fixed';
+                                    $itemDiscVal = intval($item['discount_value'] ?? 0);
+                                    $disc = $itemDiscType === 'percent' ? (int) round(($qty * $price) * ($itemDiscVal / 100)) : $itemDiscVal;
                                     
                                     $subtotalBeforeTax = ($qty * $price) - $disc;
-                                    $itemTaxAmount = (int) round($subtotalBeforeTax * ($taxRate / 100));
+                                    $itemTaxAmount = (int) round($subtotalBeforeTax * ($globalTaxRate / 100));
                                     
                                     $subtotal += $subtotalBeforeTax;
                                     $taxAmount += $itemTaxAmount;
+
+                                    $unitId = $item['unit_id'] ?? null;
+                                    if ($qty > 0 && $unitId) {
+                                        $unit = Unit::find($unitId);
+                                        if ($unit) {
+                                            $uomTotals[$unit->name] = ($uomTotals[$unit->name] ?? 0) + $qty;
+                                            
+                                            $baseUnit = $unit->baseUnit ?: $unit;
+                                            $convertedQty = $qty * ($unit->conversion_factor ?? 1);
+                                            $baseUnitTotals[$baseUnit->code] = ($baseUnitTotals[$baseUnit->code] ?? 0) + $convertedQty;
+                                        }
+                                    }
                                 }
                                 
-                                $discount = intval($get('discount') ?? 0);
+                                $physicalQtyString = collect($uomTotals)->map(fn($q, $u) => "{$q} {$u}")->implode(', ') ?: '-';
+                                $smallestQtyString = collect($baseUnitTotals)->map(fn($q, $c) => "{$q} {$c}")->implode(', ') ?: '-';
+                                
+                                $discHeaderType = $get('discount_type') ?? 'fixed';
+                                $discHeaderVal = intval($get('discount_value') ?? 0);
+                                $discount = $discHeaderType === 'percent' ? (int) round($subtotal * ($discHeaderVal / 100)) : $discHeaderVal;
                                 $shippingCost = intval($get('shipping_cost') ?? 0);
                                 $otherCost = intval($get('other_cost') ?? 0);
                                 $pphAmount = intval($get('pph_amount') ?? 0);
@@ -358,6 +658,8 @@ class PurchaseTransactionForm
                                     'pphAmount' => $pphAmount,
                                     'shippingBorneBy' => $shippingBorneBy,
                                     'grandTotal' => $grandTotal,
+                                    'physicalQtyString' => $physicalQtyString,
+                                    'smallestQtyString' => $smallestQtyString,
                                 ]);
                             })
                             ->columnSpanFull(),

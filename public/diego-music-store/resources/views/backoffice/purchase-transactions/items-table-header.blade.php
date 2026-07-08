@@ -1,11 +1,11 @@
 @php
-    $cols = "minmax(280px, 2fr) 140px 100px 110px 160px 180px 160px";
-    $minWidth = 1350;
+    $cols = "minmax(280px, 3fr) 140px 100px 110px 110px 120px 160px 120px 180px 160px";
+    $minWidth = 1800;
 @endphp
 
 <style>
-    /* Force the inner child-container of .po-items-grid to layout horizontally as a grid */
-    .po-items-grid > div {
+    /* Force the inner child-container of .pt-items-grid to layout horizontally as a grid */
+    .pt-items-grid > div {
         display: grid !important;
         grid-template-columns: {{ $cols }} !important;
         gap: 1rem !important;
@@ -14,8 +14,8 @@
     }
 
     /* Style the repeater items inside our custom container to look like flat rows */
-    .po-items-table-container .fi-fo-repeater-item,
-    .po-items-table-container .fi-repeater-item {
+    .pt-items-table-container .fi-fo-repeater-item,
+    .pt-items-table-container .fi-repeater-item {
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
@@ -33,16 +33,16 @@
     }
 
     /* Adjust padding of content within the repeater item */
-    .po-items-table-container .fi-fo-repeater-item-content,
-    .po-items-table-container .fi-repeater-item-content {
+    .pt-items-table-container .fi-fo-repeater-item-content,
+    .pt-items-table-container .fi-repeater-item-content {
         padding: 0 !important;
         flex-grow: 1 !important;
         width: 100% !important;
     }
 
     /* Position the delete button header as a sticky element on the left */
-    .po-items-table-container .fi-fo-repeater-item-header,
-    .po-items-table-container .fi-repeater-item-header {
+    .pt-items-table-container .fi-fo-repeater-item-header,
+    .pt-items-table-container .fi-repeater-item-header {
         position: sticky !important;
         left: 0 !important;
         align-self: stretch !important;
@@ -58,13 +58,13 @@
     }
 
     /* Dark mode delete button header background */
-    .dark .po-items-table-container .fi-fo-repeater-item-header,
-    .dark .po-items-table-container .fi-repeater-item-header {
+    .dark .pt-items-table-container .fi-fo-repeater-item-header,
+    .dark .pt-items-table-container .fi-repeater-item-header {
         background-color: #18181b !important;
     }
 
-    .po-items-table-container .fi-fo-repeater-item-header-end-actions,
-    .po-items-table-container .fi-repeater-item-header-end-actions {
+    .pt-items-table-container .fi-fo-repeater-item-header-end-actions,
+    .pt-items-table-container .fi-repeater-item-header-end-actions {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -74,16 +74,16 @@
     }
 
     /* Sticky columns configuration for frozen first column */
-    .po-items-header-row > :nth-child(1),
-    .po-items-grid > div > :nth-child(1) {
+    .pt-items-header-row > :nth-child(1),
+    .pt-items-grid > div > :nth-child(1) {
         position: sticky !important;
         left: 2.5rem !important; /* Starts at left 2.5rem (40px) */
         z-index: 10 !important;
     }
 
     /* Set background colors and extend to cover grid gaps using pseudo-elements */
-    .po-items-header-row > :nth-child(1)::before,
-    .po-items-grid > div > :nth-child(1)::before {
+    .pt-items-header-row > :nth-child(1)::before,
+    .pt-items-grid > div > :nth-child(1)::before {
         content: "" !important;
         position: absolute !important;
         top: -4px !important;
@@ -95,13 +95,13 @@
     }
 
     /* Dark mode background for sticky columns */
-    .dark .po-items-header-row > :nth-child(1)::before,
-    .dark .po-items-grid > div > :nth-child(1)::before {
+    .dark .pt-items-header-row > :nth-child(1)::before,
+    .dark .pt-items-grid > div > :nth-child(1)::before {
         background-color: #18181b !important;
     }
 
     /* Special mask for the header row's left padding area (0 to 2.5rem) */
-    .po-items-header-row > :nth-child(1)::after {
+    .pt-items-header-row > :nth-child(1)::after {
         content: "" !important;
         position: absolute !important;
         left: -2.5rem !important;
@@ -111,17 +111,20 @@
         background-color: #ffffff !important;
         z-index: -1 !important;
     }
-    .dark .po-items-header-row > :nth-child(1)::after {
+    .dark .pt-items-header-row > :nth-child(1)::after {
         background-color: #18181b !important;
     }
 </style>
 
-<div class="po-items-header-row pb-2 font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 mb-2" style="display: grid; grid-template-columns: {{ $cols }}; gap: 1rem; align-items: center; width: 100%; min-width: {{ $minWidth }}px; padding-left: 2.5rem; padding-right: 1rem; position: relative;">
+<div class="pt-items-header-row pb-2 font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 mb-2" style="display: grid; grid-template-columns: {{ $cols }}; gap: 1rem; align-items: center; width: 100%; min-width: {{ $minWidth }}px; padding-left: 2.5rem; padding-right: 1rem; position: relative;">
     <div data-frozen-header style="position: relative; z-index: 25; will-change: transform;">Produk / Varian</div>
     <div>Satuan</div>
-    <div>Qty</div>
+    <div>Qty PO</div>
+    <div>Qty Terima</div>
+    <div>Qty Bonus</div>
     <div>Qty Terkecil</div>
     <div>Harga Beli</div>
+    <div>Update Master?</div>
     <div>Diskon Item</div>
     <div>Subtotal</div>
 </div>

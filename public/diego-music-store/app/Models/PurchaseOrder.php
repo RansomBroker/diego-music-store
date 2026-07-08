@@ -23,6 +23,8 @@ class PurchaseOrder extends Model
         'status', // draft, approved, closed
         'total_amount',
         'discount_amount',
+        'discount_type',
+        'discount_value',
         'other_cost',
         'tax_mode', // GLOBAL, ITEM
         'tax_rate',
@@ -31,6 +33,9 @@ class PurchaseOrder extends Model
         'shipping_borne_by',
         'shipping_carrier_name',
         'notes',
+        'enable_tax',
+        'enable_item_discount',
+        'item_discount_type',
     ];
 
     protected $casts = [
@@ -38,10 +43,13 @@ class PurchaseOrder extends Model
         'eta_date' => 'date',
         'total_amount' => 'integer',
         'discount_amount' => 'integer',
+        'discount_value' => 'integer',
         'other_cost' => 'integer',
         'tax_rate' => 'integer',
         'tax_amount' => 'integer',
         'grand_total' => 'integer',
+        'enable_tax' => 'boolean',
+        'enable_item_discount' => 'boolean',
     ];
 
     protected static function booted()

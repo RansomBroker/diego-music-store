@@ -13,9 +13,12 @@ class PurchaseOrderItem extends Model
     protected $fillable = [
         'purchase_order_id',
         'product_variant_id',
+        'unit_id',
         'quantity',
         'price',
         'discount_amount',
+        'discount_type',
+        'discount_value',
         'tax_rate',
         'tax_amount',
         'subtotal',
@@ -26,6 +29,7 @@ class PurchaseOrderItem extends Model
         'quantity' => 'integer',
         'price' => 'integer',
         'discount_amount' => 'integer',
+        'discount_value' => 'integer',
         'tax_rate' => 'integer',
         'tax_amount' => 'integer',
         'subtotal' => 'integer',
@@ -39,5 +43,10 @@ class PurchaseOrderItem extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 }

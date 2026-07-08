@@ -145,9 +145,9 @@
 </style>
 
 <div class="variant-table-header-row pb-2 font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 mb-2" style="display: grid; grid-template-columns: {{ $cols }}; gap: 1rem; align-items: center; width: 100%; min-width: {{ $minWidth }}px; padding-left: 2.5rem; padding-right: 1rem; position: relative;">
-    <div>Nama Varian</div>
-    <div>SKU</div>
-    <div>Barcode</div>
+    <div data-frozen-header style="position: relative; z-index: 25; will-change: transform;">Nama Varian</div>
+    <div data-frozen-header style="position: relative; z-index: 25; will-change: transform;">SKU</div>
+    <div data-frozen-header style="position: relative; z-index: 25; will-change: transform;">Barcode</div>
     <div>Harga Jual</div>
     <div>Harga Beli</div>
     <div>Est. Ongkir</div>

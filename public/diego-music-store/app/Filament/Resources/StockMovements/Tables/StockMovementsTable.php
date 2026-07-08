@@ -58,11 +58,20 @@ class StockMovementsTable
 
                 TextColumn::make('quantity')
                     ->label('Qty')
-                    ->numeric()
                     ->alignRight()
                     ->weight('bold')
                     ->color(fn ($record) => $record->type === 'in' ? 'success' : 'danger')
-                    ->formatStateUsing(fn ($state, $record) => ($record->type === 'in' ? '+' : '-') . number_format($state)),
+                    ->formatStateUsing(function ($state, $record) {
+                        $sign = $record->type === 'in' ? '+' : '-';
+                        $baseUnitCode = $record->productVariant->product->unit?->code ?? 'pcs';
+                        $out = $sign . number_format($state) . ' ' . $baseUnitCode;
+                        
+                        if ($record->original_quantity && $record->unit_id && $record->unit_id !== $record->productVariant->product->unit_id) {
+                            $out .= " ({$sign}{$record->original_quantity} {$record->unit?->code})";
+                        }
+                        
+                        return $out;
+                    }),
 
                 TextColumn::make('unit_cost')
                     ->label('Harga Satuan')

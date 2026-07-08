@@ -18,9 +18,12 @@ class CreatePurchaseOrder
     public function execute(array $data): PurchaseOrder
     {
         return DB::transaction(function () use ($data) {
+            $enableTax = (bool)($data['enable_tax'] ?? false);
+            $enableItemDisc = true;
+            $itemDiscTypeGlobal = $data['item_discount_type'] ?? 'fixed';
             $items = $data['items'] ?? [];
-            $taxMode = $data['tax_mode'] ?? 'ITEM';
-            $globalTaxRate = intval($data['tax_rate'] ?? 0);
+            $taxMode = 'GLOBAL';
+            $globalTaxRate = $enableTax ? intval($data['tax_rate'] ?? 0) : 0;
             
             $poNumber = $data['po_number'] ?? null;
             if (empty($poNumber)) {
@@ -39,6 +42,9 @@ class CreatePurchaseOrder
                 'eta_date' => $data['eta_date'] ?? null,
                 'status' => $data['status'] ?? 'draft',
                 'notes' => $data['notes'] ?? null,
+                'enable_tax' => $enableTax,
+                'enable_item_discount' => $enableItemDisc,
+                'item_discount_type' => $itemDiscTypeGlobal,
             ]);
 
             // 2. Loop through items, calculate subtotal and tax, and create items
@@ -48,23 +54,31 @@ class CreatePurchaseOrder
             foreach ($items as $item) {
                 $qty = intval($item['quantity'] ?? 0);
                 $price = intval($item['price'] ?? 0);
-                $discItem = intval($item['discount_amount'] ?? 0);
+                $itemDiscType = $enableItemDisc ? $itemDiscTypeGlobal : 'fixed';
+                $itemDiscVal = $enableItemDisc ? intval($item['discount_value'] ?? 0) : 0;
+                $discItem = $itemDiscType === 'percent' ? (int) round(($qty * $price) * ($itemDiscVal / 100)) : $itemDiscVal;
                 
                 // Subtotal before tax
                 $subtotalBeforeTax = ($qty * $price) - $discItem;
                 
                 // Tax rate selection
-                $itemTaxRate = $taxMode === 'GLOBAL' ? $globalTaxRate : intval($item['tax_rate'] ?? 0);
+                $itemTaxRate = $globalTaxRate;
                 $itemTaxAmount = (int) round($subtotalBeforeTax * ($itemTaxRate / 100));
                 
                 $itemSubtotal = $subtotalBeforeTax + $itemTaxAmount;
 
+                $variant = \App\Models\ProductVariant::find($item['product_variant_id']);
+                $unitId = $item['unit_id'] ?? ($variant?->product?->unit_id);
+
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $po->id,
                     'product_variant_id' => $item['product_variant_id'],
+                    'unit_id' => $unitId,
                     'quantity' => $qty,
                     'price' => $price,
                     'discount_amount' => $discItem,
+                    'discount_type' => $itemDiscType,
+                    'discount_value' => $itemDiscVal,
                     'tax_rate' => $itemTaxRate,
                     'tax_amount' => $itemTaxAmount,
                     'subtotal' => $itemSubtotal,
@@ -76,7 +90,9 @@ class CreatePurchaseOrder
             }
 
             // 3. Calculate grand total and update PO
-            $discHeader = intval($data['discount_amount'] ?? 0);
+            $discHeaderType = $data['discount_type'] ?? 'fixed';
+            $discHeaderVal = intval($data['discount_value'] ?? 0);
+            $discHeader = $discHeaderType === 'percent' ? (int) round($totalAmount * ($discHeaderVal / 100)) : $discHeaderVal;
             $otherCost = intval($data['other_cost'] ?? 0); // Ongkir / biaya lain
             $shippingBorneBy = $data['shipping_borne_by'] ?? 'self_direct';
             $shippingCarrierName = $data['shipping_carrier_name'] ?? null;
@@ -87,6 +103,8 @@ class CreatePurchaseOrder
             $po->update([
                 'total_amount' => $totalAmount,
                 'discount_amount' => $discHeader,
+                'discount_type' => $discHeaderType,
+                'discount_value' => $discHeaderVal,
                 'other_cost' => $otherCost,
                 'shipping_borne_by' => $shippingBorneBy,
                 'shipping_carrier_name' => $shippingCarrierName,
