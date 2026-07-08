@@ -126,11 +126,12 @@ class ProductForm
                                             'pricingTiers' => $pricingTiers,
                                         ]))
                                         ->extraAttributes([
-                                            'style' => 'min-width: ' . (990 + (130 * count($pricingTiers))) . 'px;'
+                                            'style' => 'min-width: ' . (1210 + (140 * count($pricingTiers)) + 56) . 'px;'
                                         ]),
 
                                     Repeater::make('variants')
                                         ->hiddenLabel()
+                                        ->reorderable(false)
                                         ->schema([
                                             Group::make([
                                                 TextInput::make('name')
@@ -198,7 +199,7 @@ class ProductForm
                                         ])
                                         ->columns(1)
                                         ->extraAttributes([
-                                            'style' => 'min-width: ' . (990 + (130 * count($pricingTiers))) . 'px;'
+                                            'style' => 'min-width: ' . (1210 + (140 * count($pricingTiers)) + 56) . 'px;'
                                         ]),
                                 ])
                                 ->visible(fn (Get $get): bool => (bool) $get('has_variants'))
@@ -257,10 +258,14 @@ class ProductForm
                                             ->label('HPP Awal setelah Ongkir'),
                                     ]),
 
-                                Section::make('Harga Tingkatan (Tier Prices)')
-                                     ->visible(fn (Get $get): bool => ! $get('has_variants'))
-                                     ->description(count($pricingTiers) === 0 ? 'Belum ada tingkatan harga terdaftar. Silakan tambahkan tingkatan harga terlebih dahulu.' : null)
-                                     ->schema($tierFields),
+                                Group::make([
+                                    Placeholder::make('single_tier_prices_title')
+                                        ->hiddenLabel()
+                                        ->content(fn () => new \Illuminate\Support\HtmlString('<div class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 mt-6 border-b pb-2 border-gray-200 dark:border-gray-700">Harga Tingkatan (Tier Prices)</div>')),
+                                    Grid::make(3)
+                                        ->schema($tierFields),
+                                ])
+                                ->visible(fn (Get $get): bool => ! $get('has_variants')),
                             ]),
 
                         Tab::make('Detail Jasa')
@@ -330,20 +335,22 @@ class ProductForm
                                             ->label('HPP Awal Paket'),
                                     ]),
 
-                                Section::make('Harga Tingkatan (Tier Prices) untuk Paket')
-                                    ->schema($tierFields)
-                                    ->collapsed(),
+                                Group::make([
+                                    Placeholder::make('bundle_tier_prices_title')
+                                        ->hiddenLabel()
+                                        ->content(fn () => new \Illuminate\Support\HtmlString('<div class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 mt-6 border-b pb-2 border-gray-200 dark:border-gray-700">Harga Tingkatan (Tier Prices) untuk Paket</div>')),
+                                    Grid::make(3)
+                                        ->schema($tierFields),
+                                 ]),
 
                                 Group::make([
                                     Placeholder::make('bundle_headers')
                                         ->hiddenLabel()
-                                        ->content(fn () => view('backoffice.products.bundle-table-header'))
-                                        ->extraAttributes([
-                                            'style' => 'min-width: 420px;'
-                                        ]),
+                                        ->content(fn () => view('backoffice.products.bundle-table-header')),
 
                                     Repeater::make('bundle_items')
                                         ->hiddenLabel()
+                                        ->reorderable(false)
                                         ->schema([
                                             Group::make([
                                                 Select::make('child_variant_id')
@@ -376,13 +383,10 @@ class ProductForm
                                                 'class' => 'bundle-grid'
                                             ])
                                         ])
-                                        ->columns(1)
-                                        ->extraAttributes([
-                                            'style' => 'min-width: 420px;'
-                                        ]),
+                                        ->columns(1),
                                 ])
                                 ->extraAttributes([
-                                    'class' => 'overflow-x-auto pb-4 bundle-table-container',
+                                    'class' => 'bundle-table-container',
                                     'style' => 'width: 100%;'
                                 ]),
                             ]),
