@@ -2,13 +2,21 @@
 
 namespace App\Filament\Resources\JournalEntries\Tables;
 
+use App\Actions\Accounting\PostJournalEntry;
+use App\Actions\Accounting\UpdateJournalEntry;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class JournalEntriesTable
 {
@@ -55,20 +63,20 @@ class JournalEntriesTable
                     ->sortable(),
             ])
             ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->label('Status Jurnal')
                     ->options([
                         'draft' => 'Draft',
                         'posted' => 'Posted',
                     ]),
 
-                \Filament\Tables\Filters\SelectFilter::make('account_id')
+                SelectFilter::make('account_id')
                     ->label('Filter Akun Rekening')
                     ->relationship('items.account', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->code} - {$record->name}")
                     ->searchable()
                     ->preload()
-                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                    ->query(function (Builder $query, array $data): Builder {
                         if (empty($data['value'])) {
                             return $query;
                         }
@@ -77,13 +85,13 @@ class JournalEntriesTable
                         });
                     }),
 
-                \Filament\Tables\Filters\Filter::make('date_range')
+                Filter::make('date_range')
                     ->label('Rentang Tanggal')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('from')->label('Dari Tanggal'),
-                        \Filament\Forms\Components\DatePicker::make('until')->label('Sampai Tanggal'),
+                        DatePicker::make('from')->label('Dari Tanggal'),
+                        DatePicker::make('until')->label('Sampai Tanggal'),
                     ])
-                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                    ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
                                 $data['from'],
@@ -96,7 +104,7 @@ class JournalEntriesTable
                     })
             ])
             ->actions([
-                \Filament\Actions\ViewAction::make()
+                ViewAction::make()
                     ->label('Detail')
                     ->color('info')
                     ->icon('heroicon-o-eye')
@@ -107,7 +115,7 @@ class JournalEntriesTable
                 EditAction::make()
                     ->modalWidth('xl')
                     ->visible(fn ($record) => $record->status === 'draft')
-                    ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Accounting\UpdateJournalEntry::class)->execute($record, $data)),
+                    ->using(fn (Model $record, array $data): Model => app(UpdateJournalEntry::class)->execute($record, $data)),
 
                 Action::make('post')
                     ->label('Post')
@@ -116,7 +124,7 @@ class JournalEntriesTable
                     ->requiresConfirmation()
                     ->visible(fn ($record) => $record->status === 'draft')
                     ->action(function ($record) {
-                        app(\App\Actions\Accounting\PostJournalEntry::class)->execute($record);
+                        app(PostJournalEntry::class)->execute($record);
                     }),
 
                 DeleteAction::make()

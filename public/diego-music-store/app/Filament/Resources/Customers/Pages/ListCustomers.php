@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Customers\Pages;
 
+use App\Actions\Customer\CreateCustomer;
 use App\Filament\Resources\Customers\CustomerResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Model;
 
 class ListCustomers extends ListRecords
 {
@@ -15,7 +17,7 @@ class ListCustomers extends ListRecords
         return [
             CreateAction::make()
                 ->modalWidth('2xl')
-                ->using(fn (array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Customer\CreateCustomer::class)->execute($data)),
+                ->using(fn (array $data): Model => app(CreateCustomer::class)->execute($data)),
         ];
     }
 }

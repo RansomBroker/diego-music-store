@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Units\Tables;
 
+use App\Actions\Unit\UpdateUnit;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -9,6 +10,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class UnitsTable
 {
@@ -35,7 +37,7 @@ class UnitsTable
             ->actions([
                 EditAction::make()
                     ->modalWidth('xl')
-                    ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Unit\UpdateUnit::class)->execute($record, $data)),
+                    ->using(fn (Model $record, array $data): Model => app(UpdateUnit::class)->execute($record, $data)),
                 DeleteAction::make(),
             ])
             ->bulkActions([

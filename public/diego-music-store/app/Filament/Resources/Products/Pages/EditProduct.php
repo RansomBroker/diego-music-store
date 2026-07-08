@@ -7,15 +7,16 @@ use App\Models\Product;
 use App\Actions\Product\UpdateProduct as UpdateProductAction;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Model;
 
 class EditProduct extends EditRecord
 {
     protected static string $resource = ProductResource::class;
 
-    public function getMaxContentWidth(): \Filament\Support\Enums\Width | string | null
+    public function getMaxContentWidth(): Width | string | null
     {
-        return \Filament\Support\Enums\Width::Full;
+        return Width::Full;
     }
 
     protected function getHeaderActions(): array

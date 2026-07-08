@@ -2,15 +2,20 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
+use App\Actions\Product\DuplicateProduct;
+use App\Helpers\FormatHelper;
+use App\Helpers\ProductHelper;
+use App\Filament\Resources\StockMovements\StockMovementResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
-use App\Filament\Resources\StockMovements\StockMovementResource;
 
 class ProductsTable
 {
@@ -64,12 +69,12 @@ class ProductsTable
                             $min = $variants->min('price');
                             $max = $variants->max('price');
                             if ($min === $max) {
-                                return \App\Helpers\FormatHelper::rupiah($min);
+                                return FormatHelper::rupiah($min);
                             }
-                            return \App\Helpers\FormatHelper::rupiah($min) . ' - ' . \App\Helpers\FormatHelper::rupiah($max);
+                            return FormatHelper::rupiah($min) . ' - ' . FormatHelper::rupiah($max);
                         }
                         $price = $variants->first()?->price ?? 0;
-                        return \App\Helpers\FormatHelper::rupiah($price);
+                        return FormatHelper::rupiah($price);
                     })
                     ->label('Harga Jual Dasar'),
 
@@ -87,7 +92,7 @@ class ProductsTable
             ])
             ->actions([
                 EditAction::make(),
-                \Filament\Actions\Action::make('copy_product')
+                Action::make('copy_product')
                     ->label('Copy Produk')
                     ->icon('heroicon-o-document-duplicate')
                     ->color('warning')
@@ -95,16 +100,16 @@ class ProductsTable
                     ->modalHeading('Copy Produk')
                     ->modalDescription('Apakah Anda yakin ingin menyalin produk ini? Semua varian dan harga tingkatan akan disalin dengan SKU dan Barcode baru.')
                     ->action(function ($record) {
-                        $duplicateAction = app(\App\Actions\Product\DuplicateProduct::class);
+                        $duplicateAction = app(DuplicateProduct::class);
                         $newProduct = $duplicateAction->execute($record);
 
-                        \Filament\Notifications\Notification::make()
+                        Notification::make()
                             ->title('Produk Berhasil Disalin')
                             ->body('Produk baru: ' . $newProduct->name)
                             ->success()
                             ->send();
                     }),
-                \Filament\Actions\Action::make('kartu_stok')
+                Action::make('kartu_stok')
                     ->label('Kartu Stok')
                     ->icon('heroicon-o-queue-list')
                     ->color('info')
@@ -114,7 +119,7 @@ class ProductsTable
                     ->modalCancelActionLabel('Tutup')
                     ->modalContent(fn ($record) => view('backoffice.products.stock-card-modal', array_merge(
                         ['product' => $record],
-                        \App\Helpers\ProductHelper::getStockCardData($record)
+                        ProductHelper::getStockCardData($record)
                     ))),
                 DeleteAction::make(),
             ])

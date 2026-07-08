@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources\JournalEntries\Pages;
 
+use App\Actions\Accounting\CreateJournalEntry;
 use App\Filament\Resources\JournalEntries\JournalEntryResource;
+use App\Filament\Resources\JournalEntries\Widgets\JournalEntryStats;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Model;
 
 class ListJournalEntries extends ListRecords
 {
@@ -15,14 +18,14 @@ class ListJournalEntries extends ListRecords
         return [
             CreateAction::make()
                 ->modalWidth('xl')
-                ->using(fn (array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Accounting\CreateJournalEntry::class)->execute($data)),
+                ->using(fn (array $data): Model => app(CreateJournalEntry::class)->execute($data)),
         ];
     }
 
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Resources\JournalEntries\Widgets\JournalEntryStats::class,
+            JournalEntryStats::class,
         ];
     }
 }

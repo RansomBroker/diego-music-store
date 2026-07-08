@@ -14,6 +14,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Schemas\Components\Group;
 use App\Models\Supplier;
 use App\Models\ProductVariant;
+use App\Helpers\FormatHelper;
 
 class PurchaseOrderForm
 {
@@ -278,7 +279,7 @@ class PurchaseOrderForm
                                                 $taxAmount = (int) round($subtotalBeforeTax * ($taxRate / 100));
                                                 $subtotal = $subtotalBeforeTax + $taxAmount;
                                                 
-                                                return \App\Helpers\FormatHelper::rupiah($subtotal);
+                                                return FormatHelper::rupiah($subtotal);
                                             }),
                                     ])
                                     ->columns(1)

@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Actions\User\UpdateUser;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class UsersTable
 {
@@ -56,12 +58,12 @@ class UsersTable
             ])
             ->actions([
                 EditAction::make()
-                    ->mutateRecordDataUsing(function (\Illuminate\Database\Eloquent\Model $record, array $data): array {
+                    ->mutateRecordDataUsing(function (Model $record, array $data): array {
                         $data['branches'] = $record->branches->pluck('id')->toArray();
                         $data['roles'] = $record->roles->pluck('id')->toArray();
                         return $data;
                     })
-                    ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\User\UpdateUser::class)->execute($record, $data)),
+                    ->using(fn (Model $record, array $data): Model => app(UpdateUser::class)->execute($record, $data)),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

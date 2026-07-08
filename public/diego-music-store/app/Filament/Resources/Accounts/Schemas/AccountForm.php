@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\Accounts\Schemas;
 
+use App\Filament\Components\CreatableSelect;
+use App\Models\Account;
+use App\Models\AccountClassification;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
-use App\Filament\Components\CreatableSelect;
 
 class AccountForm
 {
@@ -34,7 +36,7 @@ class AccountForm
 
                         CreatableSelect::make('classification')
                             ->required()
-                            ->options(fn () => \App\Models\AccountClassification::pluck('name', 'key')->toArray())
+                            ->options(fn () => AccountClassification::pluck('name', 'key')->toArray())
                             ->label('Klasifikasi Akun'),
 
                         Toggle::make('is_header')
@@ -44,7 +46,7 @@ class AccountForm
 
                         Select::make('parent_id')
                             ->label('Akun Induk (Parent)')
-                            ->options(fn ($record) => \App\Models\Account::where('is_header', true)
+                            ->options(fn ($record) => Account::where('is_header', true)
                                 ->when($record, fn($q) => $q->where('id', '!=', $record->id))
                                 ->get()
                                 ->mapWithKeys(fn($acc) => [$acc->id => "{$acc->code} - {$acc->name}"])

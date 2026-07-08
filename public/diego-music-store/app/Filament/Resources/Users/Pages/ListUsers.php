@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Users\Pages;
 
+use App\Actions\User\CreateUser;
 use App\Filament\Resources\Users\UserResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Model;
 
 class ListUsers extends ListRecords
 {
@@ -14,7 +16,7 @@ class ListUsers extends ListRecords
     {
         return [
             CreateAction::make()
-                ->using(fn (array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\User\CreateUser::class)->execute($data)),
+                ->using(fn (array $data): Model => app(CreateUser::class)->execute($data)),
         ];
     }
 }

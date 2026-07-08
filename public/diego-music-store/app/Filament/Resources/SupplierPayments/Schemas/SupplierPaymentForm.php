@@ -13,6 +13,7 @@ use Filament\Forms\Components\Repeater;
 use App\Models\PurchaseTransaction;
 use App\Models\Account;
 use App\Models\Supplier;
+use App\Helpers\FormatHelper;
 
 class SupplierPaymentForm
 {
@@ -131,7 +132,7 @@ class SupplierPaymentForm
                                                     ->get()
                                                     ->filter(fn ($pt) => $pt->getRemainingUnpaidAmount() > 0)
                                                     ->mapWithKeys(fn ($pt) => [
-                                                        $pt->id => "[{$pt->transaction_no}]" . ($pt->invoice_number ? " No. Invoice: {$pt->invoice_number}" : "") . " (Tgl: {$pt->transaction_date->format('d/m/Y')} | Total: " . \App\Helpers\FormatHelper::rupiah($pt->grand_total) . " | Sisa: " . \App\Helpers\FormatHelper::rupiah($pt->getRemainingUnpaidAmount()) . ")"
+                                                        $pt->id => "[{$pt->transaction_no}]" . ($pt->invoice_number ? " No. Invoice: {$pt->invoice_number}" : "") . " (Tgl: {$pt->transaction_date->format('d/m/Y')} | Total: " . FormatHelper::rupiah($pt->grand_total) . " | Sisa: " . FormatHelper::rupiah($pt->getRemainingUnpaidAmount()) . ")"
                                                     ])
                                                     ->toArray();
                                             })
@@ -140,7 +141,7 @@ class SupplierPaymentForm
                                                 if (!$pt) {
                                                     return null;
                                                 }
-                                                return "[{$pt->transaction_no}]" . ($pt->invoice_number ? " No. Invoice: {$pt->invoice_number}" : "") . " (Tgl: {$pt->transaction_date->format('d/m/Y')} | Total: " . \App\Helpers\FormatHelper::rupiah($pt->grand_total) . " | Sisa: " . \App\Helpers\FormatHelper::rupiah($pt->getRemainingUnpaidAmount()) . ")";
+                                                return "[{$pt->transaction_no}]" . ($pt->invoice_number ? " No. Invoice: {$pt->invoice_number}" : "") . " (Tgl: {$pt->transaction_date->format('d/m/Y')} | Total: " . FormatHelper::rupiah($pt->grand_total) . " | Sisa: " . FormatHelper::rupiah($pt->getRemainingUnpaidAmount()) . ")";
                                             })
                                             ->getSearchResultsUsing(function (string $search, $get): array {
                                                 $supplierId = $get('../../supplier_id');
@@ -159,7 +160,7 @@ class SupplierPaymentForm
                                                     ->get()
                                                     ->filter(fn ($pt) => $pt->getRemainingUnpaidAmount() > 0)
                                                     ->mapWithKeys(fn ($pt) => [
-                                                        $pt->id => "[{$pt->transaction_no}]" . ($pt->invoice_number ? " No. Invoice: {$pt->invoice_number}" : "") . " (Tgl: {$pt->transaction_date->format('d/m/Y')} | Total: " . \App\Helpers\FormatHelper::rupiah($pt->grand_total) . " | Sisa: " . \App\Helpers\FormatHelper::rupiah($pt->getRemainingUnpaidAmount()) . ")"
+                                                        $pt->id => "[{$pt->transaction_no}]" . ($pt->invoice_number ? " No. Invoice: {$pt->invoice_number}" : "") . " (Tgl: {$pt->transaction_date->format('d/m/Y')} | Total: " . FormatHelper::rupiah($pt->grand_total) . " | Sisa: " . FormatHelper::rupiah($pt->getRemainingUnpaidAmount()) . ")"
                                                     ])
                                                     ->toArray();
                                             })

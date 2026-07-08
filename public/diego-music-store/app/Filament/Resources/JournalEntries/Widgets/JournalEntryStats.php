@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\JournalEntries\Widgets;
 
+use App\Helpers\FormatHelper;
 use App\Models\JournalEntry;
 use App\Models\JournalItem;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -25,7 +26,7 @@ class JournalEntryStats extends BaseWidget
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
                 
-            Stat::make('Total Nilai Transaksi', \App\Helpers\FormatHelper::rupiah($totalPostedAmount))
+            Stat::make('Total Nilai Transaksi', FormatHelper::rupiah($totalPostedAmount))
                 ->description('Akumulasi nominal debit yang sudah ter-posting')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('info'),

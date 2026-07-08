@@ -5,6 +5,7 @@ namespace App\Filament\Resources\JournalEntries;
 use App\Filament\Resources\JournalEntries\Pages\ListJournalEntries;
 use App\Filament\Resources\JournalEntries\Schemas\JournalEntryForm;
 use App\Filament\Resources\JournalEntries\Tables\JournalEntriesTable;
+use App\Filament\Resources\JournalEntries\Widgets\JournalEntryStats;
 use App\Models\JournalEntry;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -49,7 +50,7 @@ class JournalEntryResource extends Resource
     public static function getWidgets(): array
     {
         return [
-            \App\Filament\Resources\JournalEntries\Widgets\JournalEntryStats::class,
+            JournalEntryStats::class,
         ];
     }
 

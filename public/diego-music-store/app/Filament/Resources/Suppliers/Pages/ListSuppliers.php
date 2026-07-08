@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Suppliers\Pages;
 
+use App\Actions\Supplier\CreateSupplier;
 use App\Filament\Resources\Suppliers\SupplierResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Model;
 
 class ListSuppliers extends ListRecords
 {
@@ -15,7 +17,7 @@ class ListSuppliers extends ListRecords
         return [
             CreateAction::make()
                 ->modalWidth('2xl')
-                ->using(fn (array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Supplier\CreateSupplier::class)->execute($data)),
+                ->using(fn (array $data): Model => app(CreateSupplier::class)->execute($data)),
         ];
     }
 }

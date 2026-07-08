@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\StockMovements\Tables;
 
+use App\Models\Product;
+use App\Models\ProductVariant;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -93,7 +95,7 @@ class StockMovementsTable
             ->filters([
                 SelectFilter::make('product_id')
                     ->label('Produk')
-                    ->options(\App\Models\Product::pluck('name', 'id'))
+                    ->options(Product::pluck('name', 'id'))
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when($data['value'], function ($q, $value) {
                             $q->whereHas('productVariant', function ($qv) use ($value) {
@@ -106,7 +108,7 @@ class StockMovementsTable
                 SelectFilter::make('product_variant_id')
                     ->label('Varian Spesifik')
                     ->options(function () {
-                        return \App\Models\ProductVariant::join('products', 'products.id', '=', 'product_variants.product_id')
+                        return ProductVariant::join('products', 'products.id', '=', 'product_variants.product_id')
                             ->select('product_variants.id', 'products.name as product_name', 'product_variants.name as variant_name', 'product_variants.sku')
                             ->get()
                             ->mapWithKeys(fn ($v) => [

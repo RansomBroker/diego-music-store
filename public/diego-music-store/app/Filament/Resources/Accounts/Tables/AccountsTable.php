@@ -2,13 +2,19 @@
 
 namespace App\Filament\Resources\Accounts\Tables;
 
+use App\Actions\Account\UpdateAccount;
+use App\Models\Account;
+use App\Models\JournalItem;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class AccountsTable
 {
@@ -28,7 +34,7 @@ class AccountsTable
 
                 TextColumn::make('classificationRelation.name')
                     ->badge()
-                    ->color(fn (\App\Models\Account $record): string => match (strtolower($record->classification ?? '')) {
+                    ->color(fn (Account $record): string => match (strtolower($record->classification ?? '')) {
                         'asset' => 'info',
                         'liability' => 'warning',
                         'equity' => 'success',
@@ -44,8 +50,8 @@ class AccountsTable
                     ->label('Saldo Saat Ini')
                     ->money('idr')
                     ->alignEnd()
-                    ->state(function (\App\Models\Account $record) {
-                        $sums = \App\Models\JournalItem::query()
+                    ->state(function (Account $record) {
+                        $sums = JournalItem::query()
                             ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
                             ->where('account_id', $record->id)
                             ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted'))
@@ -64,13 +70,13 @@ class AccountsTable
                     ->label('Aktif'),
             ])
             ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('classification')
+                SelectFilter::make('classification')
                     ->label('Klasifikasi')
                     ->relationship('classificationRelation', 'name')
                     ->preload(),
             ])
             ->actions([
-                \Filament\Actions\Action::make('ledger')
+                Action::make('ledger')
                     ->label('Buku Besar')
                     ->icon('heroicon-o-book-open')
                     ->color('success')
@@ -78,8 +84,8 @@ class AccountsTable
                     ->modalHeading('Rincian Buku Besar (Ledger)')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
-                    ->modalContent(function (\App\Models\Account $record) {
-                        $items = \App\Models\JournalItem::where('account_id', $record->id)
+                    ->modalContent(function (Account $record) {
+                        $items = JournalItem::where('account_id', $record->id)
                             ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted'))
                             ->with('journalEntry')
                             ->get()
@@ -92,7 +98,7 @@ class AccountsTable
                     }),
                 EditAction::make()
                     ->modalWidth('md')
-                    ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Account\UpdateAccount::class)->execute($record, $data)),
+                    ->using(fn (Model $record, array $data): Model => app(UpdateAccount::class)->execute($record, $data)),
                 DeleteAction::make(),
             ])
             ->bulkActions([

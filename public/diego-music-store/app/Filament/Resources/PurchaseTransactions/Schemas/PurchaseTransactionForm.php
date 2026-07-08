@@ -12,6 +12,8 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Placeholder;
 use App\Models\PurchaseOrder;
 use App\Models\ProductVariant;
+use App\Models\Unit;
+use App\Helpers\FormatHelper;
 
 class PurchaseTransactionForm
 {
@@ -265,7 +267,7 @@ class PurchaseTransactionForm
 
                                         Select::make('unit_id')
                                             ->label('Satuan')
-                                            ->options(\App\Models\Unit::pluck('name', 'id')->toArray())
+                                            ->options(Unit::pluck('name', 'id')->toArray())
                                             ->disabled()
                                             ->dehydrated()
                                             ->columnSpan(1),
@@ -306,7 +308,7 @@ class PurchaseTransactionForm
                                                 $taxAmount = (int) round($subtotalBeforeTax * ($taxRate / 100));
                                                 $subtotal = $subtotalBeforeTax + $taxAmount;
                                                 
-                                                return \App\Helpers\FormatHelper::rupiah($subtotal);
+                                                return FormatHelper::rupiah($subtotal);
                                             })
                                             ->columnSpan(1),
                                     ]),

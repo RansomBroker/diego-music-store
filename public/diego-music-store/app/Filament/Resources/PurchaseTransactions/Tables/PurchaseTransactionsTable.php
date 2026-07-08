@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PurchaseTransactions\Tables;
 
+use App\Actions\Procurement\PostPurchaseTransaction;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Actions\EditAction;
@@ -78,7 +79,7 @@ class PurchaseTransactionsTable
                     ->requiresConfirmation()
                     ->visible(fn ($record) => $record->status === 'draft')
                     ->action(function ($record) {
-                        app(\App\Actions\Procurement\PostPurchaseTransaction::class)->execute($record);
+                        app(PostPurchaseTransaction::class)->execute($record);
                     }),
 
                 Action::make('kartu_stok')

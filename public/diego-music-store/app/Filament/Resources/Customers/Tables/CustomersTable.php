@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers\Tables;
 
+use App\Actions\Customer\UpdateCustomer;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -9,6 +10,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class CustomersTable
 {
@@ -55,7 +57,7 @@ class CustomersTable
             ->actions([
                 EditAction::make()
                     ->modalWidth('2xl')
-                    ->using(fn (\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Customer\UpdateCustomer::class)->execute($record, $data)),
+                    ->using(fn (Model $record, array $data): Model => app(UpdateCustomer::class)->execute($record, $data)),
                 DeleteAction::make(),
             ])
             ->bulkActions([

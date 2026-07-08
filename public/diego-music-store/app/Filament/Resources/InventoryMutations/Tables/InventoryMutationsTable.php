@@ -2,12 +2,13 @@
 
 namespace App\Filament\Resources\InventoryMutations\Tables;
 
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\EditAction;
+use App\Filament\Resources\StockMovements\StockMovementResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\StockMovements\StockMovementResource;
+use Filament\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class InventoryMutationsTable
 {
@@ -54,7 +55,7 @@ class InventoryMutationsTable
             ])
             ->actions([
                 EditAction::make(),
-                \Filament\Actions\Action::make('kartu_stok')
+                Action::make('kartu_stok')
                     ->label('Kartu Stok')
                     ->icon('heroicon-o-queue-list')
                     ->color('info')

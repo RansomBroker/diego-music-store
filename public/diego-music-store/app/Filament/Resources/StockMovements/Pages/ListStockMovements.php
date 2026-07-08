@@ -3,6 +3,9 @@
 namespace App\Filament\Resources\StockMovements\Pages;
 
 use App\Filament\Resources\StockMovements\StockMovementResource;
+use App\Models\Branch;
+use App\Models\ProductVariant;
+use App\Models\StockMovement;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
@@ -26,7 +29,7 @@ class ListStockMovements extends ListRecords
         if (is_array($tableFilters)) {
             if (isset($tableFilters['product_id']['value']) && $tableFilters['product_id']['value']) {
                 $productId = $tableFilters['product_id']['value'];
-                $productVariantId = \App\Models\ProductVariant::where('product_id', $productId)->first()?->id;
+                $productVariantId = ProductVariant::where('product_id', $productId)->first()?->id;
             }
             if (isset($tableFilters['product_variant_id']['value']) && $tableFilters['product_variant_id']['value']) {
                 $productVariantId = $tableFilters['product_variant_id']['value'];
@@ -52,7 +55,7 @@ class ListStockMovements extends ListRecords
                 Select::make('productVariantId')
                     ->label('Pilih Produk & Varian')
                     ->options(function() {
-                        return \App\Models\ProductVariant::join('products', 'products.id', '=', 'product_variants.product_id')
+                        return ProductVariant::join('products', 'products.id', '=', 'product_variants.product_id')
                             ->select('product_variants.id', 'products.name as product_name', 'product_variants.name as variant_name', 'product_variants.sku')
                             ->orderBy('products.name')
                             ->get()
@@ -66,7 +69,7 @@ class ListStockMovements extends ListRecords
                 
                 Select::make('branchId')
                     ->label('Cabang')
-                    ->options(\App\Models\Branch::where('is_active', true)->pluck('name', 'id'))
+                    ->options(Branch::where('is_active', true)->pluck('name', 'id'))
                     ->searchable()
                     ->live()
                     ->placeholder('-- Pilih Cabang --'),
@@ -112,21 +115,21 @@ class ListStockMovements extends ListRecords
             return [];
         }
 
-        $variant = \App\Models\ProductVariant::with('product.unit')->find($productVariantId);
-        $branch = \App\Models\Branch::find($branchId);
+        $variant = ProductVariant::with('product.unit')->find($productVariantId);
+        $branch = Branch::find($branchId);
 
         if (!$variant || !$branch) {
             return [];
         }
 
         // Calculate opening stock before start date
-        $inBefore = \App\Models\StockMovement::where('product_variant_id', $productVariantId)
+        $inBefore = StockMovement::where('product_variant_id', $productVariantId)
             ->where('branch_id', $branchId)
             ->where('type', 'in')
             ->where('created_at', '<', $startDate . ' 00:00:00')
             ->sum('quantity');
 
-        $outBefore = \App\Models\StockMovement::where('product_variant_id', $productVariantId)
+        $outBefore = StockMovement::where('product_variant_id', $productVariantId)
             ->where('branch_id', $branchId)
             ->where('type', 'out')
             ->where('created_at', '<', $startDate . ' 00:00:00')
@@ -135,7 +138,7 @@ class ListStockMovements extends ListRecords
         $openingStock = $inBefore - $outBefore;
 
         // Fetch movements during the period
-        $movements = \App\Models\StockMovement::where('product_variant_id', $productVariantId)
+        $movements = StockMovement::where('product_variant_id', $productVariantId)
             ->where('branch_id', $branchId)
             ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->orderBy('created_at', 'asc')

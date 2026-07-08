@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources\Branches\Pages;
 
+use App\Actions\Branch\CreateBranch;
 use App\Filament\Resources\Branches\BranchResource;
+use App\Filament\Resources\Branches\Schemas\BranchForm;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Model;
 
 class ListBranches extends ListRecords
 {
@@ -14,8 +17,8 @@ class ListBranches extends ListRecords
     {
         return [
             CreateAction::make()
-                ->steps(\App\Filament\Resources\Branches\Schemas\BranchForm::getWizardSteps())
-                ->using(fn (array $data): \Illuminate\Database\Eloquent\Model => app(\App\Actions\Branch\CreateBranch::class)->execute($data)),
+                ->steps(BranchForm::getWizardSteps())
+                ->using(fn (array $data): Model => app(CreateBranch::class)->execute($data)),
         ];
     }
 }

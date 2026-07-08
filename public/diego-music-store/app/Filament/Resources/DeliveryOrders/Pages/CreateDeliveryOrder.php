@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\DeliveryOrders\Pages;
 
-use App\Filament\Resources\DeliveryOrders\DeliveryOrderResource;
 use App\Actions\DeliveryOrder\CreateDeliveryOrder as CreateDeliveryOrderAction;
+use App\Filament\Resources\DeliveryOrders\DeliveryOrderResource;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Support\Enums\Width;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateDeliveryOrder extends CreateRecord
 {
@@ -16,7 +17,7 @@ class CreateDeliveryOrder extends CreateRecord
         return Width::Full;
     }
 
-    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
+    protected function handleRecordCreation(array $data): Model
     {
         return app(CreateDeliveryOrderAction::class)->execute($data);
     }

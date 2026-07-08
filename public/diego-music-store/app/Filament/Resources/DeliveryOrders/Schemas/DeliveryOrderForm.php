@@ -13,6 +13,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 
 class DeliveryOrderForm
 {
@@ -64,7 +65,7 @@ class DeliveryOrderForm
                                         'cancelled' => 'Cancelled',
                                     ])
                                     ->default('draft')
-                                    ->disabled(fn (string $context, ?\Illuminate\Database\Eloquent\Model $record): bool => 
+                                    ->disabled(fn (string $context, ?Model $record): bool => 
                                         $context === 'edit' && $record && in_array($record->status, ['shipped', 'delivered', 'cancelled'])
                                     )
                                     ->label('Status DO'),

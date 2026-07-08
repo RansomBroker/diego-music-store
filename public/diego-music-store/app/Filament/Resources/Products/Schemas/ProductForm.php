@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 use App\Models\PricingTier;
+use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\StockMovement;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -20,6 +22,7 @@ use Filament\Support\Enums\Width;
 use Filament\Schemas\Schema;
 use App\Helpers\ProductHelper;
 use Filament\Forms\Components\Placeholder;
+use Illuminate\Validation\Rules\Unique;
 
 class ProductForm
 {
@@ -28,7 +31,7 @@ class ProductForm
         // 1. Fetch dynamic pricing tiers
         $pricingTiers = PricingTier::all();
 
-        $skuUniqueRule = function (\Illuminate\Validation\Rules\Unique $rule, ?\App\Models\Product $record) {
+        $skuUniqueRule = function (Unique $rule, ?Product $record) {
             if ($record) {
                 $variantIds = $record->variants()->pluck('id')->toArray();
                 return $rule->whereNotIn('id', $variantIds);
@@ -417,8 +420,8 @@ class ProductForm
                                     ->content(function ($record) {
                                         if (!$record) return 'Belum ada data.';
 
-                                        $variantIds = $record->variants()->pluck('id')->toArray();
-                                        $movements = \App\Models\StockMovement::whereIn('product_variant_id', $variantIds)
+                                                                                $variantIds = $record->variants()->pluck('id')->toArray();
+                                        $movements = StockMovement::whereIn('product_variant_id', $variantIds)
                                             ->with(['productVariant', 'branch'])
                                             ->latest()
                                             ->get();

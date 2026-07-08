@@ -2,20 +2,22 @@
 
 namespace App\Filament\Resources\Products\Pages;
 
-use App\Filament\Resources\Products\ProductResource;
 use App\Actions\Product\CreateProduct as CreateProductAction;
+use App\Filament\Resources\Products\ProductResource;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Support\Enums\Width;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateProduct extends CreateRecord
 {
     protected static string $resource = ProductResource::class;
 
-    public function getMaxContentWidth(): \Filament\Support\Enums\Width | string | null
+    public function getMaxContentWidth(): Width | string | null
     {
-        return \Filament\Support\Enums\Width::Full;
+        return Width::Full;
     }
 
-    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
+    protected function handleRecordCreation(array $data): Model
     {
         return app(CreateProductAction::class)->execute($data);
     }

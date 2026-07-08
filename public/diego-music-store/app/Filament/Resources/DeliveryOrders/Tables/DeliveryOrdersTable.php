@@ -2,13 +2,15 @@
 
 namespace App\Filament\Resources\DeliveryOrders\Tables;
 
+use App\Filament\Resources\StockMovements\StockMovementResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use App\Filament\Resources\StockMovements\StockMovementResource;
+use Illuminate\Database\Eloquent\Model;
 
 class DeliveryOrdersTable
 {
@@ -64,10 +66,10 @@ class DeliveryOrdersTable
             ])
             ->actions([
                 EditAction::make()
-                    ->disabled(fn (\Illuminate\Database\Eloquent\Model $record): bool => 
+                    ->disabled(fn (Model $record): bool => 
                         in_array($record->status, ['shipped', 'delivered', 'cancelled'])
                     ),
-                \Filament\Actions\Action::make('kartu_stok')
+                Action::make('kartu_stok')
                     ->label('Kartu Stok')
                     ->icon('heroicon-o-queue-list')
                     ->color('info')
@@ -77,7 +79,7 @@ class DeliveryOrdersTable
                         'reference_id' => $record->id,
                     ])),
                 DeleteAction::make()
-                    ->disabled(fn (\Illuminate\Database\Eloquent\Model $record): bool => 
+                    ->disabled(fn (Model $record): bool => 
                         in_array($record->status, ['shipped', 'delivered', 'cancelled'])
                     ),
             ])

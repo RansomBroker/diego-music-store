@@ -6,7 +6,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use App\Filament\Components\CreatableSelect;
+use App\Models\CustomerLabel;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
@@ -40,7 +42,7 @@ class CustomerForm
                             ->label('Tanggal Lahir'),
 
                         CreatableSelect::make('customer_label_id')
-                            ->options(fn () => \App\Models\CustomerLabel::pluck('name', 'id')->toArray())
+                            ->options(fn () => CustomerLabel::pluck('name', 'id')->toArray())
                             ->label('Label Pelanggan'),
 
                         Textarea::make('address')
@@ -61,7 +63,7 @@ class CustomerForm
                             ->default(0)
                             ->label('Poin Belanja'),
 
-                        \Filament\Forms\Components\Select::make('pricing_tier_id')
+                        Select::make('pricing_tier_id')
                             ->relationship('pricingTier', 'name')
                             ->label('Tingkat Harga Default')
                             ->placeholder('Pilih tingkat harga...')
