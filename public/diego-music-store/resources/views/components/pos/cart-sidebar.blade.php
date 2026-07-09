@@ -12,7 +12,10 @@
     'pricingTiers' => [],
     'selectedPricingTierId' => null,
     'enableTax' => true,
-    'taxPercent' => 11
+    'taxPercent' => 11,
+    'usePoints' => false,
+    'customerPoints' => 0,
+    'pointDiscountAmount' => 0
 ])
 
 <aside class="w-96 xl:w-[600px] bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col h-full shadow-xl shadow-slate-200/50 dark:shadow-none flex-shrink-0 transition-colors">
@@ -143,6 +146,29 @@
                 </div>
                 <span class="font-semibold text-slate-800 dark:text-slate-200">Rp {{ number_format($taxAmount, 0, ',', '.') }}</span>
             </div>
+            @if ($selectedCustomerId && $customerPoints > 0)
+                <div class="flex items-center justify-between text-sm gap-2">
+                    <div class="flex items-center gap-2">
+                        <label for="usePoints" class="inline-flex items-center cursor-pointer select-none">
+                            <div class="relative">
+                                <input type="checkbox" id="usePoints" wire:model.live="usePoints" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-primary transition-colors"></div>
+                            </div>
+                            <span class="ms-2.5 text-sm font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                <i class="ph-fill ph-coins text-amber-500 text-base"></i>
+                                Gunakan Poin ({{ $customerPoints }} Poin)
+                            </span>
+                        </label>
+                    </div>
+                    <span class="font-semibold text-green-600 dark:text-green-400">
+                        @if ($usePoints)
+                            - Rp {{ number_format($pointDiscountAmount, 0, ',', '.') }}
+                        @else
+                            Rp 0
+                        @endif
+                    </span>
+                </div>
+            @endif
             @if ($discountAmount > 0)
                 <div class="flex items-center justify-between text-sm text-green-600 dark:text-green-400 font-medium">
                     <span class="flex items-center gap-1"><i class="ph-fill ph-tag"></i> Diskon Member</span>

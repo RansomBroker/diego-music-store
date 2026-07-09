@@ -18,7 +18,7 @@
     $price = ($selectedPricingTierId && is_numeric($selectedPricingTierId)) ? $variant->priceForTier((int)$selectedPricingTierId) : $variant->price;
 @endphp
 
-<div wire:click="addToCart({{ $variant->id }})" class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md hover:border-primaryLight dark:hover:border-slate-600 transition-all cursor-pointer group flex flex-col justify-between">
+<div wire:click="addToCart({{ $variant->id }})" class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md hover:border-primary-light dark:hover:border-slate-600 transition-all cursor-pointer group flex flex-col justify-between">
     <div>
         <div class="aspect-[4/3] w-full bg-slate-100 dark:bg-slate-700 rounded-xl mb-3 flex items-center justify-center text-4xl group-hover:scale-[1.02] transition-transform">
             {{ $emoji }}
@@ -47,8 +47,10 @@
     
     <div class="px-1 mt-4 flex items-center justify-between gap-1 flex-wrap">
         <span class="font-bold text-primary dark:text-blue-400 text-sm whitespace-nowrap">Rp {{ number_format($price, 0, ',', '.') }}</span>
-        <button class="w-8 h-8 rounded-full bg-primaryLight dark:bg-blue-950/60 text-primary dark:text-blue-400 flex items-center justify-center hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors flex-shrink-0">
+        <x-pos.button 
+            class="!rounded-full !w-8 !h-8 !p-0 !bg-primary-light hover:!bg-primary !text-primary hover:!text-white dark:!bg-blue-950/60 dark:!text-blue-400 dark:hover:!bg-primary dark:hover:!text-white !shadow-none flex-shrink-0"
+        >
             <i class="ph-bold ph-plus"></i>
-        </button>
+        </x-pos.button>
     </div>
 </div>

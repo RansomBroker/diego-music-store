@@ -22,7 +22,7 @@
     <!-- Menu Items -->
     <nav class="flex flex-col gap-4 flex-1 w-full px-3">
         @if ($isPos)
-            <button class="w-full aspect-square flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primaryLight dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
+            <button class="w-full aspect-square flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
                 <i class="ph-fill ph-squares-four text-2xl mb-1"></i>
                 <span class="text-[10px] font-semibold">Kasir</span>
             </button>
@@ -34,7 +34,7 @@
         @endif
 
         @if ($isSession)
-            <button class="w-full aspect-square flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primaryLight dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
+            <button class="w-full aspect-square flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
                 <i class="ph-fill ph-clock-counter-clockwise text-2xl mb-1"></i>
                 <span class="text-[10px] font-semibold">Sesi Kasir</span>
             </button>

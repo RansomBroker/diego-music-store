@@ -23,6 +23,9 @@ class POS extends Component
     public $selectedCustomerId = null;
     public $selectedCustomerName = 'Umum / Walk-in';
     public $isLoyaltyMember = false;
+    public $usePoints = false;
+    public $customerPoints = 0;
+    const POINT_VALUATION = 1000;
 
     // Create Customer Modal State
     public $showCreateCustomerModal = false;
@@ -216,15 +219,26 @@ class POS extends Component
     {
         $this->selectedCustomerId = $id;
         $this->selectedCustomerName = $name;
-        $this->isLoyaltyMember = false; // Disable loyalty member features for now
+        $this->isLoyaltyMember = $isLoyalty;
         $this->customerSearch = ''; // Clear search
         $this->discountAmount = 0;
+        $this->usePoints = false;
 
         // Automatically set pricing tier if registered for this customer
         $customer = Customer::find($id);
-        if ($customer && $customer->pricing_tier_id) {
-            $this->selectedPricingTierId = $customer->pricing_tier_id;
+        if ($customer) {
+            $this->customerPoints = $customer->loyalty_points;
+            if ($customer->pricing_tier_id) {
+                $this->selectedPricingTierId = $customer->pricing_tier_id;
+            } else {
+                // Fallback to default retail tier
+                $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
+                    ->orWhere('name', 'like', '%umum%')
+                    ->first() ?? \App\Models\PricingTier::first();
+                $this->selectedPricingTierId = $defaultTier ? $defaultTier->id : null;
+            }
         } else {
+            $this->customerPoints = 0;
             // Fallback to default retail tier
             $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
                 ->orWhere('name', 'like', '%umum%')
@@ -240,6 +254,8 @@ class POS extends Component
         $this->selectedCustomerName = 'Umum / Walk-in';
         $this->isLoyaltyMember = false;
         $this->discountAmount = 0;
+        $this->customerPoints = 0;
+        $this->usePoints = false;
 
         // Fallback to default retail tier
         $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
@@ -454,7 +470,18 @@ class POS extends Component
 
     public function getGrandTotalProperty()
     {
-        return $this->subtotal - $this->discountAmount + $this->taxAmount;
+        $baseTotal = $this->subtotal - $this->discountAmount + $this->taxAmount;
+        return max(0, $baseTotal - $this->pointDiscountAmount);
+    }
+
+    public function getPointDiscountAmountProperty()
+    {
+        if (!$this->usePoints || !$this->selectedCustomerId || $this->customerPoints <= 0) {
+            return 0;
+        }
+        $maxDiscount = $this->subtotal - $this->discountAmount + $this->taxAmount;
+        $pointsValue = $this->customerPoints * self::POINT_VALUATION;
+        return min($pointsValue, $maxDiscount);
     }
 
     // Checkout / Payment operations
@@ -513,6 +540,14 @@ class POS extends Component
                 ];
             }
 
+            // Calculate points to deduct and points discount to apply
+            $pointsUsed = 0;
+            $pointDiscount = 0;
+            if ($this->usePoints && $this->selectedCustomerId && $this->customerPoints > 0) {
+                $pointDiscount = $this->pointDiscountAmount;
+                $pointsUsed = ceil($pointDiscount / self::POINT_VALUATION);
+            }
+
             $sale = app(CreatePOSSale::class)->execute([
                 'branch_id' => $this->selectedBranchId,
                 'cash_session_id' => $activeSession->id,
@@ -520,10 +555,18 @@ class POS extends Component
                 'sales_rep_id' => $this->selectedSalesRepId,
                 'invoice_date' => $this->invoiceDate,
                 'payment_method' => $this->paymentMethod,
-                'discount_amount' => $this->discountAmount,
+                'discount_amount' => $this->discountAmount + $pointDiscount,
                 'tax_amount' => $this->taxAmount,
                 'items' => $itemsData,
             ]);
+
+            // Deduct points from database
+            if ($pointsUsed > 0) {
+                $customer = Customer::find($this->selectedCustomerId);
+                if ($customer) {
+                    $customer->decrement('loyalty_points', $pointsUsed);
+                }
+            }
 
             // Reset POS State
             $this->cart = [];
@@ -534,6 +577,7 @@ class POS extends Component
             $this->invoiceDate = now()->format('Y-m-d');
             $this->showPaymentModal = false;
             $this->amountPaid = 0;
+            $this->usePoints = false;
 
             // Dispatch print event for thermal receipt printing
             $this->dispatch('print-receipt', saleId: $sale->id);

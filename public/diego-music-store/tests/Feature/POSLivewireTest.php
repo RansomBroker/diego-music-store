@@ -228,4 +228,38 @@ class POSLivewireTest extends TestCase
             'is_loyalty_member' => true,
         ]);
     }
+
+    /** @test */
+    public function it_can_use_loyalty_points_for_discount_and_deducts_them_on_checkout()
+    {
+        // 1. Create a customer with 50 loyalty points (which is equivalent to 50 * 1000 = Rp 50.000 discount)
+        $customer = \App\Models\Customer::create([
+            'name' => 'Budi Santoso',
+            'phone' => '081234567890',
+            'loyalty_points' => 50,
+        ]);
+
+        // 2. Test POS Livewire
+        Livewire::test('App\Livewire\POS')
+            ->call('addToCart', $this->variant->id) // Adds 1 variant of retail price 2.000.000
+            // Tax: 11% -> 220.000, Total: 2.220.000
+            ->assertSet('grandTotal', 2220000)
+            // Select customer
+            ->call('selectCustomer', $customer->id, $customer->name, false)
+            ->assertSet('customerPoints', 50)
+            ->assertSet('usePoints', false)
+            // Toggle points usage
+            ->set('usePoints', true)
+            // Point discount should be: 50 * 1000 = Rp 50.000
+            ->assertSet('pointDiscountAmount', 50000)
+            // New grandTotal: 2.220.000 - 50.000 = 2.170.000
+            ->assertSet('grandTotal', 2170000)
+            // Perform checkout
+            ->set('amountPaid', 2170000)
+            ->call('checkout');
+
+        // 3. Verify points were deducted in DB (50 - 50 = 0 points left)
+        $customer->refresh();
+        $this->assertEquals(0, $customer->loyalty_points);
+    }
 }

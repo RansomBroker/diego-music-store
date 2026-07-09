@@ -9,6 +9,17 @@
 
         <!-- Products Area -->
         <div class="flex-1 overflow-y-auto p-6 no-scrollbar">
+            <!-- Search Bar -->
+            <div class="mb-5 w-full">
+                <x-pos.form.input 
+                    model="search"
+                    placeholder="Cari barang, SKU atau barcode..."
+                    icon="ph-magnifying-glass"
+                    live
+                    class="!border-gray-300 dark:!border-gray-600 focus:!border-primary dark:focus:!border-blue-500"
+                />
+            </div>
+
             <!-- Categories -->
             <x-pos.category-list :activeCategory="$activeCategory" />
 
@@ -44,6 +55,9 @@
         :selectedPricingTierId="$selectedPricingTierId"
         :enableTax="$enableTax"
         :taxPercent="$taxPercent"
+        :usePoints="$usePoints"
+        :customerPoints="$customerPoints"
+        :pointDiscountAmount="$this->pointDiscountAmount"
     />
 
     <!-- Payment Detail Modal -->

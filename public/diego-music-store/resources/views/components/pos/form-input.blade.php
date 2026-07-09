@@ -16,7 +16,7 @@
         <input 
             type="{{ $type }}" 
             wire:model="{{ $model }}" 
-            class="w-full {{ $icon ? 'pl-11' : 'px-4' }} pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-700/60 rounded-2xl outline-none font-semibold text-sm focus:ring-2 focus:ring-primaryLight dark:focus:ring-blue-950 text-slate-800 dark:text-slate-100" 
+            class="w-full {{ $icon ? 'pl-11' : 'px-4' }} pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-700/60 rounded-2xl outline-none font-semibold text-sm focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-950 text-slate-800 dark:text-slate-100" 
             placeholder="{{ $placeholder }}"
             @if($required) required @endif
         >

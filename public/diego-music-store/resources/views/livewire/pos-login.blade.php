@@ -35,7 +35,7 @@
                         type="text" 
                         id="email" 
                         placeholder="Username atau email" 
-                        class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-primary dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-primaryLight rounded-2xl outline-none transition-all text-sm font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400"
+                        class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-primary dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-primary-light rounded-2xl outline-none transition-all text-sm font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400"
                         required
                     >
                 </div>
@@ -59,7 +59,7 @@
                         type="password" 
                         id="password" 
                         placeholder="••••••••" 
-                        class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-primary dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-primaryLight rounded-2xl outline-none transition-all text-sm font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400"
+                        class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-primary dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-primary-light rounded-2xl outline-none transition-all text-sm font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400"
                         required
                     >
                 </div>
@@ -77,7 +77,7 @@
                     <input 
                         wire:model.defer="remember" 
                         type="checkbox" 
-                        class="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primaryLight cursor-pointer"
+                        class="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary-light cursor-pointer"
                     >
                     <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Ingat Saya</span>
                 </label>
