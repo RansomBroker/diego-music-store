@@ -85,6 +85,8 @@ class JournalEntry extends Model
                 return $this->belongsTo(PurchaseTransaction::class, 'reference_id');
             case 'Opname':
                 return $this->belongsTo(StockOpname::class, 'reference_id');
+            case 'ScheduledJournalEntry':
+                return $this->belongsTo(ScheduledJournalEntry::class, 'reference_id');
             default:
                 return null;
         }
