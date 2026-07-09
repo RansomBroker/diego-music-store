@@ -421,7 +421,7 @@ class ProcurementActionsTest extends TestCase
             'enable_tax' => false,
             'tax_mode' => 'GLOBAL',
             'tax_rate' => 10,
-            'discount_value' => 50000,
+            'discount_value' => 0,
             'discount_type' => 'fixed',
             'items' => [
                 [
@@ -482,7 +482,7 @@ class ProcurementActionsTest extends TestCase
             'enable_tax' => false,
             'tax_rate' => 10,
             'discount_type' => 'fixed',
-            'discount_value' => 20000,
+            'discount_value' => 0,
             'other_cost' => 10000,
             'pph_amount' => 5000,
             'items' => [
@@ -514,6 +514,7 @@ class ProcurementActionsTest extends TestCase
             'tax_rate' => 10,
             'discount_type' => 'percent',
             'discount_value' => 10,
+            'item_discount_type' => 'percent',
             'items' => [
                 [
                     'product_variant_id' => $this->variant->id,
@@ -560,6 +561,7 @@ class ProcurementActionsTest extends TestCase
             'tax_rate' => 10,
             'discount_type' => 'percent',
             'discount_value' => 10,
+            'item_discount_type' => 'percent',
             'items' => [
                 [
                     'product_variant_id' => $this->variant->id,

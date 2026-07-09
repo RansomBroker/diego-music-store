@@ -17,20 +17,7 @@ Standar penulisan kode (Coding Standards) & pola desain (Design Patterns) wajib 
   * Method Utama: Gunakan satu method publik `execute()`.
   * Transaksi: Bungkus operasi multi-tabel dalam `DB::transaction()`.
 
-```php
-<?php
-namespace App\Actions\Customer;
-use App\Models\Customer;
-use Illuminate\Support\Facades\DB;
 
-class CreateCustomer
-{
-    public function execute(array $data): Customer
-    {
-        return DB::transaction(fn() => Customer::create($data));
-    }
-}
-```
 
 ---
 
@@ -42,19 +29,6 @@ Gunakan **Helper Class** untuk logika reusable (utilitas, konversi, perhitungan,
   * Desain: Gunakan *static methods*.
   * Penamaan Class: Akhiran `Helper` (contoh: `TerbilangHelper`, `ProductHelper`).
 
-```php
-<?php
-namespace App\Helpers;
-
-class TerbilangHelper
-{
-    public static function convert(int $number): string
-    {
-        // Logika konversi angka ke kata
-        return trim($result);
-    }
-}
-```
 
 ---
 
@@ -84,13 +58,6 @@ Dilarang menulis tag HTML secara mentah (*raw HTML string*) di dalam file PHP Fi
   * Letakkan file blade di `resources/views/`.
   * Panggil view menggunakan helper `view('nama-view', $data)`.
 
-```php
-Placeholder::make('stock_history')
-    ->label('Riwayat Stok')
-    ->content(fn ($record) => view('backoffice.products.stock-movements-table', [
-        'movements' => $record->movements,
-    ]))
-```
 
 ---
 

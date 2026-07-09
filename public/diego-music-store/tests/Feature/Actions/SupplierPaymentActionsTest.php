@@ -122,6 +122,7 @@ class SupplierPaymentActionsTest extends TestCase
             'status' => 'draft',
             'items' => [
                 [
+                    'is_selected' => true,
                     'purchase_transaction_id' => $this->creditPurchase->id,
                     'amount_due' => 10000000,
                     'amount_paid' => 5000000, // Bayar separuh
@@ -170,6 +171,7 @@ class SupplierPaymentActionsTest extends TestCase
             'payment_reference' => 'UPDATED-REF',
             'items' => [
                 [
+                    'is_selected' => true,
                     'purchase_transaction_id' => $this->creditPurchase->id,
                     'amount_due' => 10000000,
                     'amount_paid' => 7000000, // Increase payment
@@ -306,6 +308,7 @@ class SupplierPaymentActionsTest extends TestCase
             'status' => 'posted',
             'items' => [
                 [
+                    'is_selected' => true,
                     'purchase_transaction_id' => $this->creditPurchase->id,
                     'amount_due' => 10000000,
                     'amount_paid' => 4000000, // Partial payment
@@ -353,5 +356,30 @@ class SupplierPaymentActionsTest extends TestCase
         $this->expectExceptionMessage('Hanya pelunasan hutang dengan status draft yang dapat diposting.');
 
         app(ProcessSupplierPaymentComplete::class)->execute($payment);
+    }
+
+    public function test_it_filters_out_unselected_items(): void
+    {
+        $data = [
+            'payment_date' => '2026-07-01',
+            'supplier_id' => $this->supplier->id,
+            'branch_id' => $this->branch->id,
+            'account_id' => $this->cashAccount->id,
+            'payment_method' => 'Bank Transfer',
+            'status' => 'draft',
+            'items' => [
+                [
+                    'is_selected' => false,
+                    'purchase_transaction_id' => $this->creditPurchase->id,
+                    'amount_due' => 10000000,
+                    'amount_paid' => 5000000,
+                ],
+            ],
+        ];
+
+        $payment = app(CreateSupplierPayment::class)->execute($data);
+
+        $this->assertEquals(0, $payment->total_amount);
+        $this->assertCount(0, $payment->items);
     }
 }

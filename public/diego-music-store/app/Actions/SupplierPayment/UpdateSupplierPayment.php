@@ -41,6 +41,10 @@ class UpdateSupplierPayment
 
                 $totalPaid = 0;
                 foreach ($data['items'] as $item) {
+                    if (!($item['is_selected'] ?? false)) {
+                        continue;
+                    }
+
                     $amountPaid = intval($item['amount_paid'] ?? 0);
                     if ($amountPaid <= 0) {
                         continue;

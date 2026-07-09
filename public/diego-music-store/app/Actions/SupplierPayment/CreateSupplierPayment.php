@@ -38,6 +38,10 @@ class CreateSupplierPayment
             // 2. Create items
             $totalPaid = 0;
             foreach ($items as $item) {
+                if (!($item['is_selected'] ?? false)) {
+                    continue;
+                }
+
                 $amountPaid = intval($item['amount_paid'] ?? 0);
                 if ($amountPaid <= 0) {
                     continue;

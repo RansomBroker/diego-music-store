@@ -24,13 +24,50 @@ class EditSupplierPayment extends EditRecord
     {
         $payment = $this->record;
         $data['items'] = [];
+        $linkedTransactionIds = [];
+
         foreach ($payment->items as $item) {
+            $pt = $item->purchaseTransaction;
+            if (!$pt) continue;
+
             $data['items'][] = [
+                'is_selected' => true,
                 'purchase_transaction_id' => $item->purchase_transaction_id,
-                'amount_due' => $item->amount_due,
+                'transaction_no' => $pt->transaction_no,
+                'invoice_number' => $pt->invoice_number,
+                'transaction_date' => $pt->transaction_date->format('Y-m-d'),
+                'due_date' => $pt->due_date?->format('Y-m-d'),
+                'grand_total' => $pt->grand_total,
+                'amount_due' => $pt->getRemainingUnpaidAmount(),
                 'amount_paid' => $item->amount_paid,
             ];
+            $linkedTransactionIds[] = $item->purchase_transaction_id;
         }
+
+        if ($payment->status === 'draft') {
+            $otherUnpaidTransactions = \App\Models\PurchaseTransaction::query()
+                ->where('supplier_id', $payment->supplier_id)
+                ->where('purchase_type', 'Kredit')
+                ->where('status', 'posted')
+                ->whereNotIn('id', $linkedTransactionIds)
+                ->get()
+                ->filter(fn ($pt) => $pt->getRemainingUnpaidAmount() > 0);
+
+            foreach ($otherUnpaidTransactions as $pt) {
+                $data['items'][] = [
+                    'is_selected' => false,
+                    'purchase_transaction_id' => $pt->id,
+                    'transaction_no' => $pt->transaction_no,
+                    'invoice_number' => $pt->invoice_number,
+                    'transaction_date' => $pt->transaction_date->format('Y-m-d'),
+                    'due_date' => $pt->due_date?->format('Y-m-d'),
+                    'grand_total' => $pt->grand_total,
+                    'amount_due' => $pt->getRemainingUnpaidAmount(),
+                    'amount_paid' => 0,
+                ];
+            }
+        }
+
         return $data;
     }
 
