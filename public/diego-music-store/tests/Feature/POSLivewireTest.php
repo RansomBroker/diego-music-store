@@ -154,6 +154,7 @@ class POSLivewireTest extends TestCase
     public function it_calculates_tax_based_on_enable_tax_and_custom_tax_percent()
     {
         Livewire::test('App\Livewire\POS')
+            ->set('enableTax', true)
             ->call('addToCart', $this->variant->id) // 2,000,000 subtotal
             ->assertSet('enableTax', true)
             ->assertSet('taxPercent', 11)
@@ -241,6 +242,7 @@ class POSLivewireTest extends TestCase
 
         // 2. Test POS Livewire
         Livewire::test('App\Livewire\POS')
+            ->set('enableTax', true)
             ->call('addToCart', $this->variant->id) // Adds 1 variant of retail price 2.000.000
             // Tax: 11% -> 220.000, Total: 2.220.000
             ->assertSet('grandTotal', 2220000)
@@ -255,11 +257,178 @@ class POSLivewireTest extends TestCase
             // New grandTotal: 2.220.000 - 50.000 = 2.170.000
             ->assertSet('grandTotal', 2170000)
             // Perform checkout
-            ->set('amountPaid', 2170000)
+            ->call('openPayment')
+            ->set('amountCash', 2170000)
             ->call('checkout');
 
         // 3. Verify points were deducted in DB (50 - 50 = 0 points left)
         $customer->refresh();
         $this->assertEquals(0, $customer->loyalty_points);
+    }
+
+    /** @test */
+    public function it_returns_default_customers_when_search_query_is_empty()
+    {
+        // Clear any existing customers
+        \App\Models\Customer::query()->delete();
+
+        // Create 2 customers
+        \App\Models\Customer::create(['name' => 'Ahmad', 'phone' => '081234']);
+        \App\Models\Customer::create(['name' => 'Budi', 'phone' => '085678']);
+
+        Livewire::test('App\Livewire\POS')
+            ->set('customerSearch', '')
+            ->assertCount('customers', 2);
+    }
+
+    /** @test */
+    public function it_can_checkout_with_split_payments()
+    {
+        $product = \App\Models\Product::create([
+            'name' => 'Produk Split Test',
+            'type' => 'physical',
+            'is_active' => true,
+        ]);
+
+        $variant = \App\Models\ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'SPL-TEST',
+            'name' => 'Standard',
+            'price' => 100000,
+            'cost_price' => 50000,
+            'hpp' => 50000,
+            'is_active' => true,
+        ]);
+
+        \App\Models\ProductBranchStock::create([
+            'product_variant_id' => $variant->id,
+            'branch_id' => $this->branch->id,
+            'stock' => 10,
+            'hpp' => 50000,
+        ]);
+
+        $cart = [
+            $variant->id => [
+                'variant_id' => $variant->id,
+                'name' => $product->name,
+                'qty' => 1,
+                'price' => 100000,
+                'type' => 'physical',
+                'emoji' => '🎸',
+                'notes' => '',
+                'discount_value' => 0,
+                'discount_type' => 'fixed',
+                'discount_amount' => 0,
+                'pricing_tier_id' => $this->retailTier->id,
+            ]
+        ];
+
+        Livewire::test('App\Livewire\POS')
+            ->set('selectedBranchId', $this->branch->id)
+            ->set('cart', $cart)
+            ->assertSet('grandTotal', 100000)
+            ->call('openPayment')
+            ->set('selectedPaymentMethods', ['cash', 'debit'])
+            ->set('amountCash', 40000)
+            ->set('amountDebit', 60000)
+            ->set('debitRef', 'TRF-123')
+            ->call('checkout');
+
+        // Verify sale was created
+        $sale = \App\Models\Sale::latest()->first();
+        $this->assertNotNull($sale);
+        $this->assertEquals('Tunai & Debit BCA', $sale->payment_method);
+        $this->assertEquals(100000, $sale->grand_total);
+
+        // Verify Journal items for Split Payment
+        $journalEntry = \App\Models\JournalEntry::where('reference_id', $sale->id)->first();
+        $this->assertNotNull($journalEntry);
+
+        // Kas Utama should be debited 40000
+        $kasItem = \App\Models\JournalItem::where('journal_entry_id', $journalEntry->id)
+            ->whereHas('account', fn($q) => $q->where('code', '1-1000'))
+            ->first();
+        $this->assertNotNull($kasItem);
+        $this->assertEquals(40000, $kasItem->debit);
+
+        // Bank BCA should be debited 60000
+        $bankItem = \App\Models\JournalItem::where('journal_entry_id', $journalEntry->id)
+            ->whereHas('account', fn($q) => $q->where('code', '1-1110'))
+            ->first();
+        $this->assertNotNull($bankItem);
+        $this->assertEquals(60000, $bankItem->debit);
+    }
+
+    /** @test */
+    public function it_can_hold_restore_and_delete_transactions_in_database()
+    {
+        // 1. Setup cart
+        $cart = [
+            $this->variant->id => [
+                'variant_id' => $this->variant->id,
+                'product_id' => $this->variant->product_id,
+                'name' => $this->variant->name,
+                'sku' => $this->variant->sku,
+                'price' => 2000000,
+                'qty' => 1,
+                'emoji' => '🎹',
+                'discount_amount' => 0,
+                'discount_type' => 'fixed',
+                'pricing_tier_id' => $this->retailTier->id,
+            ]
+        ];
+
+        // 2. Create customer
+        $customer = \App\Models\Customer::create([
+            'name' => 'Test Customer',
+            'phone' => '0812345678',
+        ]);
+
+        // 3. Perform hold
+        $component = Livewire::test('App\Livewire\POS')
+            ->set('selectedBranchId', $this->branch->id)
+            ->set('cart', $cart)
+            ->set('selectedCustomerId', $customer->id)
+            ->set('selectedCustomerName', $customer->name)
+            ->set('discountValue', 10000)
+            ->set('discountType', 'fixed')
+            ->call('holdTransaction');
+
+        // Verify it was cleared from session state
+        $component->assertSet('cart', []);
+        $component->assertSet('selectedCustomerId', null);
+
+        // Verify it was stored in database
+        $held = \App\Models\PosHeldTransaction::latest()->first();
+        $this->assertNotNull($held);
+        $this->assertEquals('Test Customer', $held->customer_name);
+        $this->assertEquals(10000, $held->discount_value);
+        $this->assertCount(1, $held->cart_data);
+
+        // 4. Restore transaction
+        Livewire::test('App\Livewire\POS')
+            ->set('selectedBranchId', $this->branch->id)
+            ->call('restoreHeldTransaction', $held->id)
+            ->assertSet('selectedCustomerId', $customer->id)
+            ->assertSet('selectedCustomerName', 'Test Customer')
+            ->assertSet('discountValue', 10000);
+
+        // Verify it was deleted from database on restore
+        $this->assertNull(\App\Models\PosHeldTransaction::find($held->id));
+
+        // 4. Test delete transaction
+        $held2 = \App\Models\PosHeldTransaction::create([
+            'id' => \Illuminate\Support\Str::uuid()->toString(),
+            'branch_id' => $this->branch->id,
+            'user_id' => \Illuminate\Support\Facades\Auth::id(),
+            'cart_data' => $cart,
+            'customer_name' => 'To Be Deleted',
+        ]);
+
+        Livewire::test('App\Livewire\POS')
+            ->set('selectedBranchId', $this->branch->id)
+            ->call('deleteHeldTransaction', $held2->id);
+
+        $this->assertNull(\App\Models\PosHeldTransaction::find($held2->id));
     }
 }

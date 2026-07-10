@@ -7,6 +7,8 @@
     'isLoyaltyMember',
     'subtotal',
     'discountAmount',
+    'discountValue' => 0,
+    'discountType' => 'fixed',
     'taxAmount',
     'grandTotal',
     'pricingTiers' => [],
@@ -15,13 +17,56 @@
     'taxPercent' => 11,
     'usePoints' => false,
     'customerPoints' => 0,
-    'pointDiscountAmount' => 0
+    'pointDiscountAmount' => 0,
+    'heldTransactions' => [],
+    'lastSaleId' => null
 ])
 
-<aside class="w-96 xl:w-[600px] bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col h-full shadow-xl shadow-slate-200/50 dark:shadow-none flex-shrink-0 transition-colors">
+<aside class="w-[450px] xl:w-[650px] bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col h-full shadow-xl shadow-slate-200/50 dark:shadow-none flex-shrink-0 transition-colors">
     <!-- Cart Header -->
     <div class="p-6 border-b border-slate-100 dark:border-slate-700">
-        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Transaksi Saat Ini</h2>
+        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-3">
+            <div class="flex flex-col">
+                <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Transaksi Saat Ini</h2>
+                <span class="text-[11px] font-mono font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                    {{ $this->previewInvoiceNumber }} (Draft)
+                </span>
+            </div>
+            
+            <!-- Toolbar Utility Buttons with Labels -->
+            <div class="flex items-center flex-wrap gap-1">
+                <!-- Reset Transaksi -->
+                <button type="button" wire:click="clearCart" class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 bg-slate-50 hover:bg-red-50/50 dark:bg-slate-900/60 dark:hover:bg-red-950/20 border border-slate-200/40 dark:border-slate-700/50 rounded-lg transition-all cursor-pointer uppercase tracking-wider" title="Reset Transaksi">
+                    <i class="ph-bold ph-trash text-xs"></i>
+                    <span>Reset</span>
+                </button>
+                <!-- Transaksi Ditunda (Hold / List) -->
+                <button type="button" wire:click="openHeldTransactionsModal" class="relative flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 bg-slate-50 hover:bg-amber-50/50 dark:bg-slate-900/60 dark:hover:bg-amber-950/20 border border-slate-200/40 dark:border-slate-700/50 rounded-lg transition-all cursor-pointer uppercase tracking-wider" title="Daftar Transaksi Ditunda">
+                    <i class="ph-bold ph-folder-open text-xs"></i>
+                    <span>Daftar</span>
+                    @if (count($heldTransactions) > 0)
+                        <span class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-amber-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                            {{ count($heldTransactions) }}
+                        </span>
+                    @endif
+                </button>
+                <!-- Tunda Transaksi Saat Ini -->
+                <button type="button" wire:click="holdTransaction" class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 bg-slate-50 hover:bg-amber-50/50 dark:bg-slate-900/60 dark:hover:bg-amber-950/20 border border-slate-200/40 dark:border-slate-700/50 rounded-lg transition-all cursor-pointer uppercase tracking-wider" title="Tunda Transaksi Sekarang" @if(empty($cart)) disabled style="opacity: 0.4; cursor: not-allowed;" @endif>
+                    <i class="ph-bold ph-folder-simple-plus text-xs"></i>
+                    <span>Tunda</span>
+                </button>
+                <!-- Print Bill Sementara (Opsi 1) -->
+                <button type="button" wire:click="printBill" class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 bg-slate-50 hover:bg-blue-50/50 dark:bg-slate-900/60 dark:hover:bg-blue-950/20 border border-slate-200/40 dark:border-slate-700/50 rounded-lg transition-all cursor-pointer uppercase tracking-wider" title="Cetak Preview Tagihan" @if(empty($cart)) disabled style="opacity: 0.4; cursor: not-allowed;" @endif>
+                    <i class="ph-bold ph-file-text text-xs"></i>
+                    <span>Preview</span>
+                </button>
+                <!-- Print Struk Terakhir (Opsi 2) -->
+                <button type="button" wire:click="reprintLastReceipt" class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 bg-slate-50 hover:bg-emerald-50/50 dark:bg-slate-900/60 dark:hover:bg-emerald-950/20 border border-slate-200/40 dark:border-slate-700/50 rounded-lg transition-all cursor-pointer uppercase tracking-wider" title="Cetak Struk Terakhir" @if(!$lastSaleId) disabled style="opacity: 0.4; cursor: not-allowed;" @endif>
+                    <i class="ph-bold ph-printer text-xs"></i>
+                    <span>Struk</span>
+                </button>
+            </div>
+        </div>
         <div class="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
             <span class="font-mono text-xs bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">Faktur Baru</span>
             <span>{{ now()->format('d M Y') }}</span>
@@ -37,7 +82,7 @@
             <!-- 2 Column Grid for Inputs -->
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <!-- Customer Selector -->
-                <div class="relative">
+                <div class="relative" x-data="{ isOpen: false }" @click.away="isOpen = false">
                     <label class="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider block mb-1">Pelanggan</label>
                     @if ($selectedCustomerId)
                         <div class="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200/50 dark:border-slate-700 shadow-sm h-[50px]">
@@ -52,57 +97,54 @@
                             </button>
                         </div>
                     @else
-                        <div class="flex items-center gap-3 p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200/50 dark:border-slate-700 shadow-sm h-[50px]">
-                            <div class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 flex items-center justify-center flex-shrink-0">
-                                <i class="ph ph-user-plus text-base"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <input type="text" wire:model.live.debounce.250ms="customerSearch" placeholder="Cari Pelanggan..." class="w-full bg-transparent border-none outline-none text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 p-0 focus:ring-0">
-                            </div>
-                            <button type="button" wire:click="openCreateCustomerModal" class="p-1.5 text-primary dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-colors flex items-center justify-center cursor-pointer flex-shrink-0" title="Tambah Pelanggan Baru">
-                                <i class="ph-bold ph-plus-circle text-xl"></i>
-                            </button>
-                        </div>
+                        <x-pos.form.input 
+                            model="customerSearch"
+                            placeholder="Cari Pelanggan..."
+                            icon="ph-user-plus"
+                            live
+                            @focus="isOpen = true"
+                            @click="isOpen = true"
+                            class="!bg-white dark:!bg-slate-800"
+                        />
                         
                         <!-- Customer Search Results Dropdown -->
-                        @if ($customerSearch !== '')
-                            <div class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-20 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
-                                @if (!empty($customers))
-                                    @foreach ($customers as $c)
-                                        <button wire:click="selectCustomer({{ $c->id }}, '{{ $c->name }}', {{ $c->is_loyalty_member ? 'true' : 'false' }})" class="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 flex items-center justify-between">
-                                            <div>
-                                                <div class="font-bold text-slate-800 dark:text-slate-100">{{ $c->name }}</div>
-                                                <div class="text-xs text-slate-500 dark:text-slate-400">{{ $c->phone }}</div>
-                                            </div>
-                                        </button>
-                                    @endforeach
-                                @endif
-                                <button type="button" wire:click="openCreateCustomerModal" class="w-full px-4 py-3 text-left text-xs bg-slate-50 dark:bg-slate-900/60 text-primary dark:text-blue-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-2 border-t border-slate-100 dark:border-slate-700">
-                                    <i class="ph-bold ph-plus-circle text-sm"></i>
-                                    <span>Daftarkan "{{ $customerSearch }}" sebagai Pelanggan Baru</span>
-                                </button>
-                            </div>
-                        @endif
+                        <div x-show="isOpen" x-cloak class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-20 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
+                            @if (!empty($customers))
+                                @foreach ($customers as $c)
+                                    <button wire:click="selectCustomer({{ $c->id }}, '{{ $c->name }}', {{ $c->is_loyalty_member ? 'true' : 'false' }})" @click="isOpen = false" class="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 flex items-center justify-between">
+                                        <div>
+                                            <div class="font-bold text-slate-800 dark:text-slate-100">{{ $c->name }}</div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400">{{ $c->phone }}</div>
+                                        </div>
+                                    </button>
+                                @endforeach
+                            @else
+                                <div class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">Tidak ada pelanggan ditemukan</div>
+                            @endif
+                            <button type="button" wire:click="openCreateCustomerModal" @click="isOpen = false" class="w-full px-4 py-3 text-left text-xs bg-slate-50 dark:bg-slate-900/60 text-primary dark:text-blue-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-2 border-t border-slate-100 dark:border-slate-700">
+                                <i class="ph-bold ph-plus-circle text-sm"></i>
+                                <span>{{ $customerSearch ? 'Daftarkan "' . $customerSearch . '" sebagai Pelanggan Baru' : 'Daftarkan Pelanggan Baru' }}</span>
+                            </button>
+                        </div>
                     @endif
                 </div>
 
                 <!-- Pricing Tier Dropdown Selector -->
                 @if (!empty($pricingTiers))
-                    <div class="relative">
-                        <label class="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider block mb-1">Tingkat Harga</label>
-                        <div class="relative flex items-center bg-white dark:bg-slate-800 rounded-xl border border-slate-200/50 dark:border-slate-700 shadow-sm overflow-hidden h-[50px]">
-                            <i class="ph-bold ph-tag text-slate-400 dark:text-slate-500 text-sm absolute left-3.5 pointer-events-none"></i>
-                            <select wire:model.live="selectedPricingTierId" class="w-full pl-10 pr-10 py-0 h-full bg-transparent border-none text-sm font-bold text-slate-700 dark:text-slate-300 outline-none cursor-pointer appearance-none focus:ring-0">
-                                @if ($selectedPricingTierId === 'custom')
-                                    <option value="custom" class="bg-white dark:bg-slate-800 text-slate-850 dark:text-slate-100">Kustom (Campuran)</option>
-                                @endif
-                                @foreach ($pricingTiers as $tier)
-                                    <option value="{{ $tier->id }}" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ $tier->name }}</option>
-                                @endforeach
-                            </select>
-                            <i class="ph-bold ph-caret-down text-slate-400 absolute right-3.5 pointer-events-none text-[11px]"></i>
-                        </div>
-                    </div>
+                    <x-pos.form.select 
+                        label="Tingkat Harga"
+                        model="selectedPricingTierId"
+                        icon="ph-tag"
+                        live
+                        class="!bg-white dark:!bg-slate-800"
+                    >
+                        @if ($selectedPricingTierId === 'custom')
+                            <option value="custom" class="bg-white dark:bg-slate-800 text-slate-850 dark:text-slate-100">Kustom (Campuran)</option>
+                        @endif
+                        @foreach ($pricingTiers as $tier)
+                            <option value="{{ $tier->id }}" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ $tier->name }}</option>
+                        @endforeach
+                    </x-pos.form.select>
                 @endif
             </div>
         </div>
@@ -169,12 +211,39 @@
                     </span>
                 </div>
             @endif
-            @if ($discountAmount > 0)
-                <div class="flex items-center justify-between text-sm text-green-600 dark:text-green-400 font-medium">
-                    <span class="flex items-center gap-1"><i class="ph-fill ph-tag"></i> Diskon Member</span>
-                    <span>- Rp {{ number_format($discountAmount, 0, ',', '.') }}</span>
+            <!-- Diskon Global Input -->
+            <div class="flex items-center justify-between text-sm gap-2 pt-1">
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold text-slate-500 dark:text-slate-400">
+                        Diskon Transaksi
+                    </span>
+                    @if ($discountType === 'percent' && $discountValue > 0)
+                        <span class="text-xs font-bold text-green-600 dark:text-green-400 mt-0.5">
+                            - Rp {{ number_format($discountAmount, 0, ',', '.') }}
+                        </span>
+                    @endif
                 </div>
-            @endif
+                <div class="w-32 flex-shrink-0">
+                    <div class="relative flex items-center bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200/50 dark:border-slate-700/60 overflow-hidden h-8">
+                        <i class="ph ph-tag text-slate-400 dark:text-slate-500 text-xs absolute left-2 pointer-events-none"></i>
+                        <input 
+                            type="number" 
+                            placeholder="{{ $discountType === 'percent' ? '0 %' : 'Rp 0' }}" 
+                            wire:model.live="discountValue"
+                            class="w-full pl-7 pr-8 py-0 h-full bg-transparent border-none text-[11px] font-bold text-slate-750 dark:text-slate-300 outline-none focus:ring-0"
+                            min="0"
+                        >
+                        <button 
+                            type="button"
+                            wire:click="toggleGlobalDiscountType"
+                            class="absolute right-0 top-0 bottom-0 px-2 bg-slate-100 dark:bg-slate-800 text-[10px] font-black border-l border-slate-200/50 dark:border-slate-700 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center select-none"
+                            title="Klik untuk mengubah jenis diskon (Nominal / Persentase)"
+                        >
+                            {{ $discountType === 'percent' ? '%' : 'Rp' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Dotted Divider -->
@@ -185,8 +254,8 @@
             <span class="text-2xl font-bold text-primary dark:text-blue-400">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
         </div>
 
-        <button wire:click="openPayment" class="w-full bg-primary hover:bg-primaryHover text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 group {{ empty($cart) ? 'opacity-50 cursor-not-allowed' : '' }}" {{ empty($cart) ? 'disabled' : '' }}>
-            <i class="ph-bold ph-credit-card text-xl group-hover:scale-110 transition-transform"></i>
+        <button wire:click="openPayment" class="w-full bg-primary hover:bg-primaryHover text-white py-3 rounded-xl font-bold text-base shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 group {{ empty($cart) ? 'opacity-50 cursor-not-allowed' : '' }}" {{ empty($cart) ? 'disabled' : '' }}>
+            <i class="ph-bold ph-credit-card text-lg group-hover:scale-110 transition-transform"></i>
             Proses Pembayaran
         </button>
     </div>

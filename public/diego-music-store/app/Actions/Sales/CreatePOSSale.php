@@ -162,22 +162,39 @@ class CreatePOSSale
                 )->id;
             };
 
-            // 5a. Debit: Receivables or Bank or Cash
-            if ($paymentMethod === 'credit') {
-                $debitAccId = $resolveAccount('1-1200', 'Piutang Dagang', 'Asset');
-            } elseif ($paymentMethod === 'debit') {
-                $debitAccId = $resolveAccount('1-1110', 'Bank BCA', 'Asset');
-            } else {
-                $debitAccId = $resolveAccount('1-1000', 'Kas Utama', 'Asset');
-            }
+            // 5a. Debit: Receivables or Bank or Cash (supporting Split Payment)
+            $payments = $data['payments'] ?? [
+                ['method' => $paymentMethod, 'amount' => $grandTotal, 'ref' => null]
+            ];
 
-            JournalItem::create([
-                'journal_entry_id' => $journalEntry->id,
-                'account_id' => $debitAccId,
-                'debit' => $grandTotal,
-                'credit' => 0,
-                'notes' => "Penerimaan POS - " . ucfirst($paymentMethod),
-            ]);
+            foreach ($payments as $pay) {
+                $payMethod = $pay['method'];
+                $payAmount = intval($pay['amount']);
+                $payRef = $pay['ref'] ?? null;
+                
+                if ($payAmount <= 0) {
+                    continue;
+                }
+
+                if ($payMethod === 'credit') {
+                    $debitAccId = $resolveAccount('1-1200', 'Piutang Dagang', 'Asset');
+                    $methodName = 'Piutang';
+                } elseif ($payMethod === 'debit') {
+                    $debitAccId = $resolveAccount('1-1110', 'Bank BCA', 'Asset');
+                    $methodName = 'Debit BCA' . ($payRef ? " (Ref: {$payRef})" : '');
+                } else {
+                    $debitAccId = $resolveAccount('1-1000', 'Kas Utama', 'Asset');
+                    $methodName = 'Tunai';
+                }
+
+                JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $debitAccId,
+                    'debit' => $payAmount,
+                    'credit' => 0,
+                    'notes' => "Penerimaan POS - {$methodName}",
+                ]);
+            }
 
             // 5b. Credit: Sales Revenue
             $salesAccId = $resolveAccount('4-1000', 'Pendapatan Penjualan', 'Revenue');

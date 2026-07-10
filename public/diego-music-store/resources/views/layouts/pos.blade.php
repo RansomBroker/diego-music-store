@@ -37,6 +37,10 @@
             const url = `{{ url('/pos/receipt') }}/${saleId}`;
             window.open(url, '_blank', 'width=400,height=600,menubar=no,toolbar=no');
         });
+
+        window.addEventListener('open-draft-bill', event => {
+            window.open(event.detail.url, '_blank', 'width=400,height=600,menubar=no,toolbar=no');
+        });
     </script>
 </body>
 </html>

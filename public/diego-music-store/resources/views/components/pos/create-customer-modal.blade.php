@@ -52,13 +52,6 @@
             @endforeach
         </x-pos.form-select>
 
-        <!-- Member Loyalitas Toggle -->
-        <x-pos.form.toggle 
-            label="Member Loyalitas" 
-            sublabel="Aktifkan untuk mengumpulkan poin belanja" 
-            model="newCustomerIsLoyaltyMember" 
-        />
-
         <!-- Action Button -->
         <x-pos.button 
             type="submit" 
