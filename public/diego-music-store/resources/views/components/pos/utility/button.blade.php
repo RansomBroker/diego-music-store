@@ -22,13 +22,13 @@
         
         'secondary' => 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border-slate-350 dark:border-slate-650 active:scale-[0.98]',
         
-        'danger' => 'bg-slate-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-700 dark:text-slate-355 hover:text-red-600 dark:hover:text-red-400 border-slate-400/80 dark:border-slate-650 active:scale-[0.98]',
+        'danger' => 'bg-slate-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-700 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 border-slate-400/80 dark:border-slate-650 active:scale-[0.98]',
         
-        'warning' => 'bg-slate-100 dark:bg-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-slate-700 dark:text-slate-355 hover:text-amber-600 dark:hover:text-amber-400 border-slate-400/80 dark:border-slate-650 active:scale-[0.98]',
+        'warning' => 'bg-slate-100 dark:bg-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 border-slate-400/80 dark:border-slate-650 active:scale-[0.98]',
         
-        'info' => 'bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 text-slate-700 dark:text-slate-355 hover:text-blue-600 dark:hover:text-blue-400 border-slate-400/80 dark:border-slate-650 active:scale-[0.98]',
+        'info' => 'bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 border-slate-400/80 dark:border-slate-650 active:scale-[0.98]',
         
-        'success' => 'bg-slate-100 dark:bg-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-slate-700 dark:text-slate-355 hover:text-emerald-600 dark:hover:text-emerald-400 border-slate-400/80 dark:border-slate-650 active:scale-[0.98]',
+        'success' => 'bg-slate-100 dark:bg-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 border-slate-400/80 dark:border-slate-650 active:scale-[0.98]',
     ];
 
     $classes = $baseClasses . ' ' . ($sizes[$size] ?? $sizes['md']) . ' ' . ($variants[$variant] ?? $variants['primary']);
