@@ -17,7 +17,7 @@
     'discountValue' => 0
 ])
 
-<x-pos.modal 
+<x-pos-page::modal 
     :show="$showPaymentModal" 
     title="Detail Pembayaran" 
     closeAction="closePayment"
@@ -125,7 +125,7 @@
                     class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
                 >
                     <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-450 rounded-lg flex items-center justify-center">
+                        <div class="w-7 h-7 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-455 rounded-lg flex items-center justify-center">
                             <i class="ph-bold ph-credit-card text-base"></i>
                         </div>
                         <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">Debit BCA</span>
@@ -142,10 +142,10 @@
                     class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
                 >
                     <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-450 rounded-lg flex items-center justify-center">
+                        <div class="w-7 h-7 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-455 rounded-lg flex items-center justify-center">
                             <i class="ph-bold ph-hand-coins text-base"></i>
                         </div>
-                        <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">Piutang</span>
+                        <span class="text-sm font-semibold text-slate-755 dark:text-slate-300">Piutang</span>
                     </div>
                     @if (in_array('credit', $selectedPaymentMethods))
                         <i class="ph-bold ph-check text-primary dark:text-blue-400 text-sm"></i>
@@ -195,10 +195,10 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
-                        <input type="number" wire:model.live="amountDebit" wire:keyup="distributePaymentAmounts" class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-950 text-slate-800 dark:text-slate-100" placeholder="0">
+                        <input type="number" wire:model.live="amountDebit" wire:keyup="distributePaymentAmounts" class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-950 text-slate-850 dark:text-slate-100" placeholder="0">
                     </div>
                     <div class="relative">
-                        <input type="text" wire:model="debitRef" class="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-sm focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-950 text-slate-800 dark:text-slate-100" placeholder="No. Bukti / Ref (Opsional)">
+                        <input type="text" wire:model="debitRef" class="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-sm focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" placeholder="No. Bukti / Ref (Opsional)">
                     </div>
                 </div>
             </div>
@@ -262,7 +262,7 @@
     @endif
 
     <!-- Action Button -->
-    <x-pos.button 
+    <x-pos.utility.button 
         wire:click="checkout" 
         variant="primary" 
         size="lg" 
@@ -270,5 +270,5 @@
         loading="checkout"
     >
         Konfirmasi & Cetak Struk
-    </x-pos.button>
-</x-pos.modal>
+    </x-pos.utility.button>
+</x-pos-page::modal>

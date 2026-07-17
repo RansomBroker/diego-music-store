@@ -79,6 +79,7 @@ class CreatePOSSale
                 'payment_method' => $paymentMethod,
                 'status' => 'completed',
                 'created_by' => Auth::id(),
+                'sale_category' => $data['sale_category'] ?? 'Store',
             ]);
 
             // 4. Create Sale Items and handle Stock Deduction & Movement

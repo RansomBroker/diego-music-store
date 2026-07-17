@@ -26,11 +26,11 @@
         </div>
         <!-- Counter -->
         <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-lg p-1">
-            <button wire:click="updateQty({{ $id }}, -1)" class="w-7 h-7 rounded bg-white dark:bg-slate-600 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors">
+            <button wire:click="updateQty({{ $id }}, -1)" class="w-7 h-7 rounded bg-white dark:bg-slate-600 shadow-sm flex items-center justify-center text-slate-650 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors">
                 <i class="ph ph-minus"></i>
             </button>
             <span class="w-4 text-center text-sm font-semibold text-slate-800 dark:text-slate-200">{{ $item['qty'] }}</span>
-            <button wire:click="updateQty({{ $id }}, 1)" class="w-7 h-7 rounded bg-white dark:bg-slate-600 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors">
+            <button wire:click="updateQty({{ $id }}, 1)" class="w-7 h-7 rounded bg-white dark:bg-slate-600 shadow-sm flex items-center justify-center text-slate-650 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors">
                 <i class="ph ph-plus"></i>
             </button>
         </div>

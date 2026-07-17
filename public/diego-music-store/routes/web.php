@@ -15,6 +15,7 @@ Route::get('/backoffice/purchase-orders/{purchaseOrder}/print', [App\Http\Contro
 Route::get('/pos/login', POSLogin::class)->name('pos.login');
 
 Route::middleware('auth.pos')->group(function () {
+    Route::get('/pos/front-office', App\Livewire\FrontOfficeDashboard::class)->name('pos.front-office');
     Route::get('/pos', App\Livewire\POS::class)->name('pos');
     Route::get('/pos/receipt/{sale}', [App\Http\Controllers\POS\POSReceiptController::class, 'show'])->name('pos.receipt');
     Route::get('/pos/receipt-draft', [App\Http\Controllers\POS\POSReceiptController::class, 'showDraft'])->name('pos.receipt-draft');

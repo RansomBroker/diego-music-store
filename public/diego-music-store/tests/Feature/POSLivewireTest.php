@@ -215,6 +215,7 @@ class POSLivewireTest extends TestCase
             ->assertSet('showCreateCustomerModal', true)
             ->assertSet('newCustomerName', 'Joko Susilo')
             ->set('newCustomerPhone', '0855667788')
+            ->set('newCustomerAddress', 'Jl. Sudirman No. 123')
             ->set('newCustomerPricingTierId', $this->grosirTier->id)
             ->set('newCustomerIsLoyaltyMember', true)
             ->call('createCustomer')
@@ -225,6 +226,7 @@ class POSLivewireTest extends TestCase
         $this->assertDatabaseHas('customers', [
             'name' => 'Joko Susilo',
             'phone' => '0855667788',
+            'address' => 'Jl. Sudirman No. 123',
             'pricing_tier_id' => $this->grosirTier->id,
             'is_loyalty_member' => true,
         ]);

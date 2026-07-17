@@ -72,8 +72,11 @@ class POSReceiptController extends Controller
             'payment_method' => 'PREVIEW TAGIHAN',
         ];
 
+        $format = $request->query('format', 'bill');
+
         return view('pos.receipt-draft', [
             'draft' => $draft,
+            'format' => $format,
         ]);
     }
 }

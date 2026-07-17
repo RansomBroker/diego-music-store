@@ -2,7 +2,7 @@
     openModal: @entangle('showSupervisorModal') 
 }" @print-z-report.window="window.open($event.detail[0].url, '_blank', 'width=400,height=600,menubar=no,toolbar=no,location=no,status=no')">
     <!-- Left Navigation Sidebar -->
-    <x-pos.sidebar :selectedLogoUrl="$selectedLogoUrl" />
+    <x-pos-page::sidebar :selectedLogoUrl="$selectedLogoUrl" />
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col h-full overflow-hidden">

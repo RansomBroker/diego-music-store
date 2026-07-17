@@ -32,12 +32,16 @@ class POS extends Component
     public $newCustomerName = '';
     public $newCustomerPhone = '';
     public $newCustomerEmail = '';
+    public $newCustomerAddress = '';
     public $newCustomerPricingTierId = null;
     public $newCustomerIsLoyaltyMember = false;
 
     // Held transactions and reprint
     public $showHeldModal = false;
     public $lastSaleId = null;
+
+    // Product search modal
+    public $showProductSearchModal = false;
 
     // Payment state
     public $paymentMethod = 'cash';
@@ -67,9 +71,12 @@ class POS extends Component
     public $selectedPricingTierId = null;
 
     // Sales Rep and Invoice Date
-    public $salesReps = [];
     public $selectedSalesRepId = null;
+    public $selectedSalesRepName = '';
+    public $salesSearch = '';
+    public $saleCategory = 'Store';
     public $invoiceDate = '';
+    public $activeSessionInfo = [];
 
     public function mount()
     {
@@ -87,6 +94,12 @@ class POS extends Component
             return redirect()->to('/pos/session');
         }
 
+        $this->activeSessionInfo = [
+            'id' => $activeSession->id,
+            'opened_at' => $activeSession->opened_at->format('d M Y H:i'),
+            'opening_cash' => $activeSession->opening_cash,
+        ];
+
         $this->branches = Branch::where('is_active', true)->get();
         // Lock selected branch to the active session's branch
         $this->selectedBranchId = $activeSession->branch_id;
@@ -99,9 +112,10 @@ class POS extends Component
         $this->selectedPricingTierId = $defaultTier ? $defaultTier->id : null;
 
         // Initialize sales representatives and invoice date
-        $this->salesReps = \App\Models\User::orderBy('name')->get();
         $this->selectedSalesRepId = Auth::id();
+        $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
         $this->invoiceDate = now()->format('Y-m-d');
+        $this->saleCategory = 'Store';
 
         $this->updateBranchDetails();
     }
@@ -227,6 +241,80 @@ class POS extends Component
             ->get();
     }
 
+    // Get matching users with "sales" role for live search dropdown
+    public function getSalesRepsProperty()
+    {
+        $query = \App\Models\User::role('sales');
+        
+        if (!empty($this->salesSearch)) {
+            $search = '%' . $this->salesSearch . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', $search)
+                  ->orWhere('email', 'like', $search);
+            });
+        } else {
+            $query->orderBy('name');
+        }
+        
+        return $query->limit(5)->get();
+    }
+
+    // Get total sales of the active cash session
+    public function getTodaySalesTotalProperty()
+    {
+        if (empty($this->activeSessionInfo['id'])) {
+            return 0;
+        }
+        return \App\Models\Sale::where('cash_session_id', $this->activeSessionInfo['id'])
+            ->where('status', 'completed')
+            ->sum('grand_total');
+    }
+
+    // Get count of cart items per category
+    public function getCategoryCountsProperty()
+    {
+        $counts = [
+            'Semua' => 0,
+            'Gitar & Bass' => 0,
+            'Keyboard & Piano' => 0,
+            'Drum & Perkusi' => 0,
+            'Aksesoris' => 0,
+            'Jasa Reparasi' => 0,
+        ];
+        
+        if (empty($this->cart)) {
+            return $counts;
+        }
+        
+        $variantIds = array_keys($this->cart);
+        $variants = \App\Models\ProductVariant::with('product')->whereIn('id', $variantIds)->get();
+        
+        foreach ($variants as $variant) {
+            $qty = $this->cart[$variant->id]['qty'] ?? 0;
+            $cat = $this->getCategoryOfVariant($variant);
+            if (isset($counts[$cat])) {
+                $counts[$cat] += $qty;
+            }
+            $counts['Semua'] += $qty;
+        }
+        
+        return $counts;
+    }
+
+    public function selectSalesRep($id, $name)
+    {
+        $this->selectedSalesRepId = $id;
+        $this->selectedSalesRepName = $name;
+        $this->salesSearch = '';
+    }
+
+    public function clearSalesRep()
+    {
+        $this->selectedSalesRepId = null;
+        $this->selectedSalesRepName = '';
+        $this->salesSearch = '';
+    }
+
     public function selectCustomer($id, $name, $isLoyalty)
     {
         $this->selectedCustomerId = $id;
@@ -284,6 +372,7 @@ class POS extends Component
         $this->newCustomerName = $this->customerSearch;
         $this->newCustomerPhone = '';
         $this->newCustomerEmail = '';
+        $this->newCustomerAddress = '';
         
         $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
             ->orWhere('name', 'like', '%umum%')
@@ -300,6 +389,7 @@ class POS extends Component
             'newCustomerName' => 'required|string|max:255',
             'newCustomerPhone' => 'nullable|string|max:255',
             'newCustomerEmail' => 'nullable|email|max:255',
+            'newCustomerAddress' => 'nullable|string|max:1000',
             'newCustomerPricingTierId' => 'nullable|exists:pricing_tiers,id',
         ], [
             'newCustomerName.required' => 'Nama pelanggan wajib diisi.',
@@ -310,6 +400,7 @@ class POS extends Component
             'name' => $this->newCustomerName,
             'phone' => $this->newCustomerPhone,
             'email' => $this->newCustomerEmail,
+            'address' => $this->newCustomerAddress,
             'pricing_tier_id' => $this->newCustomerPricingTierId,
             'is_loyalty_member' => true,
             'loyalty_points' => 0,
@@ -335,8 +426,8 @@ class POS extends Component
     {
         $variant = ProductVariant::with('product')->findOrFail($variantId);
         
-        // Check stock for physical products
-        if ($variant->product->isPhysical()) {
+        // Check stock for physical products and bundles
+        if ($variant->product->isPhysical() || $variant->product->isBundle()) {
             $stock = $variant->stockForBranch($this->selectedBranchId);
             $currentInCart = $this->cart[$variantId]['qty'] ?? 0;
             if ($stock <= $currentInCart) {
@@ -393,7 +484,7 @@ class POS extends Component
 
         // Check stock
         $variant = ProductVariant::findOrFail($variantId);
-        if ($variant->product->isPhysical() && $change > 0) {
+        if (($variant->product->isPhysical() || $variant->product->isBundle()) && $change > 0) {
             $stock = $variant->stockForBranch($this->selectedBranchId);
             if ($stock < $newQty) {
                 Notification::make()
@@ -713,6 +804,7 @@ class POS extends Component
                 'discount_amount' => $this->discountAmount + $pointDiscount,
                 'tax_amount' => $this->taxAmount,
                 'items' => $itemsData,
+                'sale_category' => $this->saleCategory,
             ]);
 
             // Deduct points from database
@@ -729,6 +821,9 @@ class POS extends Component
             $this->enableTax = false;
             $this->taxPercent = 11;
             $this->selectedSalesRepId = Auth::id();
+            $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
+            $this->salesSearch = '';
+            $this->saleCategory = 'Store';
             $this->invoiceDate = now()->format('Y-m-d');
             $this->showPaymentModal = false;
             $this->amountPaid = 0;
@@ -767,12 +862,26 @@ class POS extends Component
         $this->discountValue = 0;
         $this->discountType = 'fixed';
         $this->usePoints = false;
+        $this->selectedSalesRepId = Auth::id();
+        $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
+        $this->salesSearch = '';
+        $this->saleCategory = 'Store';
 
         Notification::make()
             ->title('Keranjang Direset')
             ->body('Seluruh item belanja dan data pelanggan telah dikosongkan.')
             ->info()
             ->send();
+    }
+
+    public function openProductSearch()
+    {
+        $this->showProductSearchModal = true;
+    }
+
+    public function closeProductSearch()
+    {
+        $this->showProductSearchModal = false;
     }
 
     public function openHeldTransactionsModal()
@@ -888,6 +997,11 @@ class POS extends Component
 
     public function printBill()
     {
+        $this->printDraft('bill');
+    }
+
+    public function printDraft($format = 'bill')
+    {
         if (empty($this->cart)) {
             Notification::make()
                 ->title('Keranjang Kosong')
@@ -909,19 +1023,26 @@ class POS extends Component
             'point_discount_amount' => $this->pointDiscountAmount,
         ]));
 
-        $url = url('/pos/receipt-draft') . '?data=' . urlencode($data);
+        $url = url('/pos/receipt-draft') . '?format=' . $format . '&data=' . urlencode($data);
         $this->dispatch('open-draft-bill', url: $url);
 
+        $titles = [
+            'bill' => 'Mencetak Bill Sementara',
+            'large' => 'Mencetak Large Bill',
+            'penawaran' => 'Mencetak Penawaran',
+            'tagihan' => 'Mencetak Tagihan',
+        ];
+
         Notification::make()
-            ->title('Mencetak Bill Sementara')
-            ->body('Draft tagihan sedang dipersiapkan untuk dicetak.')
+            ->title($titles[$format] ?? 'Mencetak Bill')
+            ->body('Draft sedang dipersiapkan untuk dicetak.')
             ->info()
             ->send();
     }
 
     public function render()
     {
-        return view('filament.pages.pos')
+        return view('filament.pages.pos.pos')
             ->layout('layouts.pos');
     }
 }

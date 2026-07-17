@@ -25,6 +25,7 @@ class Sale extends Model
         'payment_method',
         'status',
         'created_by',
+        'sale_category',
     ];
 
     protected $casts = [

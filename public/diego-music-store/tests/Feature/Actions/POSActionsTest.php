@@ -107,6 +107,7 @@ class POSActionsTest extends TestCase
             'discount_amount' => 50000,
             'grand_total' => 3940000, // 3,990,000 - 50,000 = 3,940,000
             'status' => 'completed',
+            'sale_category' => 'Store',
         ]);
 
         $this->assertDatabaseHas('sale_items', [
@@ -175,6 +176,63 @@ class POSActionsTest extends TestCase
             'account_id' => Account::where('code', '1-1300')->first()->id,
             'debit' => 0,
             'credit' => 2500000,
+        ]);
+    }
+
+    public function test_it_saves_specified_sale_category(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $branch = Branch::create([
+            'name' => 'Cabang Test 2',
+            'address' => 'Jl. Test 2',
+            'phone' => '123',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'name' => 'Gitar Akustik Yamaha 2',
+            'type' => 'physical',
+            'is_active' => true,
+        ]);
+
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'YMH-AK-2',
+            'name' => 'Natural',
+            'price' => 100000,
+            'cost_price' => 50000,
+            'hpp' => 50000,
+            'is_active' => true,
+        ]);
+
+        ProductBranchStock::create([
+            'product_variant_id' => $variant->id,
+            'branch_id' => $branch->id,
+            'stock' => 5,
+            'hpp' => 50000,
+        ]);
+
+        $data = [
+            'branch_id' => $branch->id,
+            'payment_method' => 'cash',
+            'sale_category' => 'Online',
+            'items' => [
+                [
+                    'variant_id' => $variant->id,
+                    'qty' => 1,
+                    'price' => 100000,
+                ]
+            ]
+        ];
+
+        $action = new CreatePOSSale();
+        $sale = $action->execute($data);
+
+        $this->assertDatabaseHas('sales', [
+            'id' => $sale->id,
+            'sale_category' => 'Online',
         ]);
     }
 }

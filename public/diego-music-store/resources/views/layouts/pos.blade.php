@@ -35,11 +35,11 @@
         window.addEventListener('print-receipt', event => {
             const saleId = event.detail.saleId;
             const url = `{{ url('/pos/receipt') }}/${saleId}`;
-            window.open(url, '_blank', 'width=400,height=600,menubar=no,toolbar=no');
+            window.open(url, '_blank');
         });
 
         window.addEventListener('open-draft-bill', event => {
-            window.open(event.detail.url, '_blank', 'width=400,height=600,menubar=no,toolbar=no');
+            window.open(event.detail.url, '_blank');
         });
     </script>
 </body>

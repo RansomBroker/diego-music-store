@@ -3,12 +3,13 @@
     'newCustomerName',
     'newCustomerPhone',
     'newCustomerEmail',
+    'newCustomerAddress',
     'newCustomerPricingTierId',
     'newCustomerIsLoyaltyMember',
     'pricingTiers' => []
 ])
 
-<x-pos.modal 
+<x-pos-page::modal 
     :show="$showCreateCustomerModal" 
     title="Daftarkan Pelanggan Baru" 
     closeAction="$set('showCreateCustomerModal', false)"
@@ -41,6 +42,14 @@
             icon="ph-envelope" 
         />
 
+        <!-- Alamat -->
+        <x-pos.form.input 
+            label="Alamat" 
+            model="newCustomerAddress" 
+            placeholder="Contoh: Jl. Sudirman No. 123, Jakarta" 
+            icon="ph-map-pin" 
+        />
+
         <!-- Tingkat Harga Default -->
         <x-pos.form.select 
             label="Tingkat Harga Default" 
@@ -50,10 +59,10 @@
             @foreach ($pricingTiers as $tier)
                 <option value="{{ $tier->id }}" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ $tier->name }}</option>
             @endforeach
-        </x-pos.form-select>
+        </x-pos.form.select>
 
         <!-- Action Button -->
-        <x-pos.button 
+        <x-pos.utility.button 
             type="submit" 
             variant="primary" 
             size="lg" 
@@ -62,6 +71,6 @@
             class="mt-6"
         >
             Simpan Pelanggan
-        </x-pos.button>
+        </x-pos.utility.button>
     </form>
-</x-pos.modal>
+</x-pos-page::modal>

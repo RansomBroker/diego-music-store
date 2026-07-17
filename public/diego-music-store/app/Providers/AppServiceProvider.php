@@ -21,5 +21,10 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             // Silence migration errors
         }
+
+        \Illuminate\Support\Facades\Blade::anonymousComponentPath(
+            resource_path('views/filament/pages/pos/components'),
+            'pos-page'
+        );
     }
 }
