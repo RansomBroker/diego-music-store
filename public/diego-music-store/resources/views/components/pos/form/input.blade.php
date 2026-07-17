@@ -5,8 +5,16 @@
     'icon' => null,
     'model',
     'required' => false,
-    'live' => false
+    'live' => false,
+    'size' => 'md'
 ])
+
+@php
+    $paddingClass = $size === 'sm' ? ($icon ? 'pl-9' : 'px-3.5') : ($icon ? 'pl-11' : 'px-4');
+    $paddingY = $size === 'sm' ? 'py-2' : 'py-2.5';
+    $textSize = $size === 'sm' ? 'text-xs' : 'text-sm';
+    $iconClass = $size === 'sm' ? 'left-3 text-sm' : 'left-4 text-lg';
+@endphp
 
 <div>
     @if ($label)
@@ -14,7 +22,7 @@
     @endif
     <div class="relative">
         @if ($icon)
-            <i class="ph {{ $icon }} text-slate-600 dark:text-slate-350 absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold"></i>
+            <i class="ph {{ $icon }} text-slate-600 dark:text-slate-350 absolute {{ $iconClass }} top-1/2 -translate-y-1/2 font-bold"></i>
         @endif
         <input 
             type="{{ $type }}" 
@@ -23,7 +31,7 @@
             @else
                 wire:model="{{ $model }}"
             @endif
-            {{ $attributes->merge(['class' => 'w-full ' . ($icon ? 'pl-11' : 'px-4') . ' pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-lg outline-none font-bold text-sm focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-950 text-slate-950 dark:text-white']) }}
+            {{ $attributes->merge(['class' => "w-full {$paddingClass} pr-4 {$paddingY} bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-lg outline-none font-bold {$textSize} focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-950 text-slate-950 dark:text-white"]) }}
             placeholder="{{ $placeholder }}"
             @if($required) required @endif
         >

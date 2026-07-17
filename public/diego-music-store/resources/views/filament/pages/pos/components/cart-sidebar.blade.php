@@ -56,17 +56,6 @@
                     Tambah Produk
                 </x-pos.utility.button>
 
-                <!-- Reset Transaksi -->
-                <x-pos.utility.button 
-                    wire:click="clearCart" 
-                    variant="danger" 
-                    size="sm" 
-                    icon="ph-bold ph-trash" 
-                    title="Reset Transaksi"
-                >
-                    Reset
-                </x-pos.utility.button>
-
                 <!-- Daftar Transaksi (Hold / List) -->
                 <x-pos.utility.button 
                     wire:click="openHeldTransactionsModal" 
@@ -74,10 +63,11 @@
                     size="sm" 
                     icon="ph-bold ph-folder-open" 
                     title="Daftar Transaksi"
+                    class="!bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent"
                 >
                     Daftar Transaksi
                     @if (count($heldTransactions) > 0)
-                        <span class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-amber-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center pointer-events-none">
+                        <span class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-600 text-white text-[8px] font-bold rounded-full flex items-center justify-center pointer-events-none">
                             {{ count($heldTransactions) }}
                         </span>
                     @endif
@@ -91,6 +81,7 @@
                     icon="ph-bold ph-folder-simple-plus" 
                     title="Simpan Transaksi Sekarang" 
                     :disabled="empty($cart)"
+                    class="!bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent"
                 >
                     Simpan Transaksi
                 </x-pos.utility.button>
@@ -154,6 +145,18 @@
                 >
                     Struk
                 </x-pos.utility.button>
+
+                <!-- Reset Transaksi -->
+                <x-pos.utility.button 
+                    wire:click="clearCart" 
+                    variant="danger" 
+                    size="sm" 
+                    icon="ph-bold ph-trash" 
+                    title="Reset Transaksi"
+                    class="ms-auto !bg-red-600 hover:!bg-red-700 dark:!bg-red-700 dark:hover:!bg-red-800 !text-white !border-transparent"
+                >
+                    Reset
+                </x-pos.utility.button>
             </div>
         </div>
 
@@ -171,11 +174,11 @@
                     <label class="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-1.5">Pelanggan</label>
                     @if ($selectedCustomerId)
                         <div class="relative">
-                            <i class="ph ph-user-plus text-slate-600 dark:text-slate-355 absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold"></i>
-                            <div class="w-full pl-11 pr-10 py-2.5 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-sm text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
+                            <i class="ph ph-user-plus text-slate-600 dark:text-slate-355 absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold"></i>
+                            <div class="w-full pl-9 pr-8 py-2 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
                                 <span class="truncate">{{ $selectedCustomerName }}</span>
                                 <button wire:click="clearCustomer" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2">
-                                    <i class="ph-bold ph-x text-lg"></i>
+                                    <i class="ph-bold ph-x text-base"></i>
                                 </button>
                             </div>
                         </div>
@@ -185,6 +188,7 @@
                             placehpolder="Cari Pelanggan..."
                             icon="ph-user-plus"
                             live
+                            size="sm"
                             @focus="isOpen = true"
                             @click="isOpen = true"
                             class="!bg-white dark:!bg-slate-800"
@@ -219,6 +223,7 @@
                         model="selectedPricingTierId"
                         icon="ph-tag"
                         live
+                        size="sm"
                         class="!bg-white dark:!bg-slate-800"
                     >
                         @if ($selectedPricingTierId === 'custom')
@@ -236,6 +241,7 @@
                     model="saleCategory"
                     icon="ph-storefront"
                     live
+                    size="sm"
                     class="!bg-white dark:!bg-slate-800"
                 >
                     <option value="Store" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Store</option>
@@ -247,11 +253,11 @@
                     <label class="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-1.5">Sales</label>
                     @if ($selectedSalesRepId)
                         <div class="relative">
-                            <i class="ph ph-identification-card text-slate-600 dark:text-slate-355 absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold"></i>
-                            <div class="w-full pl-11 pr-10 py-2.5 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-sm text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
+                            <i class="ph ph-identification-card text-slate-600 dark:text-slate-355 absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold"></i>
+                            <div class="w-full pl-9 pr-8 py-2 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
                                 <span class="truncate">{{ $selectedSalesRepName }}</span>
                                 <button wire:click="clearSalesRep" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2">
-                                    <i class="ph-bold ph-x text-lg"></i>
+                                    <i class="ph-bold ph-x text-base"></i>
                                 </button>
                             </div>
                         </div>
@@ -261,6 +267,7 @@
                             placeholder="Cari Sales..."
                             icon="ph-identification-card"
                             live
+                            size="sm"
                             @focus="isOpen = true"
                             @click="isOpen = true"
                             class="!bg-white dark:!bg-slate-800"
@@ -305,10 +312,10 @@
                         <th class="text-left py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider">Item</th>
                         <th class="text-left py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-48">Tingkat Harga</th>
                         <th class="text-left py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-44">Catatan</th>
-                        <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider">Harga</th>
+                        <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider !bg-slate-800 dark:!bg-slate-900/60">Harga</th>
                         <th class="text-center py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-28">Qty</th>
                         <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-36">Diskon</th>
-                        <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider">Subtotal</th>
+                        <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider !bg-emerald-900/40 dark:!bg-emerald-950/60">Subtotal</th>
                         <th class="text-center py-3 px-3 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-10"></th>
                     </tr>
                 </thead>
@@ -358,7 +365,7 @@
                                     >
                                 </div>
                             </td>
-                            <td class="py-3.5 px-2 text-sm font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap">{{ \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>
+                            <td class="py-3.5 px-2 text-sm font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/20">{{ \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>
                             <td class="py-3.5 px-2 align-middle">
                                 <div class="flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-lg p-0.5 mx-auto w-fit">
                                     <button wire:click="updateQty({{ $id }}, -1)" class="w-6 h-6 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
@@ -378,7 +385,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-2 text-sm font-black text-primary dark:text-blue-400 text-right align-middle whitespace-nowrap">{{ \App\Helpers\FormatHelper::rupiah($rowSubtotal) }}</td>
+                            <td class="py-3.5 px-2 text-base font-black text-emerald-500 dark:text-emerald-300 text-right align-middle whitespace-nowrap bg-emerald-50/30 dark:bg-emerald-950/15">{{ \App\Helpers\FormatHelper::rupiah($rowSubtotal) }}</td>
                             <td class="py-3.5 px-2 text-center align-middle">
                                 <button wire:click="updateQty({{ $id }}, -{{ $item['qty'] }})" class="w-7 h-7 rounded-lg bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center justify-center transition-colors cursor-pointer" title="Hapus item">
                                     <i class="ph-bold ph-trash text-xs"></i>
