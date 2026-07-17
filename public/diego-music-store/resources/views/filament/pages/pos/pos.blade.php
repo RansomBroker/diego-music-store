@@ -14,6 +14,13 @@
     @keydown.window.alt.t.prevent="$wire.reprintLastReceipt()"
     @keydown.window.f9.prevent="$wire.openPayment()"
     @keydown.window.alt.b.prevent="$wire.openPayment()"
+    @keydown.window.alt.r.prevent="$dispatch('confirm-open', { 
+        title: 'Reset Transaksi?', 
+        message: 'Ini akan mengosongkan seluruh keranjang belanja dan mengatur ulang data pelanggan.', 
+        onConfirm: 'livewire:clearCart', 
+        confirmLabel: 'Ya, Reset', 
+        isDanger: true 
+    })"
     @keydown.window.f12.prevent="showShortcuts = !showShortcuts"
     @keydown.window.escape="showShortcuts = false"
     class="flex flex-col h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200 relative"
@@ -279,4 +286,7 @@
             </div>
         </button>
     </div>
+
+    <!-- Reusable Global Confirmation Modal -->
+    <x-pos.utility.confirm-modal />
 </div>

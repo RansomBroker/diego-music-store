@@ -18,17 +18,35 @@
 
         <!-- Cash Session Status -->
         @if (!empty($activeSessionInfo))
-            <div class="flex items-center gap-2.5 px-3.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/50 dark:border-emerald-800/40 rounded-xl text-left" title="Sesi ID: #{{ $activeSessionInfo['id'] }}">
-                <span class="relative flex h-2 w-2 flex-shrink-0">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 dark:bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <div class="leading-none">
-                    <div class="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Sesi Aktif</div>
-                    <div class="text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400 mt-1">
-                        Mulai: {{ substr($activeSessionInfo['opened_at'], -5) }} • Modal: Rp {{ number_format($activeSessionInfo['opening_cash'], 0, ',', '.') }}
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2.5 px-3.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/50 dark:border-emerald-800/40 rounded-xl text-left" title="Sesi ID: #{{ $activeSessionInfo['id'] }}">
+                    <span class="relative flex h-2 w-2 flex-shrink-0">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 dark:bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <div class="leading-none">
+                        <div class="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Sesi Selesai / Aktif</div>
+                        <div class="text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400 mt-1">
+                            Mulai: {{ substr($activeSessionInfo['opened_at'], -5) }} • Modal: Rp {{ number_format($activeSessionInfo['opening_cash'], 0, ',', '.') }}
+                        </div>
                     </div>
                 </div>
+                <!-- Button to Close Session -->
+                <button 
+                    type="button"
+                    @click="$dispatch('confirm-open', { 
+                        title: 'Tutup Sesi Kasir?', 
+                        message: 'Anda akan dialihkan ke halaman penutupan sesi untuk mencatat kas fisik dan mencetak Z-Report.', 
+                        onConfirm: 'redirect:{{ route('pos.session') }}', 
+                        confirmLabel: 'Ya, Tutup Sesi', 
+                        isDanger: true 
+                    })"
+                    class="flex items-center gap-1.5 px-3 py-2.5 text-xs font-black text-white hover:text-white bg-red-600 hover:bg-red-700 active:scale-95 rounded-xl shadow-md shadow-red-650/15 hover:shadow-red-650/25 transition-all cursor-pointer" 
+                    title="Tutup Sesi Kasir"
+                >
+                    <i class="ph-bold ph-lock-key text-sm"></i>
+                    <span>Tutup Sesi</span>
+                </button>
             </div>
         @else
             <div class="flex items-center gap-2 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200/50 dark:border-rose-800/40 rounded-xl text-left">
@@ -48,7 +66,7 @@
 
         <!-- Dark Mode Toggle -->
         <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors" title="Ubah Tema">
-            <i class="ph-bold ph-sun text-base"></i>
+            <i class="ph-bold ph-sun dark:hidden text-base"></i>
             <i class="ph-bold ph-moon hidden dark:block text-base"></i>
         </button>
 

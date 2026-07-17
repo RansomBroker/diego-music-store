@@ -148,7 +148,13 @@
 
                 <!-- Reset Transaksi -->
                 <x-pos.utility.button 
-                    wire:click="clearCart" 
+                    @click="$dispatch('confirm-open', { 
+                        title: 'Reset Transaksi?', 
+                        message: 'Ini akan mengosongkan seluruh keranjang belanja dan mengatur ulang data pelanggan.', 
+                        onConfirm: 'livewire:clearCart', 
+                        confirmLabel: 'Ya, Reset', 
+                        isDanger: true 
+                    })"
                     variant="danger" 
                     size="sm" 
                     icon="ph-bold ph-trash" 
