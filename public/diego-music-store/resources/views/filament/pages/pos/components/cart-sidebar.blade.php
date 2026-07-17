@@ -184,8 +184,9 @@
                         </div>
                     @else
                         <x-pos.form.input 
+                            id="customer-search-input"
                             model="customerSearch"
-                            placehpolder="Cari Pelanggan..."
+                            placeholder="Cari Pelanggan..."
                             icon="ph-user-plus"
                             live
                             size="sm"
@@ -263,6 +264,7 @@
                         </div>
                     @else
                         <x-pos.form.input 
+                            id="sales-search-input"
                             model="salesSearch"
                             placeholder="Cari Sales..."
                             icon="ph-identification-card"

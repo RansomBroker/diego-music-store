@@ -10,7 +10,12 @@
 ])
 
 @if ($show)
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm" wire:click.self="closeProductSearch">
+    <div 
+        x-data="{}"
+        x-init="$nextTick(() => { $refs.searchInput.focus(); $refs.searchInput.select() })"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm" 
+        wire:click.self="closeProductSearch"
+    >
         <div class="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-5xl max-h-[85vh] shadow-2xl transition-all border border-slate-100 dark:border-slate-700 mx-4 relative flex flex-col overflow-hidden">
             <!-- Modal Header -->
             <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between flex-shrink-0">
@@ -30,10 +35,10 @@
                     <i class="ph ph-magnifying-glass text-slate-600 dark:text-slate-300 absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold"></i>
                     <input 
                         type="text" 
+                        x-ref="searchInput"
                         wire:model.live.debounce.300ms="search" 
                         placeholder="Cari barang, SKU atau barcode..." 
                         class="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-950 dark:text-white placeholder-slate-655 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary/20 dark:focus:ring-blue-500/20 focus:border-primary dark:focus:border-blue-500 outline-none transition-all"
-                        autofocus
                     >
                 </div>
 
