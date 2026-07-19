@@ -24,12 +24,33 @@
     'selectedSalesRepId' => null,
     'selectedSalesRepName' => '',
     'saleCategory' => 'Store',
-    'salesReps' => []
+    'salesReps' => [],
+    'saleCategories' => [],
+    'editingSaleId' => null
 ])
 
 <div class="flex-1 w-full bg-white dark:bg-slate-800 flex flex-col h-full transition-colors overflow-hidden">
     <!-- Cart Header -->
     <div class="p-6 border-b border-slate-100 dark:border-slate-700">
+        @if ($editingSaleId)
+            <div class="mb-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl flex items-center justify-between gap-3 transition-colors duration-200">
+                <div class="flex items-center gap-2 text-amber-700 dark:text-amber-450">
+                    <i class="ph-fill ph-warning-circle text-lg animate-pulse"></i>
+                    <div class="text-xs">
+                        <span class="font-extrabold block">Mode Edit Transaksi</span>
+                        <span class="font-medium text-slate-500 dark:text-slate-400 block mt-0.5">Semua perubahan stok & jurnal akan diperbarui setelah checkout.</span>
+                    </div>
+                </div>
+                <button 
+                    type="button"
+                    wire:click="cancelEdit"
+                    class="px-2.5 py-1.5 text-[10px] font-black text-amber-700 hover:text-white bg-amber-100 hover:bg-amber-600 dark:bg-amber-900/40 dark:hover:bg-amber-600 rounded-lg transition-all"
+                >
+                    Batal Edit
+                </button>
+            </div>
+        @endif
+
         <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-3">
             <div class="flex flex-col">
                 <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Transaksi Saat Ini</h2>
@@ -37,9 +58,15 @@
                     <span class="text-xs font-mono font-bold text-slate-900 dark:text-slate-100">
                         {{ $this->previewInvoiceNumber }}
                     </span>
-                    <x-pos.utility.pill variant="warning" size="xs">
-                        Draft
-                    </x-pos.utility.pill>
+                    @if ($editingSaleId)
+                        <x-pos.utility.pill variant="warning" size="xs">
+                            Edit Mode
+                        </x-pos.utility.pill>
+                    @else
+                        <x-pos.utility.pill variant="warning" size="xs">
+                            Draft
+                        </x-pos.utility.pill>
+                    @endif
                 </div>
             </div>
             
@@ -251,8 +278,12 @@
                     size="sm"
                     class="!bg-white dark:!bg-slate-800"
                 >
-                    <option value="Store" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Store</option>
-                    <option value="Online" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Online</option>
+                    @forelse ($saleCategories as $cat)
+                        <option value="{{ $cat->name }}" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ $cat->name }}</option>
+                    @empty
+                        <option value="Store" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Store</option>
+                        <option value="Online" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Online</option>
+                    @endforelse
                 </x-pos.form.select>
 
                 <!-- Sales Dropdown Selector (Searchable) -->

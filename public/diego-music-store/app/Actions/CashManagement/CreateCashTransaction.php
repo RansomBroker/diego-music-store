@@ -19,6 +19,7 @@ class CreateCashTransaction
             $tx = CashTransaction::create([
                 'transaction_no' => $transactionNo,
                 'branch_id' => $data['branch_id'],
+                'cash_session_id' => $data['cash_session_id'] ?? null,
                 'type' => $data['type'],
                 'transaction_date' => $data['transaction_date'],
                 'source_account_id' => $data['source_account_id'],

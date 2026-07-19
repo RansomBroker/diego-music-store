@@ -32,14 +32,17 @@ class CloseCashSession
                 throw new InvalidArgumentException('User ID yang melakukan penutupan wajib ditentukan.');
             }
 
-            // Calculate expected cash dynamically
-            // Expected Cash = Opening Cash + Cash Sales (payment_method = 'cash')
-            $cashSales = $session->sales()
-                ->where('status', 'completed')
-                ->where('payment_method', 'cash')
-                ->sum('grand_total');
+            $cashSales = \App\Helpers\SaleHelper::getSessionCashSalesSum($session);
+            $cashIn = $session->cashTransactions()
+                ->where('type', 'in')
+                ->where('status', 'posted')
+                ->sum('amount');
+            $cashOut = $session->cashTransactions()
+                ->where('type', 'out')
+                ->where('status', 'posted')
+                ->sum('amount');
 
-            $expectedCash = $session->opening_cash + $cashSales;
+            $expectedCash = $session->opening_cash + $cashSales + $cashIn - $cashOut;
             $difference = $actualCash - $expectedCash;
 
             $session->update([

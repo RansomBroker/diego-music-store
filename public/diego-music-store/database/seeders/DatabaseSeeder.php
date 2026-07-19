@@ -43,6 +43,38 @@ class DatabaseSeeder extends Seeder
         // Seed Chart of Accounts
         $this->call(AccountSeeder::class);
 
+        // Seed default payment methods
+        $cashAcc = \App\Models\Account::where('code', '1-1000')->first();
+        $debitAcc = \App\Models\Account::where('code', '1-1110')->first();
+        $creditAcc = \App\Models\Account::where('code', '1-1200')->first();
+
+        \Illuminate\Support\Facades\DB::table('payment_methods')->insert([
+            [
+                'name' => 'Tunai',
+                'code' => 'cash',
+                'account_id' => $cashAcc?->id,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Debit BCA',
+                'code' => 'debit',
+                'account_id' => $debitAcc?->id,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Piutang',
+                'code' => 'credit',
+                'account_id' => $creditAcc?->id,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
         // Seed default products
         $this->call(ProductSeeder::class);
 

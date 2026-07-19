@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Users\Schemas;
 
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class UserForm
@@ -36,6 +37,10 @@ class UserForm
                     ->dehydrated(fn (?string $state): bool => filled($state))
                     ->maxLength(255)
                     ->label('Password'),
+
+                Toggle::make('is_active')
+                    ->label('Active Status')
+                    ->default(true),
 
                 Select::make('branches')
                     ->multiple()

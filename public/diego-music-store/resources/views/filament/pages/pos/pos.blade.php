@@ -56,6 +56,8 @@
         :selectedSalesRepName="$selectedSalesRepName"
         :saleCategory="$saleCategory"
         :salesReps="$this->salesReps"
+        :saleCategories="$this->saleCategories"
+        :editingSaleId="$editingSaleId"
     />
 
     <!-- Product Search Modal -->
@@ -88,6 +90,9 @@
         :amountDebit="$amountDebit"
         :amountCredit="$amountCredit"
         :debitRef="$debitRef"
+        :paymentAmounts="$paymentAmounts"
+        :paymentRefs="$paymentRefs"
+        :paymentMethods="$this->paymentMethods"
     />
 
     <!-- Create Customer Modal -->

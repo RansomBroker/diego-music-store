@@ -177,15 +177,21 @@ class CreatePOSSale
                     continue;
                 }
 
-                if ($payMethod === 'credit') {
-                    $debitAccId = $resolveAccount('1-1200', 'Piutang Dagang', 'Asset');
-                    $methodName = 'Piutang';
-                } elseif ($payMethod === 'debit') {
-                    $debitAccId = $resolveAccount('1-1110', 'Bank BCA', 'Asset');
-                    $methodName = 'Debit BCA' . ($payRef ? " (Ref: {$payRef})" : '');
+                $dbMethod = \App\Models\PaymentMethod::where('code', $payMethod)->first();
+                if ($dbMethod) {
+                    $debitAccId = $dbMethod->account_id ?: $resolveAccount('1-1000', 'Kas Utama', 'Asset');
+                    $methodName = $dbMethod->name . ($payRef ? " (Ref: {$payRef})" : '');
                 } else {
-                    $debitAccId = $resolveAccount('1-1000', 'Kas Utama', 'Asset');
-                    $methodName = 'Tunai';
+                    if ($payMethod === 'credit') {
+                        $debitAccId = $resolveAccount('1-1200', 'Piutang Dagang', 'Asset');
+                        $methodName = 'Piutang';
+                    } elseif ($payMethod === 'debit') {
+                        $debitAccId = $resolveAccount('1-1110', 'Bank BCA', 'Asset');
+                        $methodName = 'Debit BCA' . ($payRef ? " (Ref: {$payRef})" : '');
+                    } else {
+                        $debitAccId = $resolveAccount('1-1000', 'Kas Utama', 'Asset');
+                        $methodName = 'Tunai';
+                    }
                 }
 
                 JournalItem::create([

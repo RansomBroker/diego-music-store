@@ -66,6 +66,11 @@ class Sale extends Model
         return $this->belongsTo(CashSession::class);
     }
 
+    public function returns(): HasMany
+    {
+        return $this->hasMany(SalesReturn::class);
+    }
+
     public static function generateInvoiceNumber(): string
     {
         $dateStr = now()->format('Ymd');

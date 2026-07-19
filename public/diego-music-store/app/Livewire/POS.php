@@ -39,6 +39,7 @@ class POS extends Component
     // Held transactions and reprint
     public $showHeldModal = false;
     public $lastSaleId = null;
+    public $editingSaleId = null;
 
     // Product search modal
     public $showProductSearchModal = false;
@@ -58,6 +59,8 @@ class POS extends Component
     public $amountDebit = 0;
     public $amountCredit = 0;
     public $debitRef = '';
+    public array $paymentAmounts = [];
+    public array $paymentRefs = [];
 
     // Available branches and current branch
     public $branches = [];
@@ -115,9 +118,85 @@ class POS extends Component
         $this->selectedSalesRepId = Auth::id();
         $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
         $this->invoiceDate = now()->format('Y-m-d');
-        $this->saleCategory = 'Store';
+        $defaultCategory = \App\Models\SaleCategory::first();
+        $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
 
         $this->updateBranchDetails();
+
+        // Load sale for editing if query parameter is present
+        $saleId = request()->query('edit');
+        if ($saleId) {
+            $sale = \App\Models\Sale::with(['items.variant.product', 'customer', 'salesRep'])->find($saleId);
+            if ($sale) {
+                if ($sale->branch_id !== $this->selectedBranchId) {
+                    Notification::make()
+                        ->title('Cabang Berbeda')
+                        ->body('Transaksi ini terdaftar di cabang lain.')
+                        ->danger()
+                        ->send();
+                } else {
+                    $this->editingSaleId = $sale->id;
+                    if ($sale->customer) {
+                        $this->selectedCustomerId = $sale->customer_id;
+                        $this->selectedCustomerName = $sale->customer->name;
+                        $this->isLoyaltyMember = (bool)$sale->customer->is_loyalty_member;
+                        $this->customerPoints = (int)$sale->customer->loyalty_points;
+                    } else {
+                        $this->selectedCustomerId = null;
+                        $this->selectedCustomerName = 'Umum / Walk-in';
+                        $this->isLoyaltyMember = false;
+                        $this->customerPoints = 0;
+                    }
+                    
+                    $this->selectedSalesRepId = $sale->sales_rep_id;
+                    $this->selectedSalesRepName = $sale->salesRep->name ?? '';
+                    $this->saleCategory = $sale->sale_category;
+                    $this->discountValue = $sale->discount_amount;
+                    $this->discountType = 'fixed';
+                    $this->enableTax = $sale->tax_amount > 0;
+                    $this->invoiceDate = $sale->invoice_date->format('Y-m-d');
+                    
+                    // Parse payment method
+                    $this->paymentMethod = 'cash';
+                    if (str_contains(strtolower($sale->payment_method), 'debit')) {
+                        $this->paymentMethod = 'debit';
+                    } elseif (str_contains(strtolower($sale->payment_method), 'credit') || str_contains(strtolower($sale->payment_method), 'piutang')) {
+                        $this->paymentMethod = 'credit';
+                    }
+                    
+                    $this->cart = [];
+                    foreach ($sale->items as $item) {
+                        $v = $item->variant;
+                        if (!$v) continue;
+                        
+                        $name = $v->product->name;
+                        if ($v->name) {
+                            $name .= ' (' . $v->name . ')';
+                        }
+                        
+                        $this->cart[$v->id] = [
+                            'variant_id' => $v->id,
+                            'name' => $name,
+                            'price' => $item->unit_price,
+                            'qty' => $item->quantity,
+                            'type' => $v->product->type,
+                            'emoji' => $v->product->isService() ? '🛠️' : ($v->product->isBundle() ? '📦' : '🎸'),
+                            'notes' => $item->notes ?? '',
+                            'discount_value' => $item->discount_amount / max(1, $item->quantity),
+                            'discount_type' => 'fixed',
+                            'discount_amount' => $item->discount_amount,
+                            'pricing_tier_id' => $this->selectedPricingTierId,
+                        ];
+                    }
+
+                    Notification::make()
+                        ->title('Mengedit Transaksi')
+                        ->body("Memuat data transaksi {$sale->invoice_number} ke dalam keranjang.")
+                        ->info()
+                        ->send();
+                }
+            }
+        }
     }
 
     public function updatedSelectedBranchId($value)
@@ -257,6 +336,12 @@ class POS extends Component
         }
         
         return $query->limit(5)->get();
+    }
+
+    // Get all sale categories
+    public function getSaleCategoriesProperty()
+    {
+        return \App\Models\SaleCategory::all();
     }
 
     // Get total sales of the active cash session
@@ -580,6 +665,12 @@ class POS extends Component
 
     public function getPreviewInvoiceNumberProperty()
     {
+        if ($this->editingSaleId) {
+            $sale = \App\Models\Sale::find($this->editingSaleId);
+            if ($sale) {
+                return $sale->invoice_number;
+            }
+        }
         return \App\Models\Sale::generateInvoiceNumber();
     }
 
@@ -589,6 +680,11 @@ class POS extends Component
             ->where('branch_id', $this->selectedBranchId)
             ->latest()
             ->get();
+    }
+
+    public function getPaymentMethodsProperty()
+    {
+        return \App\Models\PaymentMethod::where('is_active', true)->get();
     }
 
     public function getTaxAmountProperty()
@@ -632,6 +728,12 @@ class POS extends Component
         $this->amountCredit = 0;
         $this->debitRef = '';
         $this->amountPaid = $this->grandTotal;
+        
+        $this->paymentAmounts = [
+            'cash' => $this->grandTotal
+        ];
+        $this->paymentRefs = [];
+        
         $this->showPaymentModal = true;
     }
 
@@ -651,9 +753,13 @@ class POS extends Component
                     $this->debitRef = '';
                 }
                 if ($method === 'credit') $this->amountCredit = 0;
+                
+                unset($this->paymentAmounts[$method]);
+                unset($this->paymentRefs[$method]);
             }
         } else {
             $this->selectedPaymentMethods[] = $method;
+            $this->paymentAmounts[$method] = 0;
         }
 
         $this->distributePaymentAmounts();
@@ -666,46 +772,85 @@ class POS extends Component
         
         if ($count === 1) {
             $method = $this->selectedPaymentMethods[0];
-            if ($method === 'cash') {
-                $this->amountCash = $total;
-                $this->amountDebit = 0;
-                $this->amountCredit = 0;
-            } elseif ($method === 'debit') {
-                $this->amountCash = 0;
-                $this->amountDebit = $total;
-                $this->amountCredit = 0;
-            } elseif ($method === 'credit') {
-                $this->amountCash = 0;
-                $this->amountDebit = 0;
-                $this->amountCredit = $total;
-            }
+            $this->paymentAmounts = [$method => $total];
+            
+            // Sync compatibility vars
+            $this->amountCash = ($method === 'cash') ? $total : 0;
+            $this->amountDebit = ($method === 'debit') ? $total : 0;
+            $this->amountCredit = ($method === 'credit') ? $total : 0;
         } else {
             $assigned = 0;
             foreach ($this->selectedPaymentMethods as $method) {
-                if ($method === 'cash') $assigned += intval($this->amountCash);
-                if ($method === 'debit') $assigned += intval($this->amountDebit);
-                if ($method === 'credit') $assigned += intval($this->amountCredit);
+                $assigned += intval($this->paymentAmounts[$method] ?? 0);
             }
 
             if ($assigned != $total) {
                 if (in_array('cash', $this->selectedPaymentMethods)) {
                     $other = 0;
-                    if (in_array('debit', $this->selectedPaymentMethods)) $other += intval($this->amountDebit);
-                    if (in_array('credit', $this->selectedPaymentMethods)) $other += intval($this->amountCredit);
-                    $this->amountCash = max(0, $total - $other);
-                } else if (in_array('debit', $this->selectedPaymentMethods) && in_array('credit', $this->selectedPaymentMethods)) {
-                    $this->amountDebit = max(0, $total - intval($this->amountCredit));
+                    foreach ($this->selectedPaymentMethods as $method) {
+                        if ($method !== 'cash') {
+                            $other += intval($this->paymentAmounts[$method] ?? 0);
+                        }
+                    }
+                    $this->paymentAmounts['cash'] = max(0, $total - $other);
+                    $this->amountCash = $this->paymentAmounts['cash'];
+                } else {
+                    $firstMethod = $this->selectedPaymentMethods[0];
+                    $other = 0;
+                    foreach ($this->selectedPaymentMethods as $method) {
+                        if ($method !== $firstMethod) {
+                            $other += intval($this->paymentAmounts[$method] ?? 0);
+                        }
+                    }
+                    $this->paymentAmounts[$firstMethod] = max(0, $total - $other);
+                    
+                    if ($firstMethod === 'cash') $this->amountCash = $this->paymentAmounts[$firstMethod];
+                    if ($firstMethod === 'debit') $this->amountDebit = $this->paymentAmounts[$firstMethod];
+                    if ($firstMethod === 'credit') $this->amountCredit = $this->paymentAmounts[$firstMethod];
                 }
             }
+        }
+    }
+
+    public function updated($property, $value)
+    {
+        if (str_starts_with($property, 'paymentAmounts.')) {
+            $code = str_replace('paymentAmounts.', '', $property);
+            if ($code === 'cash') $this->amountCash = intval($value);
+            if ($code === 'debit') $this->amountDebit = intval($value);
+            if ($code === 'credit') $this->amountCredit = intval($value);
+
+            $this->distributePaymentAmounts();
+        }
+
+        if (str_starts_with($property, 'paymentRefs.')) {
+            $code = str_replace('paymentRefs.', '', $property);
+            if ($code === 'debit') $this->debitRef = $value;
+        }
+
+        if ($property === 'amountCash') {
+            $this->paymentAmounts['cash'] = intval($value);
+            $this->distributePaymentAmounts();
+        }
+        if ($property === 'amountDebit') {
+            $this->paymentAmounts['debit'] = intval($value);
+            $this->distributePaymentAmounts();
+        }
+        if ($property === 'amountCredit') {
+            $this->paymentAmounts['credit'] = intval($value);
+            $this->distributePaymentAmounts();
+        }
+        if ($property === 'debitRef') {
+            $this->paymentRefs['debit'] = $value;
         }
     }
 
     public function checkout()
     {
         $totalPaid = 0;
-        if (in_array('cash', $this->selectedPaymentMethods)) $totalPaid += intval($this->amountCash);
-        if (in_array('debit', $this->selectedPaymentMethods)) $totalPaid += intval($this->amountDebit);
-        if (in_array('credit', $this->selectedPaymentMethods)) $totalPaid += intval($this->amountCredit);
+        foreach ($this->selectedPaymentMethods as $method) {
+            $totalPaid += intval($this->paymentAmounts[$method] ?? ($method === 'cash' ? $this->amountCash : ($method === 'debit' ? $this->amountDebit : ($method === 'credit' ? $this->amountCredit : 0))));
+        }
 
         if (in_array('cash', $this->selectedPaymentMethods)) {
             if ($totalPaid < $this->grandTotal) {
@@ -758,9 +903,10 @@ class POS extends Component
             // Compile payments data for split payment support
             $paymentsData = [];
             $change = 0;
-            if (in_array('cash', $this->selectedPaymentMethods)) {
+            $cashPaid = in_array('cash', $this->selectedPaymentMethods) ? intval($this->paymentAmounts['cash'] ?? $this->amountCash) : 0;
+            if ($cashPaid > 0) {
                 $change = max(0, $totalPaid - $this->grandTotal);
-                $netCash = intval($this->amountCash) - $change;
+                $netCash = $cashPaid - $change;
                 if ($netCash > 0) {
                     $paymentsData[] = [
                         'method' => 'cash',
@@ -769,43 +915,61 @@ class POS extends Component
                     ];
                 }
             }
-            if (in_array('debit', $this->selectedPaymentMethods) && $this->amountDebit > 0) {
-                $paymentsData[] = [
-                    'method' => 'debit',
-                    'amount' => $this->amountDebit,
-                    'ref' => $this->debitRef
-                ];
-            }
-            if (in_array('credit', $this->selectedPaymentMethods) && $this->amountCredit > 0) {
-                $paymentsData[] = [
-                    'method' => 'credit',
-                    'amount' => $this->amountCredit,
-                    'ref' => null
-                ];
+
+            foreach ($this->selectedPaymentMethods as $method) {
+                if ($method === 'cash') continue;
+                
+                $amount = intval($this->paymentAmounts[$method] ?? ($method === 'debit' ? $this->amountDebit : ($method === 'credit' ? $this->amountCredit : 0)));
+                if ($amount > 0) {
+                    $paymentsData[] = [
+                        'method' => $method,
+                        'amount' => $amount,
+                        'ref' => $this->paymentRefs[$method] ?? ($method === 'debit' ? $this->debitRef : null)
+                    ];
+                }
             }
 
             // Compile human-readable payment method name
             $methodNames = [];
             foreach ($this->selectedPaymentMethods as $m) {
-                if ($m === 'cash' && $this->amountCash > 0) $methodNames[] = 'Tunai';
-                if ($m === 'debit' && $this->amountDebit > 0) $methodNames[] = 'Debit BCA';
-                if ($m === 'credit' && $this->amountCredit > 0) $methodNames[] = 'Piutang';
+                $amount = intval($this->paymentAmounts[$m] ?? ($m === 'cash' ? $this->amountCash : ($m === 'debit' ? $this->amountDebit : ($m === 'credit' ? $this->amountCredit : 0))));
+                if ($amount > 0) {
+                    $dbMethod = \App\Models\PaymentMethod::where('code', $m)->first();
+                    $methodNames[] = $dbMethod ? $dbMethod->name : ($m === 'cash' ? 'Tunai' : ($m === 'debit' ? 'Debit BCA' : ($m === 'credit' ? 'Piutang' : ucfirst($m))));
+                }
             }
             $paymentMethodString = empty($methodNames) ? 'Tunai' : implode(' & ', $methodNames);
 
-            $sale = app(CreatePOSSale::class)->execute([
-                'branch_id' => $this->selectedBranchId,
-                'cash_session_id' => $activeSession->id,
-                'customer_id' => $this->selectedCustomerId,
-                'sales_rep_id' => $this->selectedSalesRepId,
-                'invoice_date' => $this->invoiceDate,
-                'payment_method' => $paymentMethodString,
-                'payments' => $paymentsData,
-                'discount_amount' => $this->discountAmount + $pointDiscount,
-                'tax_amount' => $this->taxAmount,
-                'items' => $itemsData,
-                'sale_category' => $this->saleCategory,
-            ]);
+            $isEditing = !empty($this->editingSaleId);
+
+            if ($isEditing) {
+                $editingSale = \App\Models\Sale::findOrFail($this->editingSaleId);
+                $sale = app(\App\Actions\Sales\UpdatePOSSale::class)->execute($editingSale, [
+                    'customer_id' => $this->selectedCustomerId,
+                    'sales_rep_id' => $this->selectedSalesRepId,
+                    'invoice_date' => $this->invoiceDate,
+                    'payment_method' => $paymentMethodString,
+                    'payments' => $paymentsData,
+                    'discount_amount' => $this->discountAmount + $pointDiscount,
+                    'tax_amount' => $this->taxAmount,
+                    'items' => $itemsData,
+                    'sale_category' => $this->saleCategory,
+                ]);
+            } else {
+                $sale = app(CreatePOSSale::class)->execute([
+                    'branch_id' => $this->selectedBranchId,
+                    'cash_session_id' => $activeSession->id,
+                    'customer_id' => $this->selectedCustomerId,
+                    'sales_rep_id' => $this->selectedSalesRepId,
+                    'invoice_date' => $this->invoiceDate,
+                    'payment_method' => $paymentMethodString,
+                    'payments' => $paymentsData,
+                    'discount_amount' => $this->discountAmount + $pointDiscount,
+                    'tax_amount' => $this->taxAmount,
+                    'items' => $itemsData,
+                    'sale_category' => $this->saleCategory,
+                ]);
+            }
 
             // Deduct points from database
             if ($pointsUsed > 0) {
@@ -816,6 +980,7 @@ class POS extends Component
             }
 
             // Reset POS State
+            $this->editingSaleId = null;
             $this->cart = [];
             $this->clearCustomer();
             $this->enableTax = false;
@@ -823,7 +988,8 @@ class POS extends Component
             $this->selectedSalesRepId = Auth::id();
             $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
             $this->salesSearch = '';
-            $this->saleCategory = 'Store';
+            $defaultCategory = \App\Models\SaleCategory::first();
+            $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
             $this->invoiceDate = now()->format('Y-m-d');
             $this->showPaymentModal = false;
             $this->amountPaid = 0;
@@ -835,16 +1001,22 @@ class POS extends Component
             $this->amountDebit = 0;
             $this->amountCredit = 0;
             $this->debitRef = '';
+            $this->paymentAmounts = [];
+            $this->paymentRefs = [];
 
             // Dispatch print event for thermal receipt printing
             $this->lastSaleId = $sale->id;
             $this->dispatch('print-receipt', saleId: $sale->id);
 
             Notification::make()
-                ->title('Transaksi Sukses')
-                ->body("Faktur {$sale->invoice_number} berhasil dicatat.")
+                ->title($isEditing ? 'Transaksi Diperbarui' : 'Transaksi Sukses')
+                ->body($isEditing ? "Faktur {$sale->invoice_number} berhasil diperbarui." : "Faktur {$sale->invoice_number} berhasil dicatat.")
                 ->success()
                 ->send();
+
+            if ($isEditing) {
+                return redirect()->to('/pos/transactions');
+            }
 
         } catch (\Exception $e) {
             Notification::make()
@@ -853,6 +1025,23 @@ class POS extends Component
                 ->danger()
                 ->send();
         }
+    }
+
+    public function cancelEdit()
+    {
+        $this->editingSaleId = null;
+        $this->cart = [];
+        $this->clearCustomer();
+        $this->discountValue = 0;
+        $this->enableTax = false;
+        
+        Notification::make()
+            ->title('Edit Transaksi Dibatalkan')
+            ->body('Keranjang belanja telah dikosongkan.')
+            ->info()
+            ->send();
+            
+        return redirect()->to('/pos');
     }
 
     public function clearCart()
@@ -865,7 +1054,8 @@ class POS extends Component
         $this->selectedSalesRepId = Auth::id();
         $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
         $this->salesSearch = '';
-        $this->saleCategory = 'Store';
+        $defaultCategory = \App\Models\SaleCategory::first();
+        $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
 
         Notification::make()
             ->title('Keranjang Direset')

@@ -13,6 +13,7 @@ class CashTransaction extends Model
     protected $fillable = [
         'transaction_no',
         'branch_id',
+        'cash_session_id',
         'type',
         'transaction_date',
         'source_account_id',
@@ -35,6 +36,11 @@ class CashTransaction extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function cashSession(): BelongsTo
+    {
+        return $this->belongsTo(CashSession::class);
     }
 
     public function sourceAccount(): BelongsTo

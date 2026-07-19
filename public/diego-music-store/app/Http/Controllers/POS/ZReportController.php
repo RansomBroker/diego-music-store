@@ -20,16 +20,29 @@ class ZReportController extends Controller
         }
 
         // Calculate sales summaries
-        $salesQuery = $cashSession->sales()->where('status', 'completed');
+        $sales = $cashSession->sales()->where('status', 'completed')->get();
         
-        $cashSalesCount = (clone $salesQuery)->where('payment_method', 'cash')->count();
-        $cashSalesSum = (clone $salesQuery)->where('payment_method', 'cash')->sum('grand_total');
+        $cashSalesCount = 0;
+        $cashSalesSum = 0;
+        $nonCashSalesCount = 0;
+        $nonCashSalesSum = 0;
+        
+        foreach ($sales as $sale) {
+            $cashAmt = \App\Helpers\SaleHelper::getCashAmount($sale);
+            $nonCashAmt = max(0, $sale->grand_total - $cashAmt);
+            
+            if ($cashAmt > 0) {
+                $cashSalesCount++;
+                $cashSalesSum += $cashAmt;
+            }
+            if ($nonCashAmt > 0) {
+                $nonCashSalesCount++;
+                $nonCashSalesSum += $nonCashAmt;
+            }
+        }
 
-        $nonCashSalesCount = (clone $salesQuery)->where('payment_method', '!=', 'cash')->count();
-        $nonCashSalesSum = (clone $salesQuery)->where('payment_method', '!=', 'cash')->sum('grand_total');
-
-        $totalSalesCount = $salesQuery->count();
-        $totalSalesSum = $salesQuery->sum('grand_total');
+        $totalSalesCount = $sales->count();
+        $totalSalesSum = $sales->sum('grand_total');
 
         return view('pos.z-report', [
             'session' => $cashSession,

@@ -14,8 +14,22 @@
     'amountCredit' => 0,
     'debitRef' => '',
     'discountType' => 'fixed',
-    'discountValue' => 0
+    'discountValue' => 0,
+    'paymentAmounts' => [],
+    'paymentRefs' => [],
+    'paymentMethods' => []
 ])
+
+@php
+    $allMethods = $paymentMethods;
+    if (empty($allMethods) || count($allMethods) === 0) {
+        $allMethods = [
+            (object)['code' => 'cash', 'name' => 'Tunai'],
+            (object)['code' => 'debit', 'name' => 'Debit BCA'],
+            (object)['code' => 'credit', 'name' => 'Piutang'],
+        ];
+    }
+@endphp
 
 <x-pos-page::modal 
     :show="$showPaymentModal" 
@@ -70,15 +84,19 @@
             <!-- Dropdown Trigger Button -->
             <div 
                 @click="open = !open" 
-                class="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-slate-200 focus-within:ring-2 focus-within:ring-primary-light dark:focus-within:ring-blue-950 transition-all text-left cursor-pointer select-none"
+                class="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-slate-200 focus-within:ring-2 focus-within:ring-primary-light dark:focus-within:ring-blue-955 transition-all text-left cursor-pointer select-none"
             >
                 <div class="flex flex-wrap gap-1.5 items-center">
                     @if (empty($selectedPaymentMethods))
                         <span class="text-slate-400 font-medium text-xs">Pilih metode...</span>
                     @else
                         @foreach ($selectedPaymentMethods as $method)
+                            @php
+                                $dbMethod = collect($allMethods)->firstWhere('code', $method);
+                                $methodLabel = $dbMethod ? $dbMethod->name : ucfirst($method);
+                            @endphp
                             <span @click.stop class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary dark:bg-blue-950/40 dark:text-blue-400 rounded-full font-bold text-[10px] uppercase tracking-wider cursor-default">
-                                <span>{{ $method === 'cash' ? 'Tunai' : ($method === 'debit' ? 'Debit BCA' : 'Piutang') }}</span>
+                                <span>{{ $methodLabel }}</span>
                                 <button type="button" wire:click="togglePaymentMethod('{{ $method }}')" class="hover:text-red-500 transition-colors cursor-pointer">
                                     <i class="ph-bold ph-x text-[8px]"></i>
                                 </button>
@@ -101,136 +119,151 @@
                 class="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-slate-950/80 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800"
                 style="display: none;"
             >
-                <!-- Option: Tunai -->
-                <button 
-                    type="button" 
-                    wire:click="togglePaymentMethod('cash')" 
-                    class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450 rounded-lg flex items-center justify-center">
-                            <i class="ph-bold ph-money text-base"></i>
+                @foreach ($allMethods as $pm)
+                    @php
+                        $iconClass = 'ph-credit-card';
+                        $bgClass = 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-455';
+                        if ($pm->code === 'cash') {
+                            $iconClass = 'ph-money';
+                            $bgClass = 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450';
+                        } elseif ($pm->code === 'credit') {
+                            $iconClass = 'ph-hand-coins';
+                            $bgClass = 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-455';
+                        }
+                    @endphp
+                    <button 
+                        type="button" 
+                        wire:click="togglePaymentMethod('{{ $pm->code }}')" 
+                        class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+                    >
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 {{ $bgClass }} rounded-lg flex items-center justify-center">
+                                <i class="ph-bold {{ $iconClass }} text-base"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">{{ $pm->name }}</span>
                         </div>
-                        <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">Tunai</span>
-                    </div>
-                    @if (in_array('cash', $selectedPaymentMethods))
-                        <i class="ph-bold ph-check text-primary dark:text-blue-400 text-sm"></i>
-                    @endif
-                </button>
-
-                <!-- Option: Debit BCA -->
-                <button 
-                    type="button" 
-                    wire:click="togglePaymentMethod('debit')" 
-                    class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-455 rounded-lg flex items-center justify-center">
-                            <i class="ph-bold ph-credit-card text-base"></i>
-                        </div>
-                        <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">Debit BCA</span>
-                    </div>
-                    @if (in_array('debit', $selectedPaymentMethods))
-                        <i class="ph-bold ph-check text-primary dark:text-blue-400 text-sm"></i>
-                    @endif
-                </button>
-
-                <!-- Option: Piutang -->
-                <button 
-                    type="button" 
-                    wire:click="togglePaymentMethod('credit')" 
-                    class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-455 rounded-lg flex items-center justify-center">
-                            <i class="ph-bold ph-hand-coins text-base"></i>
-                        </div>
-                        <span class="text-sm font-semibold text-slate-755 dark:text-slate-300">Piutang</span>
-                    </div>
-                    @if (in_array('credit', $selectedPaymentMethods))
-                        <i class="ph-bold ph-check text-primary dark:text-blue-400 text-sm"></i>
-                    @endif
-                </button>
+                        @if (in_array($pm->code, $selectedPaymentMethods))
+                            <i class="ph-bold ph-check text-primary dark:text-blue-400 text-sm"></i>
+                        @endif
+                    </button>
+                @endforeach
             </div>
         </div>
     </div>
 
     <!-- Payment Inputs -->
     <div class="space-y-4 mb-6">
-        <!-- Tunai Input -->
-        @if (in_array('cash', $selectedPaymentMethods))
+        @foreach ($selectedPaymentMethods as $method)
+            @php
+                $dbMethod = collect($allMethods)->firstWhere('code', $method);
+                $methodName = $dbMethod ? $dbMethod->name : ucfirst($method);
+                
+                $iconClass = 'ph-credit-card';
+                if ($method === 'cash') {
+                    $iconClass = 'ph-money';
+                } elseif ($method === 'credit') {
+                    $iconClass = 'ph-hand-coins';
+                }
+            @endphp
+            
             <div class="p-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <div class="flex items-center justify-between mb-2">
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="ph-bold ph-money text-base text-primary dark:text-blue-400"></i>
-                        Nominal Tunai
+                        <i class="ph-bold {{ $iconClass }} text-base text-primary dark:text-blue-400"></i>
+                        Nominal {{ $methodName }}
                     </label>
                     @if (count($selectedPaymentMethods) === 1)
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Uang Pas</span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                            {{ $method === 'cash' ? 'Uang Pas' : 'Bayar Penuh' }}
+                        </span>
                     @else
-                        <button type="button" onclick="@this.set('amountCash', {{ max(0, (int)$grandTotal - (int)$amountDebit - (int)$amountCredit) }})" class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors uppercase tracking-wider">Sisa Tagihan</button>
+                        @php
+                            $otherSum = 0;
+                            foreach ($selectedPaymentMethods as $otherMethod) {
+                                if ($otherMethod !== $method) {
+                                    $otherSum += intval($paymentAmounts[$otherMethod] ?? ($otherMethod === 'cash' ? $amountCash : ($otherMethod === 'debit' ? $amountDebit : ($otherMethod === 'credit' ? $amountCredit : 0))));
+                                }
+                            }
+                            $remaining = max(0, (int)$grandTotal - $otherSum);
+                        @endphp
+                        <button type="button" 
+                                @if ($method === 'cash')
+                                    onclick="@this.set('amountCash', {{ $remaining }})"
+                                @elseif ($method === 'debit')
+                                    onclick="@this.set('amountDebit', {{ $remaining }})"
+                                @elseif ($method === 'credit')
+                                    onclick="@this.set('amountCredit', {{ $remaining }})"
+                                @endif
+                                wire:click="$set('paymentAmounts.{{ $method }}', {{ $remaining }})"
+                                class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors uppercase tracking-wider"
+                        >
+                            Sisa Tagihan
+                        </button>
                     @endif
                 </div>
-                <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
-                    <input type="number" wire:model.live="amountCash" wire:keyup="distributePaymentAmounts" class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-950 text-slate-800 dark:text-slate-100" placeholder="0">
-                </div>
-            </div>
-        @endif
-
-        <!-- Debit BCA Input -->
-        @if (in_array('debit', $selectedPaymentMethods))
-            <div class="p-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div class="flex items-center justify-between mb-2">
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="ph-bold ph-credit-card text-base text-primary dark:text-blue-400"></i>
-                        Nominal Debit BCA
-                    </label>
-                    @if (count($selectedPaymentMethods) === 1)
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Bayar Penuh</span>
-                    @else
-                        <button type="button" onclick="@this.set('amountDebit', {{ max(0, (int)$grandTotal - (int)$amountCash - (int)$amountCredit) }})" class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors uppercase tracking-wider">Sisa Tagihan</button>
-                    @endif
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                
+                @if ($method === 'debit')
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
+                            <input type="number" 
+                                   wire:model.live="amountDebit" 
+                                   wire:keyup="distributePaymentAmounts" 
+                                   class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
+                                   placeholder="0">
+                        </div>
+                        <div class="relative">
+                            <input type="text" 
+                                   wire:model="debitRef" 
+                                   class="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-sm focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
+                                   placeholder="No. Bukti / Ref (Opsional)">
+                        </div>
+                    </div>
+                @elseif ($method === 'cash')
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
-                        <input type="number" wire:model.live="amountDebit" wire:keyup="distributePaymentAmounts" class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-950 text-slate-850 dark:text-slate-100" placeholder="0">
+                        <input type="number" 
+                               wire:model.live="amountCash" 
+                               wire:keyup="distributePaymentAmounts" 
+                               class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
+                               placeholder="0">
                     </div>
+                @elseif ($method === 'credit')
                     <div class="relative">
-                        <input type="text" wire:model="debitRef" class="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-sm focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" placeholder="No. Bukti / Ref (Opsional)">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
+                        <input type="number" 
+                               wire:model.live="amountCredit" 
+                               wire:keyup="distributePaymentAmounts" 
+                               class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
+                               placeholder="0">
                     </div>
-                </div>
+                @else
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
+                            <input type="number" 
+                                   wire:model.live="paymentAmounts.{{ $method }}" 
+                                   wire:keyup="distributePaymentAmounts" 
+                                   class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
+                                   placeholder="0">
+                        </div>
+                        <div class="relative">
+                            <input type="text" 
+                                   wire:model="paymentRefs.{{ $method }}" 
+                                   class="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-sm focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
+                                   placeholder="No. Bukti / Ref (Opsional)">
+                        </div>
+                    </div>
+                @endif
             </div>
-        @endif
-
-        <!-- Piutang Input -->
-        @if (in_array('credit', $selectedPaymentMethods))
-            <div class="p-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div class="flex items-center justify-between mb-2">
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="ph-bold ph-hand-coins text-base text-primary dark:text-blue-400"></i>
-                        Nominal Piutang
-                    </label>
-                    @if (count($selectedPaymentMethods) === 1)
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Bayar Penuh</span>
-                    @else
-                        <button type="button" onclick="@this.set('amountCredit', {{ max(0, (int)$grandTotal - (int)$amountCash - (int)$amountDebit) }})" class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors uppercase tracking-wider">Sisa Tagihan</button>
-                    @endif
-                </div>
-                <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
-                    <input type="number" wire:model.live="amountCredit" wire:keyup="distributePaymentAmounts" class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-950 text-slate-800 dark:text-slate-100" placeholder="0">
-                </div>
-            </div>
-        @endif
+        @endforeach
     </div>
 
     @php
         $totalPaid = 0;
-        if (in_array('cash', $selectedPaymentMethods)) $totalPaid += intval($amountCash);
-        if (in_array('debit', $selectedPaymentMethods)) $totalPaid += intval($amountDebit);
-        if (in_array('credit', $selectedPaymentMethods)) $totalPaid += intval($amountCredit);
+        foreach ($selectedPaymentMethods as $method) {
+            $totalPaid += intval($paymentAmounts[$method] ?? ($method === 'cash' ? $amountCash : ($method === 'debit' ? $amountDebit : ($method === 'credit' ? $amountCredit : 0))));
+        }
         
         $change = max(0, $totalPaid - $grandTotal);
     @endphp

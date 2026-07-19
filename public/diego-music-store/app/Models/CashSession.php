@@ -65,4 +65,12 @@ class CashSession extends Model
     {
         return $this->hasMany(Sale::class, 'cash_session_id');
     }
+
+    /**
+     * Get the cash transactions associated with this session.
+     */
+    public function cashTransactions(): HasMany
+    {
+        return $this->hasMany(CashTransaction::class, 'cash_session_id');
+    }
 }

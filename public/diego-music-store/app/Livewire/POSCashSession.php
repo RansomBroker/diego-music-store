@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\CashSession;
 use App\Actions\CashSession\OpenCashSession;
 use App\Actions\CashSession\CloseCashSession;
+use App\Actions\CashSession\ReopenCashSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Filament\Notifications\Notification;
@@ -36,6 +37,16 @@ class POSCashSession extends Component
     public $supervisorEmail = '';
     public $supervisorPassword = '';
 
+    // State untuk detail transaksi sesi kasir
+    public bool $showTransactionsModal = false;
+    public ?int $selectedSessionId = null;
+    public $selectedSessionTransactions = [];
+    public array $selectedSessionSummary = [];
+
+    // Otorisasi & pembukaan kembali sesi kasir
+    public string $supervisorAction = 'close'; // 'close' or 'reopen'
+    public ?int $sessionToReopenId = null;
+
     public function mount()
     {
         $this->branches = Branch::where('is_active', true)->get();
@@ -57,14 +68,18 @@ class POSCashSession extends Component
         if ($this->activeSession) {
             $this->selectedBranchId = $this->activeSession->branch_id;
             
-            // Calculate current expected cash (opening cash + completed cash sales)
-            $this->cashSales = $this->activeSession->sales()
-                ->where('status', 'completed')
-                ->where('payment_method', 'cash')
-                ->sum('grand_total');
+            $this->cashSales = \App\Helpers\SaleHelper::getSessionCashSalesSum($this->activeSession);
+            $cashIn = $this->activeSession->cashTransactions()
+                ->where('type', 'in')
+                ->where('status', 'posted')
+                ->sum('amount');
+            $cashOut = $this->activeSession->cashTransactions()
+                ->where('type', 'out')
+                ->where('status', 'posted')
+                ->sum('amount');
 
-            $this->expectedCash = $this->activeSession->opening_cash + $this->cashSales;
-            $this->actualCash = $this->expectedCash; // default to expected cash
+            $this->expectedCash = $this->activeSession->opening_cash + $this->cashSales + $cashIn - $cashOut;
+            $this->actualCash = $this->expectedCash;
         } else {
             // Default opening cash state
             $this->openingCash = 500000; // standard default Rp 500.000 modal
@@ -131,6 +146,9 @@ class POSCashSession extends Component
 
         if ($discrepancy !== 0) {
             // Require supervisor validation
+            $this->supervisorAction = 'close';
+            $this->supervisorEmail = '';
+            $this->supervisorPassword = '';
             $this->showSupervisorModal = true;
         } else {
             $this->closeSession();
@@ -162,8 +180,77 @@ class POSCashSession extends Component
             return;
         }
 
-        // Close the session with supervisor ID as close_by
-        $this->closeSession($supervisor->id);
+        if ($this->supervisorAction === 'reopen') {
+            $this->reopenSession();
+        } else {
+            // Close the session with supervisor ID as close_by
+            $this->closeSession($supervisor->id);
+        }
+    }
+
+    public function requestReopenSession(int $sessionId)
+    {
+        $session = CashSession::find($sessionId);
+        if (!$session) {
+            return;
+        }
+
+        try {
+            // Check latest session
+            $latestSession = CashSession::where('user_id', $session->user_id)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($latestSession && $latestSession->id !== $session->id) {
+                throw new \Exception('Hanya sesi kasir terakhir yang dapat dibuka kembali.');
+            }
+
+            // Check if there is already an active session
+            $activeSession = CashSession::where('user_id', $session->user_id)
+                ->where('status', 'open')
+                ->first();
+
+            if ($activeSession) {
+                throw new \Exception('Anda sudah memiliki sesi kasir lain yang sedang aktif.');
+            }
+
+            $this->sessionToReopenId = $sessionId;
+            $this->supervisorAction = 'reopen';
+            $this->supervisorEmail = '';
+            $this->supervisorPassword = '';
+            $this->showSupervisorModal = true;
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Gagal Memproses')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
+    protected function reopenSession()
+    {
+        try {
+            $session = CashSession::findOrFail($this->sessionToReopenId);
+            
+            app(ReopenCashSession::class)->execute($session);
+
+            Notification::make()
+                ->title('Sesi Kasir Dibuka Kembali')
+                ->body('Sesi kasir berhasil dibuka kembali.')
+                ->success()
+                ->send();
+
+            $this->showSupervisorModal = false;
+            $this->activeTab = 'sesi';
+            $this->checkActiveSession();
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Gagal Membuka Kembali Sesi')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 
     protected function closeSession($supervisorId = null)
@@ -196,6 +283,41 @@ class POSCashSession extends Component
                 ->danger()
                 ->send();
         }
+    }
+
+    public function showTransactions(int $sessionId): void
+    {
+        $this->selectedSessionId = $sessionId;
+
+        // Load sales from the session
+        $sales = \App\Models\Sale::where('cash_session_id', $sessionId)
+            ->with('customer')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $this->selectedSessionTransactions = $sales;
+
+        // Calculate summaries
+        $cashTotal = 0;
+        $nonCashTotal = 0;
+        $totalSales = 0;
+
+        foreach ($sales as $sale) {
+            if ($sale->status !== 'completed') continue;
+            $cashAmt = \App\Helpers\SaleHelper::getCashAmount($sale);
+            $cashTotal += $cashAmt;
+            $nonCashTotal += max(0, $sale->grand_total - $cashAmt);
+            $totalSales += $sale->grand_total;
+        }
+
+        $this->selectedSessionSummary = [
+            'cash_total' => $cashTotal,
+            'non_cash_total' => $nonCashTotal,
+            'total_sales' => $totalSales,
+            'transaction_count' => $sales->count(),
+        ];
+
+        $this->showTransactionsModal = true;
     }
 
     public function render()

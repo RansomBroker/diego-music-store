@@ -27,14 +27,19 @@ class FrontOfficeDashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('pos.front-office'));
 
         $response->assertStatus(200);
-        $response->assertSee('Sesi Belum Dibuka');
+        $response->assertSee('Sesi Tidak Aktif');
     }
 
     /** @test */
     public function it_renders_session_active_when_session_is_open()
     {
         $user = User::factory()->create();
-        $branch = \App\Models\Branch::factory()->create();
+        $branch = \App\Models\Branch::create([
+            'name' => 'Cabang Test',
+            'address' => 'Jl. Test',
+            'phone' => '123',
+            'is_active' => true,
+        ]);
 
         \App\Models\CashSession::create([
             'user_id' => $user->id,

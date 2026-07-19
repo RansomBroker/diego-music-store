@@ -37,6 +37,9 @@ class POSLivewireTest extends TestCase
         Account::firstOrCreate(['code' => '4-1000'], ['name' => 'Pendapatan Penjualan', 'classification' => 'Revenue', 'is_active' => true]);
         Account::firstOrCreate(['code' => '5-1000'], ['name' => 'Harga Pokok Penjualan', 'classification' => 'Expense', 'is_active' => true]);
 
+        // Seed 'sales' role
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
+
         $this->user = User::factory()->create();
         $this->actingAs($this->user);
 
@@ -432,5 +435,93 @@ class POSLivewireTest extends TestCase
             ->call('deleteHeldTransaction', $held2->id);
 
         $this->assertNull(\App\Models\PosHeldTransaction::find($held2->id));
+    }
+
+    /** @test */
+    public function it_can_load_existing_transaction_to_cart_for_editing()
+    {
+        // 1. Create a sale
+        $sale = \App\Models\Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-EDIT-TEST',
+            'invoice_date' => now(),
+            'payment_method' => 'Tunai',
+            'status' => 'completed',
+            'subtotal' => 2000000,
+            'discount_amount' => 0,
+            'tax_amount' => 0,
+            'grand_total' => 2000000,
+            'created_by' => $this->user->id,
+        ]);
+
+        \App\Models\SaleItem::create([
+            'sale_id' => $sale->id,
+            'product_variant_id' => $this->variant->id,
+            'quantity' => 1,
+            'unit_price' => 2000000,
+            'discount_amount' => 0,
+            'total_price' => 2000000,
+        ]);
+
+        // Mock request query parameter for editing
+        Livewire::withQueryParams(['edit' => $sale->id])
+            ->test('App\Livewire\POS')
+            ->assertSet('editingSaleId', $sale->id)
+            ->assertSet('cart.' . $this->variant->id . '.price', 2000000)
+            ->assertSet('cart.' . $this->variant->id . '.qty', 1)
+            ->assertSet('grandTotal', 2000000)
+            // Edit quantity in cart
+            ->call('updateQty', $this->variant->id, 1) // increase quantity to 2
+            ->assertSet('cart.' . $this->variant->id . '.qty', 2)
+            ->assertSet('grandTotal', 4000000)
+            // Complete checkout
+            ->call('openPayment')
+            ->set('amountCash', 4000000)
+            ->call('checkout')
+            ->assertRedirect('/pos/transactions');
+
+        // Verify the database has the updated sale
+        $sale->refresh();
+        $this->assertEquals(4000000, $sale->grand_total);
+        $this->assertEquals(2, $sale->items->first()->quantity);
+        $this->assertEquals(4000000, $sale->items->first()->total_price);
+    }
+
+    /** @test */
+    public function it_can_cancel_editing_transaction()
+    {
+        // 1. Create a sale
+        $sale = \App\Models\Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-EDIT-CANCEL',
+            'invoice_date' => now(),
+            'payment_method' => 'Tunai',
+            'status' => 'completed',
+            'subtotal' => 2000000,
+            'discount_amount' => 0,
+            'tax_amount' => 0,
+            'grand_total' => 2000000,
+            'created_by' => $this->user->id,
+        ]);
+
+        \App\Models\SaleItem::create([
+            'sale_id' => $sale->id,
+            'product_variant_id' => $this->variant->id,
+            'quantity' => 1,
+            'unit_price' => 2000000,
+            'discount_amount' => 0,
+            'total_price' => 2000000,
+        ]);
+
+        // Mock request query parameter for editing
+        Livewire::withQueryParams(['edit' => $sale->id])
+            ->test('App\Livewire\POS')
+            ->assertSet('editingSaleId', $sale->id)
+            ->call('cancelEdit')
+            ->assertSet('editingSaleId', null)
+            ->assertSet('cart', [])
+            ->assertRedirect('/pos');
     }
 }
