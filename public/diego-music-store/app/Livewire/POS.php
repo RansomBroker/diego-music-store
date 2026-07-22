@@ -527,6 +527,8 @@ class POS extends Component
 
         if (isset($this->cart[$variantId])) {
             $this->cart[$variantId]['qty']++;
+            $this->recalculateItemDiscountAmount($variantId);
+            $this->recalculateItemTaxAmount($variantId);
         } else {
             $name = $variant->product->name;
             if ($variant->name) {
@@ -546,11 +548,16 @@ class POS extends Component
                 'type' => $variant->product->type,
                 'emoji' => $variant->product->isService() ? '🛠️' : ($variant->product->isBundle() ? '📦' : '🎸'),
                 'notes' => '',
-                'discount_value' => 0,
-                'discount_type' => 'fixed',
+                'discount_value' => $variant->discount_value ?? 0,
+                'discount_type' => $variant->discount_type ?? 'fixed',
                 'discount_amount' => 0,
+                'tax_value' => $variant->tax_value ?? 0,
+                'tax_type' => $variant->tax_type ?? 'percent',
+                'tax_amount' => 0,
                 'pricing_tier_id' => $tierId,
             ];
+            $this->recalculateItemDiscountAmount($variantId);
+            $this->recalculateItemTaxAmount($variantId);
         }
     }
 
@@ -583,6 +590,7 @@ class POS extends Component
 
         $this->cart[$variantId]['qty'] = $newQty;
         $this->recalculateItemDiscountAmount($variantId);
+        $this->recalculateItemTaxAmount($variantId);
     }
 
     public function updateItemNote($variantId, $note)
@@ -600,6 +608,7 @@ class POS extends Component
                 $this->cart[$variantId]['pricing_tier_id'] = $tierId;
                 $this->cart[$variantId]['price'] = $variant->priceForTier($tierId);
                 $this->recalculateItemDiscountAmount($variantId);
+                $this->recalculateItemTaxAmount($variantId);
                 $this->selectedPricingTierId = 'custom';
             }
         }
@@ -610,6 +619,7 @@ class POS extends Component
         if (isset($this->cart[$variantId])) {
             $this->cart[$variantId]['discount_value'] = max(0, intval($value));
             $this->recalculateItemDiscountAmount($variantId);
+            $this->recalculateItemTaxAmount($variantId);
         }
     }
 
@@ -619,6 +629,24 @@ class POS extends Component
             $currentType = $this->cart[$variantId]['discount_type'] ?? 'fixed';
             $this->cart[$variantId]['discount_type'] = $currentType === 'fixed' ? 'percent' : 'fixed';
             $this->recalculateItemDiscountAmount($variantId);
+            $this->recalculateItemTaxAmount($variantId);
+        }
+    }
+
+    public function updateItemTaxValue($variantId, $value)
+    {
+        if (isset($this->cart[$variantId])) {
+            $this->cart[$variantId]['tax_value'] = max(0, floatval($value));
+            $this->recalculateItemTaxAmount($variantId);
+        }
+    }
+
+    public function toggleItemTaxType($variantId)
+    {
+        if (isset($this->cart[$variantId])) {
+            $currentType = $this->cart[$variantId]['tax_type'] ?? 'percent';
+            $this->cart[$variantId]['tax_type'] = $currentType === 'fixed' ? 'percent' : 'fixed';
+            $this->recalculateItemTaxAmount($variantId);
         }
     }
 
@@ -635,6 +663,24 @@ class POS extends Component
                 $item['discount_amount'] = intval(($price * $qty) * ($value / 100));
             } else {
                 $item['discount_amount'] = $value;
+            }
+        }
+    }
+
+    protected function recalculateItemTaxAmount($variantId)
+    {
+        if (isset($this->cart[$variantId])) {
+            $item = &$this->cart[$variantId];
+            $value = floatval($item['tax_value'] ?? 0);
+            $type = $item['tax_type'] ?? 'percent';
+            $price = intval($item['price'] ?? 0);
+            $qty = intval($item['qty'] ?? 1);
+            $discount = intval($item['discount_amount'] ?? 0);
+
+            if ($type === 'percent') {
+                $item['tax_amount'] = intval((($price * $qty) - $discount) * ($value / 100));
+            } else {
+                $item['tax_amount'] = intval($value * $qty);
             }
         }
     }
@@ -689,6 +735,15 @@ class POS extends Component
 
     public function getTaxAmountProperty()
     {
+        $itemTaxSum = 0;
+        foreach ($this->cart as $item) {
+            $itemTaxSum += intval($item['tax_amount'] ?? 0);
+        }
+
+        if ($itemTaxSum > 0) {
+            return $itemTaxSum;
+        }
+
         if (!$this->enableTax) {
             return 0;
         }

@@ -4,9 +4,9 @@
 
 @php
     // Column widths in rem (First column is 13.75rem = 220px)
-    $cols = "13.75rem 10rem 10rem 8.75rem 8.75rem 6.875rem 8.75rem " . str_repeat('8.75rem ', count($pricingTiers));
-    // 1210px (sum of columns) + 56px (padding & header) = 1266px
-    $minWidth = 1210 + (140 * count($pricingTiers)) + 56;
+    $cols = "13.75rem 10rem 10rem 8.75rem 8.75rem 6.875rem 8.75rem 8.75rem 8.75rem " . str_repeat('8.75rem ', count($pricingTiers));
+    // 1210px + 140px (discount) + 140px (tax) = 1490px
+    $minWidth = 1490 + (140 * count($pricingTiers)) + 56;
 @endphp
 
 <style>
@@ -152,6 +152,8 @@
     <div>Harga Beli</div>
     <div>Est. Ongkir</div>
     <div>HPP</div>
+    <div>Diskon</div>
+    <div>PPN</div>
     @foreach($pricingTiers as $tier)
         <div>Harga Tier: {{ $tier->name }}</div>
     @endforeach

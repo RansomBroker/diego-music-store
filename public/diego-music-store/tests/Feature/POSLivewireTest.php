@@ -524,4 +524,89 @@ class POSLivewireTest extends TestCase
             ->assertSet('cart', [])
             ->assertRedirect('/pos');
     }
+
+    /** @test */
+    public function it_applies_product_level_discount_and_tax_when_added_to_cart()
+    {
+        $product = Product::create([
+            'name' => 'Gitar Dengan Diskon & PPN',
+            'type' => 'physical',
+            'is_active' => true,
+        ]);
+
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'GTR-DISC-TAX',
+            'name' => 'Natural',
+            'price' => 1000000,
+            'discount_value' => 10,
+            'discount_type' => 'percent',
+            'tax_value' => 11,
+            'tax_type' => 'percent',
+            'cost_price' => 600000,
+            'hpp' => 600000,
+            'is_active' => true,
+        ]);
+
+        ProductBranchStock::create([
+            'product_variant_id' => $variant->id,
+            'branch_id' => $this->branch->id,
+            'stock' => 5,
+            'hpp' => 600000,
+        ]);
+
+        Livewire::test('App\Livewire\POS')
+            ->set('selectedBranchId', $this->branch->id)
+            ->call('addToCart', $variant->id)
+            // Assert item has discount & tax set from product
+            ->assertSet('cart.' . $variant->id . '.discount_value', 10.00)
+            ->assertSet('cart.' . $variant->id . '.discount_type', 'percent')
+            ->assertSet('cart.' . $variant->id . '.discount_amount', 100000) // 10% of 1,000,000
+            ->assertSet('cart.' . $variant->id . '.tax_value', 11.00)
+            ->assertSet('cart.' . $variant->id . '.tax_type', 'percent')
+            // tax_amount should be (1,000,000 - 100,000) * 11% = 99,000
+            ->assertSet('cart.' . $variant->id . '.tax_amount', 99000)
+            // Assert global subtotal, taxAmount, and grandTotal properties
+            // subtotal is sum of (price * qty) - discount_amount = 1,000,000 - 100,000 = 900,000
+            ->assertSet('subtotal', 900000)
+            ->assertSet('taxAmount', 99000)
+            ->assertSet('grandTotal', 999000); // 900,000 + 99,000
+    }
+
+    /** @test */
+    public function it_can_update_item_tax_value_and_type_in_pos()
+    {
+        $product = Product::create([
+            'name' => 'Gitar Custom',
+            'type' => 'physical',
+            'is_active' => true,
+        ]);
+
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'GTR-CST',
+            'price' => 1000000,
+            'cost_price' => 600000,
+            'hpp' => 600000,
+            'is_active' => true,
+        ]);
+
+        ProductBranchStock::create([
+            'product_variant_id' => $variant->id,
+            'branch_id' => $this->branch->id,
+            'stock' => 5,
+            'hpp' => 600000,
+        ]);
+
+        Livewire::test('App\Livewire\POS')
+            ->set('selectedBranchId', $this->branch->id)
+            ->call('addToCart', $variant->id)
+            ->call('updateItemTaxValue', $variant->id, 10)
+            ->assertSet('cart.' . $variant->id . '.tax_value', 10.00)
+            ->assertSet('cart.' . $variant->id . '.tax_amount', 100000)
+            ->call('toggleItemTaxType', $variant->id)
+            ->assertSet('cart.' . $variant->id . '.tax_type', 'fixed')
+            ->assertSet('cart.' . $variant->id . '.tax_amount', 10) // 10 fixed * 1 qty
+            ->assertSet('taxAmount', 10);
+    }
 }

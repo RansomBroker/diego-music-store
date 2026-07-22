@@ -18,6 +18,10 @@ class ProductVariant extends Model
         'barcode',
         'name',
         'price',
+        'discount_value',
+        'discount_type',
+        'tax_value',
+        'tax_type',
         'cost_price',
         'hpp',
         'is_active',
@@ -25,6 +29,8 @@ class ProductVariant extends Model
 
     protected $casts = [
         'price' => 'integer',
+        'discount_value' => 'float',
+        'tax_value' => 'float',
         'cost_price' => 'integer',
         'hpp' => 'integer',
         'is_active' => 'boolean',

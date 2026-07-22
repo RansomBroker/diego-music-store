@@ -354,6 +354,7 @@
                         <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider !bg-slate-800 dark:!bg-slate-900/60">Harga</th>
                         <th class="text-center py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-28">Qty</th>
                         <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-36">Diskon</th>
+                        <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-36">PPN</th>
                         <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider !bg-emerald-900/40 dark:!bg-emerald-950/60">Subtotal</th>
                         <th class="text-center py-3 px-3 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-10"></th>
                     </tr>
@@ -421,6 +422,14 @@
                                     <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-8 w-24">
                                         <input type="number" placeholder="0" value="{{ ($item['discount_value'] ?? 0) > 0 ? $item['discount_value'] : '' }}" onchange="@this.call('updateItemDiscountValue', {{ $id }}, this.value)" class="w-full pl-2 pr-7 py-0 h-full bg-transparent border-none text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" min="0">
                                         <button type="button" wire:click="toggleItemDiscountType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-2 bg-slate-150 dark:bg-slate-800 text-[10px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['discount_type'] ?? 'fixed') === 'percent' ? '%' : 'Rp' }}</button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-2 align-middle">
+                                <div class="flex items-center justify-end gap-1">
+                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-8 w-24">
+                                        <input type="number" placeholder="0" value="{{ ($item['tax_value'] ?? 0) > 0 ? $item['tax_value'] : '' }}" onchange="@this.call('updateItemTaxValue', {{ $id }}, this.value)" class="w-full pl-2 pr-7 py-0 h-full bg-transparent border-none text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" min="0">
+                                        <button type="button" wire:click="toggleItemTaxType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-2 bg-slate-150 dark:bg-slate-800 text-[10px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['tax_type'] ?? 'percent') === 'percent' ? '%' : 'Rp' }}</button>
                                     </div>
                                 </div>
                             </td>

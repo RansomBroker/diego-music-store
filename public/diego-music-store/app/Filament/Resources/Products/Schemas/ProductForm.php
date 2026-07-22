@@ -13,6 +13,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
+use Filament\Actions\Action;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -23,6 +25,7 @@ use Filament\Schemas\Schema;
 use App\Helpers\ProductHelper;
 use Filament\Forms\Components\Placeholder;
 use Illuminate\Validation\Rules\Unique;
+use App\Filament\Components\CreatableSelect;
 
 class ProductForm
 {
@@ -31,10 +34,13 @@ class ProductForm
         // 1. Fetch dynamic pricing tiers
         $pricingTiers = PricingTier::all();
 
-        $skuUniqueRule = function (Unique $rule, ?Product $record) {
+        $skuUniqueRule = function (Unique $rule, $record) {
             if ($record) {
-                $variantIds = $record->variants()->pluck('id')->toArray();
-                return $rule->whereNotIn('id', $variantIds);
+                $product = $record instanceof \App\Models\ProductVariant ? $record->product : $record;
+                if ($product) {
+                    $variantIds = $product->variants()->pluck('id')->toArray();
+                    return $rule->whereNotIn('id', $variantIds);
+                }
             }
             return $rule;
         };
@@ -87,11 +93,28 @@ class ProductForm
                                             ->label('Tipe Produk'),
 
                                         Select::make('unit_id')
-                                            ->relationship('unit', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereNull('base_unit_id'))
+                                            ->options(fn () => \App\Models\Unit::where('is_active', true)->whereNull('base_unit_id')->pluck('name', 'id'))
                                             ->required()
                                             ->searchable()
                                             ->preload()
                                             ->label('Satuan Produk'),
+
+                                        CreatableSelect::make('category')
+                                            ->options(fn () => Product::whereNotNull('category')->distinct()->pluck('category', 'category')->toArray())
+                                            ->label('Kategori'),
+
+                                        CreatableSelect::make('brand')
+                                            ->options(fn () => Product::whereNotNull('brand')->distinct()->pluck('brand', 'brand')->toArray())
+                                            ->label('Merk'),
+
+                                        CreatableSelect::make('supplier_id')
+                                            ->options(fn () => \App\Models\Supplier::pluck('name', 'id')->toArray())
+                                            ->label('Supplier'),
+
+                                        TextInput::make('minimum_stock')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->label('Stok Minimum'),
 
                                         FileUpload::make('image_path')
                                             ->image()
@@ -115,8 +138,7 @@ class ProductForm
                             ->schema([
                                 Toggle::make('has_variants')
                                     ->label('Produk ini memiliki beberapa varian (warna, ukuran, dll.)')
-                                    ->reactive()
-                                    ->dehydrated(false),
+                                    ->reactive(),
 
                                 // If has_variants = true
                                 Group::make([
@@ -126,7 +148,7 @@ class ProductForm
                                             'pricingTiers' => $pricingTiers,
                                         ]))
                                         ->extraAttributes([
-                                            'style' => 'min-width: ' . (1210 + (140 * count($pricingTiers)) + 56) . 'px;'
+                                            'style' => 'min-width: ' . (1490 + (140 * count($pricingTiers)) + 56) . 'px;'
                                         ]),
 
                                     Repeater::make('variants')
@@ -190,6 +212,42 @@ class ProductForm
                                                     ->hiddenLabel()
                                                     ->placeholder('HPP'),
 
+                                                TextInput::make('discount_value')
+                                                    ->numeric()
+                                                    ->default(0)
+                                                    ->hiddenLabel()
+                                                    ->placeholder('Diskon')
+                                                    ->prefixAction(
+                                                        Action::make('toggleDiscountType')
+                                                            ->link()
+                                                            ->label(fn ($get) => $get('discount_type') === 'percent' ? '%' : 'Rp')
+                                                            ->action(function ($set, $get) {
+                                                                $newType = $get('discount_type') === 'percent' ? 'fixed' : 'percent';
+                                                                $set('discount_type', $newType);
+                                                            })
+                                                    ),
+
+                                                Hidden::make('discount_type')
+                                                    ->default('fixed'),
+
+                                                TextInput::make('tax_value')
+                                                    ->numeric()
+                                                    ->default(0)
+                                                    ->hiddenLabel()
+                                                    ->placeholder('PPN')
+                                                    ->prefixAction(
+                                                        Action::make('toggleTaxType')
+                                                            ->link()
+                                                            ->label(fn ($get) => $get('tax_type') === 'percent' ? '%' : 'Rp')
+                                                            ->action(function ($set, $get) {
+                                                                $newType = $get('tax_type') === 'percent' ? 'fixed' : 'percent';
+                                                                $set('tax_type', $newType);
+                                                            })
+                                                    ),
+
+                                                Hidden::make('tax_type')
+                                                    ->default('percent'),
+
                                                 ...$variantTierFields
                                             ])
                                             ->columns(1)
@@ -199,7 +257,7 @@ class ProductForm
                                         ])
                                         ->columns(1)
                                         ->extraAttributes([
-                                            'style' => 'min-width: ' . (1210 + (140 * count($pricingTiers)) + 56) . 'px;'
+                                            'style' => 'min-width: ' . (1490 + (140 * count($pricingTiers)) + 56) . 'px;'
                                         ]),
                                 ])
                                 ->visible(fn ($get): bool => (bool) $get('has_variants'))
@@ -258,6 +316,40 @@ class ProductForm
                                             ->prefix('Rp')
                                             ->readOnly()
                                             ->label('HPP Awal setelah Ongkir'),
+
+                                        TextInput::make('discount_value')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->label('Diskon Produk')
+                                            ->prefixAction(
+                                                Action::make('toggleSingleDiscountType')
+                                                    ->link()
+                                                    ->label(fn ($get) => $get('discount_type') === 'percent' ? '%' : 'Rp')
+                                                    ->action(function ($set, $get) {
+                                                        $newType = $get('discount_type') === 'percent' ? 'fixed' : 'percent';
+                                                        $set('discount_type', $newType);
+                                                    })
+                                            ),
+
+                                        Hidden::make('discount_type')
+                                            ->default('fixed'),
+
+                                        TextInput::make('tax_value')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->label('Pajak (PPN)')
+                                            ->prefixAction(
+                                                Action::make('toggleSingleTaxType')
+                                                    ->link()
+                                                    ->label(fn ($get) => $get('tax_type') === 'percent' ? '%' : 'Rp')
+                                                    ->action(function ($set, $get) {
+                                                        $newType = $get('tax_type') === 'percent' ? 'fixed' : 'percent';
+                                                        $set('tax_type', $newType);
+                                                    })
+                                            ),
+
+                                        Hidden::make('tax_type')
+                                            ->default('percent'),
                                     ]),
 
                                 Group::make([
@@ -299,6 +391,40 @@ class ProductForm
                                             ->numeric()
                                             ->prefix('Rp')
                                             ->label('HPP Jasa'),
+
+                                        TextInput::make('discount_value')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->label('Diskon Jasa')
+                                            ->prefixAction(
+                                                Action::make('toggleJasaDiscountType')
+                                                    ->link()
+                                                    ->label(fn ($get) => $get('discount_type') === 'percent' ? '%' : 'Rp')
+                                                    ->action(function ($set, $get) {
+                                                        $newType = $get('discount_type') === 'percent' ? 'fixed' : 'percent';
+                                                        $set('discount_type', $newType);
+                                                    })
+                                            ),
+
+                                        Hidden::make('discount_type')
+                                            ->default('fixed'),
+
+                                        TextInput::make('tax_value')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->label('Pajak (PPN)')
+                                            ->prefixAction(
+                                                Action::make('toggleJasaTaxType')
+                                                    ->link()
+                                                    ->label(fn ($get) => $get('tax_type') === 'percent' ? '%' : 'Rp')
+                                                    ->action(function ($set, $get) {
+                                                        $newType = $get('tax_type') === 'percent' ? 'fixed' : 'percent';
+                                                        $set('tax_type', $newType);
+                                                    })
+                                            ),
+
+                                        Hidden::make('tax_type')
+                                            ->default('percent'),
                                     ]),
 
                                 Section::make('Harga Tingkatan (Tier Prices) untuk Jasa')
@@ -335,6 +461,40 @@ class ProductForm
                                             ->numeric()
                                             ->prefix('Rp')
                                             ->label('HPP Awal Paket'),
+
+                                        TextInput::make('discount_value')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->label('Diskon Paket')
+                                            ->prefixAction(
+                                                Action::make('toggleBundleDiscountType')
+                                                    ->link()
+                                                    ->label(fn ($get) => $get('discount_type') === 'percent' ? '%' : 'Rp')
+                                                    ->action(function ($set, $get) {
+                                                        $newType = $get('discount_type') === 'percent' ? 'fixed' : 'percent';
+                                                        $set('discount_type', $newType);
+                                                    })
+                                            ),
+
+                                        Hidden::make('discount_type')
+                                            ->default('fixed'),
+
+                                        TextInput::make('tax_value')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->label('Pajak (PPN)')
+                                            ->prefixAction(
+                                                Action::make('toggleBundleTaxType')
+                                                    ->link()
+                                                    ->label(fn ($get) => $get('tax_type') === 'percent' ? '%' : 'Rp')
+                                                    ->action(function ($set, $get) {
+                                                        $newType = $get('tax_type') === 'percent' ? 'fixed' : 'percent';
+                                                        $set('tax_type', $newType);
+                                                    })
+                                            ),
+
+                                        Hidden::make('tax_type')
+                                            ->default('percent'),
                                     ]),
 
                                 Group::make([
@@ -400,21 +560,21 @@ class ProductForm
                                     ->schema([
                                         Select::make('inventory_account_id')
                                             ->label('Akun Persediaan')
-                                            ->relationship('inventoryAccount', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->where('is_header', false))
+                                            ->options(fn () => \App\Models\Account::where('is_active', true)->where('is_header', false)->pluck('name', 'id'))
                                             ->placeholder('Pilih Akun Persediaan (Default: 1-1300)')
                                             ->searchable()
                                             ->preload(),
 
                                         Select::make('sales_account_id')
                                             ->label('Akun Penjualan')
-                                            ->relationship('salesAccount', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->where('is_header', false))
+                                            ->options(fn () => \App\Models\Account::where('is_active', true)->where('is_header', false)->pluck('name', 'id'))
                                             ->placeholder('Pilih Akun Penjualan (Default: 4-1000)')
                                             ->searchable()
                                             ->preload(),
 
                                         Select::make('cogs_account_id')
                                             ->label('Akun HPP')
-                                            ->relationship('cogsAccount', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->where('is_header', false))
+                                            ->options(fn () => \App\Models\Account::where('is_active', true)->where('is_header', false)->pluck('name', 'id'))
                                             ->placeholder('Pilih Akun HPP (Default: 5-1000)')
                                             ->searchable()
                                             ->preload(),
@@ -428,7 +588,10 @@ class ProductForm
                                     ->content(function ($record) {
                                         if (!$record) return 'Belum ada data.';
 
-                                                                                $variantIds = $record->variants()->pluck('id')->toArray();
+                                        $product = $record instanceof \App\Models\ProductVariant ? $record->product : $record;
+                                        if (!$product) return 'Belum ada data.';
+
+                                        $variantIds = $product->variants()->pluck('id')->toArray();
                                         $movements = StockMovement::whereIn('product_variant_id', $variantIds)
                                             ->with(['productVariant', 'branch'])
                                             ->latest()

@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\Products;
 
-use App\Filament\Resources\Products\Pages\CreateProduct;
-use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\Schemas\ProductForm;
 use App\Filament\Resources\Products\Tables\ProductsTable;
@@ -16,11 +14,17 @@ use Filament\Tables\Table;
 
 class ProductResource extends Resource
 {
-    protected static ?string $model = Product::class;
+    protected static ?string $model = \App\Models\ProductVariant::class;
+
+    protected static ?string $navigationLabel = 'Produk';
+    
+    protected static ?string $modelLabel = 'Produk';
+
+    protected static ?string $pluralModelLabel = 'Produk';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMusicalNote;
 
-    protected static ?string $recordTitleAttribute = 'name';
+    protected static ?string $recordTitleAttribute = 'sku';
 
     public static function getNavigationGroup(): ?string
     {
@@ -48,8 +52,7 @@ class ProductResource extends Resource
     {
         return [
             'index' => ListProducts::route('/'),
-            'create' => CreateProduct::route('/create'),
-            'edit' => EditProduct::route('/{record}/edit'),
         ];
     }
 }
+

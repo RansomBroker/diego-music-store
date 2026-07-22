@@ -25,9 +25,14 @@ class CreateProduct
             $product = Product::create([
                 'name' => $data['name'],
                 'type' => $data['type'],
+                'unit_id' => $data['unit_id'] ?? null,
+                'category' => $data['category'] ?? null,
+                'brand' => $data['brand'] ?? null,
+                'supplier_id' => $data['supplier_id'] ?? null,
                 'description' => $data['description'] ?? null,
                 'image_path' => $data['image_path'] ?? null,
                 'is_active' => $data['is_active'] ?? true,
+                'minimum_stock' => $data['minimum_stock'] ?? 0,
             ]);
 
             $hasVariants = filter_var($data['has_variants'] ?? false, FILTER_VALIDATE_BOOLEAN);
@@ -41,6 +46,10 @@ class CreateProduct
                         'barcode' => $variantData['barcode'] ?? null,
                         'name' => $variantData['name'],
                         'price' => $variantData['price'] ?? 0,
+                        'discount_value' => $variantData['discount_value'] ?? 0,
+                        'discount_type' => $variantData['discount_type'] ?? 'fixed',
+                        'tax_value' => $variantData['tax_value'] ?? 0,
+                        'tax_type' => $variantData['tax_type'] ?? 'percent',
                         'cost_price' => $variantData['cost_price'] ?? 0,
                         'hpp' => $variantData['hpp'] ?? ($variantData['cost_price'] ?? 0),
                         'is_active' => true,
@@ -82,6 +91,10 @@ class CreateProduct
                     'barcode' => $data['barcode'] ?? null,
                     'name' => null, // Default variant
                     'price' => $data['price'] ?? 0,
+                    'discount_value' => $data['discount_value'] ?? 0,
+                    'discount_type' => $data['discount_type'] ?? 'fixed',
+                    'tax_value' => $data['tax_value'] ?? 0,
+                    'tax_type' => $data['tax_type'] ?? 'percent',
                     'cost_price' => $data['cost_price'] ?? 0,
                     'hpp' => $data['hpp'] ?? ($data['cost_price'] ?? 0),
                     'is_active' => true,

@@ -15,9 +15,13 @@ class Product extends Model
         'name',
         'description',
         'type', // 'physical', 'bundle', 'service'
+        'category',
+        'brand',
+        'supplier_id',
         'unit_id',
         'image_path',
         'is_active',
+        'minimum_stock',
         'inventory_account_id',
         'sales_account_id',
         'cogs_account_id',
@@ -25,6 +29,7 @@ class Product extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'minimum_stock' => 'integer',
     ];
 
     /**
@@ -97,5 +102,43 @@ class Product extends Model
     public function isService(): bool
     {
         return $this->type === 'service';
+    }
+
+    /**
+     * Get the supplier for the product.
+     */
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    /**
+     * Get total stock across all variants.
+     */
+    public function getTotalStock(): int
+    {
+        if ($this->isService()) {
+            return 999999;
+        }
+
+        $total = 0;
+        foreach ($this->variants as $variant) {
+            $total += $variant->totalStock();
+        }
+        return $total;
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($product) {
+            if ($product->supplier_id && !is_numeric($product->supplier_id)) {
+                $supplierName = $product->supplier_id;
+                $supplier = Supplier::create([
+                    'name' => $supplierName,
+                    'outstanding_debt' => 0,
+                ]);
+                $product->supplier_id = $supplier->id;
+            }
+        });
     }
 }

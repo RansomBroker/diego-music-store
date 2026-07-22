@@ -187,8 +187,7 @@ class PosBarcodePrint extends Component
             return;
         }
 
-        $payload = base64_encode(json_encode([
-            'queue'          => array_values($this->printQueue),
+        $raw = [
             'layout'         => $this->paperLayout,
             'label_width'    => $this->labelWidth,
             'label_height'   => $this->labelHeight,
@@ -201,7 +200,12 @@ class PosBarcodePrint extends Component
             'show_name'      => $this->showProductName,
             'show_price'     => $this->showPrice,
             'show_code'      => $this->showCode,
-        ]));
+        ];
+        $params = \App\Helpers\ProductHelper::resolveLayoutParams($raw);
+
+        $payload = base64_encode(json_encode(array_merge($params, [
+            'queue' => array_values($this->printQueue),
+        ])));
 
         $this->js("window.open('/pos/barcode-print/sheet?data={$payload}', '_blank')");
     }
