@@ -29,6 +29,9 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between transition-colors duration-200">
     
+    <!-- Custom Top-Right Toast Container -->
+    <x-pos.toast />
+
     <!-- Content Slot -->
     <div class="flex-1 flex flex-col items-center justify-center p-4">
         {{ $slot }}

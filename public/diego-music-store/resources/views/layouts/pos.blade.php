@@ -21,6 +21,9 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-100 h-screen w-full overflow-hidden flex transition-colors duration-200">
     
+    <!-- Custom Top-Right Toast Container -->
+    <x-pos.toast />
+
     {{ $slot }}
 
     @livewireScripts

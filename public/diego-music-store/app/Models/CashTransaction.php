@@ -63,6 +63,11 @@ class CashTransaction extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function poster(): BelongsTo
     {
         return $this->belongsTo(User::class, 'posted_by');

@@ -56,11 +56,12 @@
                 @else
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                         @foreach ($products as $variant)
-                            <x-pos-page::product-card 
+                            <x-pos.product-card 
                                 :variant="$variant" 
                                 :selectedBranchId="$selectedBranchId" 
                                 :selectedPricingTierId="$selectedPricingTierId" 
                                 :qtyInCart="$cart[$variant->id]['qty'] ?? 0"
+                                clickAction="addToCart"
                             />
                         @endforeach
                     </div>

@@ -61,12 +61,13 @@ class PosSupplierPayments extends Component
     public function mount(): void
     {
         $this->payment_date = now()->format('Y-m-d');
-        $this->branch_id = Auth::user()->branches()->first()?->id;
+        $this->branch_id = Auth::user()?->branches()->first()?->id
+            ?? Auth::user()?->branch_id
+            ?? Branch::first()?->id;
 
         // Choose default asset account
         $defaultAccount = Account::where('classification', 'asset')
             ->where('is_header', false)
-            ->where('code', 'like', '1-1%')
             ->first();
         if ($defaultAccount) {
             $this->account_id = $defaultAccount->id;
@@ -100,11 +101,12 @@ class PosSupplierPayments extends Component
             'supplier_id', 'payment_reference', 'notes', 'items'
         ]);
         $this->payment_date = now()->format('Y-m-d');
-        $this->branch_id = Auth::user()->branches()->first()?->id;
-        
+        $this->branch_id = Auth::user()?->branches()->first()?->id
+            ?? Auth::user()?->branch_id
+            ?? Branch::first()?->id;
+
         $defaultAccount = Account::where('classification', 'asset')
             ->where('is_header', false)
-            ->where('code', 'like', '1-1%')
             ->first();
         if ($defaultAccount) {
             $this->account_id = $defaultAccount->id;
@@ -139,44 +141,43 @@ class PosSupplierPayments extends Component
                     'invoice_number' => $pt->invoice_number,
                     'transaction_date' => $pt->transaction_date->format('Y-m-d'),
                     'due_date' => $pt->due_date?->format('Y-m-d'),
-                    'grand_total' => $pt->grand_total,
-                    'amount_due' => $remaining,
+                    'grand_total' => floatval($pt->grand_total),
+                    'amount_due' => floatval($remaining),
                     'amount_paid' => 0,
                 ];
             }
         }
     }
 
-    // ── Item Selection Handling ─────────────────────────────────────────
+    // ── Item Selection & Amount Change Handling (Livewire 3 compatibility) ───
     public function toggleItemSelection(int $index): void
     {
         if (isset($this->items[$index])) {
-            $item = $this->items[$index];
-            if ($item['is_selected']) {
-                $this->items[$index]['amount_paid'] = $item['amount_due'];
+            if (!empty($this->items[$index]['is_selected'])) {
+                if (floatval($this->items[$index]['amount_paid'] ?? 0) <= 0) {
+                    $this->items[$index]['amount_paid'] = $this->items[$index]['amount_due'];
+                }
             } else {
                 $this->items[$index]['amount_paid'] = 0;
             }
         }
     }
 
-    public function updatedItems($value, $key): void
+    public function updated($property, $value): void
     {
-        if (str_contains($key, '.amount_paid')) {
-            $parts = explode('.', $key);
-            $index = $parts[0];
-            $amountPaid = intval($value ?: 0);
-            $amountDue = $this->items[$index]['amount_due'];
+        if (str_contains($property, 'items.') && str_contains($property, '.amount_paid')) {
+            preg_match('/items\.(\d+)\.amount_paid/', $property, $matches);
+            if (isset($matches[1])) {
+                $index = (int) $matches[1];
+                $amountPaid = floatval($value ?: 0);
+                $amountDue = floatval($this->items[$index]['amount_due'] ?? 0);
 
-            if ($amountPaid > $amountDue) {
-                $amountPaid = $amountDue;
-                $this->items[$index]['amount_paid'] = $amountDue;
-            }
+                if ($amountPaid > $amountDue) {
+                    $amountPaid = $amountDue;
+                    $this->items[$index]['amount_paid'] = $amountDue;
+                }
 
-            if ($amountPaid > 0) {
-                $this->items[$index]['is_selected'] = true;
-            } else {
-                $this->items[$index]['is_selected'] = false;
+                $this->items[$index]['is_selected'] = ($amountPaid > 0);
             }
         }
     }
@@ -184,6 +185,12 @@ class PosSupplierPayments extends Component
     // ── Save Payment ───────────────────────────────────────────────────
     public function save(string $status = 'draft'): void
     {
+        if (!$this->branch_id) {
+            $this->branch_id = Auth::user()?->branches()->first()?->id
+                ?? Auth::user()?->branch_id
+                ?? Branch::first()?->id;
+        }
+
         $this->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'branch_id' => 'required|exists:branches,id',
@@ -194,20 +201,21 @@ class PosSupplierPayments extends Component
             'notes' => 'nullable|string|max:500',
         ], [
             'supplier_id.required' => 'Supplier wajib dipilih.',
+            'supplier_id.exists' => 'Supplier tidak valid.',
             'account_id.required' => 'Akun Kas / Bank wajib dipilih.',
+            'account_id.exists' => 'Akun Kas / Bank tidak valid.',
+            'branch_id.required' => 'Cabang wajib ditentukan.',
         ]);
 
         // Ensure at least one item is selected and has positive amount paid
         $selectedItems = collect($this->items)->filter(function ($item) {
-            return ($item['is_selected'] ?? false) && intval($item['amount_paid'] ?? 0) > 0;
+            return ($item['is_selected'] ?? false) && floatval($item['amount_paid'] ?? 0) > 0;
         });
 
         if ($selectedItems->isEmpty()) {
-            Notification::make()
-                ->title('Gagal Menyimpan')
-                ->body('Paling sedikit satu invoice harus dipilih dan diisi jumlah pembayaran yang valid.')
-                ->danger()
-                ->send();
+            $msg = 'Paling sedikit satu invoice harus dipilih dan diisi jumlah pembayaran yang lebih dari 0.';
+            Notification::make()->title('Gagal Menyimpan')->body($msg)->danger()->send();
+            $this->dispatch('toast', type: 'danger', title: 'Gagal Menyimpan', body: $msg);
             return;
         }
 
@@ -227,19 +235,15 @@ class PosSupplierPayments extends Component
         try {
             app(CreateSupplierPayment::class)->execute($data);
 
-            Notification::make()
-                ->title($status === 'posted' ? 'Pelunasan Hutang Berhasil Diposting' : 'Draft Pelunasan Hutang Berhasil Disimpan')
-                ->success()
-                ->send();
+            $title = $status === 'posted' ? 'Pelunasan Hutang Berhasil Diposting' : 'Draft Pelunasan Hutang Berhasil Disimpan';
+            Notification::make()->title($title)->success()->send();
+            $this->dispatch('toast', type: 'success', title: $title);
 
             $this->showCreateModal = false;
             $this->resetPage();
-        } catch (\Exception $e) {
-            Notification::make()
-                ->title('Gagal Menyimpan')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+        } catch (\Throwable $e) {
+            Notification::make()->title('Gagal Menyimpan')->body($e->getMessage())->danger()->send();
+            $this->dispatch('toast', type: 'danger', title: 'Gagal Menyimpan', body: $e->getMessage());
         }
     }
 
@@ -267,19 +271,14 @@ class PosSupplierPayments extends Component
             $payment = SupplierPayment::findOrFail($this->paymentIdToPost);
             app(ProcessSupplierPaymentComplete::class)->execute($payment);
 
-            Notification::make()
-                ->title('Pelunasan Hutang Berhasil Diposting')
-                ->success()
-                ->send();
+            Notification::make()->title('Pelunasan Hutang Berhasil Diposting')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Pelunasan Hutang Berhasil Diposting');
 
             $this->showPostConfirmation = false;
             $this->paymentIdToPost = null;
-        } catch (\Exception $e) {
-            Notification::make()
-                ->title('Gagal Posting')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+        } catch (\Throwable $e) {
+            Notification::make()->title('Gagal Posting')->body($e->getMessage())->danger()->send();
+            $this->dispatch('toast', type: 'danger', title: 'Gagal Posting', body: $e->getMessage());
         }
     }
 
@@ -305,19 +304,14 @@ class PosSupplierPayments extends Component
             $payment->items()->delete();
             $payment->delete();
 
-            Notification::make()
-                ->title('Pelunasan Hutang Berhasil Dihapus')
-                ->success()
-                ->send();
+            Notification::make()->title('Pelunasan Hutang Berhasil Dihapus')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Pelunasan Hutang Berhasil Dihapus');
 
             $this->showDeleteConfirmation = false;
             $this->paymentIdToDelete = null;
-        } catch (\Exception $e) {
-            Notification::make()
-                ->title('Gagal Menghapus')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+        } catch (\Throwable $e) {
+            Notification::make()->title('Gagal Menghapus')->body($e->getMessage())->danger()->send();
+            $this->dispatch('toast', type: 'danger', title: 'Gagal Menghapus', body: $e->getMessage());
         }
     }
 
@@ -334,7 +328,7 @@ class PosSupplierPayments extends Component
             ->paginate($this->perPage);
 
         // Current Branch Logo for Sidebar
-        $userBranchId = Auth::user()->branches()->first()?->id;
+        $userBranchId = Auth::user()?->branches()->first()?->id ?? Branch::first()?->id;
         $branch = $userBranchId ? Branch::find($userBranchId) : null;
         $selectedLogoUrl = ($branch && !empty($branch->logo_path))
             ? Storage::url($branch->logo_path)
@@ -343,7 +337,6 @@ class PosSupplierPayments extends Component
         // Query asset accounts for the select box
         $accounts = Account::where('classification', 'asset')
             ->where('is_header', false)
-            ->where('code', 'like', '1-1%')
             ->orderBy('code')
             ->get();
 

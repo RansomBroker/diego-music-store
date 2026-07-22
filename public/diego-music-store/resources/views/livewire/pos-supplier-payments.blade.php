@@ -281,7 +281,7 @@
                     <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">No. Pembayaran</label>
                     <input
                         type="text"
-                        class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-500 cursor-not-allowed"
+                        class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-500 cursor-not-allowed font-mono"
                         value="AUTO-GENERATED"
                         disabled
                     >
@@ -397,15 +397,15 @@
                                         <td class="px-5 py-3">
                                             <input
                                                 type="checkbox"
-                                                wire:model="items.{{ $idx }}.is_selected"
+                                                wire:model.live="items.{{ $idx }}.is_selected"
                                                 wire:change="toggleItemSelection({{ $idx }})"
-                                                class="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4.5 h-4.5 transition"
+                                                class="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4.5 h-4.5 transition cursor-pointer"
                                             >
                                         </td>
                                         <x-pos.table.td class="whitespace-nowrap font-medium text-slate-900 dark:text-slate-100">
-                                            <div>{{ $item['transaction_no'] }}</div>
+                                            <div class="font-mono font-bold">{{ $item['transaction_no'] }}</div>
                                             @if ($item['invoice_number'])
-                                                <span class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 block">Inv: {{ $item['invoice_number'] }}</span>
+                                                <span class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 block font-mono">Inv: {{ $item['invoice_number'] }}</span>
                                             @endif
                                         </x-pos.table.td>
                                         <x-pos.table.td class="whitespace-nowrap text-sm text-slate-600 dark:text-slate-355">
@@ -414,10 +414,10 @@
                                         <x-pos.table.td class="whitespace-nowrap text-sm text-slate-600 dark:text-slate-355">
                                             {{ $item['due_date'] ? date('d/m/Y', strtotime($item['due_date'])) : '-' }}
                                         </x-pos.table.td>
-                                        <x-pos.table.td class="whitespace-nowrap text-right text-sm text-slate-600 dark:text-slate-355">
+                                        <x-pos.table.td class="whitespace-nowrap text-right text-sm text-slate-600 dark:text-slate-355 font-mono">
                                             Rp {{ number_format($item['grand_total'], 0, ',', '.') }}
                                         </x-pos.table.td>
-                                        <x-pos.table.td class="whitespace-nowrap text-right font-semibold text-slate-900 dark:text-slate-200">
+                                        <x-pos.table.td class="whitespace-nowrap text-right font-semibold text-slate-900 dark:text-slate-200 font-mono">
                                             Rp {{ number_format($item['amount_due'], 0, ',', '.') }}
                                         </x-pos.table.td>
                                         <x-pos.table.td class="whitespace-nowrap text-right">
@@ -425,9 +425,10 @@
                                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs font-semibold">Rp</span>
                                                 <input
                                                     type="number"
-                                                    wire:model.live.debounce.500ms="items.{{ $idx }}.amount_paid"
-                                                    class="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-right text-slate-900 dark:text-white font-bold focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors"
+                                                    wire:model.live.debounce.300ms="items.{{ $idx }}.amount_paid"
+                                                    class="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-right text-slate-900 dark:text-white font-bold focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors font-mono"
                                                     placeholder="0"
+                                                    min="0"
                                                     max="{{ $item['amount_due'] }}"
                                                 >
                                             </div>
@@ -447,11 +448,11 @@
                     <div class="mt-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors">
                         <div>
                             <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Total Outstanding</span>
-                            <span class="text-lg font-black text-slate-850 dark:text-slate-100">Rp {{ number_format($totalOutstanding, 0, ',', '.') }}</span>
+                            <span class="text-lg font-black text-slate-850 dark:text-slate-100 font-mono">Rp {{ number_format($totalOutstanding, 0, ',', '.') }}</span>
                         </div>
                         <div class="text-right">
                             <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Total Pembayaran</span>
-                            <span class="text-2xl font-black text-primary dark:text-blue-400">Rp {{ number_format($totalPayment, 0, ',', '.') }}</span>
+                            <span class="text-2xl font-black text-primary dark:text-blue-400 font-mono">Rp {{ number_format($totalPayment, 0, ',', '.') }}</span>
                         </div>
                     </div>
                 @endif
@@ -469,16 +470,20 @@
                 <button
                     type="button"
                     wire:click="save('draft')"
-                    class="px-5 py-2 border border-primary text-primary hover:bg-primary-light dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-950/20 text-sm font-bold rounded-xl transition-colors cursor-pointer"
+                    wire:loading.attr="disabled"
+                    class="px-5 py-2 border border-primary text-primary hover:bg-primary-light dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-950/20 text-sm font-bold rounded-xl transition-colors cursor-pointer disabled:opacity-50"
                 >
-                    Simpan Draft
+                    <span wire:loading.remove wire:target="save('draft')">Simpan Draft</span>
+                    <span wire:loading wire:target="save('draft')">Menyimpan...</span>
                 </button>
                 <button
                     type="button"
                     wire:click="save('posted')"
-                    class="px-5 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-xl shadow-md hover:shadow transition duration-150 cursor-pointer active:scale-[0.98]"
+                    wire:loading.attr="disabled"
+                    class="px-5 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-xl shadow-md hover:shadow transition duration-150 cursor-pointer active:scale-[0.98] disabled:opacity-50"
                 >
-                    Simpan & Posting
+                    <span wire:loading.remove wire:target="save('posted')">Simpan & Posting</span>
+                    <span wire:loading wire:target="save('posted')">Memproses...</span>
                 </button>
             </div>
         </div>
@@ -561,18 +566,18 @@
                                 @foreach ($detailPayment->items as $det)
                                     <x-pos.table.tr>
                                         <x-pos.table.td class="whitespace-nowrap font-medium text-slate-900 dark:text-slate-100">
-                                            <div>{{ $det->purchaseTransaction->transaction_no }}</div>
+                                            <div class="font-mono font-bold">{{ $det->purchaseTransaction->transaction_no }}</div>
                                             @if ($det->purchaseTransaction->invoice_number)
-                                                <span class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 block">Inv: {{ $det->purchaseTransaction->invoice_number }}</span>
+                                                <span class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 block font-mono">Inv: {{ $det->purchaseTransaction->invoice_number }}</span>
                                             @endif
                                         </x-pos.table.td>
                                         <x-pos.table.td class="whitespace-nowrap text-sm text-slate-650 dark:text-slate-350">
                                             {{ $det->purchaseTransaction->transaction_date->format('d/m/Y') }}
                                         </x-pos.table.td>
-                                        <x-pos.table.td class="whitespace-nowrap text-right text-sm text-slate-650 dark:text-slate-350">
+                                        <x-pos.table.td class="whitespace-nowrap text-right text-sm text-slate-650 dark:text-slate-350 font-mono">
                                             Rp {{ number_format($det->amount_due, 0, ',', '.') }}
                                         </x-pos.table.td>
-                                        <x-pos.table.td class="whitespace-nowrap text-right font-black text-primary dark:text-blue-400 text-sm">
+                                        <x-pos.table.td class="whitespace-nowrap text-right font-black text-primary dark:text-blue-400 text-sm font-mono">
                                             Rp {{ number_format($det->amount_paid, 0, ',', '.') }}
                                         </x-pos.table.td>
                                     </x-pos.table.tr>
@@ -583,7 +588,7 @@
 
                     <div class="mt-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 flex justify-between items-center transition-colors">
                         <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Pelunasan</span>
-                        <span class="text-2xl font-black text-primary dark:text-blue-400">Rp {{ number_format($detailPayment->total_amount, 0, ',', '.') }}</span>
+                        <span class="text-2xl font-black text-primary dark:text-blue-400 font-mono">Rp {{ number_format($detailPayment->total_amount, 0, ',', '.') }}</span>
                     </div>
                 </div>
 

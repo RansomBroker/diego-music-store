@@ -1,3 +1,11 @@
+@php
+    $setting = \App\Models\ReceiptSetting::where('branch_id', $sale->branch_id)->first();
+    $maxWidth = match ($setting?->paper_width) {
+        '58mm' => '220px',
+        'A4' => '750px',
+        default => '300px',
+    };
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -13,7 +21,7 @@
             background: #fff;
             margin: 0;
             padding: 20px;
-            max-width: 300px; /* 80mm standard width */
+            max-width: {{ $maxWidth }};
             margin: 0 auto;
         }
         .text-center {
@@ -73,7 +81,13 @@
     </div>
 
     <div class="header text-center">
-        <span class="store-name">{{ $sale->branch->store_name ?: 'Diego Music Store' }}</span><br>
+        @if (($setting->show_logo ?? true) && !empty($sale->branch->logo_path))
+            <img src="{{ \Illuminate\Support\Facades\Storage::url($sale->branch->logo_path) }}" alt="Logo" style="max-height: 50px; margin-bottom: 8px;"><br>
+        @endif
+        <span class="store-name">{{ $setting?->store_display_name ?: ($sale->branch->store_name ?: 'Diego Music Store') }}</span><br>
+        @if (!empty($setting?->header_text))
+            <div style="font-size: 11px; font-style: italic; margin-bottom: 4px;">{{ $setting->header_text }}</div>
+        @endif
         <span>{{ $sale->branch->name }}</span><br>
         <span>Telp: {{ $sale->branch->phone }}</span>
     </div>
@@ -88,14 +102,18 @@
         <span>Tanggal:</span>
         <span>{{ $sale->created_at->format('d/m/Y H:i') }}</span>
     </div>
-    <div class="grid">
-        <span>Kasir:</span>
-        <span>{{ $sale->salesRep->name }}</span>
-    </div>
-    <div class="grid">
-        <span>Pelanggan:</span>
-        <span>{{ $sale->customer ? $sale->customer->name : 'Umum / Walk-in' }}</span>
-    </div>
+    @if ($setting->show_cashier ?? true)
+        <div class="grid">
+            <span>Kasir:</span>
+            <span>{{ $sale->salesRep->name }}</span>
+        </div>
+    @endif
+    @if ($setting->show_customer ?? true)
+        <div class="grid">
+            <span>Pelanggan:</span>
+            <span>{{ $sale->customer ? $sale->customer->name : 'Umum / Walk-in' }}</span>
+        </div>
+    @endif
 
     <div class="divider"></div>
 
@@ -129,10 +147,12 @@
             <span>-Rp {{ number_format($sale->discount_amount, 0, ',', '.') }}</span>
         </div>
     @endif
-    <div class="grid">
-        <span>PPN (11%):</span>
-        <span>Rp {{ number_format($sale->tax_amount, 0, ',', '.') }}</span>
-    </div>
+    @if ($setting->show_tax_details ?? true)
+        <div class="grid">
+            <span>PPN (11%):</span>
+            <span>Rp {{ number_format($sale->tax_amount, 0, ',', '.') }}</span>
+        </div>
+    @endif
     <div class="double-divider"></div>
     <div class="grid bold" style="font-size: 13px;">
         <span>Total Akhir:</span>
@@ -146,8 +166,7 @@
     </div>
 
     <div class="footer">
-        Terima Kasih atas Kunjungan Anda<br>
-        Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.<br><br>
+        {!! nl2br(e($setting?->footer_text ?: "Terima Kasih atas Kunjungan Anda\nBarang yang sudah dibeli tidak dapat ditukar/dikembalikan.")) !!}<br><br>
         Diego Music Store ERP
     </div>
 
