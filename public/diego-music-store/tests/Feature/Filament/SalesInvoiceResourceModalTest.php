@@ -46,8 +46,12 @@ class SalesInvoiceResourceModalTest extends TestCase
 
     public function test_it_can_create_sales_invoice_via_modal_action(): void
     {
-        Livewire::test(ListSalesInvoices::class)
-            ->callAction('create', data: [
+        $test = Livewire::test(ListSalesInvoices::class)
+            ->mountAction('create');
+
+        $itemKey = array_key_first($test->get('mountedActions.0.data.items') ?? []);
+
+        $test->setActionData([
                 'customer_id' => $this->customer->id,
                 'branch_id' => $this->branch->id,
                 'invoice_number' => 'INV-TEST-001',
@@ -55,13 +59,14 @@ class SalesInvoiceResourceModalTest extends TestCase
                 'payment_type' => 'Tunai',
                 'status' => 'draft',
                 'items' => [
-                    'item-1' => [
+                    ($itemKey ?: 'item-1') => [
                         'product_variant_id' => $this->variant->id,
                         'quantity' => 1,
                         'price' => 3000000,
-                    ]
+                    ],
                 ],
             ])
+            ->callMountedAction()
             ->assertHasNoTableActionErrors();
 
         $this->assertDatabaseHas('sales_invoices', [

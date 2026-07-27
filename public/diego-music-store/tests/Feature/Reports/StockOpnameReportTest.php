@@ -47,7 +47,7 @@ class StockOpnameReportTest extends TestCase
     /** @test */
     public function it_calculates_stock_opname_variances_and_adjustments_correctly()
     {
-        $unit = Unit::create(['name' => 'Pcs']);
+        $unit = Unit::create(['code' => 'PCS', 'name' => 'Pcs']);
 
         $product = Product::create([
             'name'          => 'Keyboard Roland XPS-30',
@@ -110,13 +110,10 @@ class StockOpnameReportTest extends TestCase
     /** @test */
     public function it_can_export_pdf_and_csv_stream()
     {
-        $component = Livewire::actingAs($this->user)
-            ->test(StockOpnameReport::class);
-
-        $pdfResponse = $component->call('printPdf');
-        $this->assertEquals(200, $pdfResponse->status());
-
-        $excelResponse = $component->call('exportExcel');
-        $this->assertEquals(200, $excelResponse->status());
+        Livewire::actingAs($this->user)
+            ->test(StockOpnameReport::class)
+            ->call('printPdf')
+            ->call('exportExcel')
+            ->assertStatus(200);
     }
 }

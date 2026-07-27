@@ -132,9 +132,9 @@ class AssetDisposalTest extends TestCase
         $this->assertEquals('disposed', $asset->status);
 
         $this->assertDatabaseHas('journal_entries', [
-            'id'                 => $postedDisposal->journal_entry_id,
-            'transaction_number' => 'DSP-202607-0001',
-            'status'             => 'posted',
+            'id'        => $postedDisposal->journal_entry_id,
+            'entry_no'  => 'DSP-202607-0001',
+            'status'    => 'posted',
         ]);
     }
 

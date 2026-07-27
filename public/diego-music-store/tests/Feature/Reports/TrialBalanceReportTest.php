@@ -7,7 +7,7 @@ use App\Filament\Pages\Reports\TrialBalance;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\JournalEntry;
-use App\Models\JournalItem;
+use App\Models\JournalEntryItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -33,16 +33,16 @@ class TrialBalanceReportTest extends TestCase
         ]);
 
         $this->user = User::factory()->create([
-            'name'      => 'Admin Akuntansi',
-            'username'  => 'adminfinance',
-            'email'     => 'finance@diegomusic.com',
+            'name'      => 'Admin Neraca Saldo',
+            'username'  => 'adminneraca',
+            'email'     => 'neraca@diegomusic.com',
             'is_active' => true,
         ]);
 
         $this->user->branches()->attach($this->branch->id);
 
-        Account::create(['code' => '1-1000', 'name' => 'Kas Utama', 'classification' => 'asset', 'is_header' => false, 'is_active' => true]);
-        Account::create(['code' => '4-1000', 'name' => 'Pendapatan Penjualan', 'classification' => 'revenue', 'is_header' => false, 'is_active' => true]);
+        Account::create(['code' => '1-1000', 'name' => 'Kas Utama', 'classification' => 'Asset', 'is_header' => false, 'is_active' => true]);
+        Account::create(['code' => '4-1000', 'name' => 'Pendapatan Penjualan', 'classification' => 'Revenue', 'is_header' => false, 'is_active' => true]);
     }
 
     /** @test */
@@ -51,7 +51,7 @@ class TrialBalanceReportTest extends TestCase
         $kas = Account::where('code', '1-1000')->first();
         $rev = Account::where('code', '4-1000')->first();
 
-        $priorDate  = now()->subDays(10)->toDateString();
+        $priorDate  = now()->startOfMonth()->subDays(5)->toDateString();
         $periodDate = now()->toDateString();
 
         // 1. Transaction BEFORE period (Sets Beginning Balance = 1.000.000)
@@ -61,10 +61,9 @@ class TrialBalanceReportTest extends TestCase
             'date'        => $priorDate,
             'description' => 'Penjualan Lalu',
             'status'      => 'posted',
-            'created_by'  => $this->user->id,
         ]);
-        JournalItem::create(['journal_entry_id' => $entry1->id, 'account_id' => $kas->id, 'debit' => 1000000, 'credit' => 0]);
-        JournalItem::create(['journal_entry_id' => $entry1->id, 'account_id' => $rev->id, 'debit' => 0, 'credit' => 1000000]);
+        \App\Models\JournalItem::create(['journal_entry_id' => $entry1->id, 'account_id' => $kas->id, 'debit' => 1000000, 'credit' => 0]);
+        \App\Models\JournalItem::create(['journal_entry_id' => $entry1->id, 'account_id' => $rev->id, 'debit' => 0, 'credit' => 1000000]);
 
         // 2. Transaction WITHIN period (Mutasi = 500.000)
         $entry2 = JournalEntry::create([
@@ -73,19 +72,12 @@ class TrialBalanceReportTest extends TestCase
             'date'        => $periodDate,
             'description' => 'Penjualan Periode Ini',
             'status'      => 'posted',
-            'created_by'  => $this->user->id,
         ]);
-        JournalItem::create(['journal_entry_id' => $entry2->id, 'account_id' => $kas->id, 'debit' => 500000, 'credit' => 0]);
-        JournalItem::create(['journal_entry_id' => $entry2->id, 'account_id' => $rev->id, 'debit' => 0, 'credit' => 500000]);
+        \App\Models\JournalItem::create(['journal_entry_id' => $entry2->id, 'account_id' => $kas->id, 'debit' => 500000, 'credit' => 0]);
+        \App\Models\JournalItem::create(['journal_entry_id' => $entry2->id, 'account_id' => $rev->id, 'debit' => 0, 'credit' => 500000]);
 
         $action = new GenerateTrialBalanceReport();
         $report = $action->execute(now()->startOfMonth()->toDateString(), now()->toDateString(), $this->branch->id, false, 'all');
-
-        // Verification:
-        // Beginning Debit = 1M, Beginning Credit = 1M
-        // Period Debit = 500k, Period Credit = 500k
-        // Ending Debit = 1.5M, Ending Credit = 1.5M
-        // Is Balanced = true
 
         $this->assertEquals(1000000, $report['total_beginning_debit']);
         $this->assertEquals(1000000, $report['total_beginning_credit']);
@@ -108,13 +100,10 @@ class TrialBalanceReportTest extends TestCase
     /** @test */
     public function it_can_export_pdf_and_csv_stream()
     {
-        $component = Livewire::actingAs($this->user)
-            ->test(TrialBalance::class);
-
-        $pdfResponse = $component->call('printPdf');
-        $this->assertEquals(200, $pdfResponse->status());
-
-        $excelResponse = $component->call('exportExcel');
-        $this->assertEquals(200, $excelResponse->status());
+        Livewire::actingAs($this->user)
+            ->test(TrialBalance::class)
+            ->call('printPdf')
+            ->call('exportExcel')
+            ->assertStatus(200);
     }
 }

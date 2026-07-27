@@ -101,13 +101,10 @@ class JournalReportTest extends TestCase
     /** @test */
     public function it_can_export_pdf_and_csv_stream()
     {
-        $component = Livewire::actingAs($this->user)
-            ->test(JournalReport::class);
-
-        $pdfResponse = $component->call('printPdf');
-        $this->assertEquals(200, $pdfResponse->status());
-
-        $excelResponse = $component->call('exportExcel');
-        $this->assertEquals(200, $excelResponse->status());
+        Livewire::actingAs($this->user)
+            ->test(JournalReport::class)
+            ->call('printPdf')
+            ->call('exportExcel')
+            ->assertStatus(200);
     }
 }

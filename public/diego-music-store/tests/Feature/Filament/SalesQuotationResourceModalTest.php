@@ -46,8 +46,12 @@ class SalesQuotationResourceModalTest extends TestCase
 
     public function test_it_can_create_sales_quotation_via_modal_action(): void
     {
-        Livewire::test(ListSalesQuotations::class)
-            ->callAction('create', data: [
+        $test = Livewire::test(ListSalesQuotations::class)
+            ->mountAction('create');
+
+        $itemKey = array_key_first($test->get('mountedActions.0.data.items') ?? []);
+
+        $test->setActionData([
                 'customer_id' => $this->customer->id,
                 'branch_id' => $this->branch->id,
                 'quotation_number' => 'SQ-TEST-001',
@@ -55,13 +59,14 @@ class SalesQuotationResourceModalTest extends TestCase
                 'status' => 'draft',
                 'notes' => 'Penawaran Spesial',
                 'items' => [
-                    'item-1' => [
+                    ($itemKey ?: 'item-1') => [
                         'product_variant_id' => $this->variant->id,
                         'quantity' => 2,
                         'price' => 5000000,
-                    ]
+                    ],
                 ],
             ])
+            ->callMountedAction()
             ->assertHasNoTableActionErrors();
 
         $this->assertDatabaseHas('sales_quotations', [

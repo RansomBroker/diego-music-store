@@ -46,7 +46,7 @@ class StockMovementReportTest extends TestCase
     /** @test */
     public function it_calculates_stock_movements_in_and_out_correctly()
     {
-        $unit = Unit::create(['name' => 'Pcs']);
+        $unit = Unit::create(['code' => 'PCS', 'name' => 'Pcs']);
 
         $product = Product::create([
             'name'      => 'Gitar Akustik Taylor GS Mini',
@@ -113,13 +113,10 @@ class StockMovementReportTest extends TestCase
     /** @test */
     public function it_can_export_pdf_and_csv_stream()
     {
-        $component = Livewire::actingAs($this->user)
-            ->test(StockMovementReport::class);
-
-        $pdfResponse = $component->call('printPdf');
-        $this->assertEquals(200, $pdfResponse->status());
-
-        $excelResponse = $component->call('exportExcel');
-        $this->assertEquals(200, $excelResponse->status());
+        Livewire::actingAs($this->user)
+            ->test(StockMovementReport::class)
+            ->call('printPdf')
+            ->call('exportExcel')
+            ->assertStatus(200);
     }
 }

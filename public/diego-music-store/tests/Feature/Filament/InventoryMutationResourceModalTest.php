@@ -45,20 +45,25 @@ class InventoryMutationResourceModalTest extends TestCase
 
     public function test_it_can_create_inventory_mutation_via_modal_action(): void
     {
-        Livewire::test(ListInventoryMutations::class)
-            ->callAction('create', data: [
+        $test = Livewire::test(ListInventoryMutations::class)
+            ->mountAction('create');
+
+        $itemKey = array_key_first($test->get('mountedActions.0.data.items') ?? []);
+
+        $test->setActionData([
                 'sender_branch_id' => $this->branchA->id,
                 'receiver_branch_id' => $this->branchB->id,
                 'mutation_date' => now()->toDateString(),
                 'status' => 'draft',
                 'notes' => 'Transfer stok pertengahan bulan',
                 'items' => [
-                    'item-1' => [
+                    ($itemKey ?: 'item-1') => [
                         'product_variant_id' => $this->variant->id,
                         'quantity' => 5,
                     ],
                 ],
             ])
+            ->callMountedAction()
             ->assertHasNoTableActionErrors();
 
         $this->assertDatabaseHas('inventory_mutations', [
@@ -92,20 +97,25 @@ class InventoryMutationResourceModalTest extends TestCase
             'quantity' => 2,
         ]);
 
-        Livewire::test(ListInventoryMutations::class)
-            ->callTableAction('edit', $mutation, data: [
+        $test = Livewire::test(ListInventoryMutations::class)
+            ->mountTableAction('edit', $mutation);
+
+        $itemKey = array_key_first($test->get('mountedTableActions.0.data.items') ?? []);
+
+        $test->setTableActionData([
                 'sender_branch_id' => $this->branchA->id,
                 'receiver_branch_id' => $this->branchB->id,
                 'mutation_date' => now()->toDateString(),
                 'status' => 'draft',
                 'notes' => 'Note baru direvisi',
                 'items' => [
-                    'item-1' => [
+                    ($itemKey ?: 'item-1') => [
                         'product_variant_id' => $this->variant->id,
                         'quantity' => 10,
                     ],
                 ],
             ])
+            ->callMountedTableAction()
             ->assertHasNoTableActionErrors();
 
         $this->assertDatabaseHas('inventory_mutations', [

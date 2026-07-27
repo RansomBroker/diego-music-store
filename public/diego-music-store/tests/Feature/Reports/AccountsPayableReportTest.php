@@ -69,15 +69,19 @@ class AccountsPayableReportTest extends TestCase
             'created_by'       => $this->user->id,
         ]);
 
+        $account = \App\Models\Account::create(['code' => '1101', 'name' => 'Kas Utama', 'classification' => 'Asset', 'is_header' => false, 'is_active' => true]);
+
         // 2. Partial Payment: 4.000.000 (Remaining Unpaid = 6.000.000)
         $pay = SupplierPayment::create([
-            'payment_no'   => 'PAY-SUP-001',
-            'payment_date' => now()->subDays(5)->toDateString(),
-            'supplier_id'   => $this->supplier->id,
-            'branch_id'     => $this->branch->id,
-            'total_amount' => 4000000,
-            'status'       => 'posted',
-            'created_by'   => $this->user->id,
+            'payment_no'     => 'PAY-SUP-001',
+            'payment_date'   => now()->subDays(5)->toDateString(),
+            'supplier_id'     => $this->supplier->id,
+            'branch_id'       => $this->branch->id,
+            'account_id'      => $account->id,
+            'payment_method'  => 'Transfer',
+            'total_amount'   => 4000000,
+            'status'         => 'posted',
+            'created_by'     => $this->user->id,
         ]);
 
         SupplierPaymentItem::create([
@@ -112,13 +116,10 @@ class AccountsPayableReportTest extends TestCase
     /** @test */
     public function it_can_export_pdf_and_csv_stream()
     {
-        $component = Livewire::actingAs($this->user)
-            ->test(AccountsPayableReport::class);
-
-        $pdfResponse = $component->call('printPdf');
-        $this->assertEquals(200, $pdfResponse->status());
-
-        $excelResponse = $component->call('exportExcel');
-        $this->assertEquals(200, $excelResponse->status());
+        Livewire::actingAs($this->user)
+            ->test(AccountsPayableReport::class)
+            ->call('printPdf')
+            ->call('exportExcel')
+            ->assertStatus(200);
     }
 }

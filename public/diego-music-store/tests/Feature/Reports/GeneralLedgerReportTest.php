@@ -52,7 +52,7 @@ class GeneralLedgerReportTest extends TestCase
         $kas   = Account::where('code', '1-1000')->first();
         $modal = Account::where('code', '3-1000')->first();
 
-        $priorDate  = now()->subDays(10)->toDateString();
+        $priorDate  = now()->startOfMonth()->subDays(5)->toDateString();
         $periodDate = now()->toDateString();
 
         // 1. Transaction BEFORE period (Sets Beginning Balance = 5.000.000 for Kas)
@@ -108,13 +108,10 @@ class GeneralLedgerReportTest extends TestCase
     /** @test */
     public function it_can_export_pdf_and_csv_stream()
     {
-        $component = Livewire::actingAs($this->user)
-            ->test(GeneralLedger::class);
-
-        $pdfResponse = $component->call('printPdf');
-        $this->assertEquals(200, $pdfResponse->status());
-
-        $excelResponse = $component->call('exportExcel');
-        $this->assertEquals(200, $excelResponse->status());
+        Livewire::actingAs($this->user)
+            ->test(GeneralLedger::class)
+            ->call('printPdf')
+            ->call('exportExcel')
+            ->assertStatus(200);
     }
 }

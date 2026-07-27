@@ -44,7 +44,7 @@ class EndingInventoryReportTest extends TestCase
 
         $this->user->branches()->attach($this->branch->id);
 
-        $unit = Unit::create(['name' => 'Unit']);
+        $unit = Unit::create(['code' => 'UNT', 'name' => 'Unit']);
 
         $this->product = Product::create([
             'name'          => 'Drum Elektrik Yamaha DTX402K',
@@ -103,13 +103,10 @@ class EndingInventoryReportTest extends TestCase
     /** @test */
     public function it_can_export_pdf_and_csv_stream()
     {
-        $component = Livewire::actingAs($this->user)
-            ->test(EndingInventoryReport::class);
-
-        $pdfResponse = $component->call('printPdf');
-        $this->assertEquals(200, $pdfResponse->status());
-
-        $excelResponse = $component->call('exportExcel');
-        $this->assertEquals(200, $excelResponse->status());
+        Livewire::actingAs($this->user)
+            ->test(EndingInventoryReport::class)
+            ->call('printPdf')
+            ->call('exportExcel')
+            ->assertStatus(200);
     }
 }

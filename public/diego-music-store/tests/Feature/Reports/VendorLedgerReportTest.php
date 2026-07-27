@@ -34,9 +34,9 @@ class VendorLedgerReportTest extends TestCase
         ]);
 
         $this->user = User::factory()->create([
-            'name'      => 'Admin Akuntansi',
-            'username'  => 'adminfinance',
-            'email'     => 'finance@diegomusic.com',
+            'name'      => 'Admin Vendor',
+            'username'  => 'adminvendor',
+            'email'     => 'vendor@diegomusic.com',
             'is_active' => true,
         ]);
 
@@ -53,7 +53,7 @@ class VendorLedgerReportTest extends TestCase
     /** @test */
     public function it_calculates_vendor_ap_beginning_and_ending_balances_correctly()
     {
-        $priorDate  = now()->subDays(10)->toDateString();
+        $priorDate  = now()->startOfMonth()->subDays(10)->toDateString();
         $periodDate = now()->toDateString();
 
         // 1. Prior Purchase Transaction (Sets Beginning Balance = 15.000.000)
@@ -62,6 +62,7 @@ class VendorLedgerReportTest extends TestCase
             'transaction_date' => $priorDate,
             'supplier_id'      => $this->supplier->id,
             'branch_id'        => $this->branch->id,
+            'purchase_type'    => 'Kredit',
             'grand_total'      => 15000000,
             'status'           => 'posted',
             'created_by'       => $this->user->id,
@@ -73,31 +74,31 @@ class VendorLedgerReportTest extends TestCase
             'transaction_date' => $periodDate,
             'supplier_id'      => $this->supplier->id,
             'branch_id'        => $this->branch->id,
+            'purchase_type'    => 'Kredit',
             'grand_total'      => 5000000,
             'status'           => 'posted',
             'created_by'       => $this->user->id,
         ]);
 
+        $account = \App\Models\Account::create(['code' => '1101', 'name' => 'Kas Utama', 'classification' => 'Asset', 'is_header' => false, 'is_active' => true]);
+
         // 3. Period Supplier Payment (- 8.000.000)
         SupplierPayment::create([
-            'payment_no'   => 'PAY-PERIOD-001',
-            'payment_date' => $periodDate,
-            'supplier_id'   => $this->supplier->id,
-            'branch_id'     => $this->branch->id,
-            'total_amount' => 8000000,
-            'status'       => 'posted',
-            'created_by'   => $this->user->id,
+            'payment_no'     => 'PAY-PERIOD-001',
+            'payment_date'   => $periodDate,
+            'supplier_id'     => $this->supplier->id,
+            'branch_id'       => $this->branch->id,
+            'account_id'      => $account->id,
+            'payment_method'  => 'Transfer',
+            'total_amount'   => 8000000,
+            'status'         => 'posted',
+            'created_by'     => $this->user->id,
         ]);
 
         $action = new GenerateVendorLedgerReport();
         $report = $action->execute(now()->startOfMonth()->toDateString(), now()->toDateString(), $this->supplier->id, $this->branch->id);
 
         $vendorLedger = $report['vendors'][0];
-
-        // Verification:
-        // Beginning AP Balance = 15M.
-        // Total Additions = 5M. Total Payments = 8M.
-        // Ending AP Balance = 12M (15M + 5M - 8M).
 
         $this->assertEquals(15000000, $vendorLedger['beginning_balance']);
         $this->assertEquals(5000000, $vendorLedger['total_additions']);
@@ -117,13 +118,10 @@ class VendorLedgerReportTest extends TestCase
     /** @test */
     public function it_can_export_pdf_and_csv_stream()
     {
-        $component = Livewire::actingAs($this->user)
-            ->test(VendorLedger::class);
-
-        $pdfResponse = $component->call('printPdf');
-        $this->assertEquals(200, $pdfResponse->status());
-
-        $excelResponse = $component->call('exportExcel');
-        $this->assertEquals(200, $excelResponse->status());
+        Livewire::actingAs($this->user)
+            ->test(VendorLedger::class)
+            ->call('printPdf')
+            ->call('exportExcel')
+            ->assertStatus(200);
     }
 }
