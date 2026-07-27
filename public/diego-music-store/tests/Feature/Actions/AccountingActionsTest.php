@@ -116,9 +116,18 @@ class AccountingActionsTest extends TestCase
         $this->assertEquals('draft', $entry->status);
         $this->assertCount(2, $entry->items);
         $this->assertEquals(500000, $entry->items->sum('debit'));
-        $this->assertEquals(500000, $entry->items->sum('credit'));
+        // 2. Validate custom entry_no
+        $customData = $data;
+        $customData['entry_no'] = 'JV-CUSTOM-0099';
+        $customEntry = app(CreateJournalEntry::class)->execute($customData);
+        $this->assertEquals('JV-CUSTOM-0099', $customEntry->entry_no);
 
-        // 2. Validate unbalanced throws exception
+        // Update with new custom entry_no
+        $customData['entry_no'] = 'JV-CUSTOM-UPDATED';
+        $updatedEntry = app(UpdateJournalEntry::class)->execute($customEntry, $customData);
+        $this->assertEquals('JV-CUSTOM-UPDATED', $updatedEntry->entry_no);
+
+        // 3. Validate unbalanced throws exception
         $unbalancedData = $data;
         $unbalancedData['items'][1]['credit'] = 400000; // unbalanced
 

@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\InventoryMutations;
 
-use App\Filament\Resources\InventoryMutations\Pages\CreateInventoryMutation;
-use App\Filament\Resources\InventoryMutations\Pages\EditInventoryMutation;
 use App\Filament\Resources\InventoryMutations\Pages\ListInventoryMutations;
 use App\Filament\Resources\InventoryMutations\Schemas\InventoryMutationForm;
 use App\Filament\Resources\InventoryMutations\Tables\InventoryMutationsTable;
@@ -54,8 +52,6 @@ class InventoryMutationResource extends Resource
     {
         return [
             'index' => ListInventoryMutations::route('/'),
-            'create' => CreateInventoryMutation::route('/create'),
-            'edit' => EditInventoryMutation::route('/{record}/edit'),
         ];
     }
 }

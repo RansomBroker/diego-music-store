@@ -2,13 +2,17 @@
 
 namespace App\Filament\Resources\InventoryMutations\Tables;
 
+use App\Actions\InventoryMutation\DeleteInventoryMutation;
+use App\Actions\InventoryMutation\UpdateInventoryMutation as UpdateInventoryMutationAction;
 use App\Filament\Resources\StockMovements\StockMovementResource;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class InventoryMutationsTable
 {
@@ -54,7 +58,27 @@ class InventoryMutationsTable
                     }),
             ])
             ->actions([
-                EditAction::make(),
+                EditAction::make()
+                    ->modalWidth('4xl')
+                    ->mutateRecordDataUsing(function (Model $record, array $data): array {
+                        $data['items'] = [];
+                        foreach ($record->items as $item) {
+                            $data['items'][] = [
+                                'product_variant_id' => $item->product_variant_id,
+                                'quantity' => $item->quantity,
+                            ];
+                        }
+                        return $data;
+                    })
+                    ->using(fn (Model $record, array $data): Model => app(UpdateInventoryMutationAction::class)->execute($record, $data)),
+                Action::make('dokumen_mutasi')
+                    ->label('Dokumen Mutasi')
+                    ->icon('heroicon-o-document-text')
+                    ->color('info')
+                    ->url(fn ($record) => route('backoffice.inventory-mutations.print', $record))
+                    ->openUrlInNewTab(),
+                DeleteAction::make()
+                    ->using(fn (Model $record) => app(DeleteInventoryMutation::class)->execute($record)),
                 Action::make('kartu_stok')
                     ->label('Kartu Stok')
                     ->icon('heroicon-o-queue-list')

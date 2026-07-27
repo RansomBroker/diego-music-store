@@ -25,8 +25,10 @@ class JournalEntryForm
                             ->schema([
                                 TextInput::make('entry_no')
                                     ->label('No. Jurnal')
-                                    ->disabled()
-                                    ->placeholder('JV-YYYYMMDD-XXXX'),
+                                    ->default(fn () => \App\Models\JournalEntry::generateEntryNo())
+                                    ->required()
+                                    ->unique('journal_entries', 'entry_no', ignoreRecord: true)
+                                    ->maxLength(100),
 
                                 DatePicker::make('date')
                                     ->label('Tanggal Jurnal')

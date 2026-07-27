@@ -46,6 +46,10 @@ class UpdatePurchaseTransaction
                 'enable_tax' => $enableTax,
                 'enable_item_discount' => $enableItemDisc,
                 'item_discount_type' => $itemDiscTypeGlobal,
+                'shipping_borne_by' => $data['shipping_borne_by'] ?? $pt->shipping_borne_by,
+                'shipping_carrier_name' => $data['shipping_carrier_name'] ?? $pt->shipping_carrier_name,
+                'shipping_payment_account_id' => $data['shipping_payment_account_id'] ?? $pt->shipping_payment_account_id,
+                'shipping_cost' => isset($data['shipping_cost']) ? intval($data['shipping_cost']) : $pt->shipping_cost,
             ]);
 
             // 2. Sync details

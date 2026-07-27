@@ -16,7 +16,16 @@ class CreateBranch
     public function execute(array $data): Branch
     {
         return DB::transaction(function () use ($data) {
-            return Branch::create($data);
+            $users = $data['users'] ?? null;
+            unset($data['users']);
+
+            $branch = Branch::create($data);
+
+            if (is_array($users)) {
+                $branch->users()->sync($users);
+            }
+
+            return $branch;
         });
     }
 }

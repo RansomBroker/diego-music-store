@@ -2,13 +2,14 @@
 
 namespace App\Filament\Resources\Branches\Tables;
 
-use App\Filament\Resources\StockMovements\StockMovementResource;
-use App\Filament\Resources\Branches\Schemas\BranchForm;
 use App\Actions\Branch\UpdateBranch;
+use App\Filament\Resources\Branches\Schemas\BranchForm;
+use App\Filament\Resources\StockMovements\StockMovementResource;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
@@ -20,32 +21,50 @@ class BranchesTable
     {
         return $table
             ->columns([
+                ImageColumn::make('logo_path')
+                    ->label('Logo')
+                    ->circular()
+                    ->defaultImageUrl('/images/default-store-logo.png'),
+
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->label('Branch Name'),
+                    ->label('Nama Cabang')
+                    ->weight('bold'),
 
                 TextColumn::make('store_name')
                     ->searchable()
                     ->sortable()
-                    ->label('Store / Shop Name'),
+                    ->label('Nama Toko / Outlet')
+                    ->description(fn ($record) => $record->city ? "{$record->city}, {$record->province}" : '-'),
+
+                TextColumn::make('manager.name')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Manajer Cabang')
+                    ->placeholder('Belum Ditunjuk')
+                    ->badge()
+                    ->color('info'),
 
                 TextColumn::make('phone')
                     ->searchable()
-                    ->label('Phone'),
+                    ->label('No. Telepon / Email')
+                    ->description(fn ($record) => $record->email ?: '-'),
 
-                TextColumn::make('address')
-                    ->limit(50)
-                    ->label('Address'),
+                TextColumn::make('users_count')
+                    ->counts('users')
+                    ->label('Total Staf')
+                    ->badge()
+                    ->color('gray'),
 
                 ToggleColumn::make('is_active')
-                    ->label('Active Status'),
+                    ->label('Status Aktif'),
 
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Created At'),
+                    ->label('Dibuat Pada'),
             ])
             ->filters([
                 //
@@ -54,6 +73,7 @@ class BranchesTable
                 EditAction::make()
                     ->steps(BranchForm::getWizardSteps())
                     ->using(fn (Model $record, array $data): Model => app(UpdateBranch::class)->execute($record, $data)),
+
                 Action::make('kartu_stok')
                     ->label('Kartu Stok')
                     ->icon('heroicon-o-queue-list')

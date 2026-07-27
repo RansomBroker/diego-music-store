@@ -71,6 +71,7 @@ class PurchaseTransactionForm
                                                 $set('item_discount_type', $po->item_discount_type);
                                                 $set('shipping_borne_by', $po->shipping_borne_by);
                                                 $set('shipping_carrier_name', $po->shipping_carrier_name);
+                                                $set('shipping_payment_account_id', $po->shipping_payment_account_id);
                                                 $set('shipping_cost', $po->other_cost);
                                                 
                                                 // Auto-populate purchase type, tempo, and due date
@@ -299,12 +300,26 @@ class PurchaseTransactionForm
                                         if ($state === 'supplier') {
                                             $set('shipping_cost', 0);
                                             $set('shipping_carrier_name', null);
+                                            $set('shipping_payment_account_id', null);
                                         }
                                     }),
 
                                 TextInput::make('shipping_carrier_name')
                                     ->label('Nama Ekspedisi (Pihak Ke-3)')
                                     ->placeholder('Misal: JNE, J&T, GoSend')
+                                    ->required(fn ($get) => $get('shipping_borne_by') === 'third_party')
+                                    ->visible(fn ($get) => $get('shipping_borne_by') === 'third_party'),
+
+                                Select::make('shipping_payment_account_id')
+                                    ->label('Metode Pembayaran Ongkir')
+                                    ->options(fn () => \App\Models\Account::where('is_header', false)
+                                        ->where('code', 'like', '1-1%')
+                                        ->get()
+                                        ->mapWithKeys(fn ($acc) => [$acc->id => "[{$acc->code}] {$acc->name}"])
+                                    )
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Pilih Akun Kas & Bank')
                                     ->required(fn ($get) => $get('shipping_borne_by') === 'third_party')
                                     ->visible(fn ($get) => $get('shipping_borne_by') === 'third_party'),
 

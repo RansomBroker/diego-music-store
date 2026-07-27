@@ -35,6 +35,7 @@ class PurchaseTransaction extends Model
         'status', // draft, posted, cancelled
         'shipping_borne_by',
         'shipping_carrier_name',
+        'shipping_payment_account_id',
         'posted_at',
         'journal_no',
         'created_by',
@@ -141,5 +142,10 @@ class PurchaseTransaction extends Model
             ->sum('amount_paid');
 
         return max(0, $this->grand_total - $paid);
+    }
+
+    public function shippingPaymentAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'shipping_payment_account_id');
     }
 }

@@ -62,6 +62,9 @@ class BackofficePanelProvider extends PanelProvider
                      ->label('Akuntansi')
                      ->icon('heroicon-o-banknotes'),
                 NavigationGroup::make()
+                     ->label('Laporan Keuangan')
+                     ->icon('heroicon-o-document-chart-bar'),
+                NavigationGroup::make()
                     ->label(fn (): string => __('navigation.settings'))
                     ->icon('heroicon-o-cog-6-tooth')
                     ->collapsed(),

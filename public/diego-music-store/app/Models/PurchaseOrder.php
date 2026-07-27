@@ -32,6 +32,7 @@ class PurchaseOrder extends Model
         'grand_total',
         'shipping_borne_by',
         'shipping_carrier_name',
+        'shipping_payment_account_id',
         'notes',
         'enable_tax',
         'enable_item_discount',
@@ -103,5 +104,10 @@ class PurchaseOrder extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    public function shippingPaymentAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'shipping_payment_account_id');
     }
 }

@@ -725,4 +725,51 @@ class ProcurementActionsTest extends TestCase
         $this->assertNotNull($movement);
         $this->assertEquals(12, $movement->original_quantity);
     }
+
+    public function test_it_can_save_shipping_payment_account_and_post_journal(): void
+    {
+        $cashAcc = \App\Models\Account::create([
+            'code' => '1-1005',
+            'name' => 'Bank BCA Ongkir',
+            'classification' => 'Asset',
+            'is_header' => false,
+        ]);
+
+        $txData = [
+            'branch_id' => $this->branch->id,
+            'supplier_id' => $this->supplier->id,
+            'transaction_no' => 'TX-PURCHASE-SHIP-01',
+            'transaction_date' => '2026-06-30',
+            'purchase_type' => 'Tunai',
+            'shipping_borne_by' => 'third_party',
+            'shipping_carrier_name' => 'JNE Express',
+            'shipping_payment_account_id' => $cashAcc->id,
+            'shipping_cost' => 50000,
+            'items' => [
+                [
+                    'product_variant_id' => $this->variant->id,
+                    'qty_received' => 2,
+                    'price' => 500000,
+                ]
+            ]
+        ];
+
+        $pt = app(CreatePurchaseTransaction::class)->execute($txData);
+
+        $this->assertEquals('third_party', $pt->shipping_borne_by);
+        $this->assertEquals($cashAcc->id, $pt->shipping_payment_account_id);
+        $this->assertEquals(50000, $pt->shipping_cost);
+
+        app(PostPurchaseTransaction::class)->execute($pt);
+
+        $journal = \App\Models\JournalEntry::where('reference_type', 'Purchase')
+            ->where('reference_id', $pt->id)
+            ->first();
+
+        $this->assertNotNull($journal);
+
+        $shippingItem = $journal->items()->where('account_id', $cashAcc->id)->first();
+        $this->assertNotNull($shippingItem);
+        $this->assertEquals(50000, $shippingItem->credit);
+    }
 }

@@ -47,6 +47,10 @@ class CreatePurchaseTransaction
                 'enable_tax' => $enableTax,
                 'enable_item_discount' => $enableItemDisc,
                 'item_discount_type' => $itemDiscTypeGlobal,
+                'shipping_borne_by' => $data['shipping_borne_by'] ?? 'self_direct',
+                'shipping_carrier_name' => $data['shipping_carrier_name'] ?? null,
+                'shipping_payment_account_id' => $data['shipping_payment_account_id'] ?? null,
+                'shipping_cost' => intval($data['shipping_cost'] ?? 0),
             ]);
 
             $subtotal = 0;

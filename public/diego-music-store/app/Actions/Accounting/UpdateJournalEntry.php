@@ -46,8 +46,11 @@ class UpdateJournalEntry
             }
 
             // 2. Update entry details
+            $entryNo = !empty($data['entry_no']) ? $data['entry_no'] : ($entry->entry_no ?: JournalEntry::generateEntryNo());
+
             $entry->update([
                 'branch_id' => $data['branch_id'],
+                'entry_no' => $entryNo,
                 'date' => $data['date'],
                 'description' => $data['description'] ?? null,
             ]);

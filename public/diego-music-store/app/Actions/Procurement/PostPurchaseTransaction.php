@@ -254,15 +254,15 @@ class PostPurchaseTransaction
                 ]);
             }
 
-            // 3. Credit: Hutang Biaya Kirim Belum Ditagih (if third-party logistics and shipping_cost > 0)
+            // 3. Credit: Kas/Bank atau Hutang Biaya Kirim untuk Ongkir Pihak Ke-3
             if (($pt->shipping_borne_by ?? 'self_direct') === 'third_party' && $pt->shipping_cost > 0) {
-                $shippingAccId = $resolveAccount('2-1500', 'Hutang Biaya Kirim Belum Ditagih');
+                $shippingAccId = $pt->shipping_payment_account_id ?? $resolveAccount('2-1500', 'Hutang Biaya Kirim Belum Ditagih');
                 \App\Models\JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id' => $shippingAccId,
                     'debit' => 0,
                     'credit' => $pt->shipping_cost,
-                    'notes' => "Akrual Ongkir Pihak Ke-3: " . ($pt->shipping_carrier_name ?? 'Ekspedisi'),
+                    'notes' => "Pembayaran Ongkir Pihak Ke-3: " . ($pt->shipping_carrier_name ?? 'Ekspedisi'),
                 ]);
             }
 

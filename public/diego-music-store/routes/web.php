@@ -11,6 +11,12 @@ Route::get('/', function () {
 Route::get('/backoffice/purchase-orders/{purchaseOrder}/print', [App\Http\Controllers\BackOffice\PurchaseOrderPrintController::class, 'show'])
     ->name('backoffice.purchase-orders.print');
 
+Route::get('/backoffice/inventory-mutations/{inventoryMutation}/print', [App\Http\Controllers\BackOffice\InventoryMutationPrintController::class, 'show'])
+    ->name('backoffice.inventory-mutations.print');
+
+Route::get('/backoffice/sales-invoices/{salesInvoice}/print', [App\Http\Controllers\BackOffice\SalesInvoicePrintController::class, 'show'])
+    ->name('backoffice.sales-invoices.print');
+
 // Custom POS Routes
 Route::get('/pos/login', POSLogin::class)->name('pos.login');
 

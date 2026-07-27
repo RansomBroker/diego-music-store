@@ -81,6 +81,7 @@ class PosReportsTest extends TestCase
     {
         $sale = Sale::create([
             'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
             'invoice_number' => 'INV-TEST-001',
             'invoice_date' => now()->toDateString(),
             'subtotal' => 1000000,
