@@ -34,6 +34,14 @@ class EndingInventoryReport extends Page implements HasForms
 
     public ?array $data = [];
 
+    public bool $showDetailModal = false;
+
+    public ?array $selectedVariantDetail = null;
+
+    public array $hppHistory = [];
+
+    public array $hppSummary = [];
+
     public function mount(): void
     {
         $this->form->fill([
@@ -211,5 +219,28 @@ class EndingInventoryReport extends Page implements HasForms
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function openVariantDetail(int $variantId): void
+    {
+        $state = $this->form->getRawState();
+        $asOfDate = $state['as_of_date'] ?? now()->format('Y-m-d');
+        $branchId = !empty($state['branch_id']) ? (int) $state['branch_id'] : null;
+
+        $action = new \App\Actions\Inventory\GetProductHppHistory();
+        $result = $action->execute($variantId, $branchId, $asOfDate);
+
+        $this->selectedVariantDetail = $result['variant'];
+        $this->hppHistory = $result['history'];
+        $this->hppSummary = $result['summary'];
+        $this->showDetailModal = true;
+    }
+
+    public function closeVariantDetail(): void
+    {
+        $this->showDetailModal = false;
+        $this->selectedVariantDetail = null;
+        $this->hppHistory = [];
+        $this->hppSummary = [];
     }
 }

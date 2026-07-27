@@ -153,11 +153,17 @@ class UserPrivileges extends Page implements HasActions, HasForms, HasTable
                     ->action(function (Role $record, array $data): void {
                         $selectedPermissions = [];
                         if (isset($data['permissions']) && is_array($data['permissions'])) {
-                            foreach ($data['permissions'] as $permKey => $isChecked) {
-                                if ($isChecked) {
-                                    $selectedPermissions[] = $permKey;
+                            $flatten = function ($array, $prefix = '') use (&$flatten, &$selectedPermissions) {
+                                foreach ($array as $key => $value) {
+                                    $fullKey = $prefix === '' ? $key : "{$prefix}.{$key}";
+                                    if (is_array($value)) {
+                                        $flatten($value, $fullKey);
+                                    } elseif ($value) {
+                                        $selectedPermissions[] = $fullKey;
+                                    }
                                 }
-                            }
+                            };
+                            $flatten($data['permissions']);
                         }
 
                         $action = new UpdateRolePermissions();

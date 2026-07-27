@@ -106,13 +106,17 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @forelse($data['rows'] as $row)
-                            <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
+                            <tr 
+                                wire:click="openVariantDetail({{ $row['id'] }})" 
+                                class="hover:bg-primary-50/60 dark:hover:bg-primary-950/40 text-gray-700 dark:text-gray-300 cursor-pointer transition-colors"
+                                title="Klik untuk melihat riwayat HPP & pergerakan stok">
                                 <td class="py-2.5 px-4 font-mono text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ $row['sku'] }}
                                     <div class="text-[10px] text-gray-400 font-normal">BC: {{ $row['barcode'] }}</div>
                                 </td>
-                                <td class="py-2.5 px-4 text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                                    {{ $row['full_name'] }}
+                                <td class="py-2.5 px-4 text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap flex items-center gap-x-2">
+                                    <span>{{ $row['full_name'] }}</span>
+                                    <x-heroicon-o-information-circle class="w-4 h-4 text-primary-500 shrink-0" />
                                 </td>
                                 <td class="py-2.5 px-4 text-xs font-mono text-gray-600 dark:text-gray-300 whitespace-nowrap">
                                     {{ $row['category'] }}
@@ -145,4 +149,145 @@
             @endif
         </div>
     </x-filament::section>
+
+    {{-- Native Filament Modal: Detail HPP & Riwayat Pergerakan Stok --}}
+    @if($showDetailModal && $selectedVariantDetail)
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                
+                <!-- Modal Header -->
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/40">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400">
+                            <x-heroicon-o-chart-bar-square class="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 dark:text-white text-base">
+                                {{ $selectedVariantDetail['full_name'] }}
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                SKU: <span class="font-mono font-semibold text-gray-800 dark:text-gray-200">{{ $selectedVariantDetail['sku'] }}</span> &bull; Kategori: {{ $selectedVariantDetail['category'] }} &bull; Merk: {{ $selectedVariantDetail['brand'] }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <button 
+                        wire:click="closeVariantDetail" 
+                        type="button" 
+                        class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <x-heroicon-o-x-mark class="w-6 h-6" />
+                    </button>
+                </div>
+
+                <!-- Modal Body (Scrollable) -->
+                <div class="p-6 overflow-y-auto space-y-6 flex-1">
+                    <!-- KPI Cards for Variant -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+                            <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Stok Akhir</span>
+                            <div class="text-lg font-bold font-mono text-gray-900 dark:text-white mt-0.5">
+                                {{ number_format($selectedVariantDetail['total_stock'], 0, ',', '.') }} {{ $selectedVariantDetail['unit'] }}
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+                            <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">HPP Terakhir / Unit</span>
+                            <div class="text-lg font-bold font-mono text-primary-600 dark:text-primary-400 mt-0.5">
+                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($selectedVariantDetail['current_hpp']) }}
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+                            <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Total Nilai Persediaan</span>
+                            <div class="text-lg font-bold font-mono text-gray-900 dark:text-white mt-0.5">
+                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($selectedVariantDetail['total_valuation']) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audit Table HPP & Stock Movement -->
+                    <div class="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-xs">
+                        <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                            <h4 class="font-bold text-gray-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-x-2">
+                                <x-heroicon-o-arrows-right-left class="w-4 h-4 text-primary-500" />
+                                Audit Riwayat HPP dan Pergerakan Stok Waktu ke Waktu
+                            </h4>
+                            <span class="text-xs text-gray-500 font-mono">{{ count($hppHistory) }} Transaksi Recorded</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-gray-600 dark:text-gray-300">
+                                <thead class="bg-gray-100/70 dark:bg-gray-800/40 uppercase font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+                                    <tr>
+                                        <th class="py-2.5 px-3 whitespace-nowrap">Tanggal & Waktu</th>
+                                        <th class="py-2.5 px-3 whitespace-nowrap">Referensi Transaksi</th>
+                                        <th class="py-2.5 px-3 whitespace-nowrap text-center">Tipe</th>
+                                        <th class="py-2.5 px-3 whitespace-nowrap text-center">Qty Mutasi</th>
+                                        <th class="py-2.5 px-3 whitespace-nowrap text-right">Unit Cost Transaksi</th>
+                                        <th class="py-2.5 px-3 whitespace-nowrap text-center">Saldo Qty</th>
+                                        <th class="py-2.5 px-3 whitespace-nowrap text-right">Moving Avg HPP</th>
+                                        <th class="py-2.5 px-3 whitespace-nowrap text-right">Total Valuasi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                                    @forelse($hppHistory as $item)
+                                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                                            <td class="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap text-gray-900 dark:text-white">
+                                                {{ $item['date'] }}
+                                            </td>
+                                            <td class="py-2.5 px-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                                                {{ $item['reference_label'] }}
+                                            </td>
+                                            <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                                                @if($item['type'] === 'Masuk')
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300">
+                                                        MASUK
+                                                    </span>
+                                                @else
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                                        KELUAR
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-2.5 px-3 text-center font-mono font-bold whitespace-nowrap {{ $item['type'] === 'Masuk' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400' }}">
+                                                {{ $item['qty_change'] }}
+                                            </td>
+                                            <td class="py-2.5 px-3 text-right font-mono text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['unit_cost']) }}
+                                            </td>
+                                            <td class="py-2.5 px-3 text-center font-mono font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                                {{ number_format($item['running_qty'], 0, ',', '.') }}
+                                            </td>
+                                            <td class="py-2.5 px-3 text-right font-mono font-bold text-primary-600 dark:text-primary-400 whitespace-nowrap">
+                                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['running_hpp']) }}
+                                            </td>
+                                            <td class="py-2.5 px-3 text-right font-mono font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['total_valuation']) }}
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="8" class="py-6 text-center text-gray-400 text-xs">
+                                                Belum ada data pergerakan stok untuk varian ini.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex justify-end bg-gray-50/50 dark:bg-gray-800/40">
+                    <button 
+                        wire:click="closeVariantDetail" 
+                        type="button" 
+                        class="px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </x-filament-panels::page>

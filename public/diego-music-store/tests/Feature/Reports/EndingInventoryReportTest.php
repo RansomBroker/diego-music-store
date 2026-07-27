@@ -3,11 +3,13 @@
 namespace Tests\Feature\Reports;
 
 use App\Actions\Inventory\GenerateEndingInventoryReport;
+use App\Actions\Inventory\GetProductHppHistory;
 use App\Filament\Pages\Reports\EndingInventoryReport;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\ProductBranchStock;
 use App\Models\ProductVariant;
+use App\Models\StockMovement;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -72,6 +74,17 @@ class EndingInventoryReportTest extends TestCase
             'stock'              => 4,
             'hpp'                => 5000000,
         ]);
+
+        StockMovement::create([
+            'product_variant_id' => $this->variant->id,
+            'branch_id'          => $this->branch->id,
+            'type'               => 'in',
+            'quantity'           => 4,
+            'unit_cost'          => 5000000,
+            'hpp'                => 5000000,
+            'reference_type'     => 'DO',
+            'reference_id'       => 101,
+        ]);
     }
 
     /** @test */
@@ -98,6 +111,24 @@ class EndingInventoryReportTest extends TestCase
             ->test(EndingInventoryReport::class)
             ->assertStatus(200)
             ->assertSee('Laporan Persediaan Akhir (Ending Inventory)');
+    }
+
+    /** @test */
+    public function it_can_open_variant_detail_and_fetch_hpp_history()
+    {
+        $hppAction = new GetProductHppHistory();
+        $historyData = $hppAction->execute($this->variant->id, $this->branch->id);
+
+        $this->assertNotEmpty($historyData['history']);
+        $this->assertEquals(5000000, $historyData['variant']['current_hpp']);
+
+        Livewire::actingAs($this->user)
+            ->test(EndingInventoryReport::class)
+            ->call('openVariantDetail', $this->variant->id)
+            ->assertSet('showDetailModal', true)
+            ->assertSee('Audit Riwayat HPP dan Pergerakan Stok Waktu ke Waktu')
+            ->call('closeVariantDetail')
+            ->assertSet('showDetailModal', false);
     }
 
     /** @test */
