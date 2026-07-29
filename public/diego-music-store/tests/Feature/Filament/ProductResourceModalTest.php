@@ -142,4 +142,63 @@ class ProductResourceModalTest extends TestCase
             'name' => 'Roland Indonesia',
         ]);
     }
+
+    public function test_it_filters_products_table_by_variant_display(): void
+    {
+        // 1. Single Product (1 variant, name null)
+        $singleProduct = Product::create([
+            'name' => 'Gitar Akustik Single',
+            'type' => 'physical',
+            'unit_id' => $this->unit->id,
+            'is_active' => true,
+        ]);
+        $singleVariant = $singleProduct->variants()->create([
+            'sku' => 'SKU-SINGLE-1',
+            'name' => null,
+            'price' => 1000000,
+            'is_active' => true,
+        ]);
+
+        // 2. Multi-variant Product (3 variants: 1 parent null name, 2 child variants)
+        $multiProduct = Product::create([
+            'name' => 'Gitar Akustik Multi',
+            'type' => 'physical',
+            'unit_id' => $this->unit->id,
+            'is_active' => true,
+        ]);
+        $parentVariant = $multiProduct->variants()->create([
+            'sku' => 'SKU-MULTI-PARENT',
+            'name' => null,
+            'price' => 2000000,
+            'is_active' => true,
+        ]);
+        $childVariantRed = $multiProduct->variants()->create([
+            'sku' => 'SKU-MULTI-RED',
+            'name' => 'Merah',
+            'price' => 2100000,
+            'is_active' => true,
+        ]);
+        $childVariantBlue = $multiProduct->variants()->create([
+            'sku' => 'SKU-MULTI-BLUE',
+            'name' => 'Biru',
+            'price' => 2100000,
+            'is_active' => true,
+        ]);
+
+        // Default filter 'hide_parent' should show singleVariant, childVariantRed, childVariantBlue, but hide parentVariant
+        Livewire::test(ListProducts::class)
+            ->assertCanSeeTableRecords([$singleVariant, $childVariantRed, $childVariantBlue])
+            ->assertCanNotSeeTableRecords([$parentVariant]);
+
+        // Filter 'all' should show all records including parentVariant
+        Livewire::test(ListProducts::class)
+            ->filterTable('variant_display', 'all')
+            ->assertCanSeeTableRecords([$singleVariant, $childVariantRed, $childVariantBlue, $parentVariant]);
+
+        // Filter 'only_parent' should show only parentVariant
+        Livewire::test(ListProducts::class)
+            ->filterTable('variant_display', 'only_parent')
+            ->assertCanSeeTableRecords([$parentVariant])
+            ->assertCanNotSeeTableRecords([$singleVariant, $childVariantRed, $childVariantBlue]);
+    }
 }

@@ -21,6 +21,7 @@ class UpdatePaymentMethod
         $paymentMethod->update([
             'name' => $data['name'],
             'code' => $code,
+            'parent_id' => !empty($data['parent_id']) ? (int)$data['parent_id'] : null,
             'account_id' => $data['account_id'] ?? null,
             'is_active' => $data['is_active'] ?? true,
         ]);

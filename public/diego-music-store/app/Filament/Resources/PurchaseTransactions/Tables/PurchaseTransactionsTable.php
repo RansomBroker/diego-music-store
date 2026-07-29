@@ -86,7 +86,7 @@ class PurchaseTransactionsTable
                     ->label('Kartu Stok')
                     ->icon('heroicon-o-document-magnifying-glass')
                     ->color('info')
-                    ->url(fn ($record) => "/admin/stock-movements?reference_type=Purchase&reference_id={$record->id}")
+                    ->url(fn ($record) => "/backoffice/stock-movements?reference_type=PurchaseTransaction&reference_id={$record->id}")
                     ->visible(fn ($record) => $record->status === 'posted'),
             ])
             ->bulkActions([

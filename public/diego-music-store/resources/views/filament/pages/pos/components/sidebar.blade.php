@@ -12,7 +12,7 @@
     $isSupplierPayments = request()->is('pos/supplier-payments*');
     $isDashboard    = request()->is('pos/front-office*');
     $isReports      = request()->is('pos/reports*');
-    $isInputData    = request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*');
+    $isInputData    = request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*') || request()->is('pos/vouchers*');
     $isUtility      = request()->is('pos/privileges*') || request()->is('pos/store-profile*') || request()->is('pos/receipt-settings*') || request()->is('pos/barcode-print*');
 @endphp
 
@@ -144,16 +144,16 @@
             </a>
         @endif
 
-        {{-- Pelunasan Hutang --}}
+        {{-- Pelunasan Piutang --}}
         @if ($isSupplierPayments)
-            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
-                <i class="ph-fill ph-credit-card text-2xl mb-1"></i>
-                <span class="text-[11px] font-semibold text-center leading-tight">Pelunasan Hutang</span>
+            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-955/40 rounded-xl transition-colors cursor-default">
+                <i class="ph-fill ph-hand-coins text-2xl mb-1"></i>
+                <span class="text-[11px] font-semibold text-center leading-tight">Pelunasan Piutang</span>
             </button>
         @else
             <a href="/pos/supplier-payments" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="ph ph-credit-card text-2xl mb-1"></i>
-                <span class="text-[11px] font-medium text-center leading-tight">Pelunasan Hutang</span>
+                <i class="ph ph-hand-coins text-2xl mb-1"></i>
+                <span class="text-[11px] font-medium text-center leading-tight">Pelunasan Piutang</span>
             </a>
         @endif
 
@@ -333,6 +333,14 @@
                                 <i class="ph ph-credit-card text-sm {{ request()->routeIs('pos.payment-methods') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
                             </div>
                             Metode Pembayaran
+                        </a>
+
+                        <a href="{{ route('pos.vouchers') }}"
+                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.vouchers') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
+                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
+                                <i class="ph ph-ticket text-sm {{ request()->routeIs('pos.vouchers') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
+                            </div>
+                            Data Voucher
                         </a>
                     </div>
                 </div>

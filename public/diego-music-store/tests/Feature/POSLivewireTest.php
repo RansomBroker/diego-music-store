@@ -342,7 +342,7 @@ class POSLivewireTest extends TestCase
         // Verify sale was created
         $sale = \App\Models\Sale::latest()->first();
         $this->assertNotNull($sale);
-        $this->assertEquals('Tunai & Debit BCA', $sale->payment_method);
+        $this->assertEquals('Tunai & Debit Card', $sale->payment_method);
         $this->assertEquals(100000, $sale->grand_total);
 
         // Verify Journal items for Split Payment

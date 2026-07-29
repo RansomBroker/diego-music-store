@@ -28,11 +28,11 @@ class PosSupplierPayments extends Component
 
     // ── Create Form State ──────────────────────────────────────────────
     public bool $showCreateModal = false;
-    public ?int $supplier_id = null;
+    public ?int $customer_id = null;
     public ?int $branch_id = null;
     public string $payment_date = '';
     public ?int $account_id = null;
-    public string $payment_method = 'Bank Transfer';
+    public string $payment_method = 'Tunai';
     public string $payment_reference = '';
     public string $notes = '';
     public array $items = [];
@@ -65,7 +65,6 @@ class PosSupplierPayments extends Component
             ?? Auth::user()?->branch_id
             ?? Branch::first()?->id;
 
-        // Choose default asset account
         $defaultAccount = Account::where('classification', 'asset')
             ->where('is_header', false)
             ->first();
@@ -98,7 +97,7 @@ class PosSupplierPayments extends Component
     public function openCreate(): void
     {
         $this->reset([
-            'supplier_id', 'payment_reference', 'notes', 'items'
+            'customer_id', 'payment_reference', 'notes', 'items'
         ]);
         $this->payment_date = now()->format('Y-m-d');
         $this->branch_id = Auth::user()?->branches()->first()?->id
@@ -112,44 +111,42 @@ class PosSupplierPayments extends Component
             $this->account_id = $defaultAccount->id;
         }
 
-        $this->payment_method = 'Bank Transfer';
+        $this->payment_method = 'Tunai';
         $this->showCreateModal = true;
     }
 
-    // ── Load Supplier Invoices ──────────────────────────────────────────
-    public function updatedSupplierId($value): void
+    // ── Load Customer Unpaid Sales Invoices ────────────────────────────
+    public function updatedCustomerId($value): void
     {
         if (!$value) {
             $this->items = [];
             return;
         }
 
-        $unpaidTransactions = PurchaseTransaction::query()
-            ->where('supplier_id', $value)
-            ->where('purchase_type', 'Kredit')
-            ->where('status', 'posted')
+        $unpaidSales = \App\Models\Sale::query()
+            ->where('customer_id', $value)
+            ->where(function ($q) {
+                $q->where('payment_method', 'like', '%piutang%')
+                  ->orWhere('payment_method', 'like', '%credit%')
+                  ->orWhere('status', '!=', 'completed');
+            })
             ->get();
 
         $this->items = [];
-        foreach ($unpaidTransactions as $pt) {
-            $remaining = $pt->getRemainingUnpaidAmount();
-            if ($remaining > 0) {
-                $this->items[] = [
-                    'is_selected' => false,
-                    'purchase_transaction_id' => $pt->id,
-                    'transaction_no' => $pt->transaction_no,
-                    'invoice_number' => $pt->invoice_number,
-                    'transaction_date' => $pt->transaction_date->format('Y-m-d'),
-                    'due_date' => $pt->due_date?->format('Y-m-d'),
-                    'grand_total' => floatval($pt->grand_total),
-                    'amount_due' => floatval($remaining),
-                    'amount_paid' => 0,
-                ];
-            }
+        foreach ($unpaidSales as $sale) {
+            $due = $sale->getPiutangAmount();
+            $this->items[] = [
+                'is_selected' => false,
+                'sale_id' => $sale->id,
+                'invoice_number' => $sale->invoice_number,
+                'transaction_date' => $sale->invoice_date->format('Y-m-d'),
+                'grand_total' => floatval($sale->grand_total),
+                'amount_due' => $due,
+                'amount_paid' => 0,
+            ];
         }
     }
 
-    // ── Item Selection & Amount Change Handling (Livewire 3 compatibility) ───
     public function toggleItemSelection(int $index): void
     {
         if (isset($this->items[$index])) {
@@ -183,7 +180,7 @@ class PosSupplierPayments extends Component
     }
 
     // ── Save Payment ───────────────────────────────────────────────────
-    public function save(string $status = 'draft'): void
+    public function save(string $status = 'posted'): void
     {
         if (!$this->branch_id) {
             $this->branch_id = Auth::user()?->branches()->first()?->id
@@ -192,50 +189,107 @@ class PosSupplierPayments extends Component
         }
 
         $this->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
+            'customer_id' => 'required|exists:customers,id',
             'branch_id' => 'required|exists:branches,id',
             'payment_date' => 'required|date',
             'account_id' => 'required|exists:accounts,id',
-            'payment_method' => 'required|in:Cash,Bank Transfer,Giro,Cheque',
+            'payment_method' => 'required|string',
             'payment_reference' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',
         ], [
-            'supplier_id.required' => 'Supplier wajib dipilih.',
-            'supplier_id.exists' => 'Supplier tidak valid.',
+            'customer_id.required' => 'Pelanggan wajib dipilih.',
+            'customer_id.exists' => 'Pelanggan tidak valid.',
             'account_id.required' => 'Akun Kas / Bank wajib dipilih.',
             'account_id.exists' => 'Akun Kas / Bank tidak valid.',
             'branch_id.required' => 'Cabang wajib ditentukan.',
         ]);
 
-        // Ensure at least one item is selected and has positive amount paid
         $selectedItems = collect($this->items)->filter(function ($item) {
             return ($item['is_selected'] ?? false) && floatval($item['amount_paid'] ?? 0) > 0;
         });
 
         if ($selectedItems->isEmpty()) {
-            $msg = 'Paling sedikit satu invoice harus dipilih dan diisi jumlah pembayaran yang lebih dari 0.';
+            $msg = 'Paling sedikit satu transaksi piutang harus dipilih dan diisi jumlah pembayaran yang lebih dari 0.';
             Notification::make()->title('Gagal Menyimpan')->body($msg)->danger()->send();
             $this->dispatch('toast', type: 'danger', title: 'Gagal Menyimpan', body: $msg);
             return;
         }
 
-        $data = [
-            'payment_no' => SupplierPayment::generatePaymentNo(),
-            'payment_date' => $this->payment_date,
-            'supplier_id' => $this->supplier_id,
-            'branch_id' => $this->branch_id,
-            'account_id' => $this->account_id,
-            'payment_method' => $this->payment_method,
-            'payment_reference' => $this->payment_reference ?: null,
-            'notes' => $this->notes ?: null,
-            'status' => $status,
-            'items' => $this->items,
-        ];
-
         try {
-            app(CreateSupplierPayment::class)->execute($data);
+            \Illuminate\Support\Facades\DB::transaction(function () use ($selectedItems) {
+                $totalPaid = 0;
+                foreach ($selectedItems as $item) {
+                    $sale = \App\Models\Sale::find($item['sale_id'] ?? null);
+                    if ($sale) {
+                        $paid = floatval($item['amount_paid']);
+                        $currentPiutang = $sale->getPiutangAmount();
+                        $isFullyPaid = ($paid >= $currentPiutang);
+                        $totalPaid += $paid;
 
-            $title = $status === 'posted' ? 'Pelunasan Hutang Berhasil Diposting' : 'Draft Pelunasan Hutang Berhasil Disimpan';
+                        $refText = $this->payment_reference ? " | Ref: {$this->payment_reference}" : '';
+                        $methodLabel = strtoupper($this->payment_method);
+
+                        // Post Journal Entry for settlement
+                        $journalEntry = \App\Models\JournalEntry::create([
+                            'branch_id' => $sale->branch_id,
+                            'date' => $this->payment_date ?: now()->toDateString(),
+                            'reference_type' => 'Sales',
+                            'reference_id' => $sale->id,
+                            'description' => "Pelunasan Piutang Inv #{$sale->invoice_number}",
+                            'status' => 'posted',
+                            'created_by' => \Illuminate\Support\Facades\Auth::id(),
+                        ]);
+
+                        // Debit chosen Kas/Bank account
+                        if ($this->account_id) {
+                            \App\Models\JournalItem::create([
+                                'journal_entry_id' => $journalEntry->id,
+                                'account_id' => $this->account_id,
+                                'debit' => $paid,
+                                'credit' => 0,
+                                'notes' => "Penerimaan Pelunasan - Inv #{$sale->invoice_number}",
+                            ]);
+                        }
+
+                        // Credit Piutang Dagang (1-1200)
+                        $piutangAccount = \App\Models\Account::where('code', '1-1200')->first();
+                        if ($piutangAccount) {
+                            \App\Models\JournalItem::create([
+                                'journal_entry_id' => $journalEntry->id,
+                                'account_id' => $piutangAccount->id,
+                                'debit' => 0,
+                                'credit' => $paid,
+                                'notes' => "Pelunasan Piutang - Inv #{$sale->invoice_number}",
+                            ]);
+                        }
+
+                        if ($isFullyPaid) {
+                            $sale->update([
+                                'payment_method' => $sale->payment_method . " (Lunas via {$methodLabel}{$refText})",
+                                'status' => 'completed',
+                            ]);
+                        } else {
+                            $sale->update([
+                                'payment_method' => $sale->payment_method . " (Dicicil Rp " . number_format($paid, 0, ',', '.') . " via {$methodLabel}{$refText})",
+                                'status' => 'pending',
+                            ]);
+                        }
+                    }
+                }
+
+                if ($this->customer_id) {
+                    try {
+                        $customer = \App\Models\Customer::find($this->customer_id);
+                        if ($customer && \Illuminate\Support\Facades\Schema::hasColumn('customers', 'outstanding_debt') && $customer->outstanding_debt > 0) {
+                            $customer->decrement('outstanding_debt', min($customer->outstanding_debt, $totalPaid));
+                        }
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::warning('Could not decrement customer debt: ' . $e->getMessage());
+                    }
+                }
+            });
+
+            $title = 'Pelunasan Piutang Berhasil Diposting';
             Notification::make()->title($title)->success()->send();
             $this->dispatch('toast', type: 'success', title: $title);
 
@@ -247,14 +301,12 @@ class PosSupplierPayments extends Component
         }
     }
 
-    // ── Open Detail Modal ───────────────────────────────────────────────
     public function showDetails(int $id): void
     {
-        $this->detailPayment = SupplierPayment::with(['supplier', 'branch', 'account', 'creator', 'items.purchaseTransaction'])->findOrFail($id);
+        $this->detailPayment = SupplierPayment::with(['supplier', 'branch', 'account', 'creator', 'items.purchaseTransaction'])->find($id);
         $this->showDetailModal = true;
     }
 
-    // ── Post Draft Payment ──────────────────────────────────────────────
     public function confirmPost(int $id): void
     {
         $this->paymentIdToPost = $id;
@@ -268,11 +320,13 @@ class PosSupplierPayments extends Component
         }
 
         try {
-            $payment = SupplierPayment::findOrFail($this->paymentIdToPost);
-            app(ProcessSupplierPaymentComplete::class)->execute($payment);
+            $payment = SupplierPayment::find($this->paymentIdToPost);
+            if ($payment) {
+                app(\App\Actions\SupplierPayment\ProcessSupplierPaymentComplete::class)->execute($payment);
+            }
 
-            Notification::make()->title('Pelunasan Hutang Berhasil Diposting')->success()->send();
-            $this->dispatch('toast', type: 'success', title: 'Pelunasan Hutang Berhasil Diposting');
+            Notification::make()->title('Pelunasan Berhasil Diposting')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Pelunasan Berhasil Diposting');
 
             $this->showPostConfirmation = false;
             $this->paymentIdToPost = null;
@@ -282,7 +336,6 @@ class PosSupplierPayments extends Component
         }
     }
 
-    // ── Delete/Cancel Draft Payment ──────────────────────────────────────
     public function confirmDelete(int $id): void
     {
         $this->paymentIdToDelete = $id;
@@ -296,16 +349,14 @@ class PosSupplierPayments extends Component
         }
 
         try {
-            $payment = SupplierPayment::findOrFail($this->paymentIdToDelete);
-            if ($payment->status !== 'draft') {
-                throw new \Exception('Hanya pelunasan berstatus draft yang dapat dihapus.');
+            $payment = SupplierPayment::find($this->paymentIdToDelete);
+            if ($payment) {
+                $payment->items()->delete();
+                $payment->delete();
             }
 
-            $payment->items()->delete();
-            $payment->delete();
-
-            Notification::make()->title('Pelunasan Hutang Berhasil Dihapus')->success()->send();
-            $this->dispatch('toast', type: 'success', title: 'Pelunasan Hutang Berhasil Dihapus');
+            Notification::make()->title('Pelunasan Berhasil Dihapus')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Pelunasan Berhasil Dihapus');
 
             $this->showDeleteConfirmation = false;
             $this->paymentIdToDelete = null;
@@ -318,33 +369,35 @@ class PosSupplierPayments extends Component
     // ── Render ───────────────────────────────────────────────────────────
     public function render()
     {
-        $payments = SupplierPayment::with(['supplier', 'account', 'creator'])
-            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
-            ->when($this->search, function ($q) {
-                $q->where('payment_no', 'like', "%{$this->search}%")
-                  ->orWhereHas('supplier', fn ($sq) => $sq->where('name', 'like', "%{$this->search}%"));
+        $salesPiutang = \App\Models\Sale::with(['customer', 'branch'])
+            ->where(function ($q) {
+                $q->where('payment_method', 'like', '%piutang%')
+                  ->orWhere('payment_method', 'like', '%credit%')
+                  ->orWhere('status', '!=', 'completed');
             })
-            ->orderBy($this->sortField, $this->sortDirection)
+            ->when($this->search, function ($q) {
+                $q->where('invoice_number', 'like', "%{$this->search}%")
+                  ->orWhereHas('customer', fn ($sq) => $sq->where('name', 'like', "%{$this->search}%"));
+            })
+            ->latest()
             ->paginate($this->perPage);
 
-        // Current Branch Logo for Sidebar
         $userBranchId = Auth::user()?->branches()->first()?->id ?? Branch::first()?->id;
         $branch = $userBranchId ? Branch::find($userBranchId) : null;
         $selectedLogoUrl = ($branch && !empty($branch->logo_path))
             ? Storage::url($branch->logo_path)
             : null;
 
-        // Query asset accounts for the select box
         $accounts = Account::where('classification', 'asset')
             ->where('is_header', false)
             ->orderBy('code')
             ->get();
 
         return view('livewire.pos-supplier-payments', [
-            'payments' => $payments,
-            'suppliers' => Supplier::orderBy('name')->get(),
+            'payments' => $salesPiutang,
+            'customers' => \App\Models\Customer::orderBy('name')->get(),
             'accounts' => $accounts,
             'selectedLogoUrl' => $selectedLogoUrl,
-        ])->layout('layouts.pos', ['title' => 'Pelunasan Hutang — POS']);
+        ])->layout('layouts.pos', ['title' => 'Pelunasan Piutang — POS']);
     }
 }

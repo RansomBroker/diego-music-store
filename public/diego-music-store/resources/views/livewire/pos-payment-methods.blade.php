@@ -101,7 +101,20 @@
                                     <x-pos.table.tr>
                                         <!-- Name -->
                                         <x-pos.table.td class="whitespace-nowrap text-sm text-slate-900 dark:text-slate-100 font-semibold">
-                                            {{ $row->name }}
+                                            <div class="flex items-center gap-1.5">
+                                                @if ($row->parent)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 rounded text-[10px] font-bold border border-purple-200/50 dark:border-purple-800/40">
+                                                        <i class="ph-bold ph-git-branch text-[10px]"></i>
+                                                        {{ $row->parent->name }}
+                                                    </span>
+                                                @elseif ($row->children->count() > 0)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 rounded text-[10px] font-bold border border-blue-200/50 dark:border-blue-800/40">
+                                                        <i class="ph-bold ph-folders text-[10px]"></i>
+                                                        Parent Group
+                                                    </span>
+                                                @endif
+                                                <span>{{ $row->name }}</span>
+                                            </div>
                                         </x-pos.table.td>
                                         <!-- Code -->
                                         <x-pos.table.td class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
@@ -279,6 +292,22 @@
                     placeholder="e.g. qris, transfer-mandiri"
                 >
                 @error('code') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+            </div>
+
+            <!-- Kategori / Parent Group (Opsional) -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Kategori / Parent Group (Opsional)</label>
+                <select
+                    wire:model="parent_id"
+                    class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors"
+                >
+                    <option value="">Tanpa Parent (Metode Utama / Standalone)</option>
+                    @foreach ($parentOptions as $parent)
+                        <option value="{{ $parent->id }}">{{ $parent->name }} ({{ $parent->code }})</option>
+                    @endforeach
+                </select>
+                <span class="text-[11px] text-slate-400 mt-1 block">Pilih jika metode ini adalah sub-metode (misal: BCA under Debit Card). Kosongkan jika ini adalah Metode Utama atau Standalone (misal: Cash, QRIS).</span>
+                @error('parent_id') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
             </div>
 
             <!-- Akun Hubungan (COA) -->

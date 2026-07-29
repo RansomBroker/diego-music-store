@@ -93,6 +93,9 @@
         :paymentAmounts="$paymentAmounts"
         :paymentRefs="$paymentRefs"
         :paymentMethods="$this->paymentMethods"
+        :voucherCodeInput="$voucherCodeInput"
+        :voucherValidationMessage="$voucherValidationMessage"
+        :voucherIsValid="$voucherIsValid"
     />
 
     <!-- Create Customer Modal -->

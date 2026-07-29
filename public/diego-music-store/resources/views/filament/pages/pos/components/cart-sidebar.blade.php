@@ -369,7 +369,7 @@
                             <td class="py-3.5 px-2 text-sm font-extrabold text-slate-700 dark:text-slate-300 align-middle">{{ $loop->iteration }}</td>
                             <td class="py-3.5 px-2 align-middle min-w-[180px]">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-lg">{{ $item['emoji'] }}</span>
+                                    <span class="text-lg">{{ $item['emoji'] ?? '🎵' }}</span>
                                     <div class="flex-1">
                                         <div class="font-extrabold text-slate-900 dark:text-white text-sm whitespace-normal leading-snug">{{ $item['name'] }}</div>
                                     </div>

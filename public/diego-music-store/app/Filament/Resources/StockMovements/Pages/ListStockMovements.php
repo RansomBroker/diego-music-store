@@ -25,17 +25,16 @@ class ListStockMovements extends ListRecords
         $productVariantId = request()->query('product_variant_id') ?? null;
         $branchId = request()->query('branch_id') ?? null;
 
-        $tableFilters = request()->query('tableFilters');
-        if (is_array($tableFilters)) {
-            if (isset($tableFilters['product_id']['value']) && $tableFilters['product_id']['value']) {
-                $productId = $tableFilters['product_id']['value'];
-                $productVariantId = ProductVariant::where('product_id', $productId)->first()?->id;
-            }
-            if (isset($tableFilters['product_variant_id']['value']) && $tableFilters['product_variant_id']['value']) {
-                $productVariantId = $tableFilters['product_variant_id']['value'];
-            }
-            if (isset($tableFilters['branch_id']['value']) && $tableFilters['branch_id']['value']) {
-                $branchId = $tableFilters['branch_id']['value'];
+        $referenceType = request()->query('reference_type');
+        $referenceId = request()->query('reference_id');
+
+        if ($referenceType && $referenceId) {
+            $movement = StockMovement::where('reference_type', 'like', "%{$referenceType}%")
+                ->where('reference_id', $referenceId)
+                ->first();
+            if ($movement) {
+                $productVariantId = $movement->product_variant_id;
+                $branchId = $movement->branch_id;
             }
         }
 

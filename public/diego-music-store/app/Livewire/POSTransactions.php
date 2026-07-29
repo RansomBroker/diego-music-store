@@ -36,6 +36,17 @@ class POSTransactions extends Component
     public array $returnItems = [];
     public string $returnReason = '';
 
+    // ── AR Settlement Modal State ─────────────────────────────────────────
+    public bool $showSettlementModal = false;
+    public ?Sale $settlementSale = null;
+    public string $settlementDate = '';
+    public ?int $settlementCustomerId = null;
+    public ?int $settlementAccountId = null;
+    public string $settlementPaymentMethod = 'Tunai';
+    public string $settlementReference = '';
+    public float $settlementAmount = 0;
+    public string $settlementNote = '';
+
     protected $queryString = [
         'search' => ['except' => ''],
         'selectedBranchId' => ['except' => null],
@@ -256,19 +267,141 @@ class POSTransactions extends Component
         }
     }
 
+    public function openSettlementModal(int $saleId): void
+    {
+        $sale = Sale::with('customer')->findOrFail($saleId);
+        $this->settlementSale = $sale;
+        $this->settlementDate = now()->format('Y-m-d');
+        $this->settlementCustomerId = $sale->customer_id;
+        $this->settlementPaymentMethod = 'Tunai';
+        $this->settlementReference = '';
+        $this->settlementNote = '';
+        $this->settlementAmount = $sale->getPiutangAmount();
+        
+        $defaultAccount = \App\Models\Account::where('classification', 'asset')
+            ->where('is_header', false)
+            ->first();
+        $this->settlementAccountId = $defaultAccount?->id;
+
+        $this->showSettlementModal = true;
+    }
+
+    public function closeSettlementModal(): void
+    {
+        $this->showSettlementModal = false;
+        $this->settlementSale = null;
+    }
+
+    public function processSettlement(): void
+    {
+        if (!$this->settlementSale) {
+            return;
+        }
+
+        if ($this->settlementAmount <= 0) {
+            Notification::make()
+                ->title('Validasi Gagal')
+                ->body('Nominal pelunasan harus lebih besar dari 0.')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () {
+                $sale = $this->settlementSale;
+                $paid = floatval($this->settlementAmount);
+                $currentPiutang = $sale->getPiutangAmount();
+                
+                $refText = $this->settlementReference ? " | Ref: {$this->settlementReference}" : '';
+                $methodLabel = strtoupper($this->settlementPaymentMethod);
+                $isFullyPaid = ($paid >= $currentPiutang);
+
+                // Post Journal Entry for settlement
+                $journalEntry = \App\Models\JournalEntry::create([
+                    'branch_id' => $sale->branch_id,
+                    'date' => $this->settlementDate ?: now()->toDateString(),
+                    'reference_type' => 'Sales',
+                    'reference_id' => $sale->id,
+                    'description' => "Pelunasan Piutang Inv #{$sale->invoice_number}",
+                    'status' => 'posted',
+                    'created_by' => \Illuminate\Support\Facades\Auth::id(),
+                ]);
+
+                // Debit chosen Kas/Bank account
+                if ($this->settlementAccountId) {
+                    \App\Models\JournalItem::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $this->settlementAccountId,
+                        'debit' => $paid,
+                        'credit' => 0,
+                        'notes' => "Penerimaan Pelunasan - Inv #{$sale->invoice_number}",
+                    ]);
+                }
+
+                // Credit Piutang Dagang (1-1200)
+                $piutangAccount = \App\Models\Account::where('code', '1-1200')->first();
+                if ($piutangAccount) {
+                    \App\Models\JournalItem::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $piutangAccount->id,
+                        'debit' => 0,
+                        'credit' => $paid,
+                        'notes' => "Pelunasan Piutang - Inv #{$sale->invoice_number}",
+                    ]);
+                }
+
+                if ($isFullyPaid) {
+                    $sale->update([
+                        'payment_method' => $sale->payment_method . " (Lunas via {$methodLabel}{$refText})",
+                        'status' => 'completed',
+                    ]);
+                } else {
+                    $sale->update([
+                        'payment_method' => $sale->payment_method . " (Dicicil Rp " . number_format($paid, 0, ',', '.') . " via {$methodLabel}{$refText})",
+                        'status' => 'pending',
+                    ]);
+                }
+
+                if ($sale->customer_id) {
+                    try {
+                        $customer = \App\Models\Customer::find($sale->customer_id);
+                        if ($customer && \Illuminate\Support\Facades\Schema::hasColumn('customers', 'outstanding_debt') && $customer->outstanding_debt > 0) {
+                            $customer->decrement('outstanding_debt', min($customer->outstanding_debt, $paid));
+                        }
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::warning('Could not decrement customer debt: ' . $e->getMessage());
+                    }
+                }
+            });
+
+            Notification::make()
+                ->title('Pelunasan Piutang Berhasil')
+                ->body("Pelunasan piutang untuk transaksi {$this->settlementSale->invoice_number} berhasil diproses.")
+                ->success()
+                ->send();
+
+            $this->closeSettlementModal();
+            $this->resetPage();
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Error')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
     public function render()
     {
-        // Load branches for filter dropdown
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
 
-        // Get logo of selected branch
         $userBranchId = Auth::user()->branches()->first()?->id;
         $activeBranch = $userBranchId ? Branch::find($userBranchId) : null;
         $selectedLogoUrl = ($activeBranch && !empty($activeBranch->logo_path))
             ? \Illuminate\Support\Facades\Storage::url($activeBranch->logo_path)
             : null;
 
-        // Query sales
         $sales = Sale::with(['customer', 'salesRep', 'branch'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
@@ -299,9 +432,18 @@ class POSTransactions extends Component
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
+        $accounts = \App\Models\Account::where('classification', 'asset')
+            ->where('is_header', false)
+            ->orderBy('code')
+            ->get();
+
+        $customers = \App\Models\Customer::orderBy('name')->get();
+
         return view('livewire.pos-transactions', [
             'sales' => $sales,
             'branches' => $branches,
+            'accounts' => $accounts,
+            'customers' => $customers,
             'selectedLogoUrl' => $selectedLogoUrl,
         ])->layout('layouts.pos', ['title' => 'Daftar Transaksi — POS']);
     }

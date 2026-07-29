@@ -38,7 +38,7 @@ class PurchaseTransactionSeeder extends Seeder
         // Fetch the seeded approved PO
         $po = PurchaseOrder::where('status', 'approved')->first();
 
-        // 1. Create a Draft Purchase Transaction referencing the approved PO
+        // 1. Create a Posted Purchase Transaction referencing the approved PO
         if ($po) {
             $createPtAction->execute([
                 'transaction_date' => now()->format('Y-m-d'),
@@ -59,10 +59,19 @@ class PurchaseTransactionSeeder extends Seeder
                 'items' => [
                     [
                         'product_variant_id' => $variant1->id,
-                        'qty_po' => 5,
-                        'qty_received' => 4, // Partial receive
+                        'qty_po' => 10,
+                        'qty_received' => 10,
                         'unit_id' => $variant1->product->unit_id,
                         'price' => $variant1->cost_price > 0 ? $variant1->cost_price : 2000000,
+                        'discount' => 0,
+                        'tax_rate' => 11,
+                    ],
+                    [
+                        'product_variant_id' => $variant2->id,
+                        'qty_po' => 10,
+                        'qty_received' => 10,
+                        'unit_id' => $variant2->product->unit_id,
+                        'price' => $variant2->cost_price > 0 ? $variant2->cost_price : 2100000,
                         'discount' => 0,
                         'tax_rate' => 11,
                     ],
@@ -91,9 +100,18 @@ class PurchaseTransactionSeeder extends Seeder
                 [
                     'product_variant_id' => $variant1->id,
                     'qty_po' => null,
-                    'qty_received' => 2,
+                    'qty_received' => 5,
                     'unit_id' => $variant1->product->unit_id,
                     'price' => $variant1->cost_price > 0 ? $variant1->cost_price : 2000000,
+                    'discount' => 5000,
+                    'tax_rate' => 11,
+                ],
+                [
+                    'product_variant_id' => $variant2->id,
+                    'qty_po' => null,
+                    'qty_received' => 5,
+                    'unit_id' => $variant2->product->unit_id,
+                    'price' => $variant2->cost_price > 0 ? $variant2->cost_price : 2100000,
                     'discount' => 5000,
                     'tax_rate' => 11,
                 ],

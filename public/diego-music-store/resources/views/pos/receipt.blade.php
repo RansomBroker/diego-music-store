@@ -160,10 +160,43 @@
     </div>
 
     <div class="divider"></div>
-    <div class="grid">
-        <span>Metode Pembayaran:</span>
-        <span class="bold">{{ strtoupper($sale->payment_method) }}</span>
-    </div>
+    <div class="bold" style="margin-bottom: 4px;">Metode & Rincian Bayar:</div>
+    @php
+        $journalEntry = \App\Models\JournalEntry::with('items.account')->where('reference_type', 'Sales')->where('reference_id', $sale->id)->first();
+        $journalPayments = [];
+        if ($journalEntry) {
+            foreach ($journalEntry->items as $ji) {
+                if ($ji->debit > 0 && $ji->account && $ji->account->classification === 'asset') {
+                    $journalPayments[] = [
+                        'name' => $ji->account->name,
+                        'notes' => $ji->notes,
+                        'amount' => $ji->debit
+                    ];
+                }
+            }
+        }
+    @endphp
+
+    @if (!empty($journalPayments))
+        @foreach ($journalPayments as $jp)
+            <div class="grid">
+                <span>{{ $jp['name'] }}:</span>
+                <span>Rp {{ number_format($jp['amount'], 0, ',', '.') }}</span>
+            </div>
+        @endforeach
+    @else
+        <div class="grid">
+            <span>Pembayaran:</span>
+            <span class="bold">{{ strtoupper($sale->payment_method) }}</span>
+        </div>
+    @endif
+
+    @if ($sale->status === 'pending' || ((str_contains(strtolower($sale->payment_method), 'piutang') || str_contains(strtolower($sale->payment_method), 'credit')) && !str_contains(strtolower($sale->payment_method), 'lunas')))
+        <div class="grid bold" style="margin-top: 4px; color: #b45309;">
+            <span>Status Transaksi:</span>
+            <span>BELUM LUNAS (PIUTANG)</span>
+        </div>
+    @endif
 
     <div class="footer">
         {!! nl2br(e($setting?->footer_text ?: "Terima Kasih atas Kunjungan Anda\nBarang yang sudah dibeli tidak dapat ditukar/dikembalikan.")) !!}<br><br>

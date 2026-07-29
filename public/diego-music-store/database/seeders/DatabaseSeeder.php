@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RoleAndPermissionSeeder::class);
+        $this->call(UserSeeder::class);
         $this->call(UnitSeeder::class);
 
         // Seed default branch (Back Office / Cabang Pusat)
@@ -43,37 +44,115 @@ class DatabaseSeeder extends Seeder
         // Seed Chart of Accounts
         $this->call(AccountSeeder::class);
 
-        // Seed default payment methods
-        $cashAcc = \App\Models\Account::where('code', '1-1000')->first();
-        $debitAcc = \App\Models\Account::where('code', '1-1110')->first();
-        $creditAcc = \App\Models\Account::where('code', '1-1200')->first();
+        // Seed default payment methods (9 Parent Categories + Sub-methods)
+        $cashAcc     = \App\Models\Account::where('code', '1-1000')->first();
+        $bankBcaAcc  = \App\Models\Account::where('code', '1-1110')->first();
+        $bankUtamaAcc= \App\Models\Account::where('code', '1-1100')->first();
+        $piutangAcc  = \App\Models\Account::where('code', '1-1200')->first();
+        $voucherAcc  = \App\Models\Account::where('code', '4-2000')->first();
+        $entertainAcc= \App\Models\Account::where('code', '6-2000')->first();
 
-        \Illuminate\Support\Facades\DB::table('payment_methods')->insert([
+        $methodsData = [
             [
-                'name' => 'Tunai',
+                'name' => 'Cash',
                 'code' => 'cash',
                 'account_id' => $cashAcc?->id,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'parent_id' => null,
+                'children' => [],
             ],
             [
-                'name' => 'Debit BCA',
-                'code' => 'debit',
-                'account_id' => $debitAcc?->id,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'name' => 'Debit Card',
+                'code' => 'debit_card',
+                'account_id' => $bankBcaAcc?->id,
+                'parent_id' => null,
+                'children' => [
+                    ['name' => 'BCA', 'code' => 'debit-bca', 'account_id' => $bankBcaAcc?->id],
+                    ['name' => 'BNI', 'code' => 'debit-bni', 'account_id' => null],
+                    ['name' => 'Mandiri', 'code' => 'debit-mandiri', 'account_id' => null],
+                    ['name' => 'BRI', 'code' => 'debit-bri', 'account_id' => null],
+                ],
+            ],
+            [
+                'name' => 'Credit Card',
+                'code' => 'credit_card',
+                'account_id' => $bankBcaAcc?->id,
+                'parent_id' => null,
+                'children' => [
+                    ['name' => 'BCA', 'code' => 'credit-bca', 'account_id' => $bankBcaAcc?->id],
+                    ['name' => 'Mandiri', 'code' => 'credit-mandiri', 'account_id' => null],
+                    ['name' => 'Visa / Mastercard', 'code' => 'credit-visa-master', 'account_id' => null],
+                ],
+            ],
+            [
+                'name' => 'Entertain',
+                'code' => 'entertain',
+                'account_id' => $entertainAcc?->id,
+                'parent_id' => null,
+                'children' => [],
             ],
             [
                 'name' => 'Piutang',
                 'code' => 'credit',
-                'account_id' => $creditAcc?->id,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'account_id' => $piutangAcc?->id,
+                'parent_id' => null,
+                'children' => [],
             ],
-        ]);
+            [
+                'name' => 'Voucher',
+                'code' => 'voucher',
+                'account_id' => $voucherAcc?->id,
+                'parent_id' => null,
+                'children' => [],
+            ],
+            [
+                'name' => 'QRIS',
+                'code' => 'qris',
+                'account_id' => $bankUtamaAcc?->id,
+                'parent_id' => null,
+                'children' => [],
+            ],
+            [
+                'name' => 'Transfer',
+                'code' => 'transfer',
+                'account_id' => $bankUtamaAcc?->id,
+                'parent_id' => null,
+                'children' => [
+                    ['name' => 'Transfer BCA', 'code' => 'transfer-bca', 'account_id' => $bankBcaAcc?->id],
+                    ['name' => 'Transfer Mandiri', 'code' => 'transfer-mandiri', 'account_id' => null],
+                ],
+            ],
+            [
+                'name' => 'Other Payment',
+                'code' => 'other_payment',
+                'account_id' => $cashAcc?->id,
+                'parent_id' => null,
+                'children' => [],
+            ],
+        ];
+
+        foreach ($methodsData as $group) {
+            $parent = \App\Models\PaymentMethod::updateOrCreate(
+                ['code' => $group['code']],
+                [
+                    'name' => $group['name'],
+                    'account_id' => $group['account_id'],
+                    'parent_id' => null,
+                    'is_active' => true,
+                ]
+            );
+
+            foreach ($group['children'] as $child) {
+                \App\Models\PaymentMethod::updateOrCreate(
+                    ['code' => $child['code']],
+                    [
+                        'name' => $child['name'],
+                        'account_id' => $child['account_id'],
+                        'parent_id' => $parent->id,
+                        'is_active' => true,
+                    ]
+                );
+            }
+        }
 
         // Seed default products
         $this->call(ProductSeeder::class);
@@ -149,5 +228,60 @@ class DatabaseSeeder extends Seeder
         $this->call(PurchaseOrderSeeder::class);
         $this->call(PurchaseTransactionSeeder::class);
         $this->call(DeliveryOrderSeeder::class);
+
+        // Seed Sample Vouchers
+        $sampleVouchers = [
+            [
+                'code' => 'PROMO50K',
+                'name' => 'Voucher Diskon Rp 50.000 Promo Toko',
+                'type' => 'fixed',
+                'value' => 50000,
+                'min_spend' => 200000,
+                'valid_until' => now()->addDays(30),
+                'max_uses' => 50,
+                'used_count' => 0,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'DISKON10',
+                'name' => 'Voucher Diskon 10% All Item',
+                'type' => 'percent',
+                'value' => 10,
+                'min_spend' => 100000,
+                'valid_until' => now()->addDays(60),
+                'max_uses' => 100,
+                'used_count' => 0,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'HEBOH100K',
+                'name' => 'Voucher Potongan Rp 100.000 Belanja Musik',
+                'type' => 'fixed',
+                'value' => 100000,
+                'min_spend' => 500000,
+                'valid_until' => now()->addDays(15),
+                'max_uses' => 20,
+                'used_count' => 0,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'MEMBER15',
+                'name' => 'Voucher Spesial Member Diskon 15%',
+                'type' => 'percent',
+                'value' => 15,
+                'min_spend' => 300000,
+                'valid_until' => now()->addDays(90),
+                'max_uses' => 200,
+                'used_count' => 0,
+                'is_active' => true,
+            ],
+        ];
+
+        foreach ($sampleVouchers as $vch) {
+            \App\Models\Voucher::updateOrCreate(
+                ['code' => $vch['code']],
+                $vch
+            );
+        }
     }
 }

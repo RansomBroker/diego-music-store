@@ -95,8 +95,14 @@ class AccountSeeder extends Seeder
                 'parent_code' => '5-0000',
             ],
             [
-                'code' => '6-1000',
-                'name' => 'Beban Operasional & Gaji',
+                'code' => '4-2000',
+                'name' => 'Potongan Voucher & Diskon Penjualan',
+                'classification' => 'revenue',
+                'parent_code' => '4-0000',
+            ],
+            [
+                'code' => '6-2000',
+                'name' => 'Beban Entertain & Promosi',
                 'classification' => 'expense',
                 'parent_code' => '6-0000',
             ],

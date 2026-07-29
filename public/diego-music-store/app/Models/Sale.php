@@ -89,4 +89,38 @@ class Sale extends Model
 
         return $prefix . $nextNum;
     }
+
+    public function getPiutangAmount(): float
+    {
+        $journalEntries = JournalEntry::where('reference_type', 'Sales')
+            ->where('reference_id', $this->id)
+            ->get();
+
+        $totalDebit = 0;
+        $totalCredit = 0;
+
+        $piutangAccount = Account::where('code', '1-1200')->first();
+        if ($piutangAccount) {
+            foreach ($journalEntries as $je) {
+                $items = JournalItem::where('journal_entry_id', $je->id)
+                    ->where('account_id', $piutangAccount->id)
+                    ->get();
+                foreach ($items as $item) {
+                    $totalDebit += floatval($item->debit);
+                    $totalCredit += floatval($item->credit);
+                }
+            }
+        }
+
+        $remaining = max(0, $totalDebit - $totalCredit);
+        if ($totalDebit > 0) {
+            return $remaining;
+        }
+
+        if (str_contains(strtolower($this->payment_method), 'piutang') || str_contains(strtolower($this->payment_method), 'credit')) {
+            return floatval($this->grand_total);
+        }
+
+        return 0;
+    }
 }

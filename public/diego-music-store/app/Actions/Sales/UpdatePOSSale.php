@@ -94,6 +94,21 @@ class UpdatePOSSale
 
             $grandTotal = $subtotal - $discountAmount + $taxAmount;
 
+            $isPiutang = str_contains(strtolower($paymentMethod), 'piutang') || str_contains(strtolower($paymentMethod), 'credit');
+            $creditAmount = 0;
+            if (!empty($data['payments'])) {
+                foreach ($data['payments'] as $pay) {
+                    if (str_contains(strtolower($pay['method']), 'credit') || str_contains(strtolower($pay['method']), 'piutang')) {
+                        $creditAmount += floatval($pay['amount']);
+                    }
+                }
+            }
+            if ($isPiutang && $creditAmount <= 0) {
+                $creditAmount = $grandTotal;
+            }
+
+            $saleStatus = ($isPiutang || $creditAmount > 0) ? 'pending' : 'completed';
+
             // 6. Update Sale Header (keep invoice number unchanged)
             $sale->update([
                 'customer_id' => $customerId,
@@ -103,8 +118,20 @@ class UpdatePOSSale
                 'tax_amount' => $taxAmount,
                 'grand_total' => $grandTotal,
                 'payment_method' => $paymentMethod,
+                'status' => $saleStatus,
                 'sale_category' => $data['sale_category'] ?? 'Store',
             ]);
+
+            if ($creditAmount > 0 && $customerId) {
+                try {
+                    $customer = \App\Models\Customer::find($customerId);
+                    if ($customer && \Illuminate\Support\Facades\Schema::hasColumn('customers', 'outstanding_debt')) {
+                        $customer->increment('outstanding_debt', $creditAmount);
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('Could not update outstanding_debt: ' . $e->getMessage());
+                }
+            }
 
             // 7. Create New Sale Items and handle Stock Deduction & Movement
             $totalCOGS = 0;

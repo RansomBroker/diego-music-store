@@ -87,24 +87,15 @@
                 };
 
                 // Check Filament session notifications
-                const filamentNotifs = @js(session()->get('filament.notifications', []));
+                @php
+                    $filamentNotifs = session()->get('filament.notifications', []);
+                    session()->forget('filament.notifications');
+                    session()->forget(['success', 'error', 'warning', 'info']);
+                @endphp
+                const filamentNotifs = @js($filamentNotifs);
                 if (Array.isArray(filamentNotifs)) {
                     filamentNotifs.forEach(n => handlePayload(n));
                 }
-
-                // Check standard session flash messages
-                @if (session()->has('success'))
-                    this.addToast({ type: 'success', title: 'Berhasil', body: @js(session('success')) });
-                @endif
-                @if (session()->has('error'))
-                    this.addToast({ type: 'error', title: 'Gagal', body: @js(session('error')) });
-                @endif
-                @if (session()->has('warning'))
-                    this.addToast({ type: 'warning', title: 'Peringatan', body: @js(session('warning')) });
-                @endif
-                @if (session()->has('info'))
-                    this.addToast({ type: 'info', title: 'Informasi', body: @js(session('info')) });
-                @endif
 
                 // 1. Listen to Window DOM events
                 window.addEventListener('toast', (e) => handlePayload(e.detail));

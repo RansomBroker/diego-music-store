@@ -64,27 +64,35 @@ class PurchaseOrderSeeder extends Seeder
 
         $createPoAction = app(CreatePurchaseOrder::class);
 
-        // 1. PO Draft (Borneo Music Supplier) - Item level tax & discount
+        // 1. PO Approved (Borneo Music Supplier)
         $createPoAction->execute([
             'supplier_id' => $supplier1->id,
             'branch_id' => $branchId,
             'po_number' => 'PO-' . now()->format('Ymd') . '-0001',
             'order_date' => now()->subDays(5)->format('Y-m-d'),
-            'status' => 'draft',
+            'status' => 'approved',
             'currency' => 'IDR',
             'payment_term' => 'COD',
             'tax_mode' => 'ITEM',
-            'discount_amount' => 50000, // global discount
-            'other_cost' => 150000, // shipping
-            'notes' => 'Pemesanan draf dengan diskon item dan PPN 11% per item.',
+            'discount_amount' => 50000,
+            'other_cost' => 150000,
+            'notes' => 'Pemesanan disetujui (Approved) dengan diskon item dan PPN 11% per item.',
             'items' => [
                 [
                     'product_variant_id' => $variant1->id,
                     'quantity' => 10,
                     'price' => $variant1->cost_price > 0 ? $variant1->cost_price : 2000000,
-                    'discount_amount' => 20000, // item discount
-                    'tax_rate' => 11, // 11% tax
+                    'discount_amount' => 20000,
+                    'tax_rate' => 11,
                     'notes' => 'Gitar warna natural.',
+                ],
+                [
+                    'product_variant_id' => $variant2->id,
+                    'quantity' => 10,
+                    'price' => $variant2->cost_price > 0 ? $variant2->cost_price : 2100000,
+                    'discount_amount' => 20000,
+                    'tax_rate' => 11,
+                    'notes' => 'Gitar warna sunburst.',
                 ],
             ],
         ]);

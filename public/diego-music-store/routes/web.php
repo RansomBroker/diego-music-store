@@ -45,6 +45,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/customer-labels', App\Livewire\PosCustomerLabels::class)->name('pos.customer-labels');
     Route::get('/pos/sale-categories', App\Livewire\PosSaleCategories::class)->name('pos.sale-categories');
     Route::get('/pos/payment-methods', App\Livewire\PosPaymentMethods::class)->name('pos.payment-methods');
+    Route::get('/pos/vouchers', App\Livewire\PosVouchers::class)->name('pos.vouchers');
 
     // Utility Routes
     Route::get('/pos/privileges', App\Livewire\PosPrivileges::class)->name('pos.privileges');
@@ -53,3 +54,10 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/barcode-print', App\Livewire\PosBarcodePrint::class)->name('pos.barcode-print');
     Route::get('/pos/barcode-print/sheet', [App\Http\Controllers\POS\POSBarcodePrintController::class, 'show'])->name('pos.barcode-print.sheet');
 });
+
+// Fallback redirect for /admin URL path to /backoffice
+Route::get('/admin/{path?}', function ($path = null) {
+    $queryString = request()->getQueryString();
+    $targetUrl = '/backoffice' . ($path ? '/' . $path : '') . ($queryString ? '?' . $queryString : '');
+    return redirect($targetUrl);
+})->where('path', '.*');

@@ -16,7 +16,10 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductsTable
@@ -107,8 +110,113 @@ class ProductsTable
                     ->label('Dibuat Pada'),
             ])
             ->filters([
-                //
+                SelectFilter::make('variant_display')
+                    ->label('Tampilan Varian')
+                    ->options([
+                        'hide_parent' => 'Varian Child & Produk Tunggal',
+                        'all'         => 'Semua Row (Termasuk Parent)',
+                        'only_parent' => 'Hanya Parent Product',
+                        'only_child'  => 'Hanya Varian Child',
+                    ])
+                    ->default('hide_parent')
+                    ->selectablePlaceholder(false)
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = $data['value'] ?? 'hide_parent';
+
+                        return match ($value) {
+                            'hide_parent' => $query->where(function (Builder $q) {
+                                $q->where(function (Builder $sub) {
+                                    $sub->whereNotNull('name')
+                                        ->where('name', '!=', '');
+                                })->orWhereHas('product', function (Builder $pq) {
+                                    $pq->has('variants', '=', 1);
+                                });
+                            }),
+                            'only_parent' => $query->where(function (Builder $q) {
+                                $q->where(function (Builder $sub) {
+                                    $sub->whereNull('name')->orWhere('name', '');
+                                })->whereHas('product', function (Builder $pq) {
+                                    $pq->has('variants', '>', 1);
+                                });
+                            }),
+                            'only_child' => $query->whereNotNull('name')->where('name', '!=', ''),
+                            'all' => $query,
+                            default => $query,
+                        };
+                    }),
+
+                SelectFilter::make('product_id')
+                    ->label('Pilih Produk')
+                    ->placeholder('Semua Produk')
+                    ->relationship('product', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('type')
+                    ->label('Tipe Produk')
+                    ->placeholder('Semua Tipe')
+                    ->options([
+                        'physical' => 'Barang Fisik',
+                        'bundle'   => 'Produk Bundling',
+                        'service'  => 'Jasa / Layanan',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when($data['value'] ?? null, function (Builder $q, string $value) {
+                            $q->whereHas('product', fn (Builder $pq) => $pq->where('type', $value));
+                        });
+                    }),
+
+                SelectFilter::make('category')
+                    ->label('Kategori Produk')
+                    ->placeholder('Semua Kategori')
+                    ->options(fn () => \App\Models\Product::whereNotNull('category')
+                        ->where('category', '!=', '')
+                        ->distinct()
+                        ->pluck('category', 'category')
+                        ->toArray()
+                    )
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when($data['value'] ?? null, function (Builder $q, string $value) {
+                            $q->whereHas('product', fn (Builder $pq) => $pq->where('category', $value));
+                        });
+                    }),
+
+                SelectFilter::make('brand')
+                    ->label('Merk / Brand')
+                    ->placeholder('Semua Merk')
+                    ->options(fn () => \App\Models\Product::whereNotNull('brand')
+                        ->where('brand', '!=', '')
+                        ->distinct()
+                        ->pluck('brand', 'brand')
+                        ->toArray()
+                    )
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when($data['value'] ?? null, function (Builder $q, string $value) {
+                            $q->whereHas('product', fn (Builder $pq) => $pq->where('brand', $value));
+                        });
+                    }),
+
+                SelectFilter::make('supplier_id')
+                    ->label('Supplier')
+                    ->placeholder('Semua Supplier')
+                    ->options(fn () => \App\Models\Supplier::orderBy('name')->pluck('name', 'id')->toArray())
+                    ->searchable()
+                    ->preload()
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when($data['value'] ?? null, function (Builder $q, string $value) {
+                            $q->whereHas('product', fn (Builder $pq) => $pq->where('supplier_id', $value));
+                        });
+                    }),
             ])
+            ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersFormColumns([
+                'default' => 1,
+                'sm'      => 2,
+                'md'      => 3,
+                'lg'      => 6,
+            ])
+            ->deferFilters(false)
+            ->hiddenFilterIndicators()
             ->actions([
                 EditAction::make()
                     ->modalWidth('8xl')

@@ -61,6 +61,13 @@ class POS extends Component
     public $debitRef = '';
     public array $paymentAmounts = [];
     public array $paymentRefs = [];
+    public array $paymentSubMethods = [];
+
+    // Live Voucher validation state
+    public string $voucherCodeInput = '';
+    public ?\App\Models\Voucher $appliedVoucher = null;
+    public string $voucherValidationMessage = '';
+    public bool $voucherIsValid = false;
 
     // Available branches and current branch
     public $branches = [];
@@ -814,7 +821,17 @@ class POS extends Component
             }
         } else {
             $this->selectedPaymentMethods[] = $method;
-            $this->paymentAmounts[$method] = 0;
+            $existingSum = 0;
+            foreach ($this->selectedPaymentMethods as $m) {
+                if ($m !== $method) {
+                    $existingSum += intval($this->paymentAmounts[$m] ?? ($m === 'cash' ? $this->amountCash : ($m === 'debit' ? $this->amountDebit : ($m === 'credit' ? $this->amountCredit : 0))));
+                }
+            }
+            $remaining = max(0, $this->grandTotal - $existingSum);
+            $this->paymentAmounts[$method] = $remaining;
+            if ($method === 'cash') $this->amountCash = $remaining;
+            if ($method === 'debit') $this->amountDebit = $remaining;
+            if ($method === 'credit') $this->amountCredit = $remaining;
         }
 
         $this->distributePaymentAmounts();
@@ -822,49 +839,9 @@ class POS extends Component
 
     public function distributePaymentAmounts()
     {
-        $total = $this->grandTotal;
-        $count = count($this->selectedPaymentMethods);
-        
-        if ($count === 1) {
-            $method = $this->selectedPaymentMethods[0];
-            $this->paymentAmounts = [$method => $total];
-            
-            // Sync compatibility vars
-            $this->amountCash = ($method === 'cash') ? $total : 0;
-            $this->amountDebit = ($method === 'debit') ? $total : 0;
-            $this->amountCredit = ($method === 'credit') ? $total : 0;
-        } else {
-            $assigned = 0;
-            foreach ($this->selectedPaymentMethods as $method) {
-                $assigned += intval($this->paymentAmounts[$method] ?? 0);
-            }
-
-            if ($assigned != $total) {
-                if (in_array('cash', $this->selectedPaymentMethods)) {
-                    $other = 0;
-                    foreach ($this->selectedPaymentMethods as $method) {
-                        if ($method !== 'cash') {
-                            $other += intval($this->paymentAmounts[$method] ?? 0);
-                        }
-                    }
-                    $this->paymentAmounts['cash'] = max(0, $total - $other);
-                    $this->amountCash = $this->paymentAmounts['cash'];
-                } else {
-                    $firstMethod = $this->selectedPaymentMethods[0];
-                    $other = 0;
-                    foreach ($this->selectedPaymentMethods as $method) {
-                        if ($method !== $firstMethod) {
-                            $other += intval($this->paymentAmounts[$method] ?? 0);
-                        }
-                    }
-                    $this->paymentAmounts[$firstMethod] = max(0, $total - $other);
-                    
-                    if ($firstMethod === 'cash') $this->amountCash = $this->paymentAmounts[$firstMethod];
-                    if ($firstMethod === 'debit') $this->amountDebit = $this->paymentAmounts[$firstMethod];
-                    if ($firstMethod === 'credit') $this->amountCredit = $this->paymentAmounts[$firstMethod];
-                }
-            }
-        }
+        $this->amountCash = intval($this->paymentAmounts['cash'] ?? $this->amountCash);
+        $this->amountDebit = intval($this->paymentAmounts['debit'] ?? $this->amountDebit);
+        $this->amountCredit = intval($this->paymentAmounts['credit'] ?? $this->amountCredit);
     }
 
     public function updated($property, $value)
@@ -876,11 +853,6 @@ class POS extends Component
             if ($code === 'credit') $this->amountCredit = intval($value);
 
             $this->distributePaymentAmounts();
-        }
-
-        if (str_starts_with($property, 'paymentRefs.')) {
-            $code = str_replace('paymentRefs.', '', $property);
-            if ($code === 'debit') $this->debitRef = $value;
         }
 
         if ($property === 'amountCash') {
@@ -895,9 +867,54 @@ class POS extends Component
             $this->paymentAmounts['credit'] = intval($value);
             $this->distributePaymentAmounts();
         }
-        if ($property === 'debitRef') {
-            $this->paymentRefs['debit'] = $value;
+    }
+
+    public function validateAndApplyVoucher(): void
+    {
+        $code = strtoupper(trim($this->voucherCodeInput));
+        if (empty($code)) {
+            $this->voucherValidationMessage = 'Masukkan kode voucher.';
+            $this->voucherIsValid = false;
+            $this->appliedVoucher = null;
+            return;
         }
+
+        $voucher = \App\Models\Voucher::where('code', $code)->first();
+        if (!$voucher) {
+            $this->voucherValidationMessage = 'Kode voucher tidak ditemukan.';
+            $this->voucherIsValid = false;
+            $this->appliedVoucher = null;
+            return;
+        }
+
+        $subtotal = floatval($this->subtotal);
+        $errorMessage = null;
+
+        if (!$voucher->isValidForSubtotal($subtotal, $errorMessage)) {
+            $this->voucherValidationMessage = $errorMessage;
+            $this->voucherIsValid = false;
+            $this->appliedVoucher = null;
+            return;
+        }
+
+        $discountAmount = $voucher->calculateDiscountAmount($subtotal);
+        $this->appliedVoucher = $voucher;
+        $this->voucherIsValid = true;
+        $this->voucherValidationMessage = "Voucher {$voucher->code} Valid! Diskon Rp " . number_format($discountAmount, 0, ',', '.');
+        
+        if (!in_array('voucher', $this->selectedPaymentMethods)) {
+            $this->selectedPaymentMethods[] = 'voucher';
+        }
+        $this->paymentAmounts['voucher'] = $discountAmount;
+        $this->paymentRefs['voucher'] = $voucher->code;
+
+        $this->distributePaymentAmounts();
+
+        Notification::make()
+            ->title('Voucher Berhasil Diterapkan')
+            ->body("Potongan voucher Rp " . number_format($discountAmount, 0, ',', '.') . " telah diterapkan.")
+            ->success()
+            ->send();
     }
 
     public function checkout()
@@ -907,23 +924,36 @@ class POS extends Component
             $totalPaid += intval($this->paymentAmounts[$method] ?? ($method === 'cash' ? $this->amountCash : ($method === 'debit' ? $this->amountDebit : ($method === 'credit' ? $this->amountCredit : 0))));
         }
 
-        if (in_array('cash', $this->selectedPaymentMethods)) {
-            if ($totalPaid < $this->grandTotal) {
-                Notification::make()
-                    ->title('Jumlah Bayar Kurang')
-                    ->body('Total pembayaran kurang dari total tagihan.')
-                    ->danger()
-                    ->send();
-                return;
+        $hasCredit = in_array('credit', $this->selectedPaymentMethods);
+
+        if (!$hasCredit) {
+            if (in_array('cash', $this->selectedPaymentMethods)) {
+                if ($totalPaid < $this->grandTotal) {
+                    Notification::make()
+                        ->title('Jumlah Bayar Kurang')
+                        ->body('Total pembayaran kurang dari total tagihan.')
+                        ->danger()
+                        ->send();
+                    return;
+                }
+            } else {
+                if ($totalPaid != $this->grandTotal) {
+                    Notification::make()
+                        ->title('Jumlah Bayar Tidak Pas')
+                        ->body('Pembayaran non-tunai harus pas dengan total tagihan: ' . number_format($this->grandTotal, 0, ',', '.'))
+                        ->danger()
+                        ->send();
+                    return;
+                }
             }
         } else {
-            if ($totalPaid != $this->grandTotal) {
-                Notification::make()
-                    ->title('Jumlah Bayar Tidak Pas')
-                    ->body('Pembayaran non-tunai harus pas dengan total tagihan: ' . number_format($this->grandTotal, 0, ',', '.'))
-                    ->danger()
-                    ->send();
-                return;
+            // Auto-fill or adjust credit amount with remaining balance if less than grand total
+            $currentCredit = intval($this->paymentAmounts['credit'] ?? $this->amountCredit);
+            if ($totalPaid < $this->grandTotal) {
+                $deficit = $this->grandTotal - $totalPaid;
+                $newCredit = $currentCredit + $deficit;
+                $this->paymentAmounts['credit'] = $newCredit;
+                $this->amountCredit = $newCredit;
             }
         }
 
@@ -976,10 +1006,14 @@ class POS extends Component
                 
                 $amount = intval($this->paymentAmounts[$method] ?? ($method === 'debit' ? $this->amountDebit : ($method === 'credit' ? $this->amountCredit : 0)));
                 if ($amount > 0) {
+                    $refValue = $this->paymentRefs[$method] ?? ($method === 'debit' ? $this->debitRef : null);
+                    $subValue = $this->paymentSubMethods[$method] ?? null;
+                    $combinedRef = trim(($subValue ? "Bank: {$subValue}" : '') . ($refValue ? ($subValue ? ' | ' : '') . "Ref: {$refValue}" : ''));
+
                     $paymentsData[] = [
                         'method' => $method,
                         'amount' => $amount,
-                        'ref' => $this->paymentRefs[$method] ?? ($method === 'debit' ? $this->debitRef : null)
+                        'ref' => $combinedRef ?: null
                     ];
                 }
             }
@@ -990,7 +1024,12 @@ class POS extends Component
                 $amount = intval($this->paymentAmounts[$m] ?? ($m === 'cash' ? $this->amountCash : ($m === 'debit' ? $this->amountDebit : ($m === 'credit' ? $this->amountCredit : 0))));
                 if ($amount > 0) {
                     $dbMethod = \App\Models\PaymentMethod::where('code', $m)->first();
-                    $methodNames[] = $dbMethod ? $dbMethod->name : ($m === 'cash' ? 'Tunai' : ($m === 'debit' ? 'Debit BCA' : ($m === 'credit' ? 'Piutang' : ucfirst($m))));
+                    $baseName = $dbMethod ? $dbMethod->name : ($m === 'cash' ? 'Tunai' : ($m === 'debit' ? 'Debit Card' : ($m === 'credit' ? 'Piutang' : ucfirst($m))));
+                    $subValue = $this->paymentSubMethods[$m] ?? null;
+                    if (!empty($subValue)) {
+                        $baseName .= " ({$subValue})";
+                    }
+                    $methodNames[] = $baseName;
                 }
             }
             $paymentMethodString = empty($methodNames) ? 'Tunai' : implode(' & ', $methodNames);
@@ -1034,6 +1073,15 @@ class POS extends Component
                 }
             }
 
+            // Increment used count for applied voucher
+            if ($this->appliedVoucher) {
+                $this->appliedVoucher->increment('used_count');
+                $this->appliedVoucher = null;
+                $this->voucherCodeInput = '';
+                $this->voucherValidationMessage = '';
+                $this->voucherIsValid = false;
+            }
+
             // Reset POS State
             $this->editingSaleId = null;
             $this->cart = [];
@@ -1074,6 +1122,9 @@ class POS extends Component
             }
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('POS Checkout Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
             Notification::make()
                 ->title('Gagal Checkout')
                 ->body($e->getMessage())

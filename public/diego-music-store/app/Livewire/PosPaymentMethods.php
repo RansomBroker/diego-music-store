@@ -30,6 +30,7 @@ class PosPaymentMethods extends Component
     // ── State Form ───────────────────────────────────────────────────────
     public string $name = '';
     public string $code = '';
+    public ?int $parent_id = null;
     public ?int $account_id = null;
     public bool $is_active = true;
 
@@ -62,7 +63,7 @@ class PosPaymentMethods extends Component
     // ── Modal: Buka Form Tambah ──────────────────────────────────────────
     public function openCreate(): void
     {
-        $this->reset(['name', 'code', 'account_id', 'is_active', 'editingId', 'isEditing']);
+        $this->reset(['name', 'code', 'parent_id', 'account_id', 'is_active', 'editingId', 'isEditing']);
         $this->showModal = true;
     }
 
@@ -75,6 +76,7 @@ class PosPaymentMethods extends Component
         $this->isEditing  = true;
         $this->name       = $method->name;
         $this->code       = $method->code;
+        $this->parent_id  = $method->parent_id;
         $this->account_id = $method->account_id;
         $this->is_active  = (bool) $method->is_active;
 
@@ -84,9 +86,15 @@ class PosPaymentMethods extends Component
     // ── Simpan (Create / Update) ─────────────────────────────────────────
     public function save(CreatePaymentMethod $createAction, UpdatePaymentMethod $updateAction): void
     {
+        if ($this->isEditing && $this->parent_id && $this->parent_id === $this->editingId) {
+            $this->addError('parent_id', 'Metode pembayaran tidak bisa menjadi parent untuk dirinya sendiri.');
+            return;
+        }
+
         $rules = [
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:255|unique:payment_methods,code,' . ($this->editingId ?? 'NULL'),
+            'parent_id' => 'nullable|exists:payment_methods,id',
             'account_id' => 'nullable|exists:accounts,id',
             'is_active' => 'boolean',
         ];
@@ -100,6 +108,7 @@ class PosPaymentMethods extends Component
         $data = [
             'name' => $this->name,
             'code' => $this->code,
+            'parent_id' => $this->parent_id,
             'account_id' => $this->account_id,
             'is_active' => $this->is_active,
         ];
@@ -136,6 +145,13 @@ class PosPaymentMethods extends Component
             return;
         }
 
+        // Check if has children
+        if ($method->children()->exists()) {
+            Notification::make()->title('Gagal Hapus')->body('Metode pembayaran ini memiliki sub-metode. Hapus atau pindahkan sub-metode terlebih dahulu.')->danger()->send();
+            $this->showDeleteModal = false;
+            return;
+        }
+
         $method->delete();
 
         Notification::make()->title('Metode Pembayaran Berhasil Dihapus')->success()->send();
@@ -148,7 +164,7 @@ class PosPaymentMethods extends Component
     // ── Render ───────────────────────────────────────────────────────────
     public function render()
     {
-        $methods = PaymentMethod::with('account')
+        $methods = PaymentMethod::with(['account', 'parent'])
             ->when($this->search, fn ($q) =>
                 $q->where('name', 'like', "%{$this->search}%")
                   ->orWhere('code', 'like', "%{$this->search}%")
@@ -157,6 +173,11 @@ class PosPaymentMethods extends Component
             ->paginate($this->perPage);
 
         $accounts = Account::orderBy('code')->get();
+
+        $parentOptions = PaymentMethod::whereNull('parent_id')
+            ->when($this->editingId, fn ($q) => $q->where('id', '!=', $this->editingId))
+            ->orderBy('name')
+            ->get();
 
         // Logo untuk sidebar
         $userBranchId    = Auth::user()->branches()->first()?->id;
@@ -168,6 +189,7 @@ class PosPaymentMethods extends Component
         return view('livewire.pos-payment-methods', [
             'methods'         => $methods,
             'accounts'        => $accounts,
+            'parentOptions'   => $parentOptions,
             'selectedLogoUrl' => $selectedLogoUrl,
         ])->layout('layouts.pos', ['title' => 'Metode Pembayaran — POS']);
     }

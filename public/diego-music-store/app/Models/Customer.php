@@ -19,6 +19,8 @@ class Customer extends Model
         'pricing_tier_id',
         'is_loyalty_member',
         'loyalty_points',
+        'deposit_balance',
+        'outstanding_debt',
     ];
 
     protected $casts = [

@@ -17,17 +17,33 @@
     'discountValue' => 0,
     'paymentAmounts' => [],
     'paymentRefs' => [],
-    'paymentMethods' => []
+    'paymentMethods' => [],
+    'voucherCodeInput' => '',
+    'voucherValidationMessage' => '',
+    'voucherIsValid' => false,
 ])
 
 @php
-    $allMethods = $paymentMethods;
-    if (empty($allMethods) || count($allMethods) === 0) {
-        $allMethods = [
-            (object)['code' => 'cash', 'name' => 'Tunai'],
-            (object)['code' => 'debit', 'name' => 'Debit BCA'],
-            (object)['code' => 'credit', 'name' => 'Piutang'],
+    $allMethodsRaw = $paymentMethods;
+    if (empty($allMethodsRaw) || count($allMethodsRaw) === 0) {
+        $allMethodsRaw = [
+            (object)['id' => 1, 'code' => 'cash', 'name' => 'Tunai', 'parent_id' => null, 'parent' => null, 'children' => collect()],
+            (object)['id' => 2, 'code' => 'debit', 'name' => 'Debit BCA', 'parent_id' => null, 'parent' => null, 'children' => collect()],
+            (object)['id' => 3, 'code' => 'credit', 'name' => 'Piutang', 'parent_id' => null, 'parent' => null, 'children' => collect()],
         ];
+    }
+
+    $allMethodsCollection = collect($allMethodsRaw);
+    $parentMethods = $allMethodsCollection->filter(fn ($m) => empty($m->parent_id));
+
+    $flatMethods = collect();
+    foreach ($allMethodsCollection as $m) {
+        $flatMethods->push($m);
+        if (isset($m->children) && count($m->children) > 0) {
+            foreach ($m->children as $child) {
+                $flatMethods->push($child);
+            }
+        }
     }
 @endphp
 
@@ -92,8 +108,8 @@
                     @else
                         @foreach ($selectedPaymentMethods as $method)
                             @php
-                                $dbMethod = collect($allMethods)->firstWhere('code', $method);
-                                $methodLabel = $dbMethod ? $dbMethod->name : ucfirst($method);
+                                $dbMethod = $flatMethods->firstWhere('code', $method);
+                                $methodLabel = $dbMethod ? ($dbMethod->parent ? $dbMethod->parent->name . ' (' . $dbMethod->name . ')' : $dbMethod->name) : ucfirst($method);
                             @endphp
                             <span @click.stop class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary dark:bg-blue-950/40 dark:text-blue-400 rounded-full font-bold text-[10px] uppercase tracking-wider cursor-default">
                                 <span>{{ $methodLabel }}</span>
@@ -107,7 +123,7 @@
                 <i class="ph-bold ph-caret-down text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
             </div>
 
-            <!-- Dropdown Options List (Absolute floating list) -->
+            <!-- Dropdown Options List (Only Parent Payment Methods) -->
             <div 
                 x-show="open" 
                 x-transition:enter="transition ease-out duration-150"
@@ -116,10 +132,10 @@
                 x-transition:leave="transition ease-in duration-100"
                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                 x-transition:leave-end="opacity-0 -translate-y-1 scale-95"
-                class="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-slate-950/80 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800"
+                class="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-slate-950/80 max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800"
                 style="display: none;"
             >
-                @foreach ($allMethods as $pm)
+                @foreach ($parentMethods as $pm)
                     @php
                         $iconClass = 'ph-credit-card';
                         $bgClass = 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-455';
@@ -131,16 +147,22 @@
                             $bgClass = 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-455';
                         }
                     @endphp
+
                     <button 
                         type="button" 
                         wire:click="togglePaymentMethod('{{ $pm->code }}')" 
-                        class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+                        class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
                     >
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 {{ $bgClass }} rounded-lg flex items-center justify-center">
                                 <i class="ph-bold {{ $iconClass }} text-base"></i>
                             </div>
-                            <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">{{ $pm->name }}</span>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">{{ $pm->name }}</span>
+                                @if (isset($pm->children) && count($pm->children) > 0)
+                                    <span class="text-[10px] text-slate-400 font-medium">Sub-metode: {{ $pm->children->pluck('name')->implode(', ') }}</span>
+                                @endif
+                            </div>
                         </div>
                         @if (in_array($pm->code, $selectedPaymentMethods))
                             <i class="ph-bold ph-check text-primary dark:text-blue-400 text-sm"></i>
@@ -155,8 +177,9 @@
     <div class="space-y-4 mb-6">
         @foreach ($selectedPaymentMethods as $method)
             @php
-                $dbMethod = collect($allMethods)->firstWhere('code', $method);
+                $dbMethod = $parentMethods->firstWhere('code', $method) ?? $flatMethods->firstWhere('code', $method);
                 $methodName = $dbMethod ? $dbMethod->name : ucfirst($method);
+                $hasChildren = $dbMethod && isset($dbMethod->children) && count($dbMethod->children) > 0;
                 
                 $iconClass = 'ph-credit-card';
                 if ($method === 'cash') {
@@ -195,12 +218,30 @@
                                     onclick="@this.set('amountCredit', {{ $remaining }})"
                                 @endif
                                 wire:click="$set('paymentAmounts.{{ $method }}', {{ $remaining }})"
-                                class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors uppercase tracking-wider"
+                                class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors uppercase tracking-wider cursor-pointer"
                         >
                             Sisa Tagihan
                         </button>
                     @endif
                 </div>
+
+                {{-- Sub-method Dropdown if Parent has Children --}}
+                @if ($hasChildren)
+                    <div class="mb-3">
+                        <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                            Pilih Bank / Sub-Metode {{ $methodName }}
+                        </label>
+                        <select 
+                            wire:model="paymentSubMethods.{{ $method }}" 
+                            class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-sm focus:ring-2 focus:ring-primary text-slate-800 dark:text-slate-100 cursor-pointer"
+                        >
+                            <option value="">-- Pilih Bank / Sub-Metode --</option>
+                            @foreach ($dbMethod->children as $child)
+                                <option value="{{ $child->name }}">{{ $child->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
                 
                 @if ($method === 'debit')
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -234,24 +275,59 @@
                         <input type="number" 
                                wire:model.live="amountCredit" 
                                wire:keyup="distributePaymentAmounts" 
-                               class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
+                               class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
                                placeholder="0">
                     </div>
+                @elseif (str_contains(strtolower($method), 'voucher'))
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="relative flex items-center gap-1.5">
+                                <input type="text" 
+                                       wire:model="voucherCodeInput" 
+                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold uppercase text-sm focus:ring-2 focus:ring-primary text-slate-900 dark:text-white" 
+                                       placeholder="e.g. PROMO50K">
+                                <button type="button" 
+                                        wire:click="validateAndApplyVoucher" 
+                                        class="px-3 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-xs whitespace-nowrap cursor-pointer shadow-sm">
+                                    Cek & Pasang
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
+                                <input type="number" 
+                                       wire:model.live="paymentAmounts.{{ $method }}" 
+                                       wire:keyup="distributePaymentAmounts" 
+                                       class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary text-slate-850 dark:text-slate-100" 
+                                       placeholder="0">
+                            </div>
+                        </div>
+                        @if ($voucherValidationMessage)
+                            <div class="p-2.5 rounded-xl text-xs font-semibold {{ $voucherIsValid ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60' }}">
+                                {{ $voucherValidationMessage }}
+                            </div>
+                        @endif
+                    </div>
                 @else
+                    @php
+                        $refPlaceholder = 'No. Bukti / Ref (Opsional)';
+                        if (str_contains(strtolower($method), 'entertain')) {
+                            $refPlaceholder = 'Alasan / Catatan Entertain';
+                        }
+                    @endphp
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
                             <input type="number" 
                                    wire:model.live="paymentAmounts.{{ $method }}" 
                                    wire:keyup="distributePaymentAmounts" 
-                                   class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
+                                   class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
                                    placeholder="0">
                         </div>
                         <div class="relative">
                             <input type="text" 
                                    wire:model="paymentRefs.{{ $method }}" 
                                    class="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-sm focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
-                                   placeholder="No. Bukti / Ref (Opsional)">
+                                   placeholder="{{ $refPlaceholder }}">
                         </div>
                     </div>
                 @endif
@@ -285,11 +361,18 @@
                 Rp {{ number_format($change, 0, ',', '.') }}
             </span>
         </div>
-    @elseif (!in_array('cash', $selectedPaymentMethods) && $totalPaid != $grandTotal)
+    @elseif (!in_array('cash', $selectedPaymentMethods) && !in_array('credit', $selectedPaymentMethods) && $totalPaid != $grandTotal)
         <div class="flex items-center justify-between p-4 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-100/50 dark:border-red-955/50 mb-6">
             <span class="text-sm font-semibold text-red-800 dark:text-red-400">Status Pembayaran</span>
             <span class="text-xs font-bold text-red-650 dark:text-red-400">
                 Nominal harus pas Rp {{ number_format($grandTotal, 0, ',', '.') }}
+            </span>
+        </div>
+    @elseif (in_array('credit', $selectedPaymentMethods) && $totalPaid < $grandTotal)
+        <div class="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-100/50 dark:border-amber-955/50 mb-6">
+            <span class="text-sm font-semibold text-amber-800 dark:text-amber-400">Sisa Utang / Piutang Pelanggan</span>
+            <span class="text-xl font-bold text-amber-600 dark:text-amber-400">
+                Rp {{ number_format($grandTotal - $totalPaid, 0, ',', '.') }}
             </span>
         </div>
     @endif
