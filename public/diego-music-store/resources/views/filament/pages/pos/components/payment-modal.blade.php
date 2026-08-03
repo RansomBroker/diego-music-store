@@ -246,12 +246,12 @@
                 @if ($method === 'debit')
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
-                            <input type="number" 
-                                   wire:model.live="amountDebit" 
-                                   wire:keyup="distributePaymentAmounts" 
-                                   class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
-                                   placeholder="0">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
+                            <x-money-input 
+                                wire:model.live="amountDebit" 
+                                wire:keyup="distributePaymentAmounts" 
+                                class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
+                                placeholder="0" />
                         </div>
                         <div class="relative">
                             <input type="text" 
@@ -262,21 +262,21 @@
                     </div>
                 @elseif ($method === 'cash')
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
-                        <input type="number" 
-                               wire:model.live="amountCash" 
-                               wire:keyup="distributePaymentAmounts" 
-                               class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
-                               placeholder="0">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
+                        <x-money-input 
+                            wire:model.live="amountCash" 
+                            wire:keyup="distributePaymentAmounts" 
+                            class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
+                            placeholder="0" />
                     </div>
                 @elseif ($method === 'credit')
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
-                        <input type="number" 
-                               wire:model.live="amountCredit" 
-                               wire:keyup="distributePaymentAmounts" 
-                               class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
-                               placeholder="0">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
+                        <x-money-input 
+                            wire:model.live="amountCredit" 
+                            wire:keyup="distributePaymentAmounts" 
+                            class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
+                            placeholder="0" />
                     </div>
                 @elseif (str_contains(strtolower($method), 'voucher'))
                     <div class="space-y-2">
@@ -293,12 +293,12 @@
                                 </button>
                             </div>
                             <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
-                                <input type="number" 
-                                       wire:model.live="paymentAmounts.{{ $method }}" 
-                                       wire:keyup="distributePaymentAmounts" 
-                                       class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary text-slate-850 dark:text-slate-100" 
-                                       placeholder="0">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
+                                <x-money-input 
+                                    wire:model.live="paymentAmounts.{{ $method }}" 
+                                    wire:keyup="distributePaymentAmounts" 
+                                    class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary text-slate-850 dark:text-slate-100" 
+                                    placeholder="0" />
                             </div>
                         </div>
                         @if ($voucherValidationMessage)
@@ -316,12 +316,12 @@
                     @endphp
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm">Rp</span>
-                            <input type="number" 
-                                   wire:model.live="paymentAmounts.{{ $method }}" 
-                                   wire:keyup="distributePaymentAmounts" 
-                                   class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
-                                   placeholder="0">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
+                            <x-money-input 
+                                wire:model.live="paymentAmounts.{{ $method }}" 
+                                wire:keyup="distributePaymentAmounts" 
+                                class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
+                                placeholder="0" />
                         </div>
                         <div class="relative">
                             <input type="text" 

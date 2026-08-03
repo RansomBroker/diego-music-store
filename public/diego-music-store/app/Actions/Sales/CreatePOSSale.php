@@ -263,6 +263,9 @@ class CreatePOSSale
                 ]);
             }
 
+            // 6. Automatic Service Ticket Generation for Service Items
+            \App\Actions\Service\CreateServiceOrderFromSale::execute($sale);
+
             return $sale;
         });
     }

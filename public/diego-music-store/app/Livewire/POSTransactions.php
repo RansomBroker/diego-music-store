@@ -68,6 +68,13 @@ class POSTransactions extends Component
         $this->resetPage();
     }
 
+    public function updated($propertyName): void
+    {
+        if ($propertyName === 'settlementAmount') {
+            $this->settlementAmount = \App\Helpers\FormatHelper::parseRupiah($this->settlementAmount);
+        }
+    }
+
     public function updatingSelectedBranchId(): void
     {
         $this->resetPage();

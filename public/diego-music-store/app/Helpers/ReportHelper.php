@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\ProductVariant;
 use App\Models\ProductBranchStock;
 use App\Models\CashTransaction;
@@ -16,30 +17,65 @@ use Illuminate\Support\Facades\DB;
 class ReportHelper
 {
     /**
-     * Get Sales Summary and Breakdown for a given date range and optional branch.
+     * Apply comprehensive sales filters to Eloquent query.
      */
-    public static function getSalesReport(?string $dateFrom, ?string $dateTo, ?int $branchId = null, ?string $search = null): array
+    private static function applySalesFilters($query, array $filters = []): void
     {
-        $query = Sale::with(['customer', 'salesRep', 'items.variant.product', 'branch'])
-            ->where('status', 'completed');
-
-        if ($dateFrom) {
-            $query->whereDate('invoice_date', '>=', $dateFrom);
+        if (!empty($filters['dateFrom'])) {
+            $query->whereDate('invoice_date', '>=', $filters['dateFrom']);
         }
-        if ($dateTo) {
-            $query->whereDate('invoice_date', '<=', $dateTo);
+        if (!empty($filters['dateTo'])) {
+            $query->whereDate('invoice_date', '<=', $filters['dateTo']);
         }
-        if ($branchId) {
-            $query->where('branch_id', $branchId);
+        if (!empty($filters['branchId'])) {
+            $query->where('branch_id', $filters['branchId']);
         }
-        if (!empty($search)) {
-            $s = '%' . trim($search) . '%';
+        if (!empty($filters['customerId'])) {
+            $query->where('customer_id', $filters['customerId']);
+        }
+        if (!empty($filters['paymentMethod'])) {
+            $query->where('payment_method', $filters['paymentMethod']);
+        }
+        if (!empty($filters['salesRepId'])) {
+            $query->where('sales_rep_id', $filters['salesRepId']);
+        }
+        if (!empty($filters['cashierId'])) {
+            $query->where('created_by', $filters['cashierId']);
+        }
+        if (!empty($filters['saleCategory'])) {
+            $query->where('sale_category', $filters['saleCategory']);
+        }
+        if (!empty($filters['productCategory'])) {
+            $query->whereHas('items.variant.product', fn($pq) => $pq->where('category', $filters['productCategory']));
+        }
+        if (!empty($filters['search'])) {
+            $s = '%' . trim($filters['search']) . '%';
             $query->where(function ($q) use ($s) {
                 $q->where('invoice_number', 'like', $s)
                   ->orWhereHas('customer', fn($cq) => $cq->where('name', 'like', $s))
-                  ->orWhereHas('salesRep', fn($sq) => $sq->where('name', 'like', $s));
+                  ->orWhereHas('salesRep', fn($sq) => $sq->where('name', 'like', $s))
+                  ->orWhereHas('items.variant', fn($vq) => $vq->where('name', 'like', $s)->orWhere('sku', 'like', $s))
+                  ->orWhereHas('items.variant.product', fn($pq) => $pq->where('name', 'like', $s));
             });
         }
+    }
+
+    /**
+     * Get Sales Summary and Breakdown for a given date range and optional filters.
+     */
+    public static function getSalesReport(array|string|null $dateFromOrFilters = null, ?string $dateTo = null, ?int $branchId = null, ?string $search = null): array
+    {
+        $filters = is_array($dateFromOrFilters) ? $dateFromOrFilters : [
+            'dateFrom' => $dateFromOrFilters,
+            'dateTo'   => $dateTo,
+            'branchId' => $branchId,
+            'search'   => $search,
+        ];
+
+        $query = Sale::with(['customer', 'salesRep', 'items.variant.product', 'branch'])
+            ->where('status', 'completed');
+
+        static::applySalesFilters($query, $filters);
 
         $sales = $query->latest('invoice_date')->latest('id')->get();
 
@@ -78,18 +114,36 @@ class ReportHelper
     /**
      * Get Accounts Receivable (Piutang Usaha) Aging & Outstanding Report.
      */
-    public static function getARAgingReport(?int $branchId = null, ?string $search = null): array
-    {
+    public static function getARAgingReport(
+        ?int $branchId = null,
+        ?string $search = null,
+        ?int $customerId = null,
+        ?string $agingGroupFilter = null,
+        ?string $dateFrom = null,
+        ?string $dateTo = null
+    ): array {
         // Query sales with credit or piutang payment method
         $query = Sale::with(['customer', 'branch'])
-            ->where('status', 'completed')
             ->where(function ($q) {
                 $q->where('payment_method', 'like', '%credit%')
-                  ->orWhere('payment_method', 'like', '%piutang%');
+                  ->orWhere('payment_method', 'like', '%piutang%')
+                  ->orWhere('status', '!=', 'completed');
             });
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
+        }
+
+        if ($customerId) {
+            $query->where('customer_id', $customerId);
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('invoice_date', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('invoice_date', '<=', $dateTo);
         }
 
         if (!empty($search)) {
@@ -112,14 +166,8 @@ class ReportHelper
         $today = Carbon::today();
 
         foreach ($sales as $sale) {
-            // Find total settlement payments recorded in journal entries for this sale's AR
-            $settledAmount = JournalItem::whereHas('journalEntry', function ($jq) use ($sale) {
-                $jq->where('reference_type', 'AR_Payment')
-                   ->where('reference_id', $sale->id)
-                   ->where('status', 'posted');
-            })->where('credit', '>', 0)->sum('credit');
-
-            $outstanding = max(0, $sale->grand_total - $settledAmount);
+            $outstanding = $sale->getPiutangAmount();
+            $settledAmount = max(0, floatval($sale->grand_total) - $outstanding);
 
             if ($outstanding <= 0) {
                 continue; // Fully paid
@@ -130,31 +178,41 @@ class ReportHelper
 
             if ($ageDays <= 30) {
                 $agingGroup = '0 - 30 Hari';
+                $agingGroupKey = '0-30';
                 $aging0to30 += $outstanding;
             } elseif ($ageDays <= 60) {
                 $agingGroup = '31 - 60 Hari';
+                $agingGroupKey = '31-60';
                 $aging31to60 += $outstanding;
             } elseif ($ageDays <= 90) {
                 $agingGroup = '61 - 90 Hari';
+                $agingGroupKey = '61-90';
                 $aging61to90 += $outstanding;
             } else {
                 $agingGroup = '> 90 Hari';
+                $agingGroupKey = 'over-90';
                 $agingOver90 += $outstanding;
+            }
+
+            if (!empty($agingGroupFilter) && $agingGroupFilter !== $agingGroupKey) {
+                continue;
             }
 
             $totalOutstanding += $outstanding;
 
             $arItems[] = [
                 'sale'            => $sale,
+                'sale_id'         => $sale->id,
                 'invoice_number'  => $sale->invoice_number,
                 'customer_name'   => $sale->customer->name ?? 'Walk-in / Umum',
                 'invoice_date'    => $sale->invoice_date->format('d/m/Y'),
-                'due_date'        => $invDate->addDays(30)->format('d/m/Y'),
-                'grand_total'     => $sale->grand_total,
+                'due_date'        => $invDate->copy()->addDays(30)->format('d/m/Y'),
+                'grand_total'     => floatval($sale->grand_total),
                 'paid_amount'     => $settledAmount,
                 'outstanding'     => $outstanding,
                 'age_days'        => $ageDays,
                 'aging_group'     => $agingGroup,
+                'aging_group_key' => $agingGroupKey,
             ];
         }
 
@@ -175,8 +233,9 @@ class ReportHelper
     public static function getARSettlementReport(?string $dateFrom, ?string $dateTo, ?int $branchId = null, ?string $search = null): array
     {
         $query = JournalEntry::with(['items.account', 'branch'])
-            ->where('reference_type', 'AR_Payment')
-            ->where('status', 'posted');
+            ->whereIn('reference_type', ['AR_Payment', 'Sales'])
+            ->where('status', 'posted')
+            ->where('description', 'like', '%Pelunasan Piutang%');
 
         if ($dateFrom) {
             $query->whereDate('date', '>=', $dateFrom);
@@ -324,4 +383,271 @@ class ReportHelper
             'potential_profit'          => $potentialProfit,
         ];
     }
+
+    /**
+     * Get Daily Sales Detail Report (Flattened Item level details).
+     */
+    public static function getDailySalesDetailReport(array|string|null $dateFromOrFilters = null, ?string $dateTo = null, ?int $branchId = null, ?string $search = null): array
+    {
+        $filters = is_array($dateFromOrFilters) ? $dateFromOrFilters : [
+            'dateFrom' => $dateFromOrFilters,
+            'dateTo'   => $dateTo,
+            'branchId' => $branchId,
+            'search'   => $search,
+        ];
+
+        $query = Sale::with(['customer', 'salesRep', 'creator', 'branch', 'items.variant.product'])
+            ->where('status', 'completed');
+
+        static::applySalesFilters($query, $filters);
+
+        $sales = $query->latest('invoice_date')->latest('id')->get();
+
+        $detailItems = [];
+        $grandTotalSum = 0;
+        $totalQtySum = 0;
+        $totalDiscountSum = 0;
+        $totalTaxSum = 0;
+
+        foreach ($sales as $sale) {
+            $grandTotalSum += floatval($sale->grand_total);
+            $totalTaxSum += floatval($sale->tax_amount);
+
+            $itemCount = max(1, $sale->items->count());
+
+            foreach ($sale->items as $idx => $item) {
+                $variant = $item->variant;
+                $productName = $variant?->product?->name ?? 'Barang';
+                if ($variant && !empty($variant->name)) {
+                    $productName .= ' (' . $variant->name . ')';
+                }
+                $sku = $variant?->sku ?? $variant?->barcode ?? '-';
+
+                $qty = intval($item->quantity);
+                $unitPrice = floatval($item->unit_price);
+                $discount = floatval($item->discount_amount);
+                $subtotal = floatval($item->total_price);
+
+                $totalQtySum += $qty;
+                $totalDiscountSum += $discount;
+
+                $detailItems[] = [
+                    'sale_id'          => $sale->id,
+                    'invoice_date'     => $sale->invoice_date->format('d/m/Y'),
+                    'sale_category'    => $sale->sale_category ?? 'Retail',
+                    'invoice_number'   => $sale->invoice_number,
+                    'customer_name'    => $sale->customer->name ?? 'Pelanggan Umum',
+                    'cashier_name'     => $sale->creator->name ?? 'Kasir',
+                    'sales_rep_name'   => $sale->salesRep->name ?? '-',
+                    'payment_method'   => $sale->payment_method ?? 'Tunai',
+                    'sku'              => $sku,
+                    'product_name'     => $productName,
+                    'quantity'         => $qty,
+                    'unit_price'       => $unitPrice,
+                    'discount_amount'  => $discount,
+                    'tax_amount'       => floatval($sale->tax_amount),
+                    'subtotal'         => $subtotal,
+                    'notes'            => $item->notes ?: ($sale->notes ?? '-'),
+                    'is_first_item'    => ($idx === 0),
+                    'rowspan'          => $itemCount,
+                ];
+            }
+        }
+
+        return [
+            'items'               => $detailItems,
+            'total_transactions'  => $sales->count(),
+            'total_qty'           => $totalQtySum,
+            'total_discount'      => $totalDiscountSum,
+            'total_tax'           => $totalTaxSum,
+            'grand_total'         => $grandTotalSum,
+        ];
+    }
+
+    /**
+     * Get Daily Sales Per Day Report (Grouped by Date).
+     */
+    public static function getDailySalesPerDayReport(array|string|null $dateFromOrFilters = null, ?string $dateTo = null, ?int $branchId = null): array
+    {
+        $filters = is_array($dateFromOrFilters) ? $dateFromOrFilters : [
+            'dateFrom' => $dateFromOrFilters,
+            'dateTo'   => $dateTo,
+            'branchId' => $branchId,
+        ];
+
+        $query = Sale::where('status', 'completed');
+
+        static::applySalesFilters($query, $filters);
+
+        $sales = $query->orderBy('invoice_date', 'desc')->get();
+
+        $grouped = $sales->groupBy(fn($s) => $s->invoice_date->format('Y-m-d'));
+
+        $items = [];
+        $totalGrandTotal = 0;
+        $totalSubtotal = 0;
+        $totalDiscount = 0;
+        $totalTax = 0;
+        $totalInvoices = 0;
+
+        foreach ($grouped as $dateStr => $daySales) {
+            $invCount = $daySales->count();
+            $sub = $daySales->sum('subtotal');
+            $disc = $daySales->sum('discount_amount');
+            $tax = $daySales->sum('tax_amount');
+            $grand = $daySales->sum('grand_total');
+
+            $totalInvoices += $invCount;
+            $totalSubtotal += $sub;
+            $totalDiscount += $disc;
+            $totalTax += $tax;
+            $totalGrandTotal += $grand;
+
+            $items[] = [
+                'date'            => Carbon::parse($dateStr)->format('d/m/Y'),
+                'raw_date'        => $dateStr,
+                'invoice_count'   => $invCount,
+                'subtotal'        => $sub,
+                'discount_amount' => $disc,
+                'tax_amount'      => $tax,
+                'grand_total'     => $grand,
+            ];
+        }
+
+        return [
+            'items'            => $items,
+            'total_invoices'   => $totalInvoices,
+            'total_subtotal'   => $totalSubtotal,
+            'total_discount'   => $totalDiscount,
+            'total_tax'        => $totalTax,
+            'total_grand_total'=> $totalGrandTotal,
+        ];
+    }
+
+    /**
+     * Get Daily Sales Per Nota Report.
+     */
+    public static function getDailySalesPerNotaReport(array|string|null $dateFromOrFilters = null, ?string $dateTo = null, ?int $branchId = null, ?string $search = null): array
+    {
+        $filters = is_array($dateFromOrFilters) ? $dateFromOrFilters : [
+            'dateFrom' => $dateFromOrFilters,
+            'dateTo'   => $dateTo,
+            'branchId' => $branchId,
+            'search'   => $search,
+        ];
+
+        $query = Sale::with(['customer', 'salesRep', 'creator', 'items'])
+            ->where('status', 'completed');
+
+        static::applySalesFilters($query, $filters);
+
+        $sales = $query->latest('invoice_date')->latest('id')->get();
+
+        $items = [];
+        $totalSubtotal = 0;
+        $totalDiscount = 0;
+        $totalTax = 0;
+        $totalGrandTotal = 0;
+
+        foreach ($sales as $sale) {
+            $sub = floatval($sale->subtotal);
+            $disc = floatval($sale->discount_amount);
+            $tax = floatval($sale->tax_amount);
+            $grand = floatval($sale->grand_total);
+
+            $totalSubtotal += $sub;
+            $totalDiscount += $disc;
+            $totalTax += $tax;
+            $totalGrandTotal += $grand;
+
+            $items[] = [
+                'sale_id'         => $sale->id,
+                'invoice_number'  => $sale->invoice_number,
+                'date'            => $sale->invoice_date->format('d/m/Y'),
+                'sale_category'   => $sale->sale_category ?? 'Retail',
+                'customer_name'   => $sale->customer->name ?? 'Pelanggan Umum',
+                'cashier_name'    => $sale->creator->name ?? 'Kasir',
+                'sales_rep_name'  => $sale->salesRep->name ?? '-',
+                'payment_method'  => $sale->payment_method ?? 'Tunai',
+                'item_count'      => $sale->items->count(),
+                'subtotal'        => $sub,
+                'discount_amount' => $disc,
+                'tax_amount'      => $tax,
+                'grand_total'     => $grand,
+            ];
+        }
+
+        return [
+            'items'            => $items,
+            'total_invoices'   => count($items),
+            'total_subtotal'   => $totalSubtotal,
+            'total_discount'   => $totalDiscount,
+            'total_tax'        => $totalTax,
+            'total_grand_total'=> $totalGrandTotal,
+        ];
+    }
+
+    /**
+     * Get Daily Sales Top Selling Products Report.
+     */
+    public static function getDailySalesTopSellingReport(array|string|null $dateFromOrFilters = null, ?string $dateTo = null, ?int $branchId = null, ?string $search = null): array
+    {
+        $filters = is_array($dateFromOrFilters) ? $dateFromOrFilters : [
+            'dateFrom' => $dateFromOrFilters,
+            'dateTo'   => $dateTo,
+            'branchId' => $branchId,
+            'search'   => $search,
+        ];
+
+        $query = SaleItem::with(['variant.product', 'sale']);
+
+        $query->whereHas('sale', function ($sq) use ($filters) {
+            $sq->where('status', 'completed');
+            static::applySalesFilters($sq, $filters);
+        });
+
+        $saleItems = $query->get();
+
+        $grouped = $saleItems->groupBy('product_variant_id');
+
+        $items = [];
+        $grandTotalQty = 0;
+        $grandTotalRevenue = 0;
+
+        foreach ($grouped as $variantId => $groupItems) {
+            $first = $groupItems->first();
+            $variant = $first?->variant;
+            $productName = $variant?->product?->name ?? 'Barang';
+            if ($variant && !empty($variant->name)) {
+                $productName .= ' (' . $variant->name . ')';
+            }
+            $sku = $variant?->sku ?? $variant?->barcode ?? '-';
+            $categoryName = $variant?->product?->category ?? 'Umum';
+
+            $totalQty = $groupItems->sum('quantity');
+            $totalRevenue = $groupItems->sum('total_price');
+
+            $grandTotalQty += $totalQty;
+            $grandTotalRevenue += $totalRevenue;
+
+            $items[] = [
+                'sku'             => $sku,
+                'product_name'    => $productName,
+                'category_name'   => $categoryName,
+                'total_qty'       => $totalQty,
+                'total_revenue'   => $totalRevenue,
+            ];
+        }
+
+        // Sort by total_qty descending
+        usort($items, fn($a, $b) => $b['total_qty'] <=> $a['total_qty']);
+
+        return [
+            'items'              => $items,
+            'total_products'     => count($items),
+            'grand_total_qty'    => $grandTotalQty,
+            'grand_total_revenue'=> $grandTotalRevenue,
+        ];
+    }
 }
+

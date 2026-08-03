@@ -73,7 +73,7 @@ class PosReportsTest extends TestCase
         Livewire::actingAs($this->user)
             ->test(PosReportsStockPrices::class)
             ->assertStatus(200)
-            ->assertSee('Daftar Stok & Penilaian Harga');
+            ->assertSee('Daftar Stok & Nilai Persediaan');
     }
 
     /** @test */

@@ -29,7 +29,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/session/{cashSession}/z-report', [App\Http\Controllers\POS\ZReportController::class, 'show'])->name('pos.z-report');
     Route::get('/pos/transactions', App\Livewire\POSTransactions::class)->name('pos.transactions');
     Route::get('/pos/daily-cash', App\Livewire\POSDailyCash::class)->name('pos.daily-cash');
-    Route::get('/pos/supplier-payments', App\Livewire\PosSupplierPayments::class)->name('pos.supplier-payments');
+    Route::get('/pos/customer-payments', App\Livewire\PosCustomerPayments::class)->name('pos.customer-payments');
     // Laporan ERP Routes
     Route::get('/pos/reports', fn() => redirect()->route('pos.reports.sales'))->name('pos.reports');
     Route::get('/pos/reports/sales', App\Livewire\PosReportsSales::class)->name('pos.reports.sales');
@@ -53,7 +53,12 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/receipt-settings', App\Livewire\PosReceiptSettings::class)->name('pos.receipt-settings');
     Route::get('/pos/barcode-print', App\Livewire\PosBarcodePrint::class)->name('pos.barcode-print');
     Route::get('/pos/barcode-print/sheet', [App\Http\Controllers\POS\POSBarcodePrintController::class, 'show'])->name('pos.barcode-print.sheet');
+    // Service Management
+    Route::get('/pos/service-management', App\Livewire\PosServiceManagement::class)->name('pos.service-management');
 });
+
+// Public Service Tracking Route (Without Login)
+Route::get('/track-service/{ticketCode}', [App\Http\Controllers\PublicServiceTrackingController::class, 'show'])->name('public.service-tracking');
 
 // Fallback redirect for /admin URL path to /backoffice
 Route::get('/admin/{path?}', function ($path = null) {

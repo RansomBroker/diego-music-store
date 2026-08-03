@@ -4,18 +4,13 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\SupplierPayment;
-use App\Models\Supplier;
 use App\Models\Account;
 use App\Models\Branch;
-use App\Models\PurchaseTransaction;
-use App\Actions\SupplierPayment\CreateSupplierPayment;
-use App\Actions\SupplierPayment\ProcessSupplierPaymentComplete;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
 
-class PosSupplierPayments extends Component
+class PosCustomerPayments extends Component
 {
     use WithPagination;
 
@@ -39,15 +34,8 @@ class PosSupplierPayments extends Component
 
     // ── Detail View State ──────────────────────────────────────────────
     public bool $showDetailModal = false;
-    public ?int $detailPaymentId = null;
-    public ?SupplierPayment $detailPayment = null;
-
-    // ── Confirmation Modal State ────────────────────────────────────────
-    public bool $showPostConfirmation = false;
-    public ?int $paymentIdToPost = null;
-
-    public bool $showDeleteConfirmation = false;
-    public ?int $paymentIdToDelete = null;
+    public ?\App\Models\Sale $selectedSale = null;
+    public array $settlementHistory = [];
 
     // ── Query string bindings for filters ───────────────────────────────
     protected $queryString = [
@@ -135,6 +123,9 @@ class PosSupplierPayments extends Component
         $this->items = [];
         foreach ($unpaidSales as $sale) {
             $due = $sale->getPiutangAmount();
+            if ($due <= 0) {
+                continue;
+            }
             $this->items[] = [
                 'is_selected' => false,
                 'sale_id' => $sale->id,
@@ -302,79 +293,68 @@ class PosSupplierPayments extends Component
         }
     }
 
+    // ── Show Detail & Settlement History Modal ──────────────────────────
     public function showDetails(int $id): void
     {
-        $this->detailPayment = SupplierPayment::with(['supplier', 'branch', 'account', 'creator', 'items.purchaseTransaction'])->find($id);
+        $sale = \App\Models\Sale::with(['customer', 'branch', 'salesRep', 'items.variant.product'])->find($id);
+        if (!$sale) {
+            return;
+        }
+
+        $this->selectedSale = $sale;
+
+        // Fetch all journal entries for this Sale (settlement transactions)
+        $journalEntries = \App\Models\JournalEntry::with(['items.account', 'user'])
+            ->where('reference_type', 'Sales')
+            ->where('reference_id', $sale->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $piutangAccount = \App\Models\Account::where('code', '1-1200')->first();
+
+        $history = [];
+        foreach ($journalEntries as $je) {
+            $piutangCredit = $je->items->first(fn($item) => $piutangAccount && $item->account_id === $piutangAccount->id && floatval($item->credit) > 0);
+            $kasDebit = $je->items->first(fn($item) => floatval($item->debit) > 0);
+
+            if ($piutangCredit || $kasDebit) {
+                $amount = $piutangCredit ? floatval($piutangCredit->credit) : floatval($kasDebit?->debit ?? 0);
+                $accountName = $kasDebit?->account?->name ?? 'Kas / Bank';
+
+                $history[] = [
+                    'id' => $je->id,
+                    'entry_number' => $je->entry_no ?? ('JE-' . str_pad($je->id, 5, '0', STR_PAD_LEFT)),
+                    'date' => $je->date ? \Carbon\Carbon::parse($je->date)->format('d/m/Y') : '-',
+                    'account_name' => $accountName,
+                    'description' => $je->description ?? 'Pelunasan Piutang',
+                    'user_name' => $je->user?->name ?? $je->creator?->name ?? 'System/Kasir',
+                    'amount' => $amount,
+                ];
+            }
+        }
+
+        $this->settlementHistory = $history;
         $this->showDetailModal = true;
     }
 
-    public function confirmPost(int $id): void
+    public function closeDetails(): void
     {
-        $this->paymentIdToPost = $id;
-        $this->showPostConfirmation = true;
-    }
-
-    public function postPayment(): void
-    {
-        if (!$this->paymentIdToPost) {
-            return;
-        }
-
-        try {
-            $payment = SupplierPayment::find($this->paymentIdToPost);
-            if ($payment) {
-                app(\App\Actions\SupplierPayment\ProcessSupplierPaymentComplete::class)->execute($payment);
-            }
-
-            Notification::make()->title('Pelunasan Berhasil Diposting')->success()->send();
-            $this->dispatch('toast', type: 'success', title: 'Pelunasan Berhasil Diposting');
-
-            $this->showPostConfirmation = false;
-            $this->paymentIdToPost = null;
-        } catch (\Throwable $e) {
-            Notification::make()->title('Gagal Posting')->body($e->getMessage())->danger()->send();
-            $this->dispatch('toast', type: 'danger', title: 'Gagal Posting', body: $e->getMessage());
-        }
-    }
-
-    public function confirmDelete(int $id): void
-    {
-        $this->paymentIdToDelete = $id;
-        $this->showDeleteConfirmation = true;
-    }
-
-    public function deletePayment(): void
-    {
-        if (!$this->paymentIdToDelete) {
-            return;
-        }
-
-        try {
-            $payment = SupplierPayment::find($this->paymentIdToDelete);
-            if ($payment) {
-                $payment->items()->delete();
-                $payment->delete();
-            }
-
-            Notification::make()->title('Pelunasan Berhasil Dihapus')->success()->send();
-            $this->dispatch('toast', type: 'success', title: 'Pelunasan Berhasil Dihapus');
-
-            $this->showDeleteConfirmation = false;
-            $this->paymentIdToDelete = null;
-        } catch (\Throwable $e) {
-            Notification::make()->title('Gagal Menghapus')->body($e->getMessage())->danger()->send();
-            $this->dispatch('toast', type: 'danger', title: 'Gagal Menghapus', body: $e->getMessage());
-        }
+        $this->showDetailModal = false;
+        $this->selectedSale = null;
+        $this->settlementHistory = [];
     }
 
     // ── Render ───────────────────────────────────────────────────────────
     public function render()
     {
         $salesPiutang = \App\Models\Sale::with(['customer', 'branch'])
-            ->where(function ($q) {
-                $q->where('payment_method', 'like', '%piutang%')
-                  ->orWhere('payment_method', 'like', '%credit%')
-                  ->orWhere('status', '!=', 'completed');
+            ->when($this->statusFilter, function ($q) {
+                if ($this->statusFilter === 'completed') {
+                    $q->where('status', 'completed');
+                } elseif ($this->statusFilter === 'unpaid' || $this->statusFilter === 'draft') {
+                    $q->where('status', '!=', 'completed');
+                }
             })
             ->when($this->search, function ($q) {
                 $q->where('invoice_number', 'like', "%{$this->search}%")
@@ -394,9 +374,9 @@ class PosSupplierPayments extends Component
             ->orderBy('code')
             ->get();
 
-        return view('livewire.pos-supplier-payments', [
+        return view('livewire.pos-customer-payments', [
             'payments' => $salesPiutang,
-            'customers' => \App\Models\Customer::orderBy('name')->get(),
+            'customers' => \App\Models\Customer::orderBy('name')->get()->filter(fn ($c) => $c->total_piutang > 0),
             'accounts' => $accounts,
             'selectedLogoUrl' => $selectedLogoUrl,
         ])->layout('layouts.pos', ['title' => 'Pelunasan Piutang — POS']);

@@ -102,10 +102,11 @@
                                 <div class="space-y-5">
                                     <div>
                                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-2">Kas Fisik Riil di Laci (Actual Cash)</label>
-                                        <div class="relative">
-                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-lg">Rp</span>
-                                            <input type="number" wire:model.live="actualCash" class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent font-bold text-lg text-slate-850 dark:text-white transition-colors" placeholder="0">
-                                        </div>
+                                        <x-money-input 
+                                            wire:model.live="actualCash"
+                                            class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent font-bold text-lg text-slate-850 dark:text-white transition-colors"
+                                            placeholder="0"
+                                        />
                                         @error('actualCash') <span class="text-xs text-rose-500 font-medium mt-1 block">{{ $message }}</span> @enderror
                                     </div>
 
@@ -187,10 +188,11 @@
                             <!-- Opening Cash -->
                             <div>
                                 <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Modal Uang Tunai Awal (Opening Cash)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-lg">Rp</span>
-                                    <input type="number" wire:model.live="openingCash" class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent font-bold text-lg text-slate-850 dark:text-white transition-colors" placeholder="0">
-                                </div>
+                                <x-money-input 
+                                    wire:model.live="openingCash"
+                                    class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent font-bold text-lg text-slate-850 dark:text-white transition-colors"
+                                    placeholder="0"
+                                />
                                 @error('openingCash') <span class="text-xs text-rose-500 font-medium mt-1 block">{{ $message }}</span> @enderror
                             </div>
 

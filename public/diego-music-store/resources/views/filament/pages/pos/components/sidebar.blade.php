@@ -9,7 +9,7 @@
     $isSession      = request()->is('pos/session*');
     $isTransactions = request()->is('pos/transactions*');
     $isDailyCash    = request()->is('pos/daily-cash*');
-    $isSupplierPayments = request()->is('pos/supplier-payments*');
+    $isCustomerPayments = request()->is('pos/customer-payments*');
     $isDashboard    = request()->is('pos/front-office*');
     $isReports      = request()->is('pos/reports*');
     $isInputData    = request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*') || request()->is('pos/vouchers*');
@@ -145,15 +145,31 @@
         @endif
 
         {{-- Pelunasan Piutang --}}
-        @if ($isSupplierPayments)
+        @if ($isCustomerPayments)
             <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-955/40 rounded-xl transition-colors cursor-default">
                 <i class="ph-fill ph-hand-coins text-2xl mb-1"></i>
                 <span class="text-[11px] font-semibold text-center leading-tight">Pelunasan Piutang</span>
             </button>
         @else
-            <a href="/pos/supplier-payments" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
+            <a href="/pos/customer-payments" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
                 <i class="ph ph-hand-coins text-2xl mb-1"></i>
                 <span class="text-[11px] font-medium text-center leading-tight">Pelunasan Piutang</span>
+            </a>
+        @endif
+
+        {{-- Barang Service --}}
+        @php
+            $isServiceManagement = request()->is('pos/service-management*');
+        @endphp
+        @if ($isServiceManagement)
+            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
+                <i class="ph-fill ph-wrench text-2xl mb-1"></i>
+                <span class="text-[11px] font-semibold text-center leading-tight">Service</span>
+            </button>
+        @else
+            <a href="/pos/service-management" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
+                <i class="ph ph-wrench text-2xl mb-1"></i>
+                <span class="text-[11px] font-medium text-center leading-tight">Service</span>
             </a>
         @endif
 

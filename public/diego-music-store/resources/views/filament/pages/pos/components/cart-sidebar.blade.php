@@ -446,105 +446,116 @@
         @endif
     </div>
 
-    <!-- Cart Footer / Summary -->
-    <div class="bg-slate-100 dark:bg-slate-900 p-6 border-t border-slate-200 dark:border-slate-700 mt-auto">
-        <div class="space-y-3 mb-5">
-            <div class="flex items-center justify-between text-sm">
-                <span class="text-slate-700 dark:text-slate-300 font-bold">Subtotal ({{ collect($cart)->sum('qty') }} item)</span>
-                <span class="font-black text-slate-950 dark:text-white text-base">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
-            </div>
-            <div class="flex items-center justify-between text-sm gap-2">
-                <div class="flex items-center gap-2">
-                    <label for="enableTax" class="inline-flex items-center cursor-pointer select-none">
-                        <div class="relative">
-                            <input type="checkbox" id="enableTax" wire:model.live="enableTax" class="sr-only peer">
-                            <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-primary transition-colors"></div>
+    <!-- Cart Footer / Summary (Flex: Details Fill Remaining Space, Slim Fixed-Width Button) -->
+    <div class="bg-slate-100 dark:bg-slate-900 p-4 sm:p-5 border-t border-slate-200 dark:border-slate-700 mt-auto">
+        <div class="flex gap-3 sm:gap-4 items-stretch">
+            <!-- Left Column: Extra Large Summary Details & Total Tagihan (Flex-1) -->
+            <div class="flex-1 flex flex-col justify-between space-y-3 min-w-0">
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between text-base sm:text-lg">
+                        <span class="text-slate-700 dark:text-slate-200 font-extrabold truncate">Subtotal ({{ collect($cart)->sum('qty') }} item)</span>
+                        <span class="font-black text-slate-950 dark:text-white text-base sm:text-lg whitespace-nowrap ml-1">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between text-base sm:text-lg gap-1">
+                        <div class="flex items-center gap-2">
+                            <label for="enableTax" class="inline-flex items-center cursor-pointer select-none">
+                                <div class="relative">
+                                    <input type="checkbox" id="enableTax" wire:model.live="enableTax" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-primary transition-colors"></div>
+                                </div>
+                                <span class="ms-2 text-base sm:text-lg font-black text-slate-700 dark:text-slate-200">PPN</span>
+                            </label>
+                            @if ($enableTax)
+                                <div class="flex items-center bg-white dark:bg-slate-700 rounded-lg px-2 py-0.5 border border-slate-400 dark:border-slate-600">
+                                    <input type="number" wire:model.live.debounce.250ms="taxPercent" class="w-9 bg-transparent text-center border-none p-0 text-xs sm:text-sm font-black text-slate-900 dark:text-white focus:ring-0 appearance-none h-5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" min="0" max="100">%
+                                </div>
+                            @endif
                         </div>
-                        <span class="ms-2.5 text-sm font-extrabold text-slate-700 dark:text-slate-300">Pajak PPN</span>
-                    </label>
-                    @if ($enableTax)
-                        <div class="flex items-center bg-white dark:bg-slate-700 rounded px-2 py-0.5 border border-slate-400 dark:border-slate-600">
-                            <input type="number" wire:model.live.debounce.250ms="taxPercent" class="w-8 bg-transparent text-center border-none p-0 text-xs font-black text-slate-900 dark:text-white focus:ring-0 appearance-none h-4 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" min="0" max="100">%
-                        </div>
-                    @endif
-                </div>
-                <span class="font-black text-slate-950 dark:text-white text-base">Rp {{ number_format($taxAmount, 0, ',', '.') }}</span>
-            </div>
-            @if ($selectedCustomerId && $customerPoints > 0)
-                <div class="flex items-center justify-between text-sm gap-2">
-                    <div class="flex items-center gap-2">
-                        <label for="usePoints" class="inline-flex items-center cursor-pointer select-none">
-                            <div class="relative">
-                                <input type="checkbox" id="usePoints" wire:model.live="usePoints" class="sr-only peer">
-                                <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-primary transition-colors"></div>
+                        <span class="font-black text-slate-950 dark:text-white text-base sm:text-lg whitespace-nowrap">Rp {{ number_format($taxAmount, 0, ',', '.') }}</span>
+                    </div>
+
+                    @if ($selectedCustomerId && $customerPoints > 0)
+                        <div class="flex items-center justify-between text-base sm:text-lg gap-2">
+                            <div class="flex items-center gap-2">
+                                <label for="usePoints" class="inline-flex items-center cursor-pointer select-none">
+                                    <div class="relative">
+                                        <input type="checkbox" id="usePoints" wire:model.live="usePoints" class="sr-only peer">
+                                        <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-primary transition-colors"></div>
+                                    </div>
+                                    <span class="ms-2 text-base sm:text-lg font-black text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                                        <i class="ph-fill ph-coins text-amber-500 text-lg"></i>
+                                        Poin ({{ $customerPoints }})
+                                    </span>
+                                </label>
                             </div>
-                            <span class="ms-2.5 text-sm font-extrabold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                                <i class="ph-fill ph-coins text-amber-500 text-base"></i>
-                                Gunakan Poin ({{ $customerPoints }} Poin)
+                            <span class="font-black text-green-600 dark:text-green-400 text-base sm:text-lg whitespace-nowrap">
+                                @if ($usePoints)
+                                    - Rp {{ number_format($pointDiscountAmount, 0, ',', '.') }}
+                                @else
+                                    Rp 0
+                                @endif
                             </span>
-                        </label>
-                    </div>
-                    <span class="font-black text-green-600 dark:text-green-400 text-base">
-                        @if ($usePoints)
-                            - Rp {{ number_format($pointDiscountAmount, 0, ',', '.') }}
-                        @else
-                            Rp 0
-                        @endif
-                    </span>
-                </div>
-            @endif
-            <!-- Diskon Global Input -->
-            <div class="flex items-center justify-between text-sm gap-2 pt-1">
-                <div class="flex flex-col">
-                    <span class="text-sm font-extrabold text-slate-700 dark:text-slate-300">
-                        Diskon Transaksi
-                    </span>
-                    @if ($discountType === 'percent' && $discountValue > 0)
-                        <span class="text-sm font-black text-green-600 dark:text-green-400 mt-0.5">
-                            - Rp {{ number_format($discountAmount, 0, ',', '.') }}
-                        </span>
+                        </div>
                     @endif
-                </div>
-                <div class="w-32 flex-shrink-0">
-                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-8">
-                        <i class="ph ph-tag text-slate-500 dark:text-slate-400 text-xs absolute left-2 pointer-events-none"></i>
-                        <input 
-                            type="number" 
-                            placeholder="{{ $discountType === 'percent' ? '0 %' : 'Rp 0' }}" 
-                            wire:model.live="discountValue"
-                            class="w-full pl-7 pr-8 py-0 h-full bg-transparent border-none text-sm font-extrabold text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
-                            min="0"
-                        >
-                        <button 
-                            type="button"
-                            wire:click="toggleGlobalDiscountType"
-                            class="absolute right-0 top-0 bottom-0 px-2 bg-slate-150 dark:bg-slate-800 text-[10px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center select-none"
-                            title="Klik untuk mengubah jenis diskon (Nominal / Persentase)"
-                        >
-                            {{ $discountType === 'percent' ? '%' : 'Rp' }}
-                        </button>
+
+                    <div class="flex items-center justify-between text-base sm:text-lg gap-2 pt-0.5">
+                        <span class="text-base sm:text-lg font-black text-slate-700 dark:text-slate-200">
+                            Diskon Transaksi
+                        </span>
+                        <div class="w-40 flex-shrink-0">
+                            <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-9.5">
+                                <i class="ph ph-tag text-slate-500 dark:text-slate-400 text-sm absolute left-2 pointer-events-none z-10"></i>
+                                @if ($discountType === 'fixed')
+                                    <x-money-input 
+                                        wire:model.live="discountValue"
+                                        class="w-full pl-7 pr-9 py-0 h-full bg-transparent border-none text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
+                                        placeholder="0"
+                                    />
+                                @else
+                                    <input 
+                                        type="number" 
+                                        placeholder="0 %" 
+                                        wire:model.live="discountValue"
+                                        class="w-full pl-7 pr-9 py-0 h-full bg-transparent border-none text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
+                                        min="0"
+                                    >
+                                @endif
+                                <button 
+                                    type="button"
+                                    wire:click="toggleGlobalDiscountType"
+                                    class="absolute right-0 top-0 bottom-0 px-2.5 bg-slate-150 dark:bg-slate-800 text-xs sm:text-sm font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center select-none z-10"
+                                    title="Klik untuk mengubah jenis diskon (Nominal / Persentase)"
+                                >
+                                    {{ $discountType === 'percent' ? '%' : 'Rp' }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Total Tagihan (Extra Prominent & Clear) -->
+                <div class="pt-3 border-t-2 border-slate-300 dark:border-slate-700 flex flex-col justify-end mt-1">
+                    <span class="text-sm sm:text-base font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none">Total Tagihan</span>
+                    <span class="text-3xl sm:text-4xl font-black text-primary dark:text-blue-400 leading-tight mt-1">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
                 </div>
             </div>
+
+            <!-- Right Column: Extra Large Payment Box Button (w-44 sm:w-48) -->
+            <div class="w-44 sm:w-48 flex-shrink-0 flex">
+                <button 
+                    type="button"
+                    wire:click="openPayment"
+                    @if(empty($cart)) disabled @endif
+                    class="w-full h-full min-h-[135px] bg-primary hover:bg-primary-dark disabled:bg-slate-250 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 dark:disabled:text-slate-600 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center text-center transition-all duration-200 shadow-xl shadow-blue-500/30 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed group"
+                >
+                    <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-xl bg-white/20 dark:bg-white/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                        <i class="ph-bold ph-credit-card text-2xl sm:text-3xl text-white"></i>
+                    </div>
+                    <span class="font-black text-base sm:text-lg leading-tight">Bayar</span>
+                    <span class="text-xs sm:text-sm text-white/95 mt-1.5 font-black bg-white/20 px-3 py-0.5 rounded-md">F9</span>
+                </button>
+            </div>
         </div>
-
-        <!-- Dotted Divider -->
-        <div class="w-full border-t-2 border-dashed border-slate-200 dark:border-slate-700 my-4"></div>
-
-        <div class="flex items-center justify-between mb-6">
-            <span class="text-base font-bold text-slate-900 dark:text-slate-100">Total Tagihan</span>
-            <span class="text-3xl font-black text-primary dark:text-blue-400">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
-        </div>
-
-        <x-pos.utility.button 
-            wire:click="openPayment" 
-            variant="primary" 
-            size="lg" 
-            icon="ph-bold ph-credit-card"
-            :disabled="empty($cart)"
-            class="shadow-blue-500/30 group"
-        >
-            Proses Pembayaran
-        </x-pos.utility.button>
     </div>
 </div>

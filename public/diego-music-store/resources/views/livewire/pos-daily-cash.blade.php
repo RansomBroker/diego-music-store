@@ -297,15 +297,11 @@
             <!-- Nominal -->
             <div>
                 <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Nominal Uang (Rp) <span class="text-rose-500">*</span></label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
-                    <input
-                        type="number"
-                        wire:model="inAmount"
-                        placeholder="0"
-                        class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition-colors"
-                    >
-                </div>
+                <x-money-input
+                    wire:model.live="inAmount"
+                    class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition-colors font-bold"
+                    placeholder="0"
+                />
                 @error('inAmount') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
             </div>
 
@@ -368,15 +364,11 @@
             <!-- Nominal -->
             <div>
                 <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Nominal Uang (Rp) <span class="text-rose-500">*</span></label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-550 font-bold text-sm">Rp</span>
-                    <input
-                        type="number"
-                        wire:model="outAmount"
-                        placeholder="0"
-                        class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 focus:outline-none transition-colors"
-                    >
-                </div>
+                <x-money-input
+                    wire:model.live="outAmount"
+                    class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 focus:outline-none transition-colors font-bold"
+                    placeholder="0"
+                />
                 @error('outAmount') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
             </div>
 

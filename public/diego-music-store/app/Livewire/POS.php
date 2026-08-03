@@ -839,32 +839,36 @@ class POS extends Component
 
     public function distributePaymentAmounts()
     {
-        $this->amountCash = intval($this->paymentAmounts['cash'] ?? $this->amountCash);
-        $this->amountDebit = intval($this->paymentAmounts['debit'] ?? $this->amountDebit);
-        $this->amountCredit = intval($this->paymentAmounts['credit'] ?? $this->amountCredit);
+        $this->amountCash = intval(\App\Helpers\FormatHelper::parseRupiah($this->paymentAmounts['cash'] ?? $this->amountCash));
+        $this->amountDebit = intval(\App\Helpers\FormatHelper::parseRupiah($this->paymentAmounts['debit'] ?? $this->amountDebit));
+        $this->amountCredit = intval(\App\Helpers\FormatHelper::parseRupiah($this->paymentAmounts['credit'] ?? $this->amountCredit));
     }
 
     public function updated($property, $value)
     {
         if (str_starts_with($property, 'paymentAmounts.')) {
             $code = str_replace('paymentAmounts.', '', $property);
-            if ($code === 'cash') $this->amountCash = intval($value);
-            if ($code === 'debit') $this->amountDebit = intval($value);
-            if ($code === 'credit') $this->amountCredit = intval($value);
+            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
+            if ($code === 'cash') $this->amountCash = $parsed;
+            if ($code === 'debit') $this->amountDebit = $parsed;
+            if ($code === 'credit') $this->amountCredit = $parsed;
 
             $this->distributePaymentAmounts();
         }
 
         if ($property === 'amountCash') {
-            $this->paymentAmounts['cash'] = intval($value);
+            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
+            $this->paymentAmounts['cash'] = $parsed;
             $this->distributePaymentAmounts();
         }
         if ($property === 'amountDebit') {
-            $this->paymentAmounts['debit'] = intval($value);
+            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
+            $this->paymentAmounts['debit'] = $parsed;
             $this->distributePaymentAmounts();
         }
         if ($property === 'amountCredit') {
-            $this->paymentAmounts['credit'] = intval($value);
+            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
+            $this->paymentAmounts['credit'] = $parsed;
             $this->distributePaymentAmounts();
         }
     }

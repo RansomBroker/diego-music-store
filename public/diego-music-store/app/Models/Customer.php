@@ -45,6 +45,27 @@ class Customer extends Model
         return $this->belongsTo(PricingTier::class, 'pricing_tier_id');
     }
 
+    /**
+     * Calculate total outstanding piutang dynamically across all unpaid sales.
+     */
+    public function getTotalPiutangAttribute(): float
+    {
+        $unpaidSales = Sale::where('customer_id', $this->id)
+            ->where(function ($q) {
+                $q->where('payment_method', 'like', '%piutang%')
+                  ->orWhere('payment_method', 'like', '%credit%')
+                  ->orWhere('status', '!=', 'completed');
+            })
+            ->get();
+
+        $total = 0;
+        foreach ($unpaidSales as $sale) {
+            $total += $sale->getPiutangAmount();
+        }
+
+        return max(0, $total ?: floatval($this->outstanding_debt ?? 0));
+    }
+
     protected static function booted()
     {
         static::saving(function ($customer) {

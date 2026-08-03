@@ -134,40 +134,100 @@ class ProductSeeder extends Seeder
             $physicalVariants = $physicalProduct->variants()->get()->all();
         }
 
-        // 4. Create 1 Service Product
-        $serviceVariant = null;
-        if (!Product::where('name', 'Setup & Stem Gitar')->exists()) {
-            $serviceProduct = Product::create([
-                'name' => 'Setup & Stem Gitar',
-                'type' => 'service',
-                'unit_id' => $unitPcs,
+        // 4. Create Service Products
+        $additionalServiceProducts = [
+            [
+                'name'        => 'Setup & Stem Gitar',
+                'sku'         => 'SKU-JSASTEMP',
+                'barcode'     => '8992345678901',
+                'price'       => 150000,
                 'description' => 'Jasa kalibrasi truss rod, saddle, nut, dan tuning senar.',
-                'image_path' => null,
-                'is_active' => true,
-                'sales_account_id' => $salesAcc,
-                'cogs_account_id' => $cogsAcc,
-            ]);
+                'category'    => 'Jasa Service',
+            ],
+            [
+                'name'        => 'Service & Pasang Preamp / Pickup Gitar',
+                'sku'         => 'SKU-SVC-PICKUP',
+                'barcode'     => '8992345678902',
+                'price'       => 250000,
+                'description' => 'Jasa Pemasangan & perbaikan sistem preamp piezo/magnetic pickup.',
+                'category'    => 'Jasa Service',
+            ],
+            [
+                'name'        => 'Reparasi & Rewiring Elektronik Gitar / Bass',
+                'sku'         => 'SKU-SVC-WIRING',
+                'barcode'     => '8992345678903',
+                'price'       => 200000,
+                'description' => 'Pembersihan potensio, ganti switch 3/5 way, dan solder kustom wiring.',
+                'category'    => 'Jasa Service',
+            ],
+            [
+                'name'        => 'Service & Kalibrasi Keyboard / Piano Digital',
+                'sku'         => 'SKU-SVC-KEYB',
+                'barcode'     => '8992345678904',
+                'price'       => 350000,
+                'description' => 'Pembersihan karet tuts, perbaikan mainboard, & perbaikan tuts mati.',
+                'category'    => 'Jasa Service',
+            ],
+            [
+                'name'        => 'Service Amplifier & Sound System',
+                'sku'         => 'SKU-SVC-AMP',
+                'barcode'     => '8992345678905',
+                'price'       => 450000,
+                'description' => 'Perbaikan amplifier gitar/bass, speaker aktif, & power mixer.',
+                'category'    => 'Jasa Service',
+            ],
+            [
+                'name'        => 'Refret & Fret Leveling Gitar / Bass Pro',
+                'sku'         => 'SKU-SVC-REFRET',
+                'barcode'     => '8992345678906',
+                'price'       => 500000,
+                'description' => 'Jasa ganti kawat fret stainless/nickel & crown leveling presisi.',
+                'category'    => 'Jasa Service',
+            ],
+        ];
 
-            $serviceVariant = ProductVariant::create([
-                'product_id' => $serviceProduct->id,
-                'sku' => 'SKU-JSASTEMP',
-                'barcode' => '8992345678901',
-                'name' => null, // default variant for service
-                'price' => 150000,
-                'cost_price' => 0,
-                'hpp' => 0,
-                'is_active' => true,
-            ]);
+        $serviceVariant = null;
+        foreach ($additionalServiceProducts as $spData) {
+            if (!Product::where('name', $spData['name'])->exists()) {
+                $serviceProduct = Product::create([
+                    'name'             => $spData['name'],
+                    'type'             => 'service',
+                    'unit_id'          => $unitPcs,
+                    'category'         => $spData['category'],
+                    'description'      => $spData['description'],
+                    'image_path'       => null,
+                    'is_active'        => true,
+                    'sales_account_id' => $salesAcc,
+                    'cogs_account_id'  => $cogsAcc,
+                ]);
 
-            // Seed tier prices for service
-            ProductTierPrice::create([
-                'product_variant_id' => $serviceVariant->id,
-                'pricing_tier_id' => $tierGrosir->id,
-                'price' => 120000,
-            ]);
-        } else {
+                $variant = ProductVariant::create([
+                    'product_id' => $serviceProduct->id,
+                    'sku'        => $spData['sku'],
+                    'barcode'    => $spData['barcode'],
+                    'name'       => null, // default variant for service
+                    'price'      => $spData['price'],
+                    'cost_price' => 0,
+                    'hpp'        => 0,
+                    'is_active'  => true,
+                ]);
+
+                if ($spData['sku'] === 'SKU-JSASTEMP') {
+                    $serviceVariant = $variant;
+                }
+
+                // Seed tier prices for service
+                ProductTierPrice::create([
+                    'product_variant_id' => $variant->id,
+                    'pricing_tier_id'    => $tierGrosir->id,
+                    'price'              => $spData['price'] * 0.85, // 15% discount for reseller
+                ]);
+            }
+        }
+
+        if (!$serviceVariant) {
             $serviceProduct = Product::where('name', 'Setup & Stem Gitar')->first();
-            $serviceVariant = $serviceProduct->variants()->first();
+            $serviceVariant = $serviceProduct?->variants()->first();
         }
 
         // 5. Create 1 Bundle Product (1x Natural Guitar + 1x Setup Service)

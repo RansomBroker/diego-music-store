@@ -69,11 +69,11 @@
                             <label class="text-xs font-semibold text-slate-500 dark:text-slate-400">Status:</label>
                             <select
                                 wire:model.live="statusFilter"
-                                class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-750 dark:text-slate-250 py-1.5 px-3 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition duration-150"
+                                class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-755 dark:text-slate-250 py-1.5 px-3 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition duration-150"
                             >
                                 <option value="">Semua Status</option>
-                                <option value="draft">Draft</option>
-                                <option value="completed">Selesai (Lunas)</option>
+                                <option value="unpaid">Belum Lunas (Piutang)</option>
+                                <option value="completed">Lunas (Completed)</option>
                             </select>
                         </div>
                     </div>
@@ -105,7 +105,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
                                 @forelse ($payments as $payment)
-                                    <x-pos.table.tr>
+                                    <x-pos.table.tr wire:click="showDetails({{ $payment->id }})" class="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                                         <x-pos.table.td class="whitespace-nowrap font-mono font-medium text-slate-900 dark:text-slate-100">
                                             {{ $payment->invoice_number }}
                                         </x-pos.table.td>
@@ -118,11 +118,17 @@
                                         <x-pos.table.td class="whitespace-nowrap text-sm">
                                             {{ $payment->payment_method }}
                                         </x-pos.table.td>
-                                        <x-pos.table.td class="whitespace-nowrap font-bold text-right text-slate-900 dark:text-slate-100">
-                                            Rp {{ number_format($payment->grand_total, 0, ',', '.') }}
+                                        @php
+                                            $piutangDue = $payment->getPiutangAmount();
+                                        @endphp
+                                        <x-pos.table.td class="whitespace-nowrap text-right font-mono">
+                                            <div class="font-bold text-slate-900 dark:text-slate-100">Rp {{ number_format($payment->grand_total, 0, ',', '.') }}</div>
+                                            @if ($piutangDue > 0)
+                                                <div class="text-[11px] font-bold text-rose-500">Sisa: Rp {{ number_format($piutangDue, 0, ',', '.') }}</div>
+                                            @endif
                                         </x-pos.table.td>
                                         <x-pos.table.td class="whitespace-nowrap text-center">
-                                            @if ($payment->status === 'completed')
+                                            @if ($piutangDue <= 0)
                                                 <span class="px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-350 text-xs font-bold rounded-full border border-emerald-200/50 dark:border-emerald-850/30">
                                                     Lunas (Completed)
                                                 </span>
@@ -193,7 +199,7 @@
                     >
                         <option value="">Pilih Pelanggan</option>
                         @foreach ($customers as $customer)
-                            <option value="{{ $customer->id }}">{{ $customer->name }} (Hutang: Rp {{ number_format($customer->outstanding_debt, 0, ',', '.') }})</option>
+                            <option value="{{ $customer->id }}">{{ $customer->name }} (Hutang: Rp {{ number_format($customer->total_piutang, 0, ',', '.') }})</option>
                         @endforeach
                     </select>
                     @error('customer_id') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
@@ -258,12 +264,12 @@
 
             <!-- Invoices List -->
             <div>
-                <h4 class="text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider mb-3">Rincian Invoice Pembelian yang Dibayar</h4>
+                <h4 class="text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider mb-3">Rincian Invoice Penjualan yang Dibayar</h4>
 
                 @if (empty($items))
                     <div class="p-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center text-slate-400 dark:text-slate-500">
                         <i class="ph ph-receipt text-3xl mb-1.5"></i>
-                        <p class="text-sm font-medium">Pilih supplier terlebih dahulu untuk menampilkan daftar invoice yang belum lunas.</p>
+                        <p class="text-sm font-medium">Pilih pelanggan terlebih dahulu untuk menampilkan daftar invoice yang belum lunas.</p>
                     </div>
                 @else
                     <x-pos.table.container>
@@ -274,7 +280,7 @@
                                     <x-pos.table.th>No. Invoice</x-pos.table.th>
                                     <x-pos.table.th>Tanggal</x-pos.table.th>
                                     <x-pos.table.th class="text-right">Total</x-pos.table.th>
-                                    <x-pos.table.th class="text-right">Sisa Hutang</x-pos.table.th>
+                                    <x-pos.table.th class="text-right">Sisa Piutang</x-pos.table.th>
                                     <x-pos.table.th class="text-right w-44">Jumlah Bayar</x-pos.table.th>
                                 </tr>
                             </thead>
@@ -344,15 +350,6 @@
                 </button>
                 <button
                     type="button"
-                    wire:click="save('draft')"
-                    wire:loading.attr="disabled"
-                    class="px-5 py-2 border border-primary text-primary hover:bg-primary-light dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-950/20 text-sm font-bold rounded-xl transition-colors cursor-pointer disabled:opacity-50"
-                >
-                    <span wire:loading.remove wire:target="save('draft')">Simpan Draft</span>
-                    <span wire:loading wire:target="save('draft')">Menyimpan...</span>
-                </button>
-                <button
-                    type="button"
                     wire:click="save('posted')"
                     wire:loading.attr="disabled"
                     class="px-5 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-xl shadow-md hover:shadow transition duration-150 cursor-pointer active:scale-[0.98] disabled:opacity-50"
@@ -364,182 +361,120 @@
         </div>
     </x-pos.modal>
 
-    {{-- ===================== MODAL: DETAIL PELUNASAN HUTANG ===================== --}}
+    {{-- ===================== MODAL: DETAIL & HISTORI PELUNASAN PIUTANG ===================== --}}
     <x-pos.modal
         wire:model="showDetailModal"
-        title="Detail Pelunasan Hutang"
-        subtitle="Rincian pembayaran hutang pembelian yang sudah tersimpan"
-        icon="ph-eye"
-        maxWidth="4xl"
+        title="Detail & Histori Pembayaran Pelunasan"
+        subtitle="Rincian transaksi invoice dan riwayat pembayaran cicilan/pelunasan"
+        icon="ph-receipt"
+        maxWidth="8xl"
     >
-        @if ($detailPayment)
+        @if ($selectedSale)
+            @php
+                $piutangRemaining = $selectedSale->getPiutangAmount();
+                $totalPaidCalculated = max(0, floatval($selectedSale->grand_total) - $piutangRemaining);
+            @endphp
             <div class="space-y-6">
-                <!-- Meta Info -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-slate-50 dark:bg-slate-900/60 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800 transition-colors">
+                <!-- Summary Meta Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl">
                     <div>
-                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">No. Pembayaran</span>
-                        <span class="text-sm font-mono font-bold text-slate-900 dark:text-white">{{ $detailPayment->payment_no }}</span>
+                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">No. Invoice</span>
+                        <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white">{{ $selectedSale->invoice_number }}</span>
                     </div>
                     <div>
-                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Tanggal Pembayaran</span>
-                        <span class="text-sm font-semibold text-slate-850 dark:text-slate-250">{{ $detailPayment->payment_date->format('d/m/Y') }}</span>
+                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Pelanggan</span>
+                        <span class="text-base font-bold text-slate-900 dark:text-white">{{ $selectedSale->customer->name ?? 'Pelanggan Umum' }}</span>
                     </div>
                     <div>
-                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Supplier</span>
-                        <span class="text-sm font-black text-slate-900 dark:text-white">{{ $detailPayment->supplier->name }}</span>
+                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Tanggal Transaksi</span>
+                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ $selectedSale->invoice_date->format('d/m/Y') }}</span>
                     </div>
                     <div>
-                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Status</span>
-                        @if ($detailPayment->status === 'draft')
-                            <span class="inline-flex px-2 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-350 text-xs font-bold rounded-full border border-amber-200/50 dark:border-amber-850/30">
-                                Draft
+                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Status Pembayaran</span>
+                        @if ($piutangRemaining <= 0)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-full border border-emerald-200 dark:border-emerald-900/40">
+                                Lunas (Completed)
                             </span>
                         @else
-                            <span class="inline-flex px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-350 text-xs font-bold rounded-full border border-emerald-200/50 dark:border-emerald-850/30">
-                                Posted
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-xs font-bold rounded-full border border-amber-200 dark:border-amber-900/40">
+                                Belum Lunas (Piutang)
                             </span>
                         @endif
                     </div>
-                    <div>
-                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Akun Kas / Bank</span>
-                        <span class="text-sm text-slate-850 dark:text-slate-250">{{ $detailPayment->account->name }}</span>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Metode Pembayaran</span>
-                        <span class="text-sm text-slate-850 dark:text-slate-250">{{ $detailPayment->payment_method }}</span>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Referensi</span>
-                        <span class="text-sm text-slate-850 dark:text-slate-250">{{ $detailPayment->payment_reference ?? '-' }}</span>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Journal No</span>
-                        <span class="text-sm font-mono text-slate-850 dark:text-slate-250">{{ $detailPayment->journal_no ?? '-' }}</span>
-                    </div>
-                    @if ($detailPayment->notes)
-                        <div class="col-span-full border-t border-slate-200 dark:border-slate-800 pt-3 mt-1">
-                            <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Catatan</span>
-                            <p class="text-sm text-slate-650 dark:text-slate-350 leading-relaxed">{{ $detailPayment->notes }}</p>
-                        </div>
-                    @endif
                 </div>
 
-                <!-- Items Details -->
+                <!-- Financial Calculation Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
+                        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Total Belanja Invoice</span>
+                        <span class="text-lg font-mono font-black text-slate-900 dark:text-white">Rp {{ number_format($selectedSale->grand_total, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="bg-emerald-50/40 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 text-center">
+                        <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider block mb-1">Total Sudah Dibayar</span>
+                        <span class="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400">Rp {{ number_format($totalPaidCalculated, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="bg-rose-50/40 dark:bg-rose-950/20 p-4 rounded-xl border border-rose-200/60 dark:border-rose-900/40 text-center">
+                        <span class="text-xs text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider block mb-1">Sisa Piutang / Tagihan</span>
+                        <span class="text-xl font-mono font-black text-rose-600 dark:text-rose-400">Rp {{ number_format($piutangRemaining, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+
+                <!-- Settlement History Table -->
                 <div>
-                    <h4 class="text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider mb-3">Invoice yang Dilunasi</h4>
+                    <h4 class="text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider mb-3">Histori Riwayat Pembayaran / Cicilan</h4>
                     <x-pos.table.container>
                         <x-pos.table>
                             <thead class="bg-slate-50 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-medium">
                                 <tr>
-                                    <x-pos.table.th>No. Invoice / Transaksi</x-pos.table.th>
-                                    <x-pos.table.th>Tanggal</x-pos.table.th>
-                                    <x-pos.table.th class="text-right">Sisa Hutang Awal</x-pos.table.th>
-                                    <x-pos.table.th class="text-right">Jumlah Dibayar</x-pos.table.th>
+                                    <x-pos.table.th>No. Jurnal / Ref</x-pos.table.th>
+                                    <x-pos.table.th>Tanggal Pelunasan</x-pos.table.th>
+                                    <x-pos.table.th>Akun Penerima (Kas/Bank)</x-pos.table.th>
+                                    <x-pos.table.th>Keterangan</x-pos.table.th>
+                                    <x-pos.table.th>Kasir / Operator</x-pos.table.th>
+                                    <x-pos.table.th class="text-right">Nominal Dibayar</x-pos.table.th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                                @foreach ($detailPayment->items as $det)
+                                @forelse ($settlementHistory as $history)
                                     <x-pos.table.tr>
-                                        <x-pos.table.td class="whitespace-nowrap font-medium text-slate-900 dark:text-slate-100">
-                                            <div class="font-mono font-bold">{{ $det->purchaseTransaction->transaction_no }}</div>
-                                            @if ($det->purchaseTransaction->invoice_number)
-                                                <span class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 block font-mono">Inv: {{ $det->purchaseTransaction->invoice_number }}</span>
-                                            @endif
+                                        <x-pos.table.td class="whitespace-nowrap font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
+                                            {{ $history['entry_number'] }}
                                         </x-pos.table.td>
-                                        <x-pos.table.td class="whitespace-nowrap text-sm text-slate-650 dark:text-slate-350">
-                                            {{ $det->purchaseTransaction->transaction_date->format('d/m/Y') }}
+                                        <x-pos.table.td class="whitespace-nowrap text-xs text-slate-600 dark:text-slate-355">
+                                            {{ $history['date'] }}
                                         </x-pos.table.td>
-                                        <x-pos.table.td class="whitespace-nowrap text-right text-sm text-slate-650 dark:text-slate-350 font-mono">
-                                            Rp {{ number_format($det->amount_due, 0, ',', '.') }}
+                                        <x-pos.table.td class="whitespace-nowrap text-xs font-bold text-blue-600 dark:text-blue-400">
+                                            {{ $history['account_name'] }}
                                         </x-pos.table.td>
-                                        <x-pos.table.td class="whitespace-nowrap text-right font-black text-primary dark:text-blue-400 text-sm font-mono">
-                                            Rp {{ number_format($det->amount_paid, 0, ',', '.') }}
+                                        <x-pos.table.td class="whitespace-nowrap text-xs text-slate-600 dark:text-slate-355">
+                                            {{ $history['description'] }}
+                                        </x-pos.table.td>
+                                        <x-pos.table.td class="whitespace-nowrap text-xs text-slate-600 dark:text-slate-355">
+                                            {{ $history['user_name'] }}
+                                        </x-pos.table.td>
+                                        <x-pos.table.td class="whitespace-nowrap text-right font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+                                            Rp {{ number_format($history['amount'], 0, ',', '.') }}
                                         </x-pos.table.td>
                                     </x-pos.table.tr>
-                                @endforeach
+                                @empty
+                                    <x-pos.table.empty colspan="6" icon="ph-receipt" message="Belum ada riwayat cicilan/pelunasan yang tercatat untuk invoice ini." />
+                                @endforelse
                             </tbody>
                         </x-pos.table>
                     </x-pos.table.container>
-
-                    <div class="mt-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 flex justify-between items-center transition-colors">
-                        <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Pelunasan</span>
-                        <span class="text-2xl font-black text-primary dark:text-blue-400 font-mono">Rp {{ number_format($detailPayment->total_amount, 0, ',', '.') }}</span>
-                    </div>
                 </div>
 
-                <!-- Footer Buttons -->
-                <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-700 flex-shrink-0">
+                <!-- Modal Footer -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                     <button
                         type="button"
-                        wire:click="$set('showDetailModal', false)"
-                        class="px-5 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-xl shadow-md hover:shadow transition duration-150 cursor-pointer active:scale-[0.98]"
+                        wire:click="closeDetails"
+                        class="px-5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl transition-colors cursor-pointer"
                     >
                         Tutup
                     </button>
                 </div>
             </div>
         @endif
-    </x-pos.modal>
-
-    {{-- ===================== CONFIRMATION: POST DRAFT PAYMENT ===================== --}}
-    <x-pos.modal
-        wire:model="showPostConfirmation"
-        title="Posting Pelunasan Hutang"
-        subtitle="Konfirmasi posting transaksi pelunasan hutang"
-        icon="ph-warning"
-        maxWidth="md"
-    >
-        <div class="space-y-6">
-            <p class="text-sm text-slate-600 dark:text-slate-300">
-                Apakah Anda yakin ingin memposting pelunasan hutang ini? Transaksi ini akan memperbarui hutang supplier secara permanen dan mencatat jurnal akuntansi secara otomatis.
-            </p>
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
-                <button
-                    type="button"
-                    wire:click="$set('showPostConfirmation', false)"
-                    class="px-4 py-2 border border-slate-350 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                    Batal
-                </button>
-                <button
-                    type="button"
-                    wire:click="postPayment"
-                    class="px-4 py-2 bg-emerald-650 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-md transition duration-150"
-                >
-                    Ya, Posting
-                </button>
-            </div>
-        </div>
-    </x-pos.modal>
-
-    {{-- ===================== CONFIRMATION: DELETE DRAFT PAYMENT ===================== --}}
-    <x-pos.modal
-        wire:model="showDeleteConfirmation"
-        title="Hapus Draft Pelunasan"
-        subtitle="Hapus transaksi draft secara permanen"
-        icon="ph-trash"
-        maxWidth="md"
-    >
-        <div class="space-y-6">
-            <p class="text-sm text-slate-600 dark:text-slate-300">
-                Apakah Anda yakin ingin menghapus draft pelunasan hutang ini secara permanen? Tindakan ini tidak dapat dibatalkan.
-            </p>
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
-                <button
-                    type="button"
-                    wire:click="$set('showDeleteConfirmation', false)"
-                    class="px-4 py-2 border border-slate-350 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                    Batal
-                </button>
-                <button
-                    type="button"
-                    wire:click="deletePayment"
-                    class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl shadow-md transition duration-150"
-                >
-                    Ya, Hapus
-                </button>
-            </div>
-        </div>
     </x-pos.modal>
 </div>

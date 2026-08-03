@@ -45,6 +45,13 @@ class PosVouchers extends Component
         $this->resetPage();
     }
 
+    public function updated($propertyName): void
+    {
+        if (in_array($propertyName, ['min_spend', 'value'])) {
+            $this->$propertyName = \App\Helpers\FormatHelper::parseRupiah($this->$propertyName);
+        }
+    }
+
     public function sortBy(string $field): void
     {
         if ($this->sortField === $field) {

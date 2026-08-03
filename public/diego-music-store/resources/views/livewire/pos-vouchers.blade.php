@@ -201,25 +201,34 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Nilai Diskon -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Nilai Diskon <span class="text-rose-500">*</span></label>
-                    <input
-                        type="number"
-                        wire:model="value"
-                        class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white"
-                        placeholder="0"
-                    >
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                        Nilai Diskon {{ $type === 'fixed' ? '(Rp)' : '(%)' }} <span class="text-rose-500">*</span>
+                    </label>
+                    @if($type === 'fixed')
+                        <x-money-input
+                            wire:model.live="value"
+                            class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white"
+                            placeholder="0"
+                        />
+                    @else
+                        <input
+                            type="number"
+                            wire:model.live="value"
+                            class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white"
+                            placeholder="0"
+                        >
+                    @endif
                     @error('value') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
                 </div>
 
                 <!-- Min Spend -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Min. Belanja (Rp)</label>
-                    <input
-                        type="number"
-                        wire:model="min_spend"
+                    <x-money-input
+                        wire:model.live="min_spend"
                         class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white"
                         placeholder="0"
-                    >
+                    />
                 </div>
             </div>
 

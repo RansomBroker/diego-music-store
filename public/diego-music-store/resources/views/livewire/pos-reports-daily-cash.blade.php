@@ -39,7 +39,7 @@
                                     </li>
                                 </ol>
                             </nav>
-                            <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Laporan Kas Harian ERP</h1>
+                            <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Laporan Kas Harian {{ $currentBranch?->name ?? '' }}</h1>
                         </div>
 
                         <!-- Print Action Button -->
@@ -210,7 +210,7 @@
         <!-- Title -->
         <div style="text-align: center; margin-bottom: 15px;">
             <h2 style="font-size: 14pt; font-weight: bold; margin: 0; text-transform: uppercase; text-decoration: underline;">
-                LAPORAN MUTASI KAS HARIAN
+                LAPORAN BUKU KAS HARIAN
             </h2>
             <div style="font-size: 9.5pt; margin-top: 4px; font-weight: bold;">
                 PERIODE: {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') : 'AWAL' }} S/D {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d/m/Y') : 'SEKARANG' }}
@@ -220,14 +220,16 @@
         <!-- Summary -->
         <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px; font-size: 9pt;">
             <tr>
-                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Total Kas Masuk (Inflow)</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Total Kas Masuk</td>
                 <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class="font-mono text-right">Rp {{ number_format($reportData['total_inflow'] ?? 0, 0, ',', '.') }}</td>
-                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Total Kas Keluar (Outflow)</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Total Kas Keluar</td>
                 <td style="border: 1px solid #000; padding: 5px;" class="font-mono text-right">Rp {{ number_format($reportData['total_outflow'] ?? 0, 0, ',', '.') }}</td>
             </tr>
             <tr>
-                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">Arus Kas Bersih (Net Cash)</td>
-                <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class="font-mono text-right" colspan="3">Rp {{ number_format($reportData['net_cash_flow'] ?? 0, 0, ',', '.') }}</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">Arus Kas Bersih</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class="font-mono text-right">Rp {{ number_format($reportData['net_cash_flow'] ?? 0, 0, ',', '.') }}</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">Total Mutasi Transaksi</td>
+                <td style="border: 1px solid #000; padding: 5px;" class="font-mono text-right">{{ $reportData['total_count'] ?? 0 }} Transaksi</td>
             </tr>
         </table>
 
@@ -236,10 +238,10 @@
             <thead>
                 <tr>
                     <th style="width: 25px;" class="text-center">NO</th>
-                    <th style="width: 110px;">WAKTU</th>
-                    <th style="width: 120px;">PETUGAS</th>
+                    <th style="width: 100px;">WAKTU</th>
+                    <th>PETUGAS</th>
                     <th>KATEGORI TRANSAKSI</th>
-                    <th style="width: 60px;" class="text-center">TIPE</th>
+                    <th style="width: 70px;" class="text-center">TIPE</th>
                     <th style="width: 110px;" class="text-right">JUMLAH</th>
                     <th>KETERANGAN / NOTES</th>
                 </tr>
@@ -249,11 +251,11 @@
                     <tr>
                         <td class="text-center">{{ $idx + 1 }}</td>
                         <td class="font-mono">{{ $tx->created_at->format('d/m/Y H:i') }}</td>
-                        <td style="font-weight: bold;">{{ $tx->creator?->name ?? $tx->user?->name ?? '-' }}</td>
-                        <td>{{ $tx->category }}</td>
-                        <td class="text-center" style="font-weight: bold;">{{ strtoupper($tx->type) }}</td>
+                        <td>{{ $tx->creator?->name ?? $tx->user?->name ?? '-' }}</td>
+                        <td style="font-weight: bold;">{{ $tx->category }}</td>
+                        <td class="text-center font-bold">{{ strtoupper($tx->type) }}</td>
                         <td class="text-right font-mono font-bold">Rp {{ number_format($tx->amount, 0, ',', '.') }}</td>
-                        <td style="font-style: italic;">{{ $tx->notes ?: '-' }}</td>
+                        <td>{{ $tx->notes ?: '-' }}</td>
                     </tr>
                 @empty
                     <tr>

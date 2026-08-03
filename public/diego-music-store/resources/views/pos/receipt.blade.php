@@ -198,6 +198,34 @@
         </div>
     @endif
 
+    @php
+        $serviceOrders = \App\Models\ServiceOrder::where('sale_id', $sale->id)->get();
+    @endphp
+
+    @if ($serviceOrders->isNotEmpty())
+        <div class="double-divider"></div>
+        <div class="text-center bold" style="font-size: 11px; margin-bottom: 4px;">INFORMASI BARANG SERVICE</div>
+        @foreach ($serviceOrders as $so)
+            <div class="divider"></div>
+            <div class="grid">
+                <span>No. Tiket:</span>
+                <span class="bold">{{ $so->ticket_code }}</span>
+            </div>
+            <div class="grid">
+                <span>Unit/Alat:</span>
+                <span>{{ $so->device_name }}</span>
+            </div>
+            <div class="grid">
+                <span>Status:</span>
+                <span class="bold">{{ $so->status_label }}</span>
+            </div>
+            <div class="text-center" style="margin-top: 8px; margin-bottom: 8px;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($so->tracking_url) }}" alt="QR Code Tracking" style="width: 80px; height: 80px;"><br>
+                <span style="font-size: 9px; word-break: break-all;">Lacak Progress: {{ $so->tracking_url }}</span>
+            </div>
+        @endforeach
+    @endif
+
     <div class="footer">
         {!! nl2br(e($setting?->footer_text ?: "Terima Kasih atas Kunjungan Anda\nBarang yang sudah dibeli tidak dapat ditukar/dikembalikan.")) !!}<br><br>
         Diego Music Store ERP

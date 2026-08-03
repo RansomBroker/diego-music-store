@@ -91,6 +91,13 @@ class POSCashSession extends Component
         $this->openingCash = $amount;
     }
 
+    public function updated($propertyName)
+    {
+        if (in_array($propertyName, ['openingCash', 'actualCash'])) {
+            $this->$propertyName = \App\Helpers\FormatHelper::parseRupiah($this->$propertyName);
+        }
+    }
+
     public function selectActualPreset($amount)
     {
         $this->actualCash = $amount;

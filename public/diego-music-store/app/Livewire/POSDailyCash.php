@@ -100,6 +100,13 @@ class POSDailyCash extends Component
         $this->showInModal = true;
     }
 
+    public function updated($propertyName)
+    {
+        if (in_array($propertyName, ['inAmount', 'outAmount'])) {
+            $this->$propertyName = \App\Helpers\FormatHelper::parseRupiah($this->$propertyName);
+        }
+    }
+
     public function openOutModal()
     {
         $this->outAmount = '';
