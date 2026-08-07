@@ -14,9 +14,9 @@
 
         <!-- Main Scrollable Body -->
         <div class="flex-1 overflow-y-auto p-8 no-scrollbar flex items-center justify-center">
-            <div class="max-w-2xl w-full">
+            <div class="max-w-4xl w-full">
                 <!-- Navigation Tiles -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <!-- POS Kasir -->
                     <a href="{{ route('pos') }}" class="group bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200/60 dark:border-slate-700 hover:border-primary dark:hover:border-blue-500 shadow-sm hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col items-center gap-4 text-center">
                         <div class="w-16 h-16 rounded-2xl bg-primary/10 dark:bg-blue-950/40 text-primary dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -36,6 +36,17 @@
                         <div>
                             <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Sesi Kasir</h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Kelola sesi kasir</p>
+                        </div>
+                    </a>
+
+                    <!-- Performa Cabang -->
+                    <a href="{{ route('pos.branch-performance') }}" class="group bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200/60 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 shadow-sm hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col items-center gap-4 text-center">
+                        <div class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-buildings text-3xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Performa Cabang</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Stok, Pelanggan & Laba Rugi</p>
                         </div>
                     </a>
 

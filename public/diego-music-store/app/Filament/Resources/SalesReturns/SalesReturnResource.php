@@ -1,44 +1,44 @@
 <?php
 
-namespace App\Filament\Resources\SalesInvoices;
+namespace App\Filament\Resources\SalesReturns;
 
-use App\Filament\Resources\SalesInvoices\Pages\ListSalesInvoices;
-use App\Filament\Resources\SalesInvoices\Schemas\SalesInvoiceForm;
-use App\Filament\Resources\SalesInvoices\Tables\SalesInvoicesTable;
-use App\Models\SalesInvoice;
+use App\Filament\Resources\SalesReturns\Pages\ListSalesReturns;
+use App\Filament\Resources\SalesReturns\Tables\SalesReturnsTable;
+use App\Models\SalesReturn;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
-class SalesInvoiceResource extends Resource
+class SalesReturnResource extends Resource
 {
-    protected static ?string $model = SalesInvoice::class;
+    protected static ?string $model = SalesReturn::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowPath;
 
-    protected static ?string $recordTitleAttribute = 'invoice_number';
+    protected static ?string $recordTitleAttribute = 'return_number';
 
-    protected static ?string $navigationLabel = 'Faktur Penjualan';
+    protected static ?string $navigationLabel = 'Retur Penjualan (Barang)';
 
-    protected static ?string $modelLabel = 'Faktur Penjualan';
+    protected static ?string $modelLabel = 'Retur Penjualan';
 
-    protected static ?string $pluralModelLabel = 'Faktur Penjualan';
+    protected static ?string $pluralModelLabel = 'Retur Penjualan';
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Penjualan';
+        return 'Inventori';
     }
 
     public static function form(Schema $schema): Schema
     {
-        return SalesInvoiceForm::configure($schema);
+        return $schema;
     }
 
     public static function table(Table $table): Table
     {
-        return SalesInvoicesTable::configure($table);
+        return SalesReturnsTable::configure($table);
     }
 
     public static function getRelations(): array
@@ -49,11 +49,11 @@ class SalesInvoiceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListSalesInvoices::route('/'),
+            'index' => ListSalesReturns::route('/'),
         ];
     }
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();

@@ -36,6 +36,11 @@ class BackofficePanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Blue,
             ])
+            ->brandName(function () {
+                $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+                $branch = \App\Models\Branch::find($branchId);
+                return $branch ? ($branch->store_name ?: "Diego Music Store ({$branch->name})") : 'Diego Music Store';
+            })
             ->navigationGroups([
                 NavigationGroup::make()
                      ->label('Shop')
@@ -104,6 +109,13 @@ class BackofficePanelProvider extends PanelProvider
 
     public function boot(): void
     {
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::USER_MENU_BEFORE,
+            fn (): HtmlString => new HtmlString(
+                view('filament.components.branch-switcher-topbar')->render()
+            ),
+        );
+
         FilamentView::registerRenderHook(
             PanelsRenderHook::STYLES_AFTER,
             fn (): HtmlString => new HtmlString(

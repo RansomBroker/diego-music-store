@@ -51,4 +51,22 @@ class StockMovementResource extends Resource
             'index' => ListStockMovements::route('/'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+            $userBranchIds = $user->branches()->pluck('branches.id')->toArray();
+            return $query->whereIn('branch_id', $userBranchIds);
+        }
+
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        if ($activeBranchId) {
+            return $query->where('branch_id', $activeBranchId);
+        }
+
+        return $query;
+    }
 }

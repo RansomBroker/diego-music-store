@@ -54,4 +54,19 @@ class PurchaseTransactionDetail extends Model
     {
         return $this->belongsTo(Unit::class);
     }
+
+    public function returnItems(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PurchaseReturnItem::class, 'purchase_transaction_detail_id');
+    }
+
+    public function getReturnedQtyAttribute(): int
+    {
+        return (int) $this->returnItems()->sum('quantity');
+    }
+
+    public function getAvailableQtyForReturnAttribute(): int
+    {
+        return max(0, $this->qty_received - $this->returned_qty);
+    }
 }

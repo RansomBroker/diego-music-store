@@ -61,6 +61,9 @@ class POSTransactions extends Component
         // Default date range is today
         $this->fromDate = now()->format('Y-m-d');
         $this->toDate = now()->format('Y-m-d');
+        if (!$this->selectedBranchId) {
+            $this->selectedBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        }
     }
 
     public function updatingSearch(): void
@@ -254,6 +257,7 @@ class POSTransactions extends Component
                 'sale_id' => $this->returnSale->id,
                 'cash_session_id' => $activeSession->id,
                 'reason' => $this->returnReason,
+                'status' => 'posted',
                 'items' => $returnPayload,
             ]);
 

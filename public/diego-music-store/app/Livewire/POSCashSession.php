@@ -49,25 +49,32 @@ class POSCashSession extends Component
 
     public function mount()
     {
-        $this->branches = Branch::where('is_active', true)->get();
-        
-        // Find if user belongs to branches and set default branch
-        $userBranchId = Auth::user()->branches()->first()?->id;
-        $this->selectedBranchId = $userBranchId ?? ($this->branches->first()?->id ?? null);
+        $this->branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
+        $this->selectedBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
 
         $this->checkActiveSession();
     }
 
+    public function updatedSelectedBranchId($value)
+    {
+        if ($value) {
+            session(['pos_active_branch_id' => $value]);
+            $this->checkActiveSession();
+        }
+    }
+
     protected function checkActiveSession()
     {
-        // Find if user has any active (open) session
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        $this->selectedBranchId = $activeBranchId;
+
+        // Find if user has active (open) session for the selected branch
         $this->activeSession = CashSession::where('user_id', Auth::id())
+            ->where('branch_id', $activeBranchId)
             ->where('status', 'open')
             ->first();
 
         if ($this->activeSession) {
-            $this->selectedBranchId = $this->activeSession->branch_id;
-            
             $this->cashSales = \App\Helpers\SaleHelper::getSessionCashSalesSum($this->activeSession);
             $cashIn = $this->activeSession->cashTransactions()
                 ->where('type', 'in')
@@ -329,15 +336,17 @@ class POSCashSession extends Component
 
     public function render()
     {
-        // Fetch closed sessions for history
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+
+        // Fetch closed sessions for history scoped to active branch
         $history = CashSession::with(['branch', 'user', 'closedBy'])
-            ->where('user_id', Auth::id())
+            ->where('branch_id', $activeBranchId)
             ->orderBy('id', 'desc')
             ->limit(10)
             ->get();
 
         // Get logo of selected branch
-        $branch = Branch::find($this->selectedBranchId);
+        $branch = Branch::find($activeBranchId);
         $selectedLogoUrl = ($branch && !empty($branch->logo_path) && trim($branch->logo_path) !== '') ? \Illuminate\Support\Facades\Storage::url($branch->logo_path) : null;
 
         return view('livewire.pos-cash-session', [

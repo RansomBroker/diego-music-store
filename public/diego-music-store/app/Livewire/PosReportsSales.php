@@ -31,6 +31,9 @@ class PosReportsSales extends Component
     {
         $this->dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->dateTo = Carbon::now()->format('Y-m-d');
+        if (!$this->selectedBranchId) {
+            $this->selectedBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        }
     }
 
     public function setQuickDateRange(string $preset)
@@ -71,11 +74,9 @@ class PosReportsSales extends Component
 
     public function render()
     {
-        $branches = Branch::all();
-        $userBranchId = Auth::user()?->branches()->first()?->id;
-        $currentBranch = $this->selectedBranchId
-            ? Branch::find($this->selectedBranchId)
-            : ($userBranchId ? Branch::find($userBranchId) : Branch::first());
+        $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
+        $activeBranchId = $this->selectedBranchId ?: \App\Helpers\BranchHelper::getActiveBranchId();
+        $currentBranch = Branch::find($activeBranchId);
 
         $selectedLogoUrl = !empty($currentBranch?->logo_path) ? Storage::url($currentBranch->logo_path) : null;
 

@@ -48,7 +48,8 @@ class POSDailyCash extends Component
 
     public function mount()
     {
-        $this->branches = Branch::where('is_active', true)->get();
+        $this->branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
+        $this->selectedBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         $this->checkActiveSession();
         $this->loadAccounts();
     }

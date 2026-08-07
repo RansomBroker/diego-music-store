@@ -33,17 +33,28 @@
 
     // Load active cashier session automatically if not passed
     if (empty($activeSessionInfo) && auth()->check()) {
-        $activeSession = \App\Models\CashSession::where('user_id', auth()->id())
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        $activeSession = \App\Models\CashSession::with('user')
+            ->where('branch_id', $activeBranchId)
             ->where('status', 'open')
             ->first();
         if ($activeSession) {
             $activeSessionInfo = [
-                'id' => $activeSession->id,
-                'opened_at' => $activeSession->opened_at->format('d M Y H:i'),
+                'id'           => $activeSession->id,
+                'opened_at'    => $activeSession->opened_at->format('d M Y H:i'),
                 'opening_cash' => $activeSession->opening_cash,
+                'opened_by'    => $activeSession->user->name ?? auth()->user()->name,
             ];
         }
     }
+
+    $currentActiveBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
+    $currentBranchModel = $currentActiveBranchId ? \App\Models\Branch::find($currentActiveBranchId) : \App\Models\Branch::first();
+    $userBranchList = auth()->check()
+        ? (auth()->user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin'])
+            ? \App\Models\Branch::where('is_active', true)->get()
+            : auth()->user()->branches()->where('is_active', true)->get())
+        : collect();
 @endphp
 
 <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-6 py-4.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 z-10 transition-colors flex-shrink-0">
@@ -62,9 +73,37 @@
 
         {{-- Judul & Subjudul --}}
         <div>
-            <h1 class="text-2xl font-black text-slate-900 dark:text-slate-55 tracking-tight leading-none">
-                Diego Music Store
-            </h1>
+            <div class="flex items-center gap-2">
+                <h1 class="text-2xl font-black text-slate-900 dark:text-slate-55 tracking-tight leading-none">
+                    {{ $currentBranchModel?->store_name ?: ($currentBranchModel?->name ?: 'Diego Music Store') }}
+                </h1>
+
+                @if ($userBranchList->count() > 1)
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 hover:bg-primary/20 text-primary dark:text-blue-400 border border-primary/20 rounded-full text-xs font-bold transition-all cursor-pointer">
+                            <i class="ph-bold ph-storefront text-xs"></i>
+                            <span>{{ $currentBranchModel?->name ?: 'Pilih Cabang' }}</span>
+                            <i class="ph-bold ph-caret-down text-[10px]"></i>
+                        </button>
+
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute left-0 mt-2 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-1.5">
+                            <div class="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ganti Cabang Aktif</div>
+                            @foreach ($userBranchList as $b)
+                                <a href="{{ route('pos.switch-branch', $b->id) }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl {{ $b->id == $currentActiveBranchId ? 'bg-primary text-white' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700' }}">
+                                    <span>{{ $b->name }}</span>
+                                    @if ($b->id == $currentActiveBranchId)
+                                        <i class="ph-bold ph-check"></i>
+                                    @endif
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @else
+                    <span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold">
+                        {{ $currentBranchModel?->name ?: 'Cabang Utama' }}
+                    </span>
+                @endif
+            </div>
             <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1.5">
                 {{ $pageTitle }}
             </p>
@@ -88,7 +127,7 @@
                     </span>
                     <div class="leading-none">
                         <div class="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
-                            Sesi Aktif
+                            Sesi Aktif: {{ $activeSessionInfo['opened_by'] ?? (auth()->user()->name ?? 'Kasir') }}
                         </div>
                         <div class="text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400 mt-1">
                             Mulai: {{ substr($activeSessionInfo['opened_at'], -5) }}

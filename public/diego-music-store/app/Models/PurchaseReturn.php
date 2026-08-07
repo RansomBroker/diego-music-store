@@ -7,19 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class SalesReturn extends Model
+class PurchaseReturn extends Model
 {
     use HasFactory;
 
-    protected $table = 'sales_returns';
+    protected $table = 'purchase_returns';
 
     protected $fillable = [
-        'sale_id',
+        'purchase_transaction_id',
         'branch_id',
-        'cash_session_id',
-        'return_number',
+        'supplier_id',
+        'return_no',
         'return_date',
-        'total_refund',
+        'total_amount',
         'status',
         'reason',
         'created_by',
@@ -27,12 +27,12 @@ class SalesReturn extends Model
 
     protected $casts = [
         'return_date' => 'date',
-        'total_refund' => 'integer',
+        'total_amount' => 'integer',
     ];
 
-    public function sale(): BelongsTo
+    public function purchaseTransaction(): BelongsTo
     {
-        return $this->belongsTo(Sale::class);
+        return $this->belongsTo(PurchaseTransaction::class);
     }
 
     public function branch(): BelongsTo
@@ -40,9 +40,9 @@ class SalesReturn extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function cashSession(): BelongsTo
+    public function supplier(): BelongsTo
     {
-        return $this->belongsTo(CashSession::class);
+        return $this->belongsTo(Supplier::class);
     }
 
     public function creator(): BelongsTo
@@ -52,20 +52,20 @@ class SalesReturn extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(SalesReturnItem::class);
+        return $this->hasMany(PurchaseReturnItem::class);
     }
 
-    public static function generateReturnNumber(): string
+    public static function generateReturnNo(): string
     {
         $dateStr = now()->format('Ymd');
-        $prefix = 'SR-' . $dateStr . '-';
+        $prefix = 'PR-' . $dateStr . '-';
 
-        $lastReturn = self::where('return_number', 'like', $prefix . '%')
-            ->orderBy('return_number', 'desc')
+        $lastReturn = self::where('return_no', 'like', $prefix . '%')
+            ->orderBy('return_no', 'desc')
             ->first();
 
         if ($lastReturn) {
-            $lastNum = intval(substr($lastReturn->return_number, -4));
+            $lastNum = intval(substr($lastReturn->return_no, strlen($prefix)));
             $nextNum = str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
         } else {
             $nextNum = '0001';

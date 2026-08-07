@@ -107,11 +107,9 @@ class PosServiceManagement extends Component
 
     public function render()
     {
-        $branches = Branch::all();
-        $userBranchId = Auth::user()?->branches()->first()?->id;
-        $currentBranch = $this->selectedBranchId
-            ? Branch::find($this->selectedBranchId)
-            : ($userBranchId ? Branch::find($userBranchId) : Branch::first());
+        $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
+        $activeBranchId = $this->selectedBranchId ?: \App\Helpers\BranchHelper::getActiveBranchId();
+        $currentBranch = Branch::find($activeBranchId);
 
         $selectedLogoUrl = !empty($currentBranch?->logo_path) ? Storage::url($currentBranch->logo_path) : null;
 
@@ -124,8 +122,8 @@ class PosServiceManagement extends Component
         $query = ServiceOrder::with(['branch', 'customer', 'technician', 'sale'])
             ->latest('id');
 
-        if ($this->selectedBranchId) {
-            $query->where('branch_id', $this->selectedBranchId);
+        if ($activeBranchId) {
+            $query->where('branch_id', $activeBranchId);
         }
 
         if ($this->selectedStatus) {

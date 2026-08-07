@@ -50,9 +50,22 @@ Route::middleware('auth.pos')->group(function () {
     // Utility Routes
     Route::get('/pos/privileges', App\Livewire\PosPrivileges::class)->name('pos.privileges');
     Route::get('/pos/store-profile', App\Livewire\PosStoreProfile::class)->name('pos.store-profile');
+    Route::get('/pos/branches', App\Livewire\PosBranches::class)->name('pos.branches');
+    Route::get('/pos/branch-performance', App\Livewire\PosBranchPerformance::class)->name('pos.branch-performance');
     Route::get('/pos/receipt-settings', App\Livewire\PosReceiptSettings::class)->name('pos.receipt-settings');
     Route::get('/pos/barcode-print', App\Livewire\PosBarcodePrint::class)->name('pos.barcode-print');
     Route::get('/pos/barcode-print/sheet', [App\Http\Controllers\POS\POSBarcodePrintController::class, 'show'])->name('pos.barcode-print.sheet');
+    // Branch Switcher Route
+    Route::get('/pos/switch-branch/{branch}', function (\App\Models\Branch $branch) {
+        if (auth()->check()) {
+            $user = auth()->user();
+            if ($user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin']) || $user->branches()->where('branches.id', $branch->id)->exists()) {
+                session(['pos_active_branch_id' => $branch->id]);
+            }
+        }
+        return redirect()->back();
+    })->name('pos.switch-branch');
+
     // Service Management
     Route::get('/pos/service-management', App\Livewire\PosServiceManagement::class)->name('pos.service-management');
 });
