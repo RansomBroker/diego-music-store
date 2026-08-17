@@ -36,266 +36,257 @@
         </div>
     </div>
 
-    {{-- Main Layout: Vertical Sections (Printer-Friendly Monochrome) --}}
-    <div class="space-y-8">
+    {{-- Main Layout: Side-by-Side (Skontro Format matching PDF) --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
-        {{-- SECTION 1: ASSETS (FULL WIDTH AT TOP) --}}
-        <x-filament::section>
-            <x-slot name="heading">
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-gray-700 dark:bg-gray-300"></span>
-                    <span class="font-extrabold tracking-wide">ASET (ASSETS)</span>
-                </div>
-            </x-slot>
-
-            <x-slot name="headerEnd">
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
-                    Aktiva
-                </span>
-            </x-slot>
-
-            <div class="divide-y divide-gray-200 dark:divide-gray-800 -mx-6 -mb-6 border-t border-gray-200 dark:border-white/10">
-                <table class="w-full text-left text-sm">
-                    <thead>
-                        <tr class="bg-gray-100/70 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-xs uppercase font-bold border-b border-gray-300 dark:border-gray-700">
-                            <th class="py-2.5 px-6">Kode</th>
-                            <th class="py-2.5 px-6">Akun / Kategori (Hierarki)</th>
-                            <th class="py-2.5 px-6 text-right">Saldo</th>
-                            <th class="py-2.5 px-4 text-center w-16">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        @forelse($data['assets']['items'] as $item)
-                            <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
-                                <td class="py-2.5 px-6 font-mono text-xs text-gray-500 dark:text-gray-400 w-32">{{ $item['code'] }}</td>
-                                <td class="py-2.5 px-6">
-                                    <div class="flex items-center gap-1.5" style="padding-left: {{ max(0, ($item['level'] - 1) * 1.25) }}rem;">
-                                        @if($item['is_header'])
-                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                                            </svg>
-                                            <span class="font-semibold">{{ $item['name'] }}</span>
-                                        @else
-                                            <span class="text-gray-400">&bull;</span>
-                                            <span>{{ $item['name'] }}</span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="py-2.5 px-6 text-right font-mono text-xs {{ $item['is_header'] ? 'font-bold' : '' }}">
-                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
-                                </td>
-                                <td class="py-2.5 px-4 text-center">
-                                    @if(!$item['is_header'])
-                                        <button 
-                                            type="button" 
-                                            wire:click="openAccountLedgerModal({{ $item['id'] }})"
-                                            title="Drill-down Rincian Mutasi Jurnal"
-                                            class="inline-flex items-center justify-center p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
-                                        >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                            </svg>
-                                        </button>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="py-6 text-center text-gray-500 dark:text-gray-400 text-xs">
-                                    Belum ada data akun Aset.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-
-                {{-- Assets Total Footer Bar (Monochrome High Contrast) --}}
-                <div class="p-4 px-6 bg-gray-100 dark:bg-white/10 border-t-2 border-gray-400 dark:border-gray-600 flex justify-between items-center text-gray-900 dark:text-white">
-                    <span class="font-extrabold text-sm uppercase tracking-wider">TOTAL ASET (AKTIVA)</span>
-                    <span class="font-mono text-base font-extrabold text-gray-900 dark:text-white">
-                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_assets']) }}
-                    </span>
-                </div>
-            </div>
-        </x-filament::section>
-
-        {{-- SECTION 2: PASIVA SECTION (KEWAJIBAN & EKUITAS SIDE-BY-SIDE BELOW ASSETS) --}}
+        {{-- LEFT COLUMN: ASET (AKTIVA / ASSETS) --}}
         <div class="space-y-6">
-            <div class="flex items-center justify-between">
-                <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-gray-700 dark:bg-gray-300"></span>
-                    KEWAJIBAN & EKUITAS (PASIVA)
-                </h3>
-            </div>
-
-            {{-- SIDE-BY-SIDE GRID FOR LIABILITIES & EQUITY --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-
-                {{-- LIABILITIES BOX (LEFT SUB-COLUMN) --}}
-                <x-filament::section>
-                    <x-slot name="heading">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-gray-700 dark:bg-gray-300"></span>
-                            <span>KEWAJIBAN (LIABILITIES)</span>
-                        </div>
-                    </x-slot>
-
-                    <x-slot name="headerEnd">
-                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
-                            Hutang
-                        </span>
-                    </x-slot>
-
-                    <div class="divide-y divide-gray-100 dark:divide-gray-800 -mx-6 -mb-6 border-t border-gray-200 dark:border-white/10">
-                        <table class="w-full text-left text-sm">
-                            <thead>
-                                <tr class="bg-gray-100/70 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-xs uppercase font-bold border-b border-gray-300 dark:border-gray-700">
-                                    <th class="py-2.5 px-4">Kode</th>
-                                    <th class="py-2.5 px-4">Akun / Kategori</th>
-                                    <th class="py-2.5 px-4 text-right">Saldo</th>
-                                    <th class="py-2.5 px-2 text-center w-12">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                                @forelse($data['liabilities']['items'] as $item)
-                                    <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
-                                        <td class="py-2 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
-                                        <td class="py-2 px-4">
-                                            <div class="flex items-center gap-1" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
-                                                @if($item['is_header'])
-                                                    <span class="font-semibold">{{ $item['name'] }}</span>
-                                                @else
-                                                    <span class="text-gray-400">&bull;</span>
-                                                    <span>{{ $item['name'] }}</span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="py-2 px-4 text-right font-mono text-xs {{ $item['is_header'] ? 'font-bold' : '' }}">
-                                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
-                                        </td>
-                                        <td class="py-2 px-2 text-center">
-                                            @if(!$item['is_header'])
-                                                <button 
-                                                    type="button" 
-                                                    wire:click="openAccountLedgerModal({{ $item['id'] }})"
-                                                    title="Drill-down Rincian Mutasi Jurnal"
-                                                    class="inline-flex items-center justify-center p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
-                                                >
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                    </svg>
-                                                </button>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="py-4 text-center text-gray-500 dark:text-gray-400 text-xs">
-                                            Tidak ada akun Kewajiban.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-
-                        <div class="p-3.5 px-4 bg-gray-100 dark:bg-white/10 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center text-gray-900 dark:text-white">
-                            <span class="font-bold text-xs uppercase tracking-wider">TOTAL KEWAJIBAN</span>
-                            <span class="font-mono text-sm font-bold text-gray-900 dark:text-white">
-                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_liabilities']) }}
-                            </span>
-                        </div>
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-gray-700 dark:bg-gray-300"></span>
+                        <span class="font-extrabold tracking-wide">ASET (AKTIVA)</span>
                     </div>
-                </x-filament::section>
+                </x-slot>
 
-                {{-- EQUITY BOX (RIGHT SUB-COLUMN) --}}
-                <x-filament::section>
-                    <x-slot name="heading">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-gray-700 dark:bg-gray-300"></span>
-                            <span>EKUITAS (EQUITY)</span>
-                        </div>
-                    </x-slot>
+                <x-slot name="headerEnd">
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
+                        Aktiva
+                    </span>
+                </x-slot>
 
-                    <x-slot name="headerEnd">
-                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
-                            Modal
-                        </span>
-                    </x-slot>
-
-                    <div class="divide-y divide-gray-100 dark:divide-gray-800 -mx-6 -mb-6 border-t border-gray-200 dark:border-white/10">
-                        <table class="w-full text-left text-sm">
-                            <thead>
-                                <tr class="bg-gray-100/70 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-xs uppercase font-bold border-b border-gray-300 dark:border-gray-700">
-                                    <th class="py-2.5 px-4">Kode</th>
-                                    <th class="py-2.5 px-4">Akun / Kategori</th>
-                                    <th class="py-2.5 px-4 text-right">Saldo</th>
-                                    <th class="py-2.5 px-2 text-center w-12">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                                @foreach($data['equity']['items'] as $item)
-                                    <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
-                                        <td class="py-2 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
-                                        <td class="py-2 px-4">
-                                            <div class="flex items-center gap-1" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
-                                                @if($item['is_header'])
-                                                    <span class="font-semibold">{{ $item['name'] }}</span>
-                                                @else
-                                                    <span class="text-gray-400">&bull;</span>
-                                                    <span>{{ $item['name'] }}</span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="py-2 px-4 text-right font-mono text-xs {{ $item['is_header'] ? 'font-bold' : '' }}">
-                                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
-                                        </td>
-                                        <td class="py-2 px-2 text-center">
-                                            @if(!$item['is_header'])
-                                                <button 
-                                                    type="button" 
-                                                    wire:click="openAccountLedgerModal({{ $item['id'] }})"
-                                                    title="Drill-down Rincian Mutasi Jurnal"
-                                                    class="inline-flex items-center justify-center p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
-                                                >
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                    </svg>
-                                                </button>
+                <div class="divide-y divide-gray-200 dark:divide-gray-800 -mx-6 -mb-6 border-t border-gray-200 dark:border-white/10">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="bg-gray-100/70 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-xs uppercase font-bold border-b border-gray-300 dark:border-gray-700">
+                                <th class="py-2.5 px-4">Kode</th>
+                                <th class="py-2.5 px-4">Akun / Kategori (Hierarki)</th>
+                                <th class="py-2.5 px-4 text-right">Saldo</th>
+                                <th class="py-2.5 px-2 text-center w-12">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                            @forelse($data['assets']['items'] as $item)
+                                <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
+                                    <td class="py-2.5 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
+                                    <td class="py-2.5 px-4">
+                                        <div class="flex items-center gap-1.5" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
+                                            @if($item['is_header'])
+                                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                                </svg>
+                                                <span class="font-semibold">{{ $item['name'] }}</span>
+                                            @else
+                                                <span class="text-gray-400">&bull;</span>
+                                                <span>{{ $item['name'] }}</span>
                                             @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-
-                                {{-- Dynamic Current Net Income Line --}}
-                                <tr class="bg-gray-100/80 font-bold dark:bg-white/10 text-gray-900 dark:text-white">
-                                    <td class="py-2.5 px-4 font-mono text-xs text-gray-500">-</td>
-                                    <td class="py-2.5 px-4 flex items-center gap-2">
-                                        <span>Laba / (Rugi) Periode Berjalan</span>
-                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
-                                            Auto-Calculate
-                                        </span>
+                                        </div>
                                     </td>
-                                    <td class="py-2.5 px-4 text-right font-mono text-xs font-bold text-gray-900 dark:text-white">
-                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['equity']['current_net_income']) }}
+                                    <td class="py-2.5 px-4 text-right font-mono text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
+                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
                                     </td>
-                                    <td></td>
+                                    <td class="py-2.5 px-2 text-center">
+                                        @if(!$item['is_header'])
+                                            <button 
+                                                type="button" 
+                                                wire:click="openAccountLedgerModal({{ $item['id'] }})"
+                                                title="Drill-down Rincian Mutasi Jurnal"
+                                                class="inline-flex items-center justify-center p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
+                                            >
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                            </button>
+                                        @endif
+                                    </td>
                                 </tr>
-                            </tbody>
-                        </table>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="py-6 text-center text-gray-500 dark:text-gray-400 text-xs">
+                                        Belum ada data akun Aset.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
 
-                        <div class="p-3.5 px-4 bg-gray-100 dark:bg-white/10 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center text-gray-900 dark:text-white">
-                            <span class="font-bold text-xs uppercase tracking-wider">TOTAL EKUITAS</span>
-                            <span class="font-mono text-sm font-bold text-gray-900 dark:text-white">
-                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_equity']) }}
-                            </span>
-                        </div>
+                    {{-- Assets Total Footer Bar (Monochrome High Contrast) --}}
+                    <div class="p-4 px-6 bg-gray-100 dark:bg-white/10 border-t-2 border-gray-400 dark:border-gray-600 flex justify-between items-center text-gray-900 dark:text-white">
+                        <span class="font-extrabold text-sm uppercase tracking-wider">TOTAL ASET (AKTIVA)</span>
+                        <span class="font-mono text-base font-extrabold text-gray-900 dark:text-white">
+                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_assets']) }}
+                        </span>
                     </div>
-                </x-filament::section>
+                </div>
+            </x-filament::section>
+        </div>
 
-            </div>
+        {{-- RIGHT COLUMN: LIABILITIES & EQUITY (PASIVA) --}}
+        <div class="space-y-6">
+
+            {{-- SECTION: LIABILITIES --}}
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-gray-700 dark:bg-gray-300"></span>
+                        <span>KEWAJIBAN (LIABILITIES)</span>
+                    </div>
+                </x-slot>
+
+                <x-slot name="headerEnd">
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
+                        Hutang
+                    </span>
+                </x-slot>
+
+                <div class="divide-y divide-gray-100 dark:divide-gray-800 -mx-6 -mb-6 border-t border-gray-200 dark:border-white/10">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="bg-gray-100/70 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-xs uppercase font-bold border-b border-gray-300 dark:border-gray-700">
+                                <th class="py-2.5 px-4">Kode</th>
+                                <th class="py-2.5 px-4">Akun / Kategori</th>
+                                <th class="py-2.5 px-4 text-right">Saldo</th>
+                                <th class="py-2.5 px-2 text-center w-12">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                            @forelse($data['liabilities']['items'] as $item)
+                                <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
+                                    <td class="py-2 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
+                                    <td class="py-2 px-4">
+                                        <div class="flex items-center gap-1" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
+                                            @if($item['is_header'])
+                                                <span class="font-semibold">{{ $item['name'] }}</span>
+                                            @else
+                                                <span class="text-gray-400">&bull;</span>
+                                                <span>{{ $item['name'] }}</span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td class="py-2 px-4 text-right font-mono text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
+                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
+                                    </td>
+                                    <td class="py-2 px-2 text-center">
+                                        @if(!$item['is_header'])
+                                            <button 
+                                                type="button" 
+                                                wire:click="openAccountLedgerModal({{ $item['id'] }})"
+                                                title="Drill-down Rincian Mutasi Jurnal"
+                                                class="inline-flex items-center justify-center p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
+                                            >
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="py-4 text-center text-gray-500 dark:text-gray-400 text-xs">
+                                        Tidak ada akun Kewajiban.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+
+                    <div class="p-3.5 px-4 bg-gray-100 dark:bg-white/10 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center text-gray-900 dark:text-white">
+                        <span class="font-bold text-xs uppercase tracking-wider">TOTAL KEWAJIBAN</span>
+                        <span class="font-mono text-sm font-bold text-gray-900 dark:text-white">
+                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_liabilities']) }}
+                        </span>
+                    </div>
+                </div>
+            </x-filament::section>
+
+            {{-- SECTION: EQUITY --}}
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-gray-700 dark:bg-gray-300"></span>
+                        <span>EKUITAS (EQUITY)</span>
+                    </div>
+                </x-slot>
+
+                <x-slot name="headerEnd">
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
+                        Modal
+                    </span>
+                </x-slot>
+
+                <div class="divide-y divide-gray-100 dark:divide-gray-800 -mx-6 -mb-6 border-t border-gray-200 dark:border-white/10">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="bg-gray-100/70 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-xs uppercase font-bold border-b border-gray-300 dark:border-gray-700">
+                                <th class="py-2.5 px-4">Kode</th>
+                                <th class="py-2.5 px-4">Akun / Kategori</th>
+                                <th class="py-2.5 px-4 text-right">Saldo</th>
+                                <th class="py-2.5 px-2 text-center w-12">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                            @foreach($data['equity']['items'] as $item)
+                                <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
+                                    <td class="py-2 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
+                                    <td class="py-2 px-4">
+                                        <div class="flex items-center gap-1" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
+                                            @if($item['is_header'])
+                                                <span class="font-semibold">{{ $item['name'] }}</span>
+                                            @else
+                                                <span class="text-gray-400">&bull;</span>
+                                                <span>{{ $item['name'] }}</span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td class="py-2 px-4 text-right font-mono text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
+                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
+                                    </td>
+                                    <td class="py-2 px-2 text-center">
+                                        @if(!$item['is_header'])
+                                            <button 
+                                                type="button" 
+                                                wire:click="openAccountLedgerModal({{ $item['id'] }})"
+                                                title="Drill-down Rincian Mutasi Jurnal"
+                                                class="inline-flex items-center justify-center p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
+                                            >
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+
+                            {{-- Dynamic Current Net Income Line --}}
+                            <tr class="bg-gray-100/80 font-bold dark:bg-white/10 text-gray-900 dark:text-white">
+                                <td class="py-2.5 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-2.5 px-4 flex items-center gap-2">
+                                    <span>Laba / (Rugi) Periode Berjalan</span>
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                        Auto-Calculate
+                                    </span>
+                                </td>
+                                <td class="py-2.5 px-4 text-right font-mono text-xs font-bold text-gray-900 dark:text-white">
+                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['equity']['current_net_income']) }}
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="p-3.5 px-4 bg-gray-100 dark:bg-white/10 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center text-gray-900 dark:text-white">
+                        <span class="font-bold text-xs uppercase tracking-wider">TOTAL EKUITAS</span>
+                        <span class="font-mono text-sm font-bold text-gray-900 dark:text-white">
+                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_equity']) }}
+                        </span>
+                    </div>
+                </div>
+            </x-filament::section>
 
             {{-- COMBINED LIABILITIES & EQUITY TOTAL FOOTER (Monochrome High Contrast) --}}
             <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl flex justify-between items-center text-gray-900 dark:text-white shadow-sm">

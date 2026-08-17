@@ -48,6 +48,9 @@ class ReportHelper
         if (!empty($filters['productCategory'])) {
             $query->whereHas('items.variant.product', fn($pq) => $pq->where('category', $filters['productCategory']));
         }
+        if (!empty($filters['productId'])) {
+            $query->whereHas('items.variant', fn($vq) => $vq->where('product_id', $filters['productId']));
+        }
         if (!empty($filters['search'])) {
             $s = '%' . trim($filters['search']) . '%';
             $query->where(function ($q) use ($s) {
@@ -413,9 +416,16 @@ class ReportHelper
             $grandTotalSum += floatval($sale->grand_total);
             $totalTaxSum += floatval($sale->tax_amount);
 
-            $itemCount = max(1, $sale->items->count());
+            $matchingItems = $sale->items->filter(function ($item) use ($filters) {
+                if (!empty($filters['productId'])) {
+                    return $item->variant?->product_id == $filters['productId'];
+                }
+                return true;
+            })->values();
 
-            foreach ($sale->items as $idx => $item) {
+            $itemCount = max(1, $matchingItems->count());
+
+            foreach ($matchingItems as $idx => $item) {
                 $variant = $item->variant;
                 $productName = $variant?->product?->name ?? 'Barang';
                 if ($variant && !empty($variant->name)) {
@@ -600,6 +610,10 @@ class ReportHelper
         ];
 
         $query = SaleItem::with(['variant.product', 'sale']);
+
+        if (!empty($filters['productId'])) {
+            $query->whereHas('variant', fn($vq) => $vq->where('product_id', $filters['productId']));
+        }
 
         $query->whereHas('sale', function ($sq) use ($filters) {
             $sq->where('status', 'completed');

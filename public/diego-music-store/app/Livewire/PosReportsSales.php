@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\Helpers\ReportHelper;
 use App\Models\Branch;
 use App\Models\Customer;
@@ -15,6 +17,8 @@ use Illuminate\Support\Facades\Storage;
 
 class PosReportsSales extends Component
 {
+    use WithPagination;
+
     public string $viewMode = 'detail'; // 'detail', 'per_day', 'per_nota', 'top_selling'
     public ?string $dateFrom = null;
     public ?string $dateTo = null;
@@ -25,7 +29,21 @@ class PosReportsSales extends Component
     public ?int $selectedCashierId = null;
     public ?string $selectedSaleCategory = null;
     public ?string $selectedProductCategory = null;
+    public ?int $selectedProductId = null;
     public ?string $search = '';
+    public int $perPage = 15;
+
+    public function updated($propertyName)
+    {
+        if (in_array($propertyName, [
+            'search', 'viewMode', 'dateFrom', 'dateTo', 'selectedBranchId',
+            'selectedCustomerId', 'selectedPaymentMethod', 'selectedSalesRepId',
+            'selectedCashierId', 'selectedSaleCategory', 'selectedProductCategory',
+            'selectedProductId', 'perPage'
+        ])) {
+            $this->resetPage();
+        }
+    }
 
     public function mount()
     {
@@ -56,6 +74,7 @@ class PosReportsSales extends Component
                 $this->dateTo = Carbon::now()->endOfYear()->format('Y-m-d');
                 break;
         }
+        $this->resetPage();
     }
 
     public function resetFilters()
@@ -67,9 +86,11 @@ class PosReportsSales extends Component
         $this->selectedCashierId = null;
         $this->selectedSaleCategory = null;
         $this->selectedProductCategory = null;
+        $this->selectedProductId = null;
         $this->search = '';
         $this->dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->dateTo = Carbon::now()->format('Y-m-d');
+        $this->resetPage();
     }
 
     public function render()
@@ -90,6 +111,7 @@ class PosReportsSales extends Component
             'cashierId'       => $this->selectedCashierId,
             'saleCategory'    => $this->selectedSaleCategory,
             'productCategory' => $this->selectedProductCategory,
+            'productId'       => $this->selectedProductId,
             'search'          => $this->search,
         ];
 
@@ -101,6 +123,39 @@ class PosReportsSales extends Component
         };
 
         $summaryData = ReportHelper::getSalesReport($filters);
+
+        // Paginate reportData items
+        $rawItems = $reportData['items'] ?? [];
+        $totalItems = count($rawItems);
+
+        if ($this->perPage > 0) {
+            $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
+            $currentPageItems = array_slice($rawItems, ($currentPage - 1) * $this->perPage, $this->perPage);
+            $paginatedItems = new LengthAwarePaginator(
+                $currentPageItems,
+                $totalItems,
+                $this->perPage,
+                $currentPage,
+                [
+                    'path' => LengthAwarePaginator::resolveCurrentPath(),
+                    'pageName' => 'page',
+                ]
+            );
+        } else {
+            $paginatedItems = new LengthAwarePaginator(
+                $rawItems,
+                $totalItems,
+                max(1, $totalItems),
+                1,
+                [
+                    'path' => LengthAwarePaginator::resolveCurrentPath(),
+                    'pageName' => 'page',
+                ]
+            );
+        }
+
+        $paginatedReportData = $reportData;
+        $paginatedReportData['paginated_items'] = $paginatedItems;
 
         // Filter Options Dropdowns
         $customers = Customer::orderBy('name')->get();
@@ -116,19 +171,22 @@ class PosReportsSales extends Component
         $paymentMethods = Sale::whereNotNull('payment_method')->where('payment_method', '!=', '')->distinct()->pluck('payment_method');
         $saleCategories = Sale::whereNotNull('sale_category')->where('sale_category', '!=', '')->distinct()->pluck('sale_category');
         $productCategories = Product::whereNotNull('category')->where('category', '!=', '')->distinct()->pluck('category');
+        $products = Product::orderBy('name')->get();
 
         return view('livewire.pos-reports-sales', [
-            'branches'          => $branches,
-            'currentBranch'     => $currentBranch,
-            'selectedLogoUrl'   => $selectedLogoUrl,
-            'reportData'        => $reportData,
-            'summaryData'       => $summaryData,
-            'customers'         => $customers,
-            'salesUsers'        => $salesUsers,
-            'cashierUsers'      => $cashierUsers,
-            'paymentMethods'    => $paymentMethods,
-            'saleCategories'    => $saleCategories,
-            'productCategories' => $productCategories,
+            'branches'             => $branches,
+            'currentBranch'        => $currentBranch,
+            'selectedLogoUrl'      => $selectedLogoUrl,
+            'reportData'           => $reportData,
+            'paginatedReportData'  => $paginatedReportData,
+            'summaryData'          => $summaryData,
+            'customers'            => $customers,
+            'salesUsers'           => $salesUsers,
+            'cashierUsers'         => $cashierUsers,
+            'paymentMethods'       => $paymentMethods,
+            'saleCategories'       => $saleCategories,
+            'productCategories'    => $productCategories,
+            'products'             => $products,
         ])->layout('layouts.pos', ['title' => 'Laporan Penjualan ERP — POS']);
     }
 }

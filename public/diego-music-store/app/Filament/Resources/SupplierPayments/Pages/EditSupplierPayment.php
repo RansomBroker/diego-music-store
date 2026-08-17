@@ -8,6 +8,10 @@ use Filament\Resources\Pages\EditRecord;
 use Filament\Actions\DeleteAction;
 use Illuminate\Database\Eloquent\Model;
 
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use App\Actions\SupplierPayment\CancelSupplierPayment;
+
 class EditSupplierPayment extends EditRecord
 {
     protected static string $resource = SupplierPaymentResource::class;
@@ -15,6 +19,22 @@ class EditSupplierPayment extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('cancel')
+                ->label('Batalkan Pembayaran')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->visible(fn () => in_array($this->record->status, ['draft', 'posted']))
+                ->requiresConfirmation()
+                ->modalHeading('Batalkan Pembayaran Supplier')
+                ->modalDescription('Apakah Anda yakin ingin membatalkan pembayaran ini? Saldo hutang supplier akan diperbarui dan jurnal akan dibatalkan.')
+                ->action(function () {
+                    app(CancelSupplierPayment::class)->execute($this->record);
+                    Notification::make()
+                        ->title('Pembayaran Supplier Berhasil Dibatalkan')
+                        ->success()
+                        ->send();
+                    $this->redirect($this->getResource()::getUrl('index'));
+                }),
             DeleteAction::make()
                 ->visible(fn ($record) => $record->status === 'draft'),
         ];

@@ -5,7 +5,7 @@ namespace App\Helpers;
 class FinancialReportHelper
 {
     /**
-     * Format a numeric amount to standard Indonesian Rupiah format.
+     * Format a numeric amount to standard Indonesian Rupiah format with parenthesis for negative values.
      */
     public static function formatRupiah(float|int $amount): string
     {
@@ -14,6 +14,22 @@ class FinancialReportHelper
         }
 
         return 'Rp ' . number_format($amount, 0, ',', '.');
+    }
+
+    /**
+     * Format a numeric amount without Rp prefix with parenthesis for negative values.
+     */
+    public static function formatNumber(float|int $amount): string
+    {
+        if ($amount == 0) {
+            return '-';
+        }
+
+        if ($amount < 0) {
+            return '(' . number_format(abs($amount), 0, ',', '.') . ')';
+        }
+
+        return number_format($amount, 0, ',', '.');
     }
 
     /**

@@ -133,4 +133,54 @@ class PosReportsTest extends TestCase
         $this->assertEquals(20000000, $data['total_retail_valuation']);
         $this->assertEquals(8000000, $data['potential_profit']);
     }
+
+    /** @test */
+    public function it_can_filter_pos_sales_report_by_product()
+    {
+        $productA = Product::create(['name' => 'Gitar Fender', 'type' => 'physical', 'is_active' => true]);
+        $variantA = ProductVariant::create(['product_id' => $productA->id, 'name' => 'Sunburst', 'sku' => 'GTR-FND-01', 'price' => 5000000, 'cost_price' => 3000000, 'hpp' => 3000000, 'is_active' => true]);
+
+        $productB = Product::create(['name' => 'Biola Stentor', 'type' => 'physical', 'is_active' => true]);
+        $variantB = ProductVariant::create(['product_id' => $productB->id, 'name' => 'Standard', 'sku' => 'VIL-STN-01', 'price' => 1500000, 'cost_price' => 900000, 'hpp' => 900000, 'is_active' => true]);
+
+        $sale = Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-PROD-TEST',
+            'invoice_date' => now()->toDateString(),
+            'subtotal' => 6500000,
+            'discount_amount' => 0,
+            'tax_amount' => 0,
+            'grand_total' => 6500000,
+            'payment_method' => 'cash',
+            'status' => 'completed',
+            'created_by' => $this->user->id,
+        ]);
+
+        \App\Models\SaleItem::create([
+            'sale_id' => $sale->id,
+            'product_variant_id' => $variantA->id,
+            'quantity' => 1,
+            'unit_price' => 5000000,
+            'discount_amount' => 0,
+            'total_price' => 5000000,
+            'cost_price' => 3000000,
+        ]);
+
+        \App\Models\SaleItem::create([
+            'sale_id' => $sale->id,
+            'product_variant_id' => $variantB->id,
+            'quantity' => 1,
+            'unit_price' => 1500000,
+            'discount_amount' => 0,
+            'total_price' => 1500000,
+            'cost_price' => 900000,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(PosReportsSales::class)
+            ->set('selectedProductId', $productA->id)
+            ->assertSet('selectedProductId', $productA->id)
+            ->assertSee('Gitar Fender');
+    }
 }

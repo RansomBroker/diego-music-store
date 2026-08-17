@@ -6,138 +6,117 @@
     <style>
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 10px;
+            font-size: 9px;
             color: #111827;
             margin: 0;
-            padding: 15px;
+            padding: 10px;
         }
         .header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             border-bottom: 2px solid #111827;
-            padding-bottom: 8px;
+            padding-bottom: 6px;
         }
         .company-name {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             letter-spacing: 1px;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             color: #111827;
         }
         .report-title {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             text-transform: uppercase;
             color: #111827;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         .report-meta {
-            font-size: 9px;
+            font-size: 8.5px;
             color: #374151;
         }
-        .status-badge {
-            display: block;
-            padding: 6px 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 10px;
-            text-align: center;
-            background-color: #f3f4f6;
-            color: #111827;
-            border: 1px solid #111827;
-        }
-        .section-header {
-            background-color: #111827;
-            color: #ffffff;
-            padding: 5px 8px;
-            font-weight: bold;
-            font-size: 10.5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 10px;
-            margin-bottom: 4px;
-        }
-        table.data-table {
+        table.statement-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 4px;
+            margin-bottom: 10px;
         }
-        table.data-table th {
-            font-size: 8.5px;
+        table.statement-table th {
+            font-size: 8px;
             text-transform: uppercase;
             color: #111827;
-            border-bottom: 1.5px solid #111827;
-            padding: 3px 4px;
-            text-align: left;
+            border: 1px solid #111827;
+            padding: 4px 3px;
+            background-color: #e5e7eb;
+            text-align: center;
         }
-        table.data-table td {
-            padding: 3px 4px;
-            border-bottom: 1px solid #e5e7eb;
+        table.statement-table td {
+            padding: 3.5px 4px;
+            border: 1px solid #d1d5db;
+            font-size: 8.5px;
         }
         .text-right {
             text-align: right;
         }
         .font-mono {
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-weight: bold;
         }
         .font-bold {
             font-weight: bold;
         }
-        .pl-detail {
-            padding-left: 12px !important;
+        .bg-category {
+            background-color: #f3f4f6;
+            font-weight: bold;
         }
-        .subtotal-row {
+        .bg-subtotal {
+            background-color: #e5e7eb;
+            font-weight: bold;
+        }
+        .bg-gross {
+            background-color: #fef3c7;
+            font-weight: bold;
+            border-top: 1.5px solid #111827 !important;
+            border-bottom: 1.5px solid #111827 !important;
+        }
+        .bg-net {
+            background-color: #e2e8f0;
             font-weight: bold;
             font-size: 9.5px;
-            border-top: 1px dashed #9ca3af;
-            background-color: #f9fafb;
-            padding: 4px;
-            margin-bottom: 6px;
-        }
-        .summary-box {
-            background-color: #f3f4f6;
-            border: 1px solid #111827;
-            padding: 5px 8px;
-            font-weight: bold;
-            font-size: 10px;
-            margin-top: 6px;
-            margin-bottom: 10px;
-        }
-        .grand-total-box {
-            background-color: #f9fafb;
-            border: 2px solid #111827;
-            padding: 8px 10px;
-            font-weight: bold;
-            font-size: 11px;
-            margin-top: 15px;
-            color: #111827;
+            border-top: 2px solid #111827 !important;
+            border-bottom: 2px solid #111827 !important;
         }
         .signatures {
-            margin-top: 35px;
+            margin-top: 25px;
             width: 100%;
         }
         .signatures td {
             text-align: center;
             width: 33%;
             vertical-align: bottom;
-            height: 60px;
+            height: 50px;
         }
         .sig-line {
             border-top: 1px solid #111827;
             width: 80%;
             margin: 0 auto;
             padding-top: 4px;
-            font-size: 9px;
+            font-size: 8.5px;
             color: #111827;
         }
     </style>
 </head>
 <body>
 
+    @php
+        $fmt = function ($val) {
+            return \App\Helpers\FinancialReportHelper::formatNumber($val);
+        };
+        $mLabel = strtoupper($data['period_month_label'] ?? 'PERIODE');
+    @endphp
+
     <div class="header">
         <div class="company-name">DIEGO MUSIC STORE</div>
-        <div class="report-title">LAPORAN LABA RUGI (INCOME STATEMENT - MULTI STEP)</div>
+        <div class="report-title">LAPORAN LABA RUGI (INCOME STATEMENT - COMPARATIVE)</div>
         <div class="report-meta">
             Periode: <strong>{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }} s.d. {{ \Illuminate\Support\Carbon::parse($data['to_date'])->format('d/m/Y') }}</strong>
             &bull; Cabang: <strong>{{ $data['branch_name'] }}</strong>
@@ -145,176 +124,153 @@
         </div>
     </div>
 
-    <div class="status-badge">
-        HASIL PERIODE: {{ $data['is_profit'] ? 'LABA BERSIH (NET PROFIT)' : 'RUGI BERSIH (NET LOSS)' }} — Rp {{ number_format($data['net_income'], 0, ',', '.') }}
-    </div>
-
-    {{-- 1. PENDAPATAN OPERASIONAL --}}
-    <div class="section-header">PENDAPATAN OPERASIONAL</div>
-    <table class="data-table">
+    <table class="statement-table">
         <thead>
             <tr>
-                <th style="width: 18%;">Kode</th>
-                <th style="width: 57%;">Nama Akun / Kategori</th>
-                <th style="width: 25%;" class="text-right">Nominal (Rp)</th>
+                <th rowspan="2" style="width: 34%; text-align: left; padding-left: 6px;">DESCRIPTION</th>
+                <th colspan="3" style="width: 33%;">{{ $mLabel }}</th>
+                <th colspan="3" style="width: 33%;">YTD (YEAR TO DATE)</th>
+            </tr>
+            <tr>
+                <th style="width: 11%;">TOKO</th>
+                <th style="width: 11%;">GUDANG</th>
+                <th style="width: 11%;">TOTAL</th>
+                <th style="width: 11%;">TOKO</th>
+                <th style="width: 11%;">GUDANG</th>
+                <th style="width: 11%;">TOTAL</th>
             </tr>
         </thead>
         <tbody>
+            {{-- 1. PENJUALAN --}}
+            <tr class="bg-category">
+                <td colspan="7">PENJUALAN (REVENUE)</td>
+            </tr>
             @forelse($data['revenue']['items'] as $item)
-                <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
-                    <td class="font-mono">{{ $item['code'] }}</td>
-                    <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                    <td class="text-right font-mono">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                <tr class="{{ $item['is_header'] ? 'font-bold bg-category' : '' }}">
+                    <td style="padding-left: {{ max(4, ($item['level'] - 1) * 10) }}px;">
+                        <span class="font-mono" style="color: #4b5563;">{{ $item['code'] }}</span> {{ $item['name'] }}
+                    </td>
+                    <td class="text-right font-mono">{{ $fmt($item['balance_toko']) }}</td>
+                    <td class="text-right font-mono">{{ $fmt($item['balance_gudang']) }}</td>
+                    <td class="text-right font-mono font-bold">{{ $fmt($item['balance']) }}</td>
+                    <td class="text-right font-mono">{{ $fmt($item['ytd_toko']) }}</td>
+                    <td class="text-right font-mono">{{ $fmt($item['ytd_gudang']) }}</td>
+                    <td class="text-right font-mono font-bold">{{ $fmt($item['ytd_total']) }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3" class="text-right" style="color: #6b7280;">Tidak ada Pendapatan Operasional</td>
+                    <td colspan="7" class="text-right" style="color: #6b7280;">Tidak ada Penjualan</td>
                 </tr>
             @endforelse
-        </tbody>
-    </table>
-    <div class="subtotal-row">
-        <table style="width: 100%;">
-            <tr>
-                <td>TOTAL PENDAPATAN OPERASIONAL</td>
-                <td class="text-right font-mono">Rp {{ number_format($data['revenue']['total'], 0, ',', '.') }}</td>
+            <tr class="bg-subtotal">
+                <td>TOTAL PENJUALAN</td>
+                <td class="text-right font-mono">{{ $fmt($data['revenue']['toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($data['revenue']['gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($data['revenue']['total']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($data['revenue']['ytd_toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($data['revenue']['ytd_gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($data['revenue']['ytd_total']) }}</td>
             </tr>
-        </table>
-    </div>
 
-    {{-- 2. HARGA POKOK PENJUALAN (COGS) --}}
-    <div class="section-header">HARGA POKOK PENJUALAN (COGS)</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="width: 18%;">Kode</th>
-                <th style="width: 57%;">Nama Akun / Kategori</th>
-                <th style="width: 25%;" class="text-right">Nominal (Rp)</th>
+            {{-- 2. PEMBELIAN DAN HPP --}}
+            <tr class="bg-category">
+                <td colspan="7">PEMBELIAN DAN HPP (COGS)</td>
             </tr>
-        </thead>
-        <tbody>
             @forelse($data['cogs']['items'] as $item)
-                <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
-                    <td class="font-mono">{{ $item['code'] }}</td>
-                    <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                    <td class="text-right font-mono">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                <tr class="{{ $item['is_header'] ? 'font-bold bg-category' : '' }}">
+                    <td style="padding-left: {{ max(4, ($item['level'] - 1) * 10) }}px;">
+                        <span class="font-mono" style="color: #4b5563;">{{ $item['code'] }}</span> {{ $item['name'] }}
+                    </td>
+                    <td class="text-right font-mono">{{ $fmt($item['balance_toko']) }}</td>
+                    <td class="text-right font-mono">{{ $fmt($item['balance_gudang']) }}</td>
+                    <td class="text-right font-mono font-bold">{{ $fmt($item['balance']) }}</td>
+                    <td class="text-right font-mono">{{ $fmt($item['ytd_toko']) }}</td>
+                    <td class="text-right font-mono">{{ $fmt($item['ytd_gudang']) }}</td>
+                    <td class="text-right font-mono font-bold">{{ $fmt($item['ytd_total']) }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3" class="text-right" style="color: #6b7280;">Tidak ada HPP</td>
+                    <td colspan="7" class="text-right" style="color: #6b7280;">Tidak ada HPP</td>
                 </tr>
             @endforelse
-        </tbody>
-    </table>
-    <div class="subtotal-row">
-        <table style="width: 100%;">
-            <tr>
-                <td>TOTAL HARGA POKOK PENJUALAN</td>
-                <td class="text-right font-mono">Rp {{ number_format($data['cogs']['total'], 0, ',', '.') }}</td>
+            <tr class="bg-subtotal">
+                <td>TOTAL PEMBELIAN DAN HPP</td>
+                <td class="text-right font-mono">{{ $fmt($data['cogs']['toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($data['cogs']['gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($data['cogs']['total']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($data['cogs']['ytd_toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($data['cogs']['ytd_gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($data['cogs']['ytd_total']) }}</td>
             </tr>
-        </table>
-    </div>
 
-    {{-- SUMMARY: LABA KOTOR --}}
-    <div class="summary-box">
-        <table style="width: 100%;">
-            <tr>
+            {{-- SUMMARY: LABA KOTOR --}}
+            @php $gp = $data['gross_profit_details']; @endphp
+            <tr class="bg-gross">
                 <td>LABA KOTOR (GROSS PROFIT)</td>
-                <td class="text-right font-mono">Rp {{ number_format($data['gross_profit'], 0, ',', '.') }}</td>
+                <td class="text-right font-mono">{{ $fmt($gp['toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($gp['gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($gp['total']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($gp['ytd_toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($gp['ytd_gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($gp['ytd_total']) }}</td>
             </tr>
-        </table>
-    </div>
 
-    {{-- 3. BEBAN OPERASIONAL --}}
-    <div class="section-header">BEBAN OPERASIONAL</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="width: 18%;">Kode</th>
-                <th style="width: 57%;">Nama Akun / Kategori</th>
-                <th style="width: 25%;" class="text-right">Nominal (Rp)</th>
+            {{-- 3. BEBAN OPERASIONAL --}}
+            <tr class="bg-category">
+                <td colspan="7">BEBAN OPERASIONAL (OPERATING EXPENSES)</td>
             </tr>
-        </thead>
-        <tbody>
             @forelse($data['operating_expenses']['items'] as $item)
-                <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
-                    <td class="font-mono">{{ $item['code'] }}</td>
-                    <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                    <td class="text-right font-mono">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                <tr class="{{ $item['is_header'] ? 'font-bold bg-category' : '' }}">
+                    <td style="padding-left: {{ max(4, ($item['level'] - 1) * 10) }}px;">
+                        <span class="font-mono" style="color: #4b5563;">{{ $item['code'] }}</span> {{ $item['name'] }}
+                    </td>
+                    <td class="text-right font-mono">{{ $fmt($item['balance_toko']) }}</td>
+                    <td class="text-right font-mono">{{ $fmt($item['balance_gudang']) }}</td>
+                    <td class="text-right font-mono font-bold">{{ $fmt($item['balance']) }}</td>
+                    <td class="text-right font-mono">{{ $fmt($item['ytd_toko']) }}</td>
+                    <td class="text-right font-mono">{{ $fmt($item['ytd_gudang']) }}</td>
+                    <td class="text-right font-mono font-bold">{{ $fmt($item['ytd_total']) }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3" class="text-right" style="color: #6b7280;">Tidak ada Beban Operasional</td>
+                    <td colspan="7" class="text-right" style="color: #6b7280;">Tidak ada Beban Operasional</td>
                 </tr>
             @endforelse
+            <tr class="bg-subtotal">
+                <td>TOTAL BEBAN OPERASIONAL</td>
+                <td class="text-right font-mono">{{ $fmt($data['operating_expenses']['toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($data['operating_expenses']['gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($data['operating_expenses']['total']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($data['operating_expenses']['ytd_toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($data['operating_expenses']['ytd_gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($data['operating_expenses']['ytd_total']) }}</td>
+            </tr>
+
+            {{-- SUMMARY: LABA / (RUGI) OPERASIONAL --}}
+            @php $opInc = $data['operating_income_details']; @endphp
+            <tr class="bg-subtotal" style="border-top: 1.5px solid #111827;">
+                <td>LABA / (RUGI) OPERASIONAL</td>
+                <td class="text-right font-mono">{{ $fmt($opInc['toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($opInc['gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($opInc['total']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($opInc['ytd_toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($opInc['ytd_gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($opInc['ytd_total']) }}</td>
+            </tr>
+
+            {{-- FINAL GRAND TOTAL: LABA BERSIH --}}
+            @php $netInc = $data['net_income_details']; @endphp
+            <tr class="bg-net">
+                <td>{{ $data['is_profit'] ? 'LABA BERSIH (NET PROFIT)' : 'RUGI BERSIH (NET LOSS)' }}</td>
+                <td class="text-right font-mono">{{ $fmt($netInc['toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($netInc['gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($netInc['total']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($netInc['ytd_toko']) }}</td>
+                <td class="text-right font-mono">{{ $fmt($netInc['ytd_gudang']) }}</td>
+                <td class="text-right font-mono font-bold">{{ $fmt($netInc['ytd_total']) }}</td>
+            </tr>
         </tbody>
     </table>
-    <div class="subtotal-row">
-        <table style="width: 100%;">
-            <tr>
-                <td>TOTAL BEBAN OPERASIONAL</td>
-                <td class="text-right font-mono">Rp {{ number_format($data['operating_expenses']['total'], 0, ',', '.') }}</td>
-            </tr>
-        </table>
-    </div>
-
-    {{-- SUMMARY: LABA OPERASIONAL --}}
-    <div class="summary-box">
-        <table style="width: 100%;">
-            <tr>
-                <td>LABA OPERASIONAL (OPERATING INCOME)</td>
-                <td class="text-right font-mono">Rp {{ number_format($data['operating_income'], 0, ',', '.') }}</td>
-            </tr>
-        </table>
-    </div>
-
-    {{-- 4. NON-OPERASIONAL (JIKA ADA) --}}
-    @if(count($data['other_revenue']['items']) > 0 || count($data['other_expenses']['items']) > 0)
-        <div class="section-header">PENDAPATAN & BEBAN NON-OPERASIONAL</div>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th style="width: 18%;">Kode</th>
-                    <th style="width: 57%;">Nama Akun / Kategori</th>
-                    <th style="width: 25%;" class="text-right">Nominal (Rp)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($data['other_revenue']['items'] as $item)
-                    <tr>
-                        <td class="font-mono">{{ $item['code'] }}</td>
-                        <td>{{ $item['name'] }}</td>
-                        <td class="text-right font-mono">{{ number_format($item['balance'], 0, ',', '.') }}</td>
-                    </tr>
-                @endforeach
-                @foreach($data['other_expenses']['items'] as $item)
-                    <tr>
-                        <td class="font-mono">{{ $item['code'] }}</td>
-                        <td>{{ $item['name'] }}</td>
-                        <td class="text-right font-mono">({{ number_format($item['balance'], 0, ',', '.') }})</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-        <div class="subtotal-row">
-            <table style="width: 100%;">
-                <tr>
-                    <td>NET NON-OPERATIONAL</td>
-                    <td class="text-right font-mono">Rp {{ number_format($data['net_other'], 0, ',', '.') }}</td>
-                </tr>
-            </table>
-        </div>
-    @endif
-
-    {{-- GRAND TOTAL: LABA BERSIH --}}
-    <div class="grand-total-box">
-        <table style="width: 100%;">
-            <tr>
-                <td>{{ $data['is_profit'] ? 'LABA BERSIH (NET PROFIT)' : 'RUGI BERSIH (NET LOSS)' }}</td>
-                <td class="text-right font-mono" style="font-size: 12px;">Rp {{ number_format($data['net_income'], 0, ',', '.') }}</td>
-            </tr>
-        </table>
-    </div>
 
     <table class="signatures">
         <tr>

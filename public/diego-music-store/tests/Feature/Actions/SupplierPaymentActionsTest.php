@@ -382,4 +382,40 @@ class SupplierPaymentActionsTest extends TestCase
         $this->assertEquals(0, $payment->total_amount);
         $this->assertCount(0, $payment->items);
     }
+
+    public function test_it_can_cancel_posted_supplier_payment(): void
+    {
+        $this->supplier->update(['outstanding_debt' => 10000000]);
+
+        $payment = SupplierPayment::create([
+            'payment_no' => 'SP-TEST-CANCEL',
+            'payment_date' => '2026-07-01',
+            'supplier_id' => $this->supplier->id,
+            'branch_id' => $this->branch->id,
+            'account_id' => $this->cashAccount->id,
+            'payment_method' => 'Cash',
+            'total_amount' => 5000000,
+            'status' => 'draft',
+        ]);
+
+        SupplierPaymentItem::create([
+            'supplier_payment_id' => $payment->id,
+            'purchase_transaction_id' => $this->creditPurchase->id,
+            'amount_due' => 10000000,
+            'amount_paid' => 5000000,
+        ]);
+
+        app(ProcessSupplierPaymentComplete::class)->execute($payment);
+        $this->assertEquals(5000000, $this->supplier->fresh()->outstanding_debt);
+
+        app(\App\Actions\SupplierPayment\CancelSupplierPayment::class)->execute($payment->fresh());
+
+        $this->assertEquals('cancelled', $payment->fresh()->status);
+        $this->assertEquals(10000000, $this->supplier->fresh()->outstanding_debt);
+
+        $journal = JournalEntry::where('reference_type', 'SupplierPayment')
+            ->where('reference_id', $payment->id)
+            ->first();
+        $this->assertEquals('cancelled', $journal->status);
+    }
 }

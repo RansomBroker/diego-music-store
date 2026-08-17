@@ -4,12 +4,13 @@ namespace App\Actions\Accounting;
 
 use App\Models\Account;
 use App\Models\Branch;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class GenerateIncomeStatementReport
 {
     /**
-     * Execute the Multi-Step Income Statement (Laba Rugi) calculation.
+     * Execute the Multi-Step Income Statement (Laba Rugi) calculation with Toko, Gudang, and YTD comparison.
      *
      * @param  string|null  $fromDate
      * @param  string|null  $toDate
@@ -24,28 +25,62 @@ class GenerateIncomeStatementReport
         $toDate   = $toDate ?: now()->format('Y-m-d');
         $branch   = $branchId ? Branch::find($branchId) : null;
 
-        // 1. Fetch sums of debits and credits from posted journal items within [fromDate, toDate]
-        $journalQuery = DB::table('journal_items')
+        $ytdFromDate = Carbon::parse($toDate)->startOfYear()->format('Y-m-d');
+        $monthLabel  = Carbon::parse($toDate)->translatedFormat('M');
+
+        // 1. Classify branches into Toko vs Gudang
+        $allBranches = Branch::all();
+        $gudangBranchIds = [];
+        foreach ($allBranches as $b) {
+            $bName = strtolower($b->name . ' ' . $b->store_name);
+            if (str_contains($bName, 'gudang') || str_contains($bName, 'warehouse')) {
+                $gudangBranchIds[] = $b->id;
+            }
+        }
+
+        // 2. Fetch sums for Current Period [fromDate, toDate] grouped by account_id and branch_id
+        $currentQuery = DB::table('journal_items')
             ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.status', 'posted')
             ->whereDate('journal_entries.date', '>=', $fromDate)
             ->whereDate('journal_entries.date', '<=', $toDate);
 
         if ($branchId) {
-            $journalQuery->where('journal_entries.branch_id', $branchId);
+            $currentQuery->where('journal_entries.branch_id', $branchId);
         }
 
-        $journalSums = $journalQuery
+        $currentSums = $currentQuery
             ->select(
                 'journal_items.account_id',
+                'journal_entries.branch_id',
                 DB::raw('SUM(journal_items.debit) as total_debit'),
                 DB::raw('SUM(journal_items.credit) as total_credit')
             )
-            ->groupBy('journal_items.account_id')
-            ->get()
-            ->keyBy('account_id');
+            ->groupBy('journal_items.account_id', 'journal_entries.branch_id')
+            ->get();
 
-        // 2. Fetch revenue (4, 7) and expense/COGS (5, 6, 8) accounts
+        // 3. Fetch sums for YTD Period [ytdFromDate, toDate] grouped by account_id and branch_id
+        $ytdQuery = DB::table('journal_items')
+            ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
+            ->where('journal_entries.status', 'posted')
+            ->whereDate('journal_entries.date', '>=', $ytdFromDate)
+            ->whereDate('journal_entries.date', '<=', $toDate);
+
+        if ($branchId) {
+            $ytdQuery->where('journal_entries.branch_id', $branchId);
+        }
+
+        $ytdSums = $ytdQuery
+            ->select(
+                'journal_items.account_id',
+                'journal_entries.branch_id',
+                DB::raw('SUM(journal_items.debit) as total_debit'),
+                DB::raw('SUM(journal_items.credit) as total_credit')
+            )
+            ->groupBy('journal_items.account_id', 'journal_entries.branch_id')
+            ->get();
+
+        // 4. Fetch revenue (4, 7) and expense/COGS (5, 6, 8) accounts
         $allAccounts = Account::with('parent')
             ->where('is_active', true)
             ->where(function ($q) {
@@ -61,7 +96,6 @@ class GenerateIncomeStatementReport
 
         $accountsById = Account::where('is_active', true)->get()->keyBy('id');
 
-        // Calculate account depth level (1 = Root, 2 = Sub, 3 = Detail)
         $getAccountLevel = function (Account $account) use ($accountsById): int {
             $level = 1;
             $current = $account;
@@ -73,36 +107,60 @@ class GenerateIncomeStatementReport
             return $level;
         };
 
-        // 3. Calculate raw account balances within period
-        $rawBalances = [];
-        foreach ($allAccounts as $acc) {
-            $sums = $journalSums->get($acc->id);
-            $debits = $sums ? (float) $sums->total_debit : 0.0;
-            $credits = $sums ? (float) $sums->total_credit : 0.0;
+        // Helper to calculate balance array [toko, gudang, total] for an account from sums collection
+        $calcBalances = function (Account $acc, $sumsCollection) use ($gudangBranchIds): array {
+            $toko = 0.0;
+            $gudang = 0.0;
 
             $class = strtolower($acc->classification);
             $code = strtolower($acc->code);
+            $isRevenue = ($class === 'revenue' || str_starts_with($code, '4') || str_starts_with($code, '7'));
 
-            // Revenue (4, 7): normal balance is Credit (credits - debits)
-            if ($class === 'revenue' || str_starts_with($code, '4') || str_starts_with($code, '7')) {
-                $rawBalances[$acc->id] = $credits - $debits;
-            } else {
-                // Expense & COGS (5, 6, 8): normal balance is Debit (debits - credits)
-                $rawBalances[$acc->id] = $debits - $credits;
+            $rows = $sumsCollection->where('account_id', $acc->id);
+            foreach ($rows as $row) {
+                $debits = (float) $row->total_debit;
+                $credits = (float) $row->total_credit;
+                $bal = $isRevenue ? ($credits - $debits) : ($debits - $credits);
+
+                if (in_array($row->branch_id, $gudangBranchIds)) {
+                    $gudang += $bal;
+                } else {
+                    $toko += $bal;
+                }
             }
+
+            return [
+                'toko'   => $toko,
+                'gudang' => $gudang,
+                'total'  => $toko + $gudang,
+            ];
+        };
+
+        // Calculate raw balances per account
+        $rawCurrent = [];
+        $rawYtd     = [];
+        foreach ($allAccounts as $acc) {
+            $rawCurrent[$acc->id] = $calcBalances($acc, $currentSums);
+            $rawYtd[$acc->id]     = $calcBalances($acc, $ytdSums);
         }
 
         // Calculate cumulative balances for header accounts
-        $cumulativeBalances = [];
+        $cumCurrent = [];
+        $cumYtd     = [];
         foreach ($allAccounts as $acc) {
             if ($acc->is_header) {
-                $descendantSum = 0.0;
+                $cToko = 0.0; $cGudang = 0.0;
+                $yToko = 0.0; $yGudang = 0.0;
+
                 foreach ($allAccounts as $child) {
                     if (!$child->is_header) {
                         $curr = $child;
                         while ($curr->parent_id) {
                             if ($curr->parent_id == $acc->id) {
-                                $descendantSum += $rawBalances[$child->id];
+                                $cToko += $rawCurrent[$child->id]['toko'];
+                                $cGudang += $rawCurrent[$child->id]['gudang'];
+                                $yToko += $rawYtd[$child->id]['toko'];
+                                $yGudang += $rawYtd[$child->id]['gudang'];
                                 break;
                             }
                             if (!isset($accountsById[$curr->parent_id])) break;
@@ -110,13 +168,16 @@ class GenerateIncomeStatementReport
                         }
                     }
                 }
-                $cumulativeBalances[$acc->id] = $descendantSum;
+
+                $cumCurrent[$acc->id] = ['toko' => $cToko, 'gudang' => $cGudang, 'total' => $cToko + $cGudang];
+                $cumYtd[$acc->id]     = ['toko' => $yToko, 'gudang' => $yGudang, 'total' => $yToko + $yGudang];
             } else {
-                $cumulativeBalances[$acc->id] = $rawBalances[$acc->id];
+                $cumCurrent[$acc->id] = $rawCurrent[$acc->id];
+                $cumYtd[$acc->id]     = $rawYtd[$acc->id];
             }
         }
 
-        // 4. Categorize accounts into Multi-Step sections
+        // Categorize into sections
         $revenueItems          = [];
         $cogsItems             = [];
         $operatingExpenseItems = [];
@@ -125,25 +186,27 @@ class GenerateIncomeStatementReport
 
         foreach ($allAccounts as $acc) {
             $level = $getAccountLevel($acc);
-            $balance = $cumulativeBalances[$acc->id];
 
             $itemData = [
-                'id'          => $acc->id,
-                'code'        => $acc->code,
-                'name'        => $acc->name,
-                'is_header'   => $acc->is_header,
-                'level'       => $level,
-                'parent_id'   => $acc->parent_id,
-                'parent_code' => $acc->parent?->code,
-                'balance'     => $balance,
+                'id'             => $acc->id,
+                'code'           => $acc->code,
+                'name'           => $acc->name,
+                'is_header'      => $acc->is_header,
+                'level'          => $level,
+                'parent_id'      => $acc->parent_id,
+                'parent_code'    => $acc->parent?->code,
+                'balance'        => $cumCurrent[$acc->id]['total'],
+                'balance_toko'   => $cumCurrent[$acc->id]['toko'],
+                'balance_gudang' => $cumCurrent[$acc->id]['gudang'],
+                'ytd_total'      => $cumYtd[$acc->id]['total'],
+                'ytd_toko'       => $cumYtd[$acc->id]['toko'],
+                'ytd_gudang'     => $cumYtd[$acc->id]['gudang'],
             ];
 
-            // Summary view filtering (only headers)
             if ($viewType === 'summary' && !$acc->is_header) {
                 continue;
             }
 
-            // Account level filtering
             if ($accountLevel !== 'all') {
                 $maxLvl = (int) $accountLevel;
                 if ($level > $maxLvl) {
@@ -173,43 +236,70 @@ class GenerateIncomeStatementReport
             }
         }
 
-        // 5. Calculate overall Multi-Step totals from raw non-header balances
-        $totalRevenue = 0.0;
-        $totalCogs = 0.0;
-        $totalOperatingExpenses = 0.0;
-        $totalOtherRevenue = 0.0;
-        $totalOtherExpenses = 0.0;
+        // Section Totals calculation from raw non-header balances
+        $sumGroup = function (string $prefix) use ($allAccounts, $rawCurrent, $rawYtd) {
+            $cToko = 0.0; $cGudang = 0.0;
+            $yToko = 0.0; $yGudang = 0.0;
 
-        foreach ($allAccounts as $acc) {
-            if (!$acc->is_header) {
-                $code = strtolower($acc->code);
-                $class = strtolower($acc->classification);
-                $bal = $rawBalances[$acc->id];
+            foreach ($allAccounts as $acc) {
+                if (!$acc->is_header) {
+                    $code = strtolower($acc->code);
+                    $class = strtolower($acc->classification);
+                    $match = false;
 
-                if (str_starts_with($code, '4')) {
-                    $totalRevenue += $bal;
-                } elseif (str_starts_with($code, '5')) {
-                    $totalCogs += $bal;
-                } elseif (str_starts_with($code, '6')) {
-                    $totalOperatingExpenses += $bal;
-                } elseif (str_starts_with($code, '7')) {
-                    $totalOtherRevenue += $bal;
-                } elseif (str_starts_with($code, '8')) {
-                    $totalOtherExpenses += $bal;
-                } else {
-                    if ($class === 'revenue') {
-                        $totalRevenue += $bal;
-                    } else {
-                        $totalOperatingExpenses += $bal;
+                    if ($prefix === '4' && (str_starts_with($code, '4') || $class === 'revenue')) $match = true;
+                    elseif ($prefix === '5' && str_starts_with($code, '5')) $match = true;
+                    elseif ($prefix === '6' && (str_starts_with($code, '6') || ($class !== 'revenue' && !str_starts_with($code, '4') && !str_starts_with($code, '5') && !str_starts_with($code, '7') && !str_starts_with($code, '8')))) $match = true;
+                    elseif ($prefix === '7' && str_starts_with($code, '7')) $match = true;
+                    elseif ($prefix === '8' && str_starts_with($code, '8')) $match = true;
+
+                    if ($match) {
+                        $cToko += $rawCurrent[$acc->id]['toko'];
+                        $cGudang += $rawCurrent[$acc->id]['gudang'];
+                        $yToko += $rawYtd[$acc->id]['toko'];
+                        $yGudang += $rawYtd[$acc->id]['gudang'];
                     }
                 }
             }
-        }
 
-        $grossProfit = $totalRevenue - $totalCogs;
-        $operatingIncome = $grossProfit - $totalOperatingExpenses;
-        $netOther = $totalOtherRevenue - $totalOtherExpenses;
-        $netIncome = $operatingIncome + $netOther;
+            return [
+                'toko'       => $cToko,
+                'gudang'     => $cGudang,
+                'total'      => $cToko + $cGudang,
+                'ytd_toko'   => $yToko,
+                'ytd_gudang' => $yGudang,
+                'ytd_total'  => $yToko + $yGudang,
+            ];
+        };
+
+        $revenueTotal   = $sumGroup('4');
+        $cogsTotal      = $sumGroup('5');
+        $opExpenseTotal = $sumGroup('6');
+        $othRevTotal    = $sumGroup('7');
+        $othExpTotal    = $sumGroup('8');
+
+        $calcDiff = function (array $a, array $b) {
+            return [
+                'toko'       => $a['toko'] - $b['toko'],
+                'gudang'     => $a['gudang'] - $b['gudang'],
+                'total'      => $a['total'] - $b['total'],
+                'ytd_toko'   => $a['ytd_toko'] - $b['ytd_toko'],
+                'ytd_gudang' => $a['ytd_gudang'] - $b['ytd_gudang'],
+                'ytd_total'  => $a['ytd_total'] - $b['ytd_total'],
+            ];
+        };
+
+        $grossProfit     = $calcDiff($revenueTotal, $cogsTotal);
+        $operatingIncome = $calcDiff($grossProfit, $opExpenseTotal);
+        $netOther        = $calcDiff($othRevTotal, $othExpTotal);
+        $netIncome       = [
+            'toko'       => $operatingIncome['toko'] + $netOther['toko'],
+            'gudang'     => $operatingIncome['gudang'] + $netOther['gudang'],
+            'total'      => $operatingIncome['total'] + $netOther['total'],
+            'ytd_toko'   => $operatingIncome['ytd_toko'] + $netOther['ytd_toko'],
+            'ytd_gudang' => $operatingIncome['ytd_gudang'] + $netOther['ytd_gudang'],
+            'ytd_total'  => $operatingIncome['ytd_total'] + $netOther['ytd_total'],
+        ];
 
         return [
             'from_date'               => $fromDate,
@@ -218,35 +308,25 @@ class GenerateIncomeStatementReport
             'branch_name'             => $branch ? $branch->name : 'Semua Cabang',
             'view_type'               => $viewType,
             'account_level'           => $accountLevel,
+            'period_month_label'      => $monthLabel,
 
-            'revenue'                 => [
-                'items' => $revenueItems,
-                'total' => $totalRevenue,
-            ],
-            'cogs'                    => [
-                'items' => $cogsItems,
-                'total' => $totalCogs,
-            ],
-            'gross_profit'            => $grossProfit,
+            'revenue'                 => array_merge(['items' => $revenueItems], $revenueTotal),
+            'cogs'                    => array_merge(['items' => $cogsItems], $cogsTotal),
+            'gross_profit'            => $grossProfit['total'],
+            'gross_profit_details'    => $grossProfit,
 
-            'operating_expenses'      => [
-                'items' => $operatingExpenseItems,
-                'total' => $totalOperatingExpenses,
-            ],
-            'operating_income'        => $operatingIncome,
+            'operating_expenses'      => array_merge(['items' => $operatingExpenseItems], $opExpenseTotal),
+            'operating_income'        => $operatingIncome['total'],
+            'operating_income_details'=> $operatingIncome,
 
-            'other_revenue'           => [
-                'items' => $otherRevenueItems,
-                'total' => $totalOtherRevenue,
-            ],
-            'other_expenses'          => [
-                'items' => $otherExpenseItems,
-                'total' => $totalOtherExpenses,
-            ],
-            'net_other'               => $netOther,
+            'other_revenue'           => array_merge(['items' => $otherRevenueItems], $othRevTotal),
+            'other_expenses'          => array_merge(['items' => $otherExpenseItems], $othExpTotal),
+            'net_other'               => $netOther['total'],
+            'net_other_details'       => $netOther,
 
-            'net_income'              => $netIncome,
-            'is_profit'               => $netIncome >= 0,
+            'net_income'              => $netIncome['total'],
+            'net_income_details'      => $netIncome,
+            'is_profit'               => $netIncome['total'] >= 0,
         ];
     }
 }

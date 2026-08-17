@@ -11,6 +11,9 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
+use App\Actions\SupplierPayment\CancelSupplierPayment;
+use Filament\Notifications\Notification;
+
 class SupplierPaymentsTable
 {
     public static function configure(Table $table): Table
@@ -57,16 +60,36 @@ class SupplierPaymentsTable
                     ->color(fn (string $state): string => match ($state) {
                         'draft' => 'gray',
                         'posted' => 'success',
+                        'cancelled' => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'draft' => 'Draft',
                         'posted' => 'Posted',
+                        'cancelled' => 'Batal',
                         default => ucfirst($state),
                     }),
             ])
             ->actions([
-                EditAction::make(),
+                EditAction::make()
+                    ->disabled(fn ($record) => $record->status === 'cancelled'),
+
+                Action::make('cancel')
+                    ->label('Batalkan')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn ($record) => in_array($record->status, ['draft', 'posted']))
+                    ->requiresConfirmation()
+                    ->modalHeading('Batalkan Pembayaran Supplier')
+                    ->modalDescription('Apakah Anda yakin ingin membatalkan pembayaran ini? Saldo hutang supplier akan diperbarui dan jurnal akan dibatalkan.')
+                    ->action(function ($record) {
+                        app(CancelSupplierPayment::class)->execute($record);
+                        Notification::make()
+                            ->title('Pembayaran Supplier Berhasil Dibatalkan')
+                            ->success()
+                            ->send();
+                    }),
+
                 DeleteAction::make()
                     ->visible(fn ($record) => $record->status === 'draft'),
 

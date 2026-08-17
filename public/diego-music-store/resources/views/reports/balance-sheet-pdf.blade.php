@@ -105,11 +105,15 @@
             padding: 3px 4px;
             border-bottom: 1px solid #e5e7eb;
         }
+        table.data-table td.text-right {
+            font-weight: bold;
+        }
         .text-right {
             text-align: right;
         }
         .font-mono {
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-weight: bold;
         }
         .font-bold {
             font-weight: bold;

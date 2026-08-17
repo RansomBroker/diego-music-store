@@ -20,7 +20,7 @@
                     <!-- Header & Breadcrumb -->
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
-                            <nav class="text-xs font-semibold text-slate-400 dark:text-slate-500 mb-1.5" aria-label="Breadcrumb">
+                            <nav class="text-sm font-semibold text-slate-400 dark:text-slate-500 mb-1.5" aria-label="Breadcrumb">
                                 <ol class="inline-flex items-center space-x-1 md:space-x-2">
                                     <li class="inline-flex items-center">
                                         <a href="/pos/front-office" class="hover:text-primary dark:hover:text-blue-400 transition-colors">POS</a>
@@ -50,132 +50,173 @@
                         </div>
                     </div>
 
-                    <!-- Common Filter Toolbar Card (4-Column Layout) -->
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 shadow-sm space-y-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                            <!-- Col 1: Mode Laporan -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Mode Laporan</label>
-                                <x-pos.form.select model="viewMode" :live="true" size="sm" icon="ph-squares-four">
-                                    <option value="detail">Detail Transaksi</option>
-                                    <option value="per_day">Per Hari</option>
-                                    <option value="per_nota">Per Nota</option>
-                                    <option value="top_selling">Terlaris</option>
-                                </x-pos.form.select>
+                    <!-- Common Filter Toolbar Card (Expandable / Collapsible) -->
+                    <div x-data="{ isExpanded: true }" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition-all duration-200 overflow-hidden">
+                        
+                        <!-- Filter Header Bar (Clickable to Collapse / Expand) -->
+                        <div @click="isExpanded = !isExpanded" class="p-4 px-4.5 flex items-center justify-between cursor-pointer select-none bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                    <i class="ph ph-funnel text-base font-bold"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                        Filter Laporan & Parameter
+                                    </h3>
+                                    <p class="text-[11px] text-slate-400 dark:text-slate-500">
+                                        Klik untuk menyembunyikan / menampilkan opsi filter
+                                    </p>
+                                </div>
                             </div>
 
-                            <!-- Col 2: Periode Dari -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Dari Tanggal</label>
-                                <x-pos.form.input type="date" model="dateFrom" :live="true" size="sm" />
-                            </div>
-
-                            <!-- Col 3: Periode s/d -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Sampai Tanggal</label>
-                                <x-pos.form.input type="date" model="dateTo" :live="true" size="sm" />
-                            </div>
-
-                            <!-- Col 4: Cabang -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Cabang</label>
-                                <x-pos.form.select model="selectedBranchId" :live="true" size="sm" icon="ph-storefront">
-                                    <option value="">Semua Cabang</option>
-                                    @foreach ($branches as $b)
-                                        <option value="{{ $b->id }}">{{ $b->name }}</option>
-                                    @endforeach
-                                </x-pos.form.select>
-                            </div>
-
-                            <!-- Col 5: Pelanggan -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Pelanggan</label>
-                                <x-pos.form.select model="selectedCustomerId" :live="true" size="sm" icon="ph-user">
-                                    <option value="">Semua Pelanggan</option>
-                                    @foreach ($customers as $c)
-                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
-                                    @endforeach
-                                </x-pos.form.select>
-                            </div>
-
-                            <!-- Col 6: Jenis Pembayaran -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Jenis Pembayaran</label>
-                                <x-pos.form.select model="selectedPaymentMethod" :live="true" size="sm" icon="ph-credit-card">
-                                    <option value="">Semua Jenis Bayar</option>
-                                    @foreach ($paymentMethods as $pm)
-                                        <option value="{{ $pm }}">{{ $pm }}</option>
-                                    @endforeach
-                                </x-pos.form.select>
-                            </div>
-
-                            <!-- Col 7: Sales Rep -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Sales Representative</label>
-                                <x-pos.form.select model="selectedSalesRepId" :live="true" size="sm" icon="ph-identification-badge">
-                                    <option value="">Semua Sales</option>
-                                    @foreach ($salesUsers as $u)
-                                        <option value="{{ $u->id }}">{{ $u->name }}</option>
-                                    @endforeach
-                                </x-pos.form.select>
-                            </div>
-
-                            <!-- Col 8: Kasir -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Kasir / Operator</label>
-                                <x-pos.form.select model="selectedCashierId" :live="true" size="sm" icon="ph-user-gear">
-                                    <option value="">Semua Kasir</option>
-                                    @foreach ($cashierUsers as $u)
-                                        <option value="{{ $u->id }}">{{ $u->name }}</option>
-                                    @endforeach
-                                </x-pos.form.select>
-                            </div>
-
-                            <!-- Col 9: Kategori Penjualan -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Kategori Penjualan</label>
-                                <x-pos.form.select model="selectedSaleCategory" :live="true" size="sm" icon="ph-tag">
-                                    <option value="">Semua Kat. Penjualan</option>
-                                    @foreach ($saleCategories as $sc)
-                                        <option value="{{ $sc }}">{{ $sc }}</option>
-                                    @endforeach
-                                </x-pos.form.select>
-                            </div>
-
-                            <!-- Col 10: Kategori Barang -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Kategori Barang</label>
-                                <x-pos.form.select model="selectedProductCategory" :live="true" size="sm" icon="ph-package">
-                                    <option value="">Semua Kat. Barang</option>
-                                    @foreach ($productCategories as $pc)
-                                        <option value="{{ $pc }}">{{ $pc }}</option>
-                                    @endforeach
-                                </x-pos.form.select>
-                            </div>
-
-                            <!-- Col 11: Pencarian / Search -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Kata Kunci / Search</label>
-                                <x-pos.form.input model="search" :live="true" placeholder="Cari invoice/pelanggan/barang..." icon="ph-magnifying-glass" size="sm" />
-                            </div>
-
-                            <!-- Col 12: Actions (Reset) -->
-                            <div>
-                                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Reset</label>
-                                <x-pos.utility.button variant="secondary" size="sm" icon="ph-arrow-counter-clockwise" class="w-full justify-center" wire:click="resetFilters">
-                                    Reset Filter
-                                </x-pos.utility.button>
+                            <div class="flex items-center gap-2">
+                                <span x-show="!isExpanded" class="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                    Filter Sembunyi
+                                </span>
+                                <button type="button" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all">
+                                    <i class="ph text-base transition-transform duration-200" :class="isExpanded ? 'ph-caret-up' : 'ph-caret-down'"></i>
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Presets Bar -->
-                        <div class="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[11px] font-bold text-slate-400 uppercase mr-1">Preset Tanggal:</span>
-                                <x-pos.utility.button variant="secondary" size="sm" wire:click="setQuickDateRange('today')">Hari Ini</x-pos.utility.button>
-                                <x-pos.utility.button variant="secondary" size="sm" wire:click="setQuickDateRange('this_week')">Minggu Ini</x-pos.utility.button>
-                                <x-pos.utility.button variant="secondary" size="sm" wire:click="setQuickDateRange('this_month')">Bulan Ini</x-pos.utility.button>
-                                <x-pos.utility.button variant="secondary" size="sm" wire:click="setQuickDateRange('this_year')">Tahun Ini</x-pos.utility.button>
+                        <!-- Filter Form Content Body (Collapsible) -->
+                        <div x-show="isExpanded" x-collapse class="p-4.5 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                                <!-- Col 1: Mode Laporan -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Mode Laporan</label>
+                                    <x-pos.form.select model="viewMode" :live="true" size="sm" icon="ph-squares-four">
+                                        <option value="detail">Detail Transaksi</option>
+                                        <option value="per_day">Per Hari</option>
+                                        <option value="per_nota">Per Nota</option>
+                                        <option value="top_selling">Terlaris</option>
+                                    </x-pos.form.select>
+                                </div>
+
+                                <!-- Col 2: Periode Dari -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Dari Tanggal</label>
+                                    <x-pos.form.input type="date" model="dateFrom" :live="true" size="sm" />
+                                </div>
+
+                                <!-- Col 3: Periode s/d -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Sampai Tanggal</label>
+                                    <x-pos.form.input type="date" model="dateTo" :live="true" size="sm" />
+                                </div>
+
+                                <!-- Col 4: Cabang -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Cabang</label>
+                                    <x-pos.form.select model="selectedBranchId" :live="true" size="sm" icon="ph-storefront">
+                                        <option value="">Semua Cabang</option>
+                                        @foreach ($branches as $b)
+                                            <option value="{{ $b->id }}">{{ $b->name }}</option>
+                                        @endforeach
+                                    </x-pos.form.select>
+                                </div>
+
+                                <!-- Col 5: Pelanggan -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Pelanggan</label>
+                                    <x-pos.form.select model="selectedCustomerId" :live="true" size="sm" icon="ph-user">
+                                        <option value="">Semua Pelanggan</option>
+                                        @foreach ($customers as $c)
+                                            <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                        @endforeach
+                                    </x-pos.form.select>
+                                </div>
+
+                                <!-- Col 6: Jenis Pembayaran -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Jenis Pembayaran</label>
+                                    <x-pos.form.select model="selectedPaymentMethod" :live="true" size="sm" icon="ph-credit-card">
+                                        <option value="">Semua Jenis Bayar</option>
+                                        @foreach ($paymentMethods as $pm)
+                                            <option value="{{ $pm }}">{{ $pm }}</option>
+                                        @endforeach
+                                    </x-pos.form.select>
+                                </div>
+
+                                <!-- Col 7: Sales Rep -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Sales Representative</label>
+                                    <x-pos.form.select model="selectedSalesRepId" :live="true" size="sm" icon="ph-identification-badge">
+                                        <option value="">Semua Sales</option>
+                                        @foreach ($salesUsers as $u)
+                                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                        @endforeach
+                                    </x-pos.form.select>
+                                </div>
+
+                                <!-- Col 8: Kasir -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Kasir / Operator</label>
+                                    <x-pos.form.select model="selectedCashierId" :live="true" size="sm" icon="ph-user-gear">
+                                        <option value="">Semua Kasir</option>
+                                        @foreach ($cashierUsers as $u)
+                                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                        @endforeach
+                                    </x-pos.form.select>
+                                </div>
+
+                                <!-- Col 9: Kategori Penjualan -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Kategori Penjualan</label>
+                                    <x-pos.form.select model="selectedSaleCategory" :live="true" size="sm" icon="ph-tag">
+                                        <option value="">Semua Kat. Penjualan</option>
+                                        @foreach ($saleCategories as $sc)
+                                            <option value="{{ $sc }}">{{ $sc }}</option>
+                                        @endforeach
+                                    </x-pos.form.select>
+                                </div>
+
+                                <!-- Col 10: Kategori Barang -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Kategori Barang</label>
+                                    <x-pos.form.select model="selectedProductCategory" :live="true" size="sm" icon="ph-package">
+                                        <option value="">Semua Kat. Barang</option>
+                                        @foreach ($productCategories as $pc)
+                                            <option value="{{ $pc }}">{{ $pc }}</option>
+                                        @endforeach
+                                    </x-pos.form.select>
+                                </div>
+
+                                <!-- Col 11: Filter Produk Spesifik -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Filter Produk</label>
+                                    <x-pos.form.select model="selectedProductId" :live="true" size="sm" icon="ph-music-notes">
+                                        <option value="">Semua Produk</option>
+                                        @foreach ($products as $p)
+                                            <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                        @endforeach
+                                    </x-pos.form.select>
+                                </div>
+
+                                <!-- Col 12: Pencarian / Search -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Kata Kunci / Search</label>
+                                    <x-pos.form.input model="search" :live="true" placeholder="Cari invoice/pelanggan/barang..." icon="ph-magnifying-glass" size="sm" />
+                                </div>
+
+                                <!-- Col 13: Actions (Reset) -->
+                                <div>
+                                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Reset</label>
+                                    <x-pos.utility.button variant="secondary" size="sm" icon="ph-arrow-counter-clockwise" class="w-full justify-center" wire:click="resetFilters">
+                                        Reset Filter
+                                    </x-pos.utility.button>
+                                </div>
+                            </div>
+
+                            <!-- Presets Bar -->
+                            <div class="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] font-bold text-slate-400 uppercase mr-1">Preset Tanggal:</span>
+                                    <x-pos.utility.button variant="secondary" size="sm" wire:click="setQuickDateRange('today')">Hari Ini</x-pos.utility.button>
+                                    <x-pos.utility.button variant="secondary" size="sm" wire:click="setQuickDateRange('this_week')">Minggu Ini</x-pos.utility.button>
+                                    <x-pos.utility.button variant="secondary" size="sm" wire:click="setQuickDateRange('this_month')">Bulan Ini</x-pos.utility.button>
+                                    <x-pos.utility.button variant="secondary" size="sm" wire:click="setQuickDateRange('this_year')">Tahun Ini</x-pos.utility.button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -184,7 +225,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <!-- Card 1: Total Omzet Penjualan -->
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-                            <span class="text-xs font-semibold text-slate-400 uppercase">Total Omzet Penjualan</span>
+                            <span class="text-sm font-semibold text-slate-400 uppercase">Total Omzet Penjualan</span>
                             <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
                                 Rp {{ number_format($summaryData['grand_total'] ?? 0, 0, ',', '.') }}
                             </div>
@@ -195,7 +236,7 @@
 
                         <!-- Card 2: Total HPP Barang -->
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-                            <span class="text-xs font-semibold text-slate-400 uppercase">Total HPP Barang</span>
+                            <span class="text-sm font-semibold text-slate-400 uppercase">Total HPP Barang</span>
                             <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">
                                 Rp {{ number_format($summaryData['total_cogs'] ?? 0, 0, ',', '.') }}
                             </div>
@@ -206,7 +247,7 @@
 
                         <!-- Card 3: Laba Kotor (Gross Profit) -->
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-                            <span class="text-xs font-semibold text-slate-400 uppercase">Laba Kotor (Gross Profit)</span>
+                            <span class="text-sm font-semibold text-slate-400 uppercase">Laba Kotor (Gross Profit)</span>
                             <div class="text-xl font-black text-primary dark:text-blue-400 mt-1">
                                 Rp {{ number_format($summaryData['gross_profit'] ?? 0, 0, ',', '.') }}
                             </div>
@@ -217,7 +258,7 @@
 
                         <!-- Card 4: Diskon & Pajak -->
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-                            <span class="text-xs font-semibold text-slate-400 uppercase">Diskon & Pajak</span>
+                            <span class="text-sm font-semibold text-slate-400 uppercase">Diskon & Pajak</span>
                             <div class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-1 space-y-0.5 font-mono">
                                 <div>Disc: <span class="text-rose-600">Rp {{ number_format($summaryData['total_discount'] ?? 0, 0, ',', '.') }}</span></div>
                                 <div>Pajak: <span class="text-blue-600">Rp {{ number_format($summaryData['total_tax'] ?? 0, 0, ',', '.') }}</span></div>
@@ -239,7 +280,7 @@
                                     Laporan Produk Terlaris (Top Selling)
                                 @endif
                             </span>
-                            <span class="text-xs text-slate-400 font-normal uppercase">Mode: {{ str_replace('_', ' ', $viewMode) }}</span>
+                            <span class="text-sm text-slate-400 font-normal uppercase">Mode: {{ str_replace('_', ' ', $viewMode) }}</span>
                         </div>
 
                         <x-pos.table.container>
@@ -251,6 +292,7 @@
                                             <x-pos.table.th>Kategori Jual</x-pos.table.th>
                                             <x-pos.table.th>No. Invoice</x-pos.table.th>
                                             <x-pos.table.th>Pelanggan</x-pos.table.th>
+                                            <x-pos.table.th>Catatan / Note</x-pos.table.th>
                                             <x-pos.table.th>Kasir</x-pos.table.th>
                                             <x-pos.table.th>Sales</x-pos.table.th>
                                             <x-pos.table.th>Jenis Bayar</x-pos.table.th>
@@ -261,47 +303,48 @@
                                             <x-pos.table.th class="text-right">Diskon Item</x-pos.table.th>
                                             <x-pos.table.th class="text-right">PPN / Pajak</x-pos.table.th>
                                             <x-pos.table.th class="text-right">Subtotal</x-pos.table.th>
-                                            <x-pos.table.th>Catatan / Note</x-pos.table.th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                                        @forelse ($reportData['items'] ?? [] as $item)
+                                        @forelse ($paginatedReportData['paginated_items'] ?? [] as $item)
                                             <x-pos.table.tr class="align-top">
                                                 @if (!empty($item['is_first_item']))
-                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="text-xs font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
+                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
                                                         {{ $item['invoice_date'] }}
                                                     </x-pos.table.td>
-                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
-                                                        <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200">{{ $item['sale_category'] }}</span>
+                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="font-bold text-slate-900 dark:text-white whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
+                                                        <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold text-slate-800 dark:text-slate-200">{{ $item['sale_category'] }}</span>
                                                     </x-pos.table.td>
-                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="text-xs font-mono font-bold text-primary dark:text-blue-400 whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
+                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="font-mono font-bold text-primary dark:text-blue-400 whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
                                                         {{ $item['invoice_number'] }}
                                                     </x-pos.table.td>
-                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="text-xs font-bold text-slate-900 dark:text-white whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
+                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="font-bold text-slate-900 dark:text-white whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
                                                         {{ $item['customer_name'] }}
                                                     </x-pos.table.td>
-                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
+                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="font-bold text-slate-800 dark:text-slate-200 italic whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
+                                                        {{ $item['notes'] }}
+                                                    </x-pos.table.td>
+                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="font-bold text-slate-900 dark:text-white whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
                                                         {{ $item['cashier_name'] }}
                                                     </x-pos.table.td>
-                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
+                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="font-bold text-slate-900 dark:text-white whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
                                                         {{ $item['sales_rep_name'] }}
                                                     </x-pos.table.td>
-                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
+                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="font-bold text-slate-900 dark:text-white whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-800 align-top">
                                                         {{ $item['payment_method'] }}
                                                     </x-pos.table.td>
                                                 @endif
-                                                <x-pos.table.td class="text-xs font-mono text-slate-500 whitespace-nowrap">{{ $item['sku'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-xs font-bold text-slate-900 dark:text-white whitespace-nowrap">{{ $item['product_name'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-center font-bold text-xs text-slate-900 dark:text-white whitespace-nowrap">{{ $item['quantity'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono text-xs text-slate-700 dark:text-slate-300 whitespace-nowrap">Rp {{ number_format($item['unit_price'], 0, ',', '.') }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono text-xs text-rose-600 whitespace-nowrap">Rp {{ number_format($item['discount_amount'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-mono font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">{{ $item['sku'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-bold text-slate-900 dark:text-white whitespace-nowrap">{{ $item['product_name'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-center font-bold text-slate-900 dark:text-white whitespace-nowrap">{{ $item['quantity'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">Rp {{ number_format($item['unit_price'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">Rp {{ number_format($item['discount_amount'], 0, ',', '.') }}</x-pos.table.td>
                                                 @if (!empty($item['is_first_item']))
-                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="text-right font-mono text-xs text-blue-600 whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-l border-slate-200 dark:border-slate-800 align-top">
+                                                    <x-pos.table.td rowspan="{{ $item['rowspan'] }}" class="text-right font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap bg-slate-50/40 dark:bg-slate-800/30 border-l border-slate-200 dark:border-slate-800 align-top">
                                                         Rp {{ number_format($item['tax_amount'], 0, ',', '.') }}
                                                     </x-pos.table.td>
                                                 @endif
-                                                <x-pos.table.td class="text-right font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-xs text-slate-500 italic whitespace-nowrap">{{ $item['notes'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</x-pos.table.td>
                                             </x-pos.table.tr>
                                         @empty
                                             <x-pos.table.empty colspan="15" icon="ph-receipt" message="Belum ada transaksi penjualan harian pada periode ini." />
@@ -319,14 +362,14 @@
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                                        @forelse ($reportData['items'] ?? [] as $row)
+                                        @forelse ($paginatedReportData['paginated_items'] ?? [] as $row)
                                             <x-pos.table.tr>
-                                                <x-pos.table.td class="text-xs font-bold text-slate-900 dark:text-white">{{ $row['date'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-center font-bold text-xs text-slate-900 dark:text-white"><span class="px-2.5 py-1 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 font-bold text-xs">{{ $row['invoice_count'] }} Nota</span></x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono text-xs text-slate-700 dark:text-slate-300">Rp {{ number_format($row['subtotal'], 0, ',', '.') }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono text-xs text-rose-600">Rp {{ number_format($row['discount_amount'], 0, ',', '.') }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono text-xs text-blue-600">Rp {{ number_format($row['tax_amount'], 0, ',', '.') }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">Rp {{ number_format($row['grand_total'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-bold text-slate-900 dark:text-white">{{ $row['date'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-center font-bold text-slate-900 dark:text-white"><span class="px-2.5 py-1 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 font-bold">{{ $row['invoice_count'] }} Nota</span></x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-slate-900 dark:text-white">Rp {{ number_format($row['subtotal'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-rose-600 dark:text-rose-400">Rp {{ number_format($row['discount_amount'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-blue-600 dark:text-blue-400">Rp {{ number_format($row['tax_amount'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($row['grand_total'], 0, ',', '.') }}</x-pos.table.td>
                                             </x-pos.table.tr>
                                         @empty
                                             <x-pos.table.empty colspan="6" icon="ph-calendar" message="Belum ada data penjualan per hari pada periode ini." />
@@ -350,20 +393,20 @@
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                                        @forelse ($reportData['items'] ?? [] as $nota)
+                                        @forelse ($paginatedReportData['paginated_items'] ?? [] as $nota)
                                             <x-pos.table.tr>
-                                                <x-pos.table.td class="text-xs font-mono font-bold text-primary dark:text-blue-400">{{ $nota['invoice_number'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-xs font-mono text-slate-600 dark:text-slate-300">{{ $nota['date'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-xs font-semibold text-slate-700 dark:text-slate-300"><span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200">{{ $nota['sale_category'] }}</span></x-pos.table.td>
-                                                <x-pos.table.td class="text-xs font-bold text-slate-900 dark:text-white">{{ $nota['customer_name'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300">{{ $nota['cashier_name'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300">{{ $nota['sales_rep_name'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ $nota['payment_method'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-center font-bold text-xs text-slate-900 dark:text-white">{{ $nota['item_count'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono text-xs text-slate-700 dark:text-slate-300">Rp {{ number_format($nota['subtotal'], 0, ',', '.') }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono text-xs text-rose-600">Rp {{ number_format($nota['discount_amount'], 0, ',', '.') }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono text-xs text-blue-600">Rp {{ number_format($nota['tax_amount'], 0, ',', '.') }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">Rp {{ number_format($nota['grand_total'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-mono font-bold text-primary dark:text-blue-400">{{ $nota['invoice_number'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $nota['date'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-bold text-slate-900 dark:text-white"><span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold text-slate-800 dark:text-slate-200">{{ $nota['sale_category'] }}</span></x-pos.table.td>
+                                                <x-pos.table.td class="font-bold text-slate-900 dark:text-white">{{ $nota['customer_name'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-bold text-slate-900 dark:text-white">{{ $nota['cashier_name'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-bold text-slate-900 dark:text-white">{{ $nota['sales_rep_name'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-bold text-slate-900 dark:text-white">{{ $nota['payment_method'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-center font-bold text-slate-900 dark:text-white">{{ $nota['item_count'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-slate-900 dark:text-white">Rp {{ number_format($nota['subtotal'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-rose-600 dark:text-rose-400">Rp {{ number_format($nota['discount_amount'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-blue-600 dark:text-blue-400">Rp {{ number_format($nota['tax_amount'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($nota['grand_total'], 0, ',', '.') }}</x-pos.table.td>
                                             </x-pos.table.tr>
                                         @empty
                                             <x-pos.table.empty colspan="12" icon="ph-receipt" message="Belum ada transaksi nota penjualan pada periode ini." />
@@ -381,18 +424,18 @@
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                                        @forelse ($reportData['items'] ?? [] as $rank => $prod)
+                                        @forelse ($paginatedReportData['paginated_items'] ?? [] as $rank => $prod)
                                             <x-pos.table.tr>
-                                                <x-pos.table.td class="text-center font-black text-xs">
-                                                    <span class="w-6 h-6 inline-flex items-center justify-center rounded-full text-xs font-bold {{ $rank === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300' : ($rank === 1 ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : ($rank === 2 ? 'bg-amber-50 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400')) }}">
+                                                <x-pos.table.td class="text-center font-black">
+                                                    <span class="w-6 h-6 inline-flex items-center justify-center rounded-full font-bold {{ $rank === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300' : ($rank === 1 ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : ($rank === 2 ? 'bg-amber-50 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400')) }}">
                                                         #{{ $rank + 1 }}
                                                     </span>
                                                 </x-pos.table.td>
-                                                <x-pos.table.td class="text-xs font-mono text-slate-600 dark:text-slate-300">{{ $prod['sku'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-xs font-bold text-slate-900 dark:text-white">{{ $prod['product_name'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ $prod['category_name'] }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-center font-extrabold text-xs text-primary dark:text-blue-400">{{ number_format($prod['total_qty'], 0, ',', '.') }}</x-pos.table.td>
-                                                <x-pos.table.td class="text-right font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">Rp {{ number_format($prod['total_revenue'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $prod['sku'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-bold text-slate-900 dark:text-white">{{ $prod['product_name'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="font-bold text-slate-900 dark:text-white">{{ $prod['category_name'] }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-center font-extrabold text-primary dark:text-blue-400">{{ number_format($prod['total_qty'], 0, ',', '.') }}</x-pos.table.td>
+                                                <x-pos.table.td class="text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($prod['total_revenue'], 0, ',', '.') }}</x-pos.table.td>
                                             </x-pos.table.tr>
                                         @empty
                                             <x-pos.table.empty colspan="6" icon="ph-trophy" message="Belum ada data produk terlaris pada periode ini." />
@@ -401,6 +444,9 @@
                                 @endif
                             </x-pos.table>
                         </x-pos.table.container>
+
+                        <!-- Table Footer Component -->
+                        <x-pos.table.footer :paginator="$paginatedReportData['paginated_items'] ?? null" />
                     </div>
 
                 </div>
@@ -486,6 +532,7 @@
                         <th>KATEGORI</th>
                         <th>NO INVOICE</th>
                         <th>PELANGGAN</th>
+                        <th>CATATAN</th>
                         <th>KASIR</th>
                         <th>SALES</th>
                         <th>BAYAR</th>
@@ -507,6 +554,7 @@
                                 <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['sale_category'] }}</td>
                                 <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;" class="font-mono font-bold">{{ $item['invoice_number'] }}</td>
                                 <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['customer_name'] }}</td>
+                                <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top; font-style: italic;">{{ $item['notes'] }}</td>
                                 <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['cashier_name'] }}</td>
                                 <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['sales_rep_name'] }}</td>
                                 <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['payment_method'] }}</td>

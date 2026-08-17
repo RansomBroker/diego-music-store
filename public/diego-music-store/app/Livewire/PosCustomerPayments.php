@@ -92,15 +92,37 @@ class PosCustomerPayments extends Component
             ?? Auth::user()?->branch_id
             ?? Branch::first()?->id;
 
-        $defaultAccount = Account::where('classification', 'asset')
-            ->where('is_header', false)
-            ->first();
-        if ($defaultAccount) {
-            $this->account_id = $defaultAccount->id;
+        $paymentMethodsData = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get();
+        if ($paymentMethodsData->isNotEmpty()) {
+            $firstPm = $paymentMethodsData->first();
+            $this->payment_method = $firstPm->name;
+            $effectiveAccount = $firstPm->getEffectiveAccountId();
+            if ($effectiveAccount) {
+                $this->account_id = $effectiveAccount;
+            }
+        } else {
+            $this->payment_method = 'Tunai';
         }
 
-        $this->payment_method = 'Tunai';
         $this->showCreateModal = true;
+    }
+
+    public function updatedPaymentMethod($value): void
+    {
+        if (!$value) {
+            return;
+        }
+
+        $pm = \App\Models\PaymentMethod::where('name', $value)
+            ->orWhere('code', $value)
+            ->first();
+
+        if ($pm) {
+            $effectiveAccountId = $pm->getEffectiveAccountId();
+            if ($effectiveAccountId) {
+                $this->account_id = $effectiveAccountId;
+            }
+        }
     }
 
     // ── Load Customer Unpaid Sales Invoices ────────────────────────────
@@ -180,6 +202,27 @@ class PosCustomerPayments extends Component
                 ?? Branch::first()?->id;
         }
 
+        if ($this->payment_method) {
+            $pm = \App\Models\PaymentMethod::where('name', $this->payment_method)
+                ->orWhere('code', $this->payment_method)
+                ->first();
+            if ($pm) {
+                $effectiveAcc = $pm->getEffectiveAccountId();
+                if ($effectiveAcc) {
+                    $this->account_id = $effectiveAcc;
+                }
+            }
+        }
+
+        if (!$this->account_id) {
+            $defaultAccount = Account::where('classification', 'asset')
+                ->where('is_header', false)
+                ->first();
+            if ($defaultAccount) {
+                $this->account_id = $defaultAccount->id;
+            }
+        }
+
         $this->validate([
             'customer_id' => 'required|exists:customers,id',
             'branch_id' => 'required|exists:branches,id',
@@ -191,7 +234,7 @@ class PosCustomerPayments extends Component
         ], [
             'customer_id.required' => 'Pelanggan wajib dipilih.',
             'customer_id.exists' => 'Pelanggan tidak valid.',
-            'account_id.required' => 'Akun Kas / Bank wajib dipilih.',
+            'account_id.required' => 'Akun Kas / Bank tidak ditemukan untuk metode pembayaran ini.',
             'account_id.exists' => 'Akun Kas / Bank tidak valid.',
             'branch_id.required' => 'Cabang wajib ditentukan.',
         ]);
@@ -374,10 +417,13 @@ class PosCustomerPayments extends Component
             ->orderBy('code')
             ->get();
 
+        $paymentMethodsData = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get();
+
         return view('livewire.pos-customer-payments', [
             'payments' => $salesPiutang,
             'customers' => \App\Models\Customer::orderBy('name')->get()->filter(fn ($c) => $c->total_piutang > 0),
             'accounts' => $accounts,
+            'paymentMethodsData' => $paymentMethodsData,
             'selectedLogoUrl' => $selectedLogoUrl,
         ])->layout('layouts.pos', ['title' => 'Pelunasan Piutang — POS']);
     }

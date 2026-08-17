@@ -104,4 +104,21 @@ class PosCustomerPaymentsTest extends TestCase
 
         $this->assertEquals(0, $this->customer->fresh()->outstanding_debt);
     }
+
+    /** @test */
+    public function it_fetches_payment_methods_dynamically()
+    {
+        $pm = \App\Models\PaymentMethod::create([
+            'name' => 'Transfer Bank Syariah',
+            'code' => 'transfer_bsi',
+            'account_id' => $this->cashAccount->id,
+            'is_active' => true,
+        ]);
+
+        Livewire::test('App\Livewire\PosCustomerPayments')
+            ->call('openCreate')
+            ->assertSet('payment_method', 'Transfer Bank Syariah')
+            ->assertSet('account_id', $this->cashAccount->id)
+            ->assertSee('Transfer Bank Syariah');
+    }
 }
