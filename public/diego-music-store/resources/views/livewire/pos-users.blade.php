@@ -174,25 +174,11 @@
                                         </x-pos.table.td>
                                         <!-- Actions -->
                                         <x-pos.table.td class="whitespace-nowrap text-right">
-                                            <div class="flex items-center justify-end gap-3">
-                                                <button
-                                                    wire:click="openEdit({{ $row->id }})"
-                                                    class="inline-flex items-center gap-1 text-sm font-semibold text-primary dark:text-blue-400 hover:underline cursor-pointer"
-                                                >
-                                                    <i class="ph-bold ph-pencil-simple text-xs"></i>
-                                                    <span>Ubah</span>
-                                                </button>
-                                                @if (Auth::id() !== $row->id)
-                                                    <span class="text-slate-300 dark:text-slate-700">|</span>
-                                                    <button
-                                                        wire:click="confirmDelete({{ $row->id }})"
-                                                        class="inline-flex items-center gap-1 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
-                                                    >
-                                                        <i class="ph-bold ph-trash text-xs"></i>
-                                                        <span>Hapus</span>
-                                                    </button>
-                                                @endif
-                                            </div>
+                                            <x-pos.table.actions
+                                                :editAction="'openEdit(' . $row->id . ')'"
+                                                :deleteAction="Auth::id() !== $row->id ? 'confirmDelete(' . $row->id . ')' : null"
+                                                :showDelete="Auth::id() !== $row->id"
+                                            />
                                         </x-pos.table.td>
                                     </x-pos.table.tr>
                                 @empty

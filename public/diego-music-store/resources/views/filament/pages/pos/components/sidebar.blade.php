@@ -12,7 +12,7 @@
     $isCustomerPayments = request()->is('pos/customer-payments*');
     $isDashboard    = request()->is('pos/front-office*');
     $isReports      = request()->is('pos/reports*');
-    $isInputData    = request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*') || request()->is('pos/vouchers*');
+    $isInputData    = request()->is('pos/employees*') || request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*') || request()->is('pos/vouchers*');
     $isUtility      = request()->is('pos/privileges*') || request()->is('pos/store-profile*') || request()->is('pos/receipt-settings*') || request()->is('pos/barcode-print*');
 @endphp
 
@@ -173,6 +173,22 @@
             </a>
         @endif
 
+        {{-- Manajemen Karyawan --}}
+        @php
+            $isEmployees = request()->is('pos/employees*');
+        @endphp
+        @if ($isEmployees)
+            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
+                <i class="ph-fill ph-user-gear text-2xl mb-1"></i>
+                <span class="text-[11px] font-semibold text-center leading-tight">Karyawan</span>
+            </button>
+        @else
+            <a href="/pos/employees" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
+                <i class="ph ph-user-gear text-2xl mb-1"></i>
+                <span class="text-[11px] font-medium text-center leading-tight">Karyawan</span>
+            </a>
+        @endif
+
         {{-- Input Data (Flyout Trigger) --}}
         <div class="w-full">
             <button
@@ -225,15 +241,6 @@
             <span class="text-[11px] font-medium">Backoffice</span>
         </a>
     </nav>
-
-    <!-- Theme Switcher (Fixed Bottom) -->
-    <div class="mt-auto pt-2 flex flex-col gap-4 w-full px-3 items-center flex-shrink-0">
-        <!-- Dark Mode Toggle Button -->
-        <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer" title="Ubah Tema">
-            <i class="ph-bold ph-sun dark:hidden text-lg"></i>
-            <i class="ph-bold ph-moon hidden dark:block text-lg"></i>
-        </button>
-    </div>
 
     <!-- Single Unified Teleported Flyout Submenu Container -->
     <template x-teleport="body">
@@ -311,6 +318,14 @@
                     </div>
 
                     <div class="py-2">
+                        <a href="{{ route('pos.employees') }}"
+                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.employees') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
+                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
+                                <i class="ph ph-user-gear text-sm {{ request()->routeIs('pos.employees') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
+                            </div>
+                            Data Karyawan
+                        </a>
+
                         <a href="{{ route('pos.customers') }}"
                            class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.customers') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
                             <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">

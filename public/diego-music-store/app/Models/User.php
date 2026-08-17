@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -61,6 +62,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the employee profile associated with this user.
+     */
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class);
+    }
+
+    /**
      * Boot the model.
      */
     protected static function boot()
@@ -80,6 +89,23 @@ class User extends Authenticatable
                 }
                 
                 $user->username = $username;
+            }
+        });
+
+        static::created(function ($user) {
+            if (!$user->employee()->exists()) {
+                $lastId = Employee::withTrashed()->max('id') ?? 0;
+                $nik = 'EMP-' . str_pad((string) ($lastId + 1), 4, '0', STR_PAD_LEFT);
+
+                Employee::create([
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'nik' => $nik,
+                    'monthly_off_days_quota' => 4,
+                    'basic_salary' => 0,
+                    'is_active' => $user->is_active ?? true,
+                ]);
             }
         });
     }

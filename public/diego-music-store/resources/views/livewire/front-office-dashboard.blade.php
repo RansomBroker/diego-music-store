@@ -50,6 +50,17 @@
                         </div>
                     </a>
 
+                    <!-- Data Karyawan -->
+                    <a href="{{ route('pos.employees') }}" class="group bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200/60 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-400 shadow-sm hover:shadow-lg hover:shadow-purple-500/10 transition-all flex flex-col items-center gap-4 text-center">
+                        <div class="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-users-three text-3xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Data Karyawan</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Kelola data personel & cabang</p>
+                        </div>
+                    </a>
+
                     <!-- Backoffice -->
                     <a href="/backoffice" class="group bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200/60 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 shadow-sm hover:shadow-lg hover:shadow-emerald-500/10 transition-all flex flex-col items-center gap-4 text-center">
                         <div class="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">

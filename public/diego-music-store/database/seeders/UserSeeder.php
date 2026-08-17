@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Branch;
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -81,6 +82,22 @@ class UserSeeder extends Seeder
         $ownerUser->syncRoles(['owner', 'admin']);
         if ($branches->isNotEmpty()) {
             $ownerUser->branches()->sync($branches->pluck('id'));
+        }
+
+        $users = [$admin, $kasir, $diegoAdmin, $ownerUser];
+        foreach ($users as $u) {
+            Employee::updateOrCreate(
+                ['user_id' => $u->id],
+                [
+                    'nik' => 'EMP-' . str_pad((string) $u->id, 4, '0', STR_PAD_LEFT),
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'branch_id' => $branches->first()?->id,
+                    'monthly_off_days_quota' => 4,
+                    'basic_salary' => 0,
+                    'is_active' => true,
+                ]
+            );
         }
     }
 }

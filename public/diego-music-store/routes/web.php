@@ -39,6 +39,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/reports/stock-prices', App\Livewire\PosReportsStockPrices::class)->name('pos.reports.stock-prices');
 
     // Input Data
+    Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
     Route::get('/pos/customers', App\Livewire\PosCustomers::class)->name('pos.customers');
     Route::get('/pos/users', App\Livewire\PosUsers::class)->name('pos.users');
     Route::get('/pos/units', App\Livewire\PosUnits::class)->name('pos.units');
