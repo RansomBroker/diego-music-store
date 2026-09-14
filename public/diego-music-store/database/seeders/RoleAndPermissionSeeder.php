@@ -16,13 +16,12 @@ class RoleAndPermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create standard roles
+        // Create simplified standard roles
         $roles = [
             'owner',
             'admin',
-            'cashier',
+            'karyawan',
             'sales',
-            'technician',
         ];
 
         foreach ($roles as $role) {

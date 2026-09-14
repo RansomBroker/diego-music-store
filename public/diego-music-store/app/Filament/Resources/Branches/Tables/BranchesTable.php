@@ -57,6 +57,12 @@ class BranchesTable
                     ->badge()
                     ->color('gray'),
 
+                TextColumn::make('shift_time')
+                    ->label('Jam Shift Kerja')
+                    ->badge()
+                    ->color('info')
+                    ->getStateUsing(fn ($record) => ($record->shift_start_time ? substr($record->shift_start_time, 0, 5) : '09:00') . ' - ' . ($record->shift_end_time ? substr($record->shift_end_time, 0, 5) : '17:00')),
+
                 ToggleColumn::make('is_active')
                     ->label('Status Aktif'),
 

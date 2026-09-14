@@ -25,8 +25,20 @@ class Branch extends Model
         'bank_info',
         'receipt_header',
         'receipt_footer',
+        'latitude',
+        'longitude',
+        'attendance_radius_meters',
+        'shift_start_time',
+        'shift_end_time',
         'manager_id',
         'is_active',
+    ];
+
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'attendance_radius_meters' => 'integer',
+        'is_active' => 'boolean',
     ];
 
     /**

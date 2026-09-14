@@ -24,6 +24,8 @@ class EmployeeResource extends Resource
 
     protected static ?string $modelLabel = 'Karyawan';
 
+    protected static ?int $navigationSort = 1;
+
     public static function getNavigationGroup(): ?string
     {
         return 'Manajemen Karyawan';

@@ -16,60 +16,16 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ensure standard roles exist
-        $roles = ['owner', 'admin', 'cashier', 'sales', 'technician'];
+        // Ensure simplified standard roles exist
+        $roles = ['owner', 'admin', 'karyawan', 'sales'];
         foreach ($roles as $roleName) {
             Role::firstOrCreate(['name' => $roleName]);
         }
 
         $branches = Branch::all();
+        $mainBranch = $branches->first();
 
-        // 1. Admin User
-        $admin = User::updateOrCreate(
-            ['email' => 'admin@admin.com'],
-            [
-                'name' => 'Admin Backoffice',
-                'username' => 'admin',
-                'password' => Hash::make('password'),
-                'is_active' => true,
-            ]
-        );
-        $admin->syncRoles(['admin', 'owner']);
-        if ($branches->isNotEmpty()) {
-            $admin->branches()->sync($branches->pluck('id'));
-        }
-
-        // 2. Kasir User
-        $kasir = User::updateOrCreate(
-            ['email' => 'kasir@admin.com'],
-            [
-                'name' => 'Kasir Utama',
-                'username' => 'kasir',
-                'password' => Hash::make('password'),
-                'is_active' => true,
-            ]
-        );
-        $kasir->syncRoles(['sales', 'cashier']);
-        if ($branches->isNotEmpty()) {
-            $kasir->branches()->sync($branches->pluck('id'));
-        }
-
-        // 3. Diego Admin User
-        $diegoAdmin = User::updateOrCreate(
-            ['email' => 'admin@diegomusic.com'],
-            [
-                'name' => 'Diego Admin',
-                'username' => 'diegoadmin',
-                'password' => Hash::make('password'),
-                'is_active' => true,
-            ]
-        );
-        $diegoAdmin->syncRoles(['admin', 'owner']);
-        if ($branches->isNotEmpty()) {
-            $diegoAdmin->branches()->sync($branches->pluck('id'));
-        }
-
-        // 4. Owner User
+        // 1. Owner User (All Branches)
         $ownerUser = User::updateOrCreate(
             ['email' => 'owner@admin.com'],
             [
@@ -79,12 +35,72 @@ class UserSeeder extends Seeder
                 'is_active' => true,
             ]
         );
-        $ownerUser->syncRoles(['owner', 'admin']);
+        $ownerUser->syncRoles(['owner']);
         if ($branches->isNotEmpty()) {
             $ownerUser->branches()->sync($branches->pluck('id'));
         }
 
-        $users = [$admin, $kasir, $diegoAdmin, $ownerUser];
+        // 2. Admin User (All Branches)
+        $admin = User::updateOrCreate(
+            ['email' => 'admin@admin.com'],
+            [
+                'name' => 'Admin Backoffice',
+                'username' => 'admin',
+                'password' => Hash::make('password'),
+                'is_active' => true,
+            ]
+        );
+        $admin->syncRoles(['admin']);
+        if ($branches->isNotEmpty()) {
+            $admin->branches()->sync($branches->pluck('id'));
+        }
+
+        // 3. Diego Admin User (All Branches)
+        $diegoAdmin = User::updateOrCreate(
+            ['email' => 'admin@diegomusic.com'],
+            [
+                'name' => 'Diego Admin',
+                'username' => 'diegoadmin',
+                'password' => Hash::make('password'),
+                'is_active' => true,
+            ]
+        );
+        $diegoAdmin->syncRoles(['admin']);
+        if ($branches->isNotEmpty()) {
+            $diegoAdmin->branches()->sync($branches->pluck('id'));
+        }
+
+        // 4. Karyawan Kasir User (Khusus Cabang Utama)
+        $karyawan = User::updateOrCreate(
+            ['email' => 'kasir@admin.com'],
+            [
+                'name' => 'Karyawan Kasir Utama',
+                'username' => 'kasir',
+                'password' => Hash::make('password'),
+                'is_active' => true,
+            ]
+        );
+        $karyawan->syncRoles(['karyawan']);
+        if ($mainBranch) {
+            $karyawan->branches()->sync([$mainBranch->id]);
+        }
+
+        // 5. Sales Staff User (Khusus Cabang Utama)
+        $salesUser = User::updateOrCreate(
+            ['email' => 'sales@admin.com'],
+            [
+                'name' => 'Staf Sales Executive',
+                'username' => 'sales',
+                'password' => Hash::make('password'),
+                'is_active' => true,
+            ]
+        );
+        $salesUser->syncRoles(['sales', 'karyawan']);
+        if ($mainBranch) {
+            $salesUser->branches()->sync([$mainBranch->id]);
+        }
+
+        $users = [$ownerUser, $admin, $diegoAdmin, $karyawan, $salesUser];
         foreach ($users as $u) {
             Employee::updateOrCreate(
                 ['user_id' => $u->id],

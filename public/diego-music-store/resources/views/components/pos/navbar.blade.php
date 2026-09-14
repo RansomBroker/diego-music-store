@@ -55,12 +55,85 @@
             ? \App\Models\Branch::where('is_active', true)->get()
             : auth()->user()->branches()->where('is_active', true)->get())
         : collect();
+
+    // Attendance Info Calculation
+    $currentEmployee = auth()->check() ? auth()->user()->employee : null;
+    $isOwner = auth()->check() && auth()->user()->hasRole(['owner', 'Owner']);
+    $todayDate = now()->format('Y-m-d');
+
+    $todayAttendance = null;
+    $usedOffDays = 0;
+    $quotaOffDays = 4;
+    $isOverQuota = false;
+    $overCount = 0;
+    $todayStatusText = 'Belum Presensi';
+
+    if ($currentEmployee) {
+        $usedOffDays = $currentEmployee->used_off_days_this_month;
+        $quotaOffDays = $currentEmployee->monthly_off_days_quota;
+        $isOverQuota = $currentEmployee->is_off_days_over_quota;
+        $overCount = $currentEmployee->off_days_over_count;
+
+        $todayAttendance = \App\Models\EmployeeAttendance::where('employee_id', $currentEmployee->id)
+            ->where('date', $todayDate)
+            ->first();
+
+        if ($todayAttendance) {
+            if ($todayAttendance->status === 'hadir') {
+                $clockInFormatted = $todayAttendance->clock_in ? $todayAttendance->clock_in->format('H:i') : '-';
+                $todayStatusText = "Hadir ({$clockInFormatted})";
+            } else {
+                $todayStatusText = ucfirst(str_replace('_', ' ', $todayAttendance->status));
+            }
+        }
+    }
+
+    // Smart Navbar Attendance State Detection
+    $clockState = 'not_clocked_in';
+    $clockInTimeText = null;
+    $clockOutTimeText = null;
+
+    if ($todayAttendance) {
+        if ($todayAttendance->clock_in && !$todayAttendance->clock_out) {
+            $clockState = 'clocked_in';
+            $clockInTimeText = $todayAttendance->clock_in->format('H:i');
+        } elseif ($todayAttendance->clock_in && $todayAttendance->clock_out) {
+            $clockState = 'clocked_out';
+            $clockInTimeText = $todayAttendance->clock_in->format('H:i');
+            $clockOutTimeText = $todayAttendance->clock_out->format('H:i');
+        } elseif (in_array($todayAttendance->status, ['off_day', 'izin', 'sakit', 'alpha'])) {
+            $clockState = 'clocked_out';
+        }
+    }
+
+    $allBranchEmployees = collect();
+    if ($isOwner && $currentBranchModel) {
+        $allBranchEmployees = \App\Models\Employee::with(['attendances' => function ($q) use ($todayDate) {
+            $q->where('date', $todayDate);
+        }, 'user'])
+        ->where('is_active', true)
+        ->where(function ($q) use ($currentBranchModel) {
+            $q->where('branch_id', $currentBranchModel->id)
+              ->orWhereNull('branch_id');
+        })
+        ->get();
+    }
 @endphp
 
 <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-6 py-4.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 z-10 transition-colors flex-shrink-0">
 
-    {{-- ====== LEFT: Back Button + Page Identity ====== --}}
-    <div class="flex items-center gap-4">
+    {{-- ====== LEFT: Sidebar Toggle + Back Button + Page Identity ====== --}}
+    <div class="flex items-center gap-3">
+        {{-- Tombol Toggle Collapse / Expand Sidebar --}}
+        <button
+            onclick="window.dispatchEvent(new CustomEvent('toggle-sidebar'))"
+            type="button"
+            class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0 shadow-sm"
+            title="Ciutkan / Perluas Sidebar Navigasi"
+        >
+            <i class="ph-bold ph-list text-lg"></i>
+        </button>
+
         {{-- Tombol Kembali (hanya tampil jika showBack=true) --}}
         @if ($showBack)
             <a href="{{ $resolvedBackUrl }}"
@@ -115,6 +188,112 @@
 
         {{-- Slot Aksi Tambahan (custom per halaman) --}}
         {{ $slot }}
+
+        {{-- Tombol Pintar Lakukan Presensi (Smart Detection) --}}
+        @if ($clockState === 'not_clocked_in')
+            <a
+                href="{{ route('pos.attendances') }}?action=clock_in"
+                class="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                title="Klik untuk Clock In (Absen Masuk)"
+            >
+                <i class="ph-bold ph-sign-in text-base group-hover:scale-110 transition-transform"></i>
+                <span>Clock In (Masuk)</span>
+            </a>
+        @elseif ($clockState === 'clocked_in')
+            <a
+                href="{{ route('pos.attendances') }}?action=clock_out"
+                class="inline-flex items-center gap-2 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                title="Masuk jam {{ $clockInTimeText }}. Klik untuk Clock Out (Absen Pulang)"
+            >
+                <i class="ph-bold ph-sign-out text-base group-hover:scale-110 transition-transform"></i>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="font-extrabold">Clock Out (Pulang)</span>
+                    <span class="text-[10px] opacity-90 mt-0.5 font-mono">In: {{ $clockInTimeText }}</span>
+                </div>
+            </a>
+        @else
+            <div
+                class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold"
+                title="Presensi hari ini telah selesai"
+            >
+                <i class="ph-bold ph-check-circle text-base text-emerald-500"></i>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="font-extrabold text-[11px]">Presensi Selesai</span>
+                    @if ($clockInTimeText && $clockOutTimeText)
+                        <span class="text-[9px] opacity-75 mt-0.5 font-mono">{{ $clockInTimeText }} - {{ $clockOutTimeText }}</span>
+                    @else
+                        <span class="text-[9px] opacity-75 mt-0.5 capitalize">{{ str_replace('_', ' ', $todayAttendance?->status) }}</span>
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        {{-- Widget Info/Bar Absensi POS Karyawan --}}
+        @if ($currentEmployee)
+            <div class="relative" x-data="{ openAttendanceModal: false }">
+                <button
+                    @click="openAttendanceModal = !openAttendanceModal"
+                    type="button"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-sm {{ $isOverQuota ? 'bg-rose-600 text-white border-rose-500 animate-pulse shadow-rose-500/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700' }}"
+                    title="Widget Presensi & Off Day Karyawan"
+                >
+                    <i class="ph-bold {{ $isOverQuota ? 'ph-warning-circle text-lg text-white' : 'ph-clock text-base text-primary dark:text-blue-400' }}"></i>
+
+                    <div class="flex flex-col text-left leading-none">
+                        <div class="flex items-center gap-1.5 text-[11px]">
+                            <span class="font-extrabold">Off Day:</span>
+                            <span>{{ $usedOffDays }} / {{ $quotaOffDays }} Hari</span>
+                            @if ($isOverQuota)
+                                <span class="bg-white text-rose-700 text-[10px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">OVER {{ $overCount }} HARI!</span>
+                            @endif
+                        </div>
+                        <div class="text-[10px] font-semibold opacity-80 mt-1">
+                            Hari Ini: <span class="capitalize font-bold">{{ $todayStatusText }}</span>
+                        </div>
+                    </div>
+                </button>
+
+                <!-- Popup Modal Presensi / Clock In / Out -->
+                <div
+                    x-show="openAttendanceModal"
+                    @click.away="openAttendanceModal = false"
+                    x-cloak
+                    class="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-4 space-y-3"
+                >
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-bold ph-user-check text-primary dark:text-blue-400"></i>
+                            <h4 class="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Status Presensi {{ $currentEmployee->name }}</h4>
+                        </div>
+                        <button @click="openAttendanceModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                            <i class="ph-bold ph-x text-sm"></i>
+                        </button>
+                    </div>
+
+                    <!-- Off Day Progress Bar -->
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-xs font-bold">
+                            <span class="text-slate-500 dark:text-slate-400">Penggunaan Off Day Bulan Ini</span>
+                            <span class="{{ $isOverQuota ? 'text-rose-600 dark:text-rose-400 font-extrabold' : 'text-slate-700 dark:text-slate-200' }}">
+                                {{ $usedOffDays }} / {{ $quotaOffDays }} Hari
+                            </span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                            @php
+                                $percent = min(100, ($usedOffDays / max(1, $quotaOffDays)) * 100);
+                            @endphp
+                            <div class="h-full transition-all duration-300 {{ $isOverQuota ? 'bg-rose-500' : 'bg-primary dark:bg-blue-500' }}" style="width: {{ $percent }}%;"></div>
+                        </div>
+                        @if ($isOverQuota)
+                            <p class="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
+                                <i class="ph-bold ph-warning"></i>
+                                Perhatian: Jatah Off Day telah melebihi kuota sebanyak {{ $overCount }} hari!
+                            </p>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
 
         {{-- Status Sesi Kasir --}}
         @if (!empty($activeSessionInfo))
@@ -214,6 +393,17 @@
                 @endif
             </div>
         </div>
+
+        {{-- Tombol Logout --}}
+        <form id="pos-logout-form" action="{{ route('pos.logout') }}" method="POST" class="inline-block">
+            @csrf
+            <button type="submit"
+                    class="flex items-center gap-1.5 px-3 py-2 text-xs font-extrabold text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/80 rounded-xl transition-all cursor-pointer shadow-sm active:scale-95 group"
+                    title="Logout (Keluar dari Sistem)">
+                <i class="ph-bold ph-sign-out text-base group-hover:scale-110 transition-transform"></i>
+                <span class="hidden sm:inline">Logout</span>
+            </button>
+        </form>
 
         {{-- Jam & Tanggal (Far Right) --}}
         <div class="hidden sm:flex flex-col items-end justify-center min-w-[95px] leading-tight text-right">

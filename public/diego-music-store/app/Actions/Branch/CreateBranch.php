@@ -39,6 +39,8 @@ class CreateBranch
                 'bank_info'      => $data['bank_info'] ?? null,
                 'receipt_header' => $data['receipt_header'] ?? null,
                 'receipt_footer' => $data['receipt_footer'] ?? null,
+                'shift_start_time' => $data['shift_start_time'] ?? '09:00:00',
+                'shift_end_time'   => $data['shift_end_time'] ?? '17:00:00',
                 'manager_id'     => $data['manager_id'] ?? null,
                 'is_active'      => $data['is_active'] ?? true,
             ]);

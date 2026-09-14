@@ -20,6 +20,9 @@ class PosStoreProfile extends Component
     public string $name = '';
     public string $address = '';
     public string $phone = '';
+    public ?float $latitude = null;
+    public ?float $longitude = null;
+    public int $attendance_radius_meters = 100;
     public bool $is_active = true;
 
     public $logo;
@@ -44,6 +47,9 @@ class PosStoreProfile extends Component
         $this->name             = $branch->name;
         $this->address          = $branch->address ?? '';
         $this->phone            = $branch->phone ?? '';
+        $this->latitude         = $branch->latitude !== null ? $branch->latitude : -0.03470087552402962;
+        $this->longitude        = $branch->longitude !== null ? $branch->longitude : 109.33239215349418;
+        $this->attendance_radius_meters = $branch->attendance_radius_meters ?: 100;
         $this->is_active        = (bool) $branch->is_active;
         $this->currentLogoUrl   = !empty($branch->logo_path) ? Storage::url($branch->logo_path) : null;
         $this->logo             = null;
@@ -62,6 +68,9 @@ class PosStoreProfile extends Component
             'name'       => 'required|string|max:255',
             'address'    => 'nullable|string|max:500',
             'phone'      => 'nullable|string|max:50',
+            'latitude'   => 'nullable|numeric',
+            'longitude'  => 'nullable|numeric',
+            'attendance_radius_meters' => 'required|integer|min:10|max:10000',
             'logo'       => 'nullable|image|max:2048', // 2MB max
         ], [
             'store_name.required' => 'Nama Toko / Usaha wajib diisi.',
@@ -77,6 +86,9 @@ class PosStoreProfile extends Component
             'name'       => $this->name,
             'address'    => $this->address,
             'phone'      => $this->phone,
+            'latitude'   => $this->latitude,
+            'longitude'  => $this->longitude,
+            'attendance_radius_meters' => $this->attendance_radius_meters,
             'is_active'  => $this->is_active,
         ];
 

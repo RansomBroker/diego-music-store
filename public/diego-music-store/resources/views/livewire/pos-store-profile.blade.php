@@ -1,4 +1,8 @@
 <div class="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
+    <!-- Leaflet JS CDN Assets -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <!-- Sidebar -->
     <x-pos-page::sidebar :selectedLogoUrl="$selectedLogoUrl" />
 
@@ -138,6 +142,142 @@
                                         placeholder="Alamat jalan, gedung, RT/RW, kota..."
                                     ></textarea>
                                     @error('address') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Lokasi GPS & Radius Absensi dengan Peta Leaflet.js -->
+                                <div class="p-4 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3"
+                                     x-data="{
+                                        gettingGps: false,
+                                        map: null,
+                                        marker: null,
+                                        circle: null,
+                                        initMap() {
+                                            if (!window.L) return;
+                                            this.$nextTick(() => {
+                                                const container = this.$refs.storeMapContainer;
+                                                if (!container) return;
+                                                if (this.map) this.map.remove();
+
+                                                let lat = parseFloat($wire.latitude) || -0.03470087552402962;
+                                                let lng = parseFloat($wire.longitude) || 109.33239215349418;
+                                                let radius = parseInt($wire.attendance_radius_meters) || 100;
+
+                                                this.map = L.map(container).setView([lat, lng], 16);
+
+                                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                                    maxZoom: 19,
+                                                    attribution: '© OpenStreetMap'
+                                                }).addTo(this.map);
+
+                                                this.circle = L.circle([lat, lng], {
+                                                    color: '#3b82f6',
+                                                    fillColor: '#93c5fd',
+                                                    fillOpacity: 0.3,
+                                                    radius: radius
+                                                }).addTo(this.map);
+
+                                                this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map)
+                                                    .bindPopup('<b>Lokasi Cabang</b><br>Geser pin untuk ubah koordinat');
+
+                                                this.marker.on('dragend', (e) => {
+                                                    const newPos = e.target.getLatLng();
+                                                    $wire.latitude = parseFloat(newPos.lat.toFixed(7));
+                                                    $wire.longitude = parseFloat(newPos.lng.toFixed(7));
+                                                    this.updateCircle();
+                                                });
+
+                                                $wire.$watch('latitude', () => this.updateMapFromWire());
+                                                $wire.$watch('longitude', () => this.updateMapFromWire());
+                                                $wire.$watch('attendance_radius_meters', () => this.updateCircle());
+                                            });
+                                        },
+                                        updateMapFromWire() {
+                                            let lat = parseFloat($wire.latitude) || -0.03470087552402962;
+                                            let lng = parseFloat($wire.longitude) || 109.33239215349418;
+                                            if (this.marker && this.map) {
+                                                this.marker.setLatLng([lat, lng]);
+                                                this.map.setView([lat, lng], 16);
+                                                this.updateCircle();
+                                            }
+                                        },
+                                        updateCircle() {
+                                            let lat = parseFloat($wire.latitude) || -0.03470087552402962;
+                                            let lng = parseFloat($wire.longitude) || 109.33239215349418;
+                                            let radius = parseInt($wire.attendance_radius_meters) || 100;
+                                            if (this.circle) {
+                                                this.circle.setLatLng([lat, lng]);
+                                                this.circle.setRadius(radius);
+                                            }
+                                        },
+                                        getGps() {
+                                            this.gettingGps = true;
+                                            if ('geolocation' in navigator) {
+                                                navigator.geolocation.getCurrentPosition((pos) => {
+                                                    $wire.latitude = parseFloat(pos.coords.latitude.toFixed(7));
+                                                    $wire.longitude = parseFloat(pos.coords.longitude.toFixed(7));
+                                                    this.gettingGps = false;
+                                                    this.updateMapFromWire();
+                                                }, (err) => {
+                                                    this.gettingGps = false;
+                                                    alert('Gagal mendeteksi lokasi GPS: ' + err.message);
+                                                }, { enableHighAccuracy: true });
+                                            }
+                                        }
+                                     }"
+                                     x-init="initMap()"
+                                >
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <i class="ph-bold ph-map-pin text-primary text-base"></i>
+                                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Lokasi GPS & Visualisasi Radius Absensi</h4>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            @click="getGps()"
+                                            class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline cursor-pointer"
+                                        >
+                                            <i class="ph-bold ph-crosshair"></i>
+                                            <span x-text="gettingGps ? 'Mendeteksi...' : 'Deteksi Koordinat Saya'"></span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Container Interactive Map Leaflet.js -->
+                                    <div x-ref="storeMapContainer" class="w-full h-52 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-inner"></div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Latitude</label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                wire:model.live="latitude"
+                                                placeholder="-0.03470087552402962"
+                                                class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-900 dark:text-white outline-none"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Longitude</label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                wire:model.live="longitude"
+                                                placeholder="109.33239215349418"
+                                                class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-900 dark:text-white outline-none"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Radius Toleransi (Meter)</label>
+                                            <input
+                                                type="number"
+                                                wire:model.live="attendance_radius_meters"
+                                                placeholder="100"
+                                                class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none"
+                                            >
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400">
+                                        Geser pin marker pada peta atau klik "Deteksi Koordinat Saya" untuk memperbarui lokasi toko. Lingkaran biru memvisualisasikan batas radius absensi karyawan.
+                                    </p>
                                 </div>
 
                                 <!-- Upload Logo -->

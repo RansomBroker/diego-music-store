@@ -27,7 +27,15 @@ class ProductBranchStock extends Model
      */
     public function productVariant(): BelongsTo
     {
-        return $this->belongsTo(ProductVariant::class);
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    /**
+     * Alias for productVariant.
+     */
+    public function variant(): BelongsTo
+    {
+        return $this->productVariant();
     }
 
     /**

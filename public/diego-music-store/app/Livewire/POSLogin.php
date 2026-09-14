@@ -77,7 +77,7 @@ class POSLogin extends Component
                 ->success()
                 ->send();
 
-            return redirect()->to('/pos');
+            return $this->redirect('/pos');
         }
 
         RateLimiter::hit($throttleKey, 60);
@@ -88,7 +88,7 @@ class POSLogin extends Component
     public function selectBranchAndCompleteLogin()
     {
         if (!Auth::check()) {
-            return redirect()->to('/pos/login');
+            return $this->redirect('/pos/login');
         }
 
         $user = Auth::user();
@@ -100,7 +100,6 @@ class POSLogin extends Component
         }
 
         session(['pos_active_branch_id' => $this->selectedBranchId]);
-        session()->regenerate();
 
         Notification::make()
             ->title('Berhasil Masuk')
@@ -108,7 +107,7 @@ class POSLogin extends Component
             ->success()
             ->send();
 
-        return redirect()->to('/pos');
+        return $this->redirect('/pos');
     }
 
     public function backToCredentials()

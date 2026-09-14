@@ -37,6 +37,11 @@ class SaleItem extends Model
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
+    public function productVariant(): BelongsTo
+    {
+        return $this->variant();
+    }
+
     public function returnItems(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(SalesReturnItem::class, 'sale_item_id');

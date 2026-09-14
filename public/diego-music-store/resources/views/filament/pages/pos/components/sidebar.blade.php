@@ -2,452 +2,356 @@
 
 @php
     $hasLogo = !empty($selectedLogoUrl) && $selectedLogoUrl !== '/storage' && $selectedLogoUrl !== '/storage/';
-@endphp
-
-@php
-    $isPos          = request()->is('pos') || request()->is('pos/login');
-    $isSession      = request()->is('pos/session*');
-    $isTransactions = request()->is('pos/transactions*');
-    $isDailyCash    = request()->is('pos/daily-cash*');
+    
+    // Route state checks
+    $isDashboard       = request()->is('pos/front-office*');
+    $isPos             = request()->is('pos') || request()->is('pos/login');
+    $isSession         = request()->is('pos/session*');
+    $isTransactions    = request()->is('pos/transactions*');
+    $isDailyCash       = request()->is('pos/daily-cash*');
     $isCustomerPayments = request()->is('pos/customer-payments*');
-    $isDashboard    = request()->is('pos/front-office*');
-    $isReports      = request()->is('pos/reports*');
-    $isInputData    = request()->is('pos/employees*') || request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*') || request()->is('pos/vouchers*');
-    $isUtility      = request()->is('pos/privileges*') || request()->is('pos/store-profile*') || request()->is('pos/receipt-settings*') || request()->is('pos/barcode-print*');
+    $isServiceManagement = request()->is('pos/service-management*');
+    $isEmployees       = request()->is('pos/employees*');
+    $isAttendances     = request()->is('pos/attendances*');
+    $isAttendanceRadiuses = request()->is('pos/attendance-radiuses*');
+    $isCommissions     = request()->is('pos/commissions*');
+    $isViolations      = request()->is('pos/attendance-violations*');
+    $isKpi             = request()->is('pos/kpi-performance*');
+    $isPayroll         = request()->is('pos/payroll*');
+    $isReports         = request()->is('pos/reports*');
+    $isInputData       = request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*') || request()->is('pos/vouchers*');
+    $isUtility         = request()->is('pos/privileges*') || request()->is('pos/store-profile*') || request()->is('pos/receipt-settings*') || request()->is('pos/barcode-print*') || request()->is('pos/branches*') || request()->is('pos/branch-performance*');
 @endphp
 
 <aside
     x-data="{
-        activeFlyout: null, // null, 'reports', 'input', or 'utility'
-        flyoutTop: 0,
-        openFlyout(el, name) {
-            if (this.activeFlyout === name) {
-                this.activeFlyout = null;
-            } else {
-                const rect = el.getBoundingClientRect();
-                this.flyoutTop = rect.top;
-                this.activeFlyout = name;
-            }
-        },
-        updateActivePosition() {
-            if (!this.activeFlyout) return;
-            const triggerId = this.activeFlyout === 'reports' ? 'reports-trigger' : (this.activeFlyout === 'input' ? 'input-data-trigger' : 'utility-trigger');
-            const el = document.getElementById(triggerId);
-            if (el) {
-                this.flyoutTop = el.getBoundingClientRect().top;
-            }
+        isCollapsed: localStorage.getItem('pos_sidebar_collapsed') === 'true',
+        openReports: {{ json_encode($isReports) }},
+        openInputData: {{ json_encode($isInputData) }},
+        openUtility: {{ json_encode($isUtility) }},
+        toggleCollapse() {
+            this.isCollapsed = !this.isCollapsed;
+            localStorage.setItem('pos_sidebar_collapsed', this.isCollapsed);
         }
     }"
-    @resize.window="updateActivePosition()"
-    class="w-28 h-screen max-h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col items-center py-6 shadow-sm z-10 flex-shrink-0 hidden md:flex transition-colors relative overflow-hidden"
+    @toggle-sidebar.window="toggleCollapse()"
+    :class="isCollapsed ? 'w-20' : 'w-64'"
+    class="h-screen max-h-screen bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shadow-md z-20 flex-shrink-0 hidden md:flex transition-all duration-300 relative overflow-hidden"
 >
-    <!-- Logo -->
-    <div class="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center mb-6 shadow-md flex-shrink-0 {{ $hasLogo ? '' : 'bg-primary text-white shadow-blue-500/30' }}">
-        @if ($hasLogo)
-            <img src="{{ $selectedLogoUrl }}" alt="Store Logo" class="w-full h-full object-cover">
-        @else
-            <i class="ph-bold ph-storefront text-2xl"></i>
-        @endif
+    <!-- BRAND / LOGO HEADER -->
+    <div class="px-4 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center flex-shrink-0 h-16">
+        <div class="flex items-center gap-3 min-w-0" x-show="!isCollapsed" x-cloak>
+            <div class="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shadow-md flex-shrink-0 {{ $hasLogo ? '' : 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-blue-500/20' }}">
+                @if ($hasLogo)
+                    <img src="{{ $selectedLogoUrl }}" alt="Store Logo" class="w-full h-full object-cover">
+                @else
+                    <i class="ph-bold ph-storefront text-lg"></i>
+                @endif
+            </div>
+            <div class="min-w-0">
+                <h2 class="text-xs font-black text-slate-900 dark:text-white tracking-tight truncate leading-tight">
+                    Diego Music Store
+                </h2>
+                <div class="flex items-center gap-1 mt-0.5">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Front Office</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collapsed Icon Only Mode Logo -->
+        <div class="w-full flex justify-center" x-show="isCollapsed">
+            <div class="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shadow-md {{ $hasLogo ? '' : 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-blue-500/20' }}">
+                @if ($hasLogo)
+                    <img src="{{ $selectedLogoUrl }}" alt="Store Logo" class="w-full h-full object-cover">
+                @else
+                    <i class="ph-bold ph-storefront text-lg"></i>
+                @endif
+            </div>
+        </div>
     </div>
 
-    <!-- Menu Items (Scrollable Navigation) -->
-    <nav
-        @scroll="updateActivePosition()"
-        class="flex flex-col gap-3 flex-1 w-full px-3 overflow-y-auto no-scrollbar pb-4"
-    >
+    <!-- MAIN SCROLLABLE NAVIGATION LIST -->
+    <nav class="flex-1 px-3 py-4 space-y-5 overflow-y-auto no-scrollbar">
+        
+        <!-- SECTION 1: UTAMA -->
+        <div class="space-y-1">
+            <div x-show="!isCollapsed" class="px-3 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+                Menu Utama
+            </div>
 
-        {{-- Dashboard --}}
-        @if ($isDashboard)
-            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
-                <i class="ph-fill ph-layout text-2xl mb-1"></i>
-                <span class="text-[11px] font-semibold">Dashboard</span>
-            </button>
-        @else
-            <a href="/pos/front-office" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="ph ph-layout text-2xl mb-1"></i>
-                <span class="text-[11px] font-medium">Dashboard</span>
+            <!-- Dashboard -->
+            <a href="/pos/front-office"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isDashboard ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Dashboard Front Office' : ''">
+                <i class="ph-bold ph-layout text-lg flex-shrink-0 {{ $isDashboard ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Dashboard</span>
             </a>
-        @endif
 
-        {{-- POS Kasir --}}
-        @if ($isPos)
-            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
-                <i class="ph-fill ph-squares-four text-2xl mb-1"></i>
-                <span class="text-[11px] font-semibold">Kasir</span>
-            </button>
-        @else
-            <a href="/pos" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="ph ph-squares-four text-2xl mb-1"></i>
-                <span class="text-[11px] font-medium">Kasir</span>
+            <!-- POS Kasir -->
+            <a href="/pos"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isPos ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'POS Kasir Transaksi' : ''">
+                <i class="ph-bold ph-squares-four text-lg flex-shrink-0 {{ $isPos ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">POS Kasir</span>
             </a>
-        @endif
 
-        {{-- Sesi Kasir --}}
-        @if ($isSession)
-            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
-                <i class="ph-fill ph-clock-counter-clockwise text-2xl mb-1"></i>
-                <span class="text-[11px] font-semibold text-center leading-tight">Sesi Kasir</span>
-            </button>
-        @else
-            <a href="/pos/session" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="ph ph-clock-counter-clockwise text-2xl mb-1"></i>
-                <span class="text-[11px] font-medium text-center leading-tight">Sesi Kasir</span>
+            <!-- Sesi Kasir -->
+            <a href="/pos/session"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isSession ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Sesi Kasir' : ''">
+                <i class="ph-bold ph-clock-counter-clockwise text-lg flex-shrink-0 {{ $isSession ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Sesi Kasir</span>
             </a>
-        @endif
 
-        {{-- List Transaksi --}}
-        @if ($isTransactions)
-            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
-                <i class="ph-fill ph-receipt text-2xl mb-1"></i>
-                <span class="text-[11px] font-semibold text-center leading-tight">Transaksi</span>
-            </button>
-        @else
-            <a href="/pos/transactions" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="ph ph-receipt text-2xl mb-1"></i>
-                <span class="text-[11px] font-medium text-center leading-tight">Transaksi</span>
+            <!-- Histori Transaksi -->
+            <a href="/pos/transactions"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isTransactions ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Daftar Transaksi' : ''">
+                <i class="ph-bold ph-receipt text-lg flex-shrink-0 {{ $isTransactions ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Daftar Transaksi</span>
             </a>
-        @endif
-
-        {{-- Laporan ERP (Flyout Trigger) --}}
-        <div class="w-full">
-            <button
-                id="reports-trigger"
-                @click.stop="openFlyout($event.currentTarget, 'reports')"
-                :class="activeFlyout === 'reports' || {{ json_encode($isReports) }} ? 'text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40' : 'text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
-                class="w-full py-3 flex flex-col items-center justify-center rounded-xl transition-colors relative cursor-pointer"
-            >
-                <i
-                    :class="activeFlyout === 'reports' || {{ json_encode($isReports) }} ? 'ph-fill ph-chart-pie-slice' : 'ph ph-chart-pie-slice'"
-                    class="text-2xl mb-1"
-                ></i>
-                <span class="text-[11px] font-medium flex items-center gap-0.5">
-                    Laporan
-                </span>
-                <span
-                    x-show="activeFlyout === 'reports' || {{ json_encode($isReports) }}"
-                    class="absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary"
-                    x-cloak
-                ></span>
-            </button>
         </div>
 
-        {{-- Kas Harian --}}
-        @if ($isDailyCash)
-            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
-                <i class="ph-fill ph-wallet text-2xl mb-1"></i>
-                <span class="text-[11px] font-semibold text-center leading-tight">Kas Harian</span>
-            </button>
-        @else
-            <a href="/pos/daily-cash" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="ph ph-wallet text-2xl mb-1"></i>
-                <span class="text-[11px] font-medium text-center leading-tight">Kas Harian</span>
-            </a>
-        @endif
+        <!-- SECTION 2: OPERASIONAL & KAS -->
+        <div class="space-y-1">
+            <div x-show="!isCollapsed" class="px-3 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+                Operasional & Keuangan
+            </div>
 
-        {{-- Pelunasan Piutang --}}
-        @if ($isCustomerPayments)
-            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-955/40 rounded-xl transition-colors cursor-default">
-                <i class="ph-fill ph-hand-coins text-2xl mb-1"></i>
-                <span class="text-[11px] font-semibold text-center leading-tight">Pelunasan Piutang</span>
-            </button>
-        @else
-            <a href="/pos/customer-payments" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="ph ph-hand-coins text-2xl mb-1"></i>
-                <span class="text-[11px] font-medium text-center leading-tight">Pelunasan Piutang</span>
+            <!-- Kas Harian -->
+            <a href="/pos/daily-cash"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isDailyCash ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Arus Kas Harian' : ''">
+                <i class="ph-bold ph-wallet text-lg flex-shrink-0 {{ $isDailyCash ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Kas Harian</span>
             </a>
-        @endif
 
-        {{-- Barang Service --}}
-        @php
-            $isServiceManagement = request()->is('pos/service-management*');
-        @endphp
-        @if ($isServiceManagement)
-            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
-                <i class="ph-fill ph-wrench text-2xl mb-1"></i>
-                <span class="text-[11px] font-semibold text-center leading-tight">Service</span>
-            </button>
-        @else
-            <a href="/pos/service-management" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="ph ph-wrench text-2xl mb-1"></i>
-                <span class="text-[11px] font-medium text-center leading-tight">Service</span>
+            <!-- Pelunasan Piutang -->
+            <a href="/pos/customer-payments"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isCustomerPayments ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Pelunasan Piutang' : ''">
+                <i class="ph-bold ph-hand-coins text-lg flex-shrink-0 {{ $isCustomerPayments ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Pelunasan Piutang</span>
             </a>
-        @endif
 
-        {{-- Manajemen Karyawan --}}
-        @php
-            $isEmployees = request()->is('pos/employees*');
-        @endphp
-        @if ($isEmployees)
-            <button class="w-full py-3 flex flex-col items-center justify-center text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40 rounded-xl transition-colors cursor-default">
-                <i class="ph-fill ph-user-gear text-2xl mb-1"></i>
-                <span class="text-[11px] font-semibold text-center leading-tight">Karyawan</span>
-            </button>
-        @else
-            <a href="/pos/employees" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="ph ph-user-gear text-2xl mb-1"></i>
-                <span class="text-[11px] font-medium text-center leading-tight">Karyawan</span>
+            <!-- Barang Service -->
+            <a href="/pos/service-management"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isServiceManagement ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Manajemen Service' : ''">
+                <i class="ph-bold ph-wrench text-lg flex-shrink-0 {{ $isServiceManagement ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Service</span>
             </a>
-        @endif
-
-        {{-- Input Data (Flyout Trigger) --}}
-        <div class="w-full">
-            <button
-                id="input-data-trigger"
-                @click.stop="openFlyout($event.currentTarget, 'input')"
-                :class="activeFlyout === 'input' || {{ json_encode($isInputData) }} ? 'text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40' : 'text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
-                class="w-full py-3 flex flex-col items-center justify-center rounded-xl transition-colors relative cursor-pointer"
-            >
-                <i
-                    :class="activeFlyout === 'input' || {{ json_encode($isInputData) }} ? 'ph-fill ph-database' : 'ph ph-database'"
-                    class="text-2xl mb-1"
-                ></i>
-                <span class="text-[11px] font-medium flex items-center gap-0.5">
-                    Input Data
-                </span>
-                <span
-                    x-show="activeFlyout === 'input' || {{ json_encode($isInputData) }}"
-                    class="absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary"
-                    x-cloak
-                ></span>
-            </button>
         </div>
 
-        {{-- Utility (Flyout Trigger) --}}
-        <div class="w-full">
-            <button
-                id="utility-trigger"
-                @click.stop="openFlyout($event.currentTarget, 'utility')"
-                :class="activeFlyout === 'utility' || {{ json_encode($isUtility) }} ? 'text-primary dark:text-blue-400 bg-primary-light dark:bg-blue-950/40' : 'text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
-                class="w-full py-3 flex flex-col items-center justify-center rounded-xl transition-colors relative cursor-pointer"
-            >
-                <i
-                    :class="activeFlyout === 'utility' || {{ json_encode($isUtility) }} ? 'ph-fill ph-wrench' : 'ph ph-wrench'"
-                    class="text-2xl mb-1"
-                ></i>
-                <span class="text-[11px] font-medium flex items-center gap-0.5">
-                    Utility
-                </span>
-                <span
-                    x-show="activeFlyout === 'utility' || {{ json_encode($isUtility) }}"
-                    class="absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary"
-                    x-cloak
-                ></span>
-            </button>
+        <!-- SECTION 3: SDM & KARYAWAN -->
+        <div class="space-y-1">
+            <div x-show="!isCollapsed" class="px-3 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+                SDM & Kehadiran
+            </div>
+
+            <!-- Data Karyawan -->
+            <a href="/pos/employees"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isEmployees ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Data Personel Karyawan' : ''">
+                <i class="ph-bold ph-user-gear text-lg flex-shrink-0 {{ $isEmployees ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Karyawan</span>
+            </a>
+
+            <!-- Presensi Karyawan -->
+            <a href="/pos/attendances"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isAttendances ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Presensi Staf' : ''">
+                <i class="ph-bold ph-calendar-check text-lg flex-shrink-0 {{ $isAttendances ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Presensi</span>
+            </a>
+
+            <!-- Komisi Sales -->
+            <a href="/pos/commissions"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isCommissions ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Komisi Sales' : ''">
+                <i class="ph-bold ph-percent text-lg flex-shrink-0 {{ $isCommissions ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Komisi Sales</span>
+            </a>
+
+            <!-- KPI & Bonus -->
+            <a href="/pos/kpi-performance"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isKpi ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Performance KPI' : ''">
+                <i class="ph-bold ph-trophy text-lg flex-shrink-0 {{ $isKpi ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">KPI & Bonus</span>
+            </a>
+
+            <!-- Payroll Gaji -->
+            <a href="/pos/payroll"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all {{ $isPayroll ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+               :class="isCollapsed ? 'justify-center px-0' : ''"
+               :title="isCollapsed ? 'Payroll Gaji' : ''">
+                <i class="ph-bold ph-bank text-lg flex-shrink-0 {{ $isPayroll ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                <span x-show="!isCollapsed" class="truncate">Payroll Gaji</span>
+            </a>
         </div>
 
-        {{-- Backoffice --}}
-        <a href="/backoffice" class="w-full py-3 flex flex-col items-center justify-center text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-            <i class="ph ph-house text-2xl mb-1"></i>
-            <span class="text-[11px] font-medium">Backoffice</span>
-        </a>
+        <!-- SECTION 4: MASTER DATA & LAPORAN -->
+        <div class="space-y-1">
+            <div x-show="!isCollapsed" class="px-3 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+                Master Data & Laporan
+            </div>
+
+            <!-- Dropdown 1: Laporan ERP (Parent Icon, Submenu Lines without Icon) -->
+            <div class="space-y-1">
+                <button
+                    @click="if (isCollapsed) { isCollapsed = false; openReports = true; } else { openReports = !openReports; }"
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all {{ $isReports ? 'text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}"
+                    :class="isCollapsed ? 'justify-center px-0' : ''"
+                    :title="isCollapsed ? 'Laporan ERP' : ''"
+                >
+                    <div class="flex items-center gap-3">
+                        <i class="ph-bold ph-chart-pie-slice text-lg flex-shrink-0 {{ $isReports ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                        <span x-show="!isCollapsed" class="truncate">Laporan ERP</span>
+                    </div>
+                    <i x-show="!isCollapsed" class="ph-bold ph-caret-down text-xs transition-transform duration-200" :class="{ 'rotate-180': openReports }"></i>
+                </button>
+
+                <!-- Submenu Connector with Border Guide (No Icons inside Submenu) -->
+                <div x-show="openReports && !isCollapsed" x-cloak class="ml-4 pl-3 border-l-2 border-slate-200 dark:border-slate-700/80 space-y-1 text-xs pt-1">
+                    <a href="{{ route('pos.reports.sales') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.reports.sales') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Laporan Penjualan
+                    </a>
+                    <a href="{{ route('pos.reports.ar-aging') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.reports.ar-aging') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Laporan Piutang
+                    </a>
+                    <a href="{{ route('pos.reports.daily-cash') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.reports.daily-cash') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Laporan Kas Harian
+                    </a>
+                    <a href="{{ route('pos.reports.stock-prices') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.reports.stock-prices') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Daftar Stok & Harga
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dropdown 2: Input Master Data (Parent Icon, Submenu Lines without Icon) -->
+            <div class="space-y-1">
+                <button
+                    @click="if (isCollapsed) { isCollapsed = false; openInputData = true; } else { openInputData = !openInputData; }"
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all {{ $isInputData ? 'text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}"
+                    :class="isCollapsed ? 'justify-center px-0' : ''"
+                    :title="isCollapsed ? 'Input Master Data' : ''"
+                >
+                    <div class="flex items-center gap-3">
+                        <i class="ph-bold ph-database text-lg flex-shrink-0 {{ $isInputData ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                        <span x-show="!isCollapsed" class="truncate">Input Master Data</span>
+                    </div>
+                    <i x-show="!isCollapsed" class="ph-bold ph-caret-down text-xs transition-transform duration-200" :class="{ 'rotate-180': openInputData }"></i>
+                </button>
+
+                <!-- Submenu Connector with Border Guide (No Icons inside Submenu) -->
+                <div x-show="openInputData && !isCollapsed" x-cloak class="ml-4 pl-3 border-l-2 border-slate-200 dark:border-slate-700/80 space-y-1 text-xs pt-1">
+                    <a href="{{ route('pos.customers') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.customers') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Data Pelanggan
+                    </a>
+                    <a href="{{ route('pos.users') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.users') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Data User Login
+                    </a>
+                    <a href="{{ route('pos.units') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.units') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Satuan Barang
+                    </a>
+                    <a href="{{ route('pos.sale-categories') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.sale-categories') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Kategori Penjualan
+                    </a>
+                    <a href="{{ route('pos.payment-methods') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.payment-methods') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Metode Pembayaran
+                    </a>
+                    <a href="{{ route('pos.vouchers') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.vouchers') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Data Voucher Promo
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dropdown 3: Pengaturan & Utility (Parent Icon, Submenu Lines without Icon) -->
+            <div class="space-y-1">
+                <button
+                    @click="if (isCollapsed) { isCollapsed = false; openUtility = true; } else { openUtility = !openUtility; }"
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all {{ $isUtility ? 'text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}"
+                    :class="isCollapsed ? 'justify-center px-0' : ''"
+                    :title="isCollapsed ? 'Pengaturan & Utility' : ''"
+                >
+                    <div class="flex items-center gap-3">
+                        <i class="ph-bold ph-gear text-lg flex-shrink-0 {{ $isUtility ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                        <span x-show="!isCollapsed" class="truncate">Pengaturan & Utility</span>
+                    </div>
+                    <i x-show="!isCollapsed" class="ph-bold ph-caret-down text-xs transition-transform duration-200" :class="{ 'rotate-180': openUtility }"></i>
+                </button>
+
+                <!-- Submenu Connector with Border Guide (No Icons inside Submenu) -->
+                <div x-show="openUtility && !isCollapsed" x-cloak class="ml-4 pl-3 border-l-2 border-slate-200 dark:border-slate-700/80 space-y-1 text-xs pt-1">
+                    <a href="{{ route('pos.privileges') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.privileges') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Privilege Role User
+                    </a>
+                    <a href="{{ route('pos.store-profile') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.store-profile') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Profil & Nama Toko
+                    </a>
+                    <a href="{{ route('pos.branches') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.branches') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Manajemen Cabang
+                    </a>
+                    <a href="{{ route('pos.branch-performance') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.branch-performance') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/40 dark:bg-blue-950/40' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Performa Cabang Toko
+                    </a>
+                    <a href="{{ route('pos.receipt-settings') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.receipt-settings') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Setting Struk & Invoice
+                    </a>
+                    <a href="{{ route('pos.barcode-print') }}"
+                       class="block py-1.5 px-2.5 rounded-lg transition-colors {{ request()->routeIs('pos.barcode-print') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium' }}">
+                        Cetak Barcode Item
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </nav>
 
-    <!-- Single Unified Teleported Flyout Submenu Container -->
-    <template x-teleport="body">
-        <div
-            x-show="activeFlyout !== null"
-            x-transition:enter="transition ease-out duration-150"
-            x-transition:enter-start="opacity-0 -translate-x-2 scale-95"
-            x-transition:enter-end="opacity-100 translate-x-0 scale-100"
-            x-transition:leave="transition ease-in duration-100"
-            x-transition:leave-start="opacity-100 translate-x-0 scale-100"
-            x-transition:leave-end="opacity-0 -translate-x-2 scale-95"
-            @click.outside="activeFlyout = null"
-            :style="`position: fixed; left: 115px; top: ${flyoutTop}px; z-index: 9999;`"
-            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl shadow-slate-900/10 dark:shadow-slate-900/40 overflow-hidden"
-            x-cloak
-        >
-            <!-- 1. Laporan ERP Submenu -->
-            <template x-if="activeFlyout === 'reports'">
-                <div class="w-60">
-                    <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
-                        <i class="ph-fill ph-chart-pie-slice text-base text-primary dark:text-blue-400"></i>
-                        <span class="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider">Laporan ERP</span>
-                    </div>
-
-                    <div class="py-2">
-                        <a href="{{ route('pos.reports.sales') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold {{ request()->routeIs('pos.reports.sales') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-chart-line-up text-sm {{ request()->routeIs('pos.reports.sales') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Laporan Penjualan
-                        </a>
-
-                        <a href="{{ route('pos.reports.ar-aging') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold {{ request()->routeIs('pos.reports.ar-aging') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-credit-card text-sm {{ request()->routeIs('pos.reports.ar-aging') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Laporan Piutang
-                        </a>
-
-                        <a href="{{ route('pos.reports.ar-settlement') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold {{ request()->routeIs('pos.reports.ar-settlement') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-hand-coins text-sm {{ request()->routeIs('pos.reports.ar-settlement') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Pelunasan Piutang
-                        </a>
-
-                        <a href="{{ route('pos.reports.daily-cash') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold {{ request()->routeIs('pos.reports.daily-cash') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-wallet text-sm {{ request()->routeIs('pos.reports.daily-cash') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Laporan Kas Harian
-                        </a>
-
-                        <a href="{{ route('pos.reports.stock-prices') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold {{ request()->routeIs('pos.reports.stock-prices') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-package text-sm {{ request()->routeIs('pos.reports.stock-prices') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Daftar Stok & Harga
-                        </a>
-                    </div>
+    <!-- SIDEBAR FOOTER (BACKOFFICE ACCESSIBLE LINK) -->
+    <div class="p-3 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
+        <a href="/backoffice"
+           class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all group"
+           :class="isCollapsed ? 'justify-center px-0' : ''"
+           :title="isCollapsed ? 'Panel Backoffice Admin' : ''">
+            <div class="flex items-center gap-3">
+                <div class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold flex-shrink-0">
+                    <i class="ph-bold ph-house text-base group-hover:scale-110 transition-transform"></i>
                 </div>
-            </template>
-
-            <!-- 2. Input Data Submenu -->
-            <template x-if="activeFlyout === 'input'">
-                <div class="w-52">
-                    <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
-                        <i class="ph-fill ph-database text-base text-primary dark:text-blue-400"></i>
-                        <span class="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider">Input Data</span>
-                    </div>
-
-                    <div class="py-2">
-                        <a href="{{ route('pos.employees') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.employees') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-user-gear text-sm {{ request()->routeIs('pos.employees') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Data Karyawan
-                        </a>
-
-                        <a href="{{ route('pos.customers') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.customers') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-users text-sm {{ request()->routeIs('pos.customers') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Data Pelanggan
-                        </a>
-
-                        <a href="{{ route('pos.users') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.users') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-user-circle text-sm {{ request()->routeIs('pos.users') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Data User
-                        </a>
-
-                        <a href="{{ route('pos.units') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.units') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-ruler text-sm {{ request()->routeIs('pos.units') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Satuan Barang
-                        </a>
-
-                        <a href="{{ route('pos.sale-categories') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.sale-categories') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-tag text-sm {{ request()->routeIs('pos.sale-categories') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Kategori Penjualan
-                        </a>
-
-                        <a href="{{ route('pos.payment-methods') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.payment-methods') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-credit-card text-sm {{ request()->routeIs('pos.payment-methods') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Metode Pembayaran
-                        </a>
-
-                        <a href="{{ route('pos.vouchers') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.vouchers') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-ticket text-sm {{ request()->routeIs('pos.vouchers') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Data Voucher
-                        </a>
-                    </div>
+                <div class="text-left" x-show="!isCollapsed">
+                    <div class="text-xs font-black">Panel Backoffice</div>
+                    <div class="text-[9px] text-slate-400 dark:text-slate-500">Kelola Admin ERP</div>
                 </div>
-            </template>
-
-            <!-- 3. Utility Submenu -->
-            <template x-if="activeFlyout === 'utility'">
-                <div class="w-56">
-                    <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
-                        <i class="ph-fill ph-wrench text-base text-primary dark:text-blue-400"></i>
-                        <span class="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider">Utility</span>
-                    </div>
-
-                    <div class="py-2">
-                        <a href="{{ route('pos.privileges') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.privileges') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-shield-check text-sm {{ request()->routeIs('pos.privileges') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Setting Privilege User
-                        </a>
-
-                        <a href="{{ route('pos.store-profile') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.store-profile') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-storefront text-sm {{ request()->routeIs('pos.store-profile') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Register Nama Toko
-                        </a>
-
-                        <a href="{{ route('pos.branches') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.branches') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-buildings text-sm {{ request()->routeIs('pos.branches') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Manajemen Cabang Toko
-                        </a>
-
-                        <a href="{{ route('pos.branch-performance') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.branch-performance') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-chart-bar text-sm {{ request()->routeIs('pos.branch-performance') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Performa & Laba Rugi Cabang
-                        </a>
-
-                        <a href="{{ route('pos.receipt-settings') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.receipt-settings') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-printer text-sm {{ request()->routeIs('pos.receipt-settings') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Setting Struk & Invoice
-                        </a>
-
-                        <a href="{{ route('pos.barcode-print') }}"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {{ request()->routeIs('pos.barcode-print') ? 'text-primary dark:text-blue-400 bg-primary-light/50 dark:bg-blue-950/20' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 hover:bg-primary-light dark:hover:bg-blue-950/30' }} transition-colors group">
-                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-primary-light dark:group-hover:bg-blue-950/40 flex items-center justify-center transition-colors flex-shrink-0">
-                                <i class="ph ph-barcode text-sm {{ request()->routeIs('pos.barcode-print') ? 'text-primary dark:text-blue-400' : 'text-slate-500 dark:text-slate-400' }} group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"></i>
-                            </div>
-                            Cetak Barcode
-                        </a>
-                    </div>
-                </div>
-            </template>
-        </div>
-    </template>
-
-    <script>
-        function toggleDarkMode() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            }
-        }
-    </script>
+            </div>
+            <i x-show="!isCollapsed" class="ph-bold ph-arrow-right text-xs text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+        </a>
+    </div>
 </aside>

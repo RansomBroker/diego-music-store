@@ -39,7 +39,7 @@ class OpenCashSession
             throw new InvalidArgumentException('Anda sudah memiliki sesi kasir aktif di cabang ini.');
         }
 
-        return CashSession::create([
+        $session = CashSession::create([
             'user_id' => $userId,
             'branch_id' => $branchId,
             'opened_at' => now(),
@@ -48,5 +48,17 @@ class OpenCashSession
             'status' => 'open',
             'notes' => $notes,
         ]);
+
+        // Auto clock-in employee if linked to this user
+        $user = \App\Models\User::find($userId);
+        if ($user && $user->employee) {
+            app(\App\Actions\Attendance\ClockIn::class)->execute(
+                $user->employee,
+                $branchId,
+                'Otomatis presensi saat Buka Sesi Kasir'
+            );
+        }
+
+        return $session;
     }
 }

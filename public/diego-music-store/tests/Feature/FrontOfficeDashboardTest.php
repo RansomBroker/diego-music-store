@@ -34,6 +34,7 @@ class FrontOfficeDashboardTest extends TestCase
     public function it_renders_session_active_when_session_is_open()
     {
         $user = User::factory()->create();
+        $user->assignRole('owner');
         $branch = \App\Models\Branch::create([
             'name' => 'Cabang Test',
             'address' => 'Jl. Test',
@@ -53,5 +54,21 @@ class FrontOfficeDashboardTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Sesi Aktif');
+        $response->assertSee('Presensi Karyawan Cabang Hari Ini');
+        $response->assertSee('Clock In (Masuk)');
+    }
+
+    /** @test */
+    public function it_renders_presensi_karyawan_cabang_hari_ini_section_on_dashboard()
+    {
+        $user = User::factory()->create();
+        $user->assignRole('owner');
+
+        $response = $this->actingAs($user)->get(route('pos.front-office'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Presensi Karyawan Cabang Hari Ini');
+        $response->assertSee('Clock In (Masuk)');
+        $response->assertSee('Komisi:');
     }
 }

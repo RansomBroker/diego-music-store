@@ -52,6 +52,9 @@ class BackofficePanelProvider extends PanelProvider
                     ->label('Master Data')
                     ->icon('heroicon-o-circle-stack'),
                 NavigationGroup::make()
+                    ->label('Manajemen Karyawan')
+                    ->icon('heroicon-o-user-group'),
+                NavigationGroup::make()
                      ->label('Pembelian')
                      ->icon('heroicon-o-shopping-bag'),
                 NavigationGroup::make()
@@ -120,6 +123,9 @@ class BackofficePanelProvider extends PanelProvider
             PanelsRenderHook::STYLES_AFTER,
             fn (): HtmlString => new HtmlString(
                 \Illuminate\Support\Facades\Blade::render("@vite('resources/css/app.css')") . '
+                <!-- Leaflet.js Map Library -->
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
                 <style>
                     /* Custom Sidebar Styles */
                     .fi-sidebar {

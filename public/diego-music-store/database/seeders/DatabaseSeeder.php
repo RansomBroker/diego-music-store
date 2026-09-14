@@ -283,5 +283,9 @@ class DatabaseSeeder extends Seeder
                 $vch
             );
         }
+
+        $this->call(CommissionSchemeSeeder::class);
+        $this->call(AttendanceViolationRuleSeeder::class);
+        $this->call(KpiTemplateSeeder::class);
     }
 }

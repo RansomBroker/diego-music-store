@@ -18,6 +18,7 @@ use App\Models\Supplier;
 use App\Models\ProductVariant;
 use App\Models\Unit;
 use App\Helpers\FormatHelper;
+use App\Helpers\PoSmartAssistHelper;
 use Filament\Forms\Get;
 
 class PurchaseOrderForm
@@ -436,6 +437,48 @@ class PurchaseOrderForm
                             'x-data' => '{}',
                             'x-on:scroll' => "\$el.querySelectorAll('[data-frozen-header]').forEach(function(el){ el.style.transform = 'translateX(' + \$el.scrollLeft + 'px)'; })",
                         ]),
+                    ])
+                    ->columnSpanFull(),
+
+                Section::make('Smart Assist - Analisis Keuangan Toko')
+                    ->schema([
+                        Placeholder::make('smart_assist_analysis_card')
+                            ->hiddenLabel()
+                            ->content(function ($get) {
+                                $items = $get('items') ?? [];
+                                $globalTaxRate = intval($get('tax_rate') ?? 0);
+
+                                $totalAmount = 0;
+                                foreach ($items as $item) {
+                                    $qty = intval($item['quantity'] ?? 0);
+                                    $price = intval($item['price'] ?? 0);
+                                    $itemDiscType = $get('item_discount_type') ?? 'fixed';
+                                    $itemDiscVal = intval($item['discount_value'] ?? 0);
+                                    $disc = $itemDiscType === 'percent' ? (int) round(($qty * $price) * ($itemDiscVal / 100)) : $itemDiscVal;
+
+                                    $subtotalBeforeTax = ($qty * $price) - $disc;
+                                    $totalAmount += $subtotalBeforeTax;
+                                }
+
+                                $discHeaderType = $get('discount_type') ?? 'fixed';
+                                $discHeaderVal = intval($get('discount_value') ?? 0);
+                                $discHeader = $discHeaderType === 'percent' ? (int) round($totalAmount * ($discHeaderVal / 100)) : $discHeaderVal;
+                                $taxAmount = (int) round($totalAmount * ($globalTaxRate / 100));
+                                $otherCost = intval($get('other_cost') ?? 0);
+                                $shippingBorneBy = $get('shipping_borne_by') ?? 'self_direct';
+
+                                $shippingCostInGrandTotal = ($shippingBorneBy === 'self_direct') ? $otherCost : 0;
+                                $grandTotal = $totalAmount - $discHeader + $taxAmount + $shippingCostInGrandTotal;
+                                $branchId = $get('branch_id');
+                                $paymentTerm = $get('payment_term');
+
+                                $evaluation = PoSmartAssistHelper::evaluate($grandTotal, $branchId, $paymentTerm);
+
+                                return view('backoffice.purchase-orders.smart-assist-card', [
+                                    'evaluation' => $evaluation,
+                                ]);
+                            })
+                            ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),
 

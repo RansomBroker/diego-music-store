@@ -19,6 +19,12 @@ Route::get('/backoffice/sales-invoices/{salesInvoice}/print', [App\Http\Controll
 
 // Custom POS Routes
 Route::get('/pos/login', POSLogin::class)->name('pos.login');
+Route::post('/pos/logout', function () {
+    auth()->logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    return redirect()->route('pos.login');
+})->name('pos.logout');
 
 Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/front-office', App\Livewire\FrontOfficeDashboard::class)->name('pos.front-office');
@@ -38,8 +44,12 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/reports/daily-cash', App\Livewire\PosReportsDailyCash::class)->name('pos.reports.daily-cash');
     Route::get('/pos/reports/stock-prices', App\Livewire\PosReportsStockPrices::class)->name('pos.reports.stock-prices');
 
-    // Input Data
+    // Input Data / Manajemen Karyawan
     Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
+    Route::get('/pos/attendances', App\Livewire\PosAttendances::class)->name('pos.attendances');
+    Route::get('/pos/attendance-radiuses', App\Livewire\PosAttendanceRadiuses::class)->name('pos.attendance-radiuses');
+    Route::get('/pos/commissions', App\Livewire\PosCommissions::class)->name('pos.commissions');
+    Route::get('/pos/attendance-violations', App\Livewire\PosAttendanceViolations::class)->name('pos.attendance-violations');
     Route::get('/pos/customers', App\Livewire\PosCustomers::class)->name('pos.customers');
     Route::get('/pos/users', App\Livewire\PosUsers::class)->name('pos.users');
     Route::get('/pos/units', App\Livewire\PosUnits::class)->name('pos.units');
@@ -69,6 +79,14 @@ Route::middleware('auth.pos')->group(function () {
 
     // Service Management
     Route::get('/pos/service-management', App\Livewire\PosServiceManagement::class)->name('pos.service-management');
+
+    // KPI & Performance
+    Route::get('/pos/kpi-performance', App\Livewire\PosKpiPerformance::class)->name('pos.kpi-performance');
+
+    // Payroll & Gaji Karyawan
+    Route::get('/pos/payroll', App\Livewire\PosPayrollManagement::class)->name('pos.payroll');
+    Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
+    Route::get('/pos/payroll/bulk-payslip-pdf/{id}', [App\Http\Controllers\POS\BulkPayrollPayslipController::class, 'show'])->name('pos.payroll.bulk-payslip-pdf');
 });
 
 // Public Service Tracking Route (Without Login)

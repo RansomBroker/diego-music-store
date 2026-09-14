@@ -31,6 +31,8 @@ class UpdateBranch
                 'bank_info'      => $data['bank_info'] ?? $branch->bank_info,
                 'receipt_header' => $data['receipt_header'] ?? $branch->receipt_header,
                 'receipt_footer' => $data['receipt_footer'] ?? $branch->receipt_footer,
+                'shift_start_time' => $data['shift_start_time'] ?? $branch->shift_start_time,
+                'shift_end_time'   => $data['shift_end_time'] ?? $branch->shift_end_time,
                 'manager_id'     => $data['manager_id'] ?? $branch->manager_id,
                 'is_active'      => $data['is_active'] ?? $branch->is_active,
             ]);

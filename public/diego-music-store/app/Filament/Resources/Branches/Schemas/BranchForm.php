@@ -94,6 +94,20 @@ class BranchForm
                         ->placeholder('Contoh: BCA 1234567890 a.n. Diego Music Store')
                         ->columnSpanFull(),
 
+                    TextInput::make('shift_start_time')
+                        ->required()
+                        ->default('09:00')
+                        ->label('Jam Masuk Shift (HH:MM)')
+                        ->placeholder('09:00')
+                        ->helperText('Jam mulai kerja cabang. Clock In setelah jam ini dianggap keterlambatan.'),
+
+                    TextInput::make('shift_end_time')
+                        ->required()
+                        ->default('17:00')
+                        ->label('Jam Pulang Shift (HH:MM)')
+                        ->placeholder('17:00')
+                        ->helperText('Jam selesai kerja cabang. Clock Out sebelum jam ini dianggap pulang cepat.'),
+
                     Toggle::make('is_active')
                         ->label('Status Aktif Operasional')
                         ->default(true),
