@@ -114,19 +114,50 @@ jobs:
             fi
 
             echo "Configuring Node.js and NPM..."
-            if command -v nvm >/dev/null 2>&1; then
-              nvm install --lts || true
-              nvm use --lts || true
-            elif [ -s "$HOME/.nvm/nvm.sh" ]; then
-              source "$HOME/.nvm/nvm.sh"
-              nvm install --lts || true
-              nvm use --lts || true
-            else
-              echo "NVM not detected. Using system Node.js / NPM..."
+            # 1. Cek apakah Node.js sudah ada di PATH atau direktori bawaan cPanel / CloudLinux
+            if ! command -v node >/dev/null 2>&1; then
+              for p in /opt/cpanel/ea-nodejs22/bin /opt/cpanel/ea-nodejs20/bin /opt/cpanel/ea-nodejs18/bin /opt/alt/alt-nodejs20/root/usr/bin /opt/alt/alt-nodejs18/root/usr/bin /usr/local/bin; do
+                if [ -x "$p/node" ]; then
+                  echo "Menemukan Node.js di $p"
+                  export PATH="$p:$PATH"
+                  break
+                fi
+              done
             fi
 
-            echo "Node: $(node -v 2>/dev/null || echo 'Not installed')"
-            echo "NPM: $(npm -v 2>/dev/null || echo 'Not installed')"
+            # 2. Jika Node.js masih belum ada, pasang NVM otomatis di user home directory
+            if ! command -v node >/dev/null 2>&1; then
+              export NVM_DIR="$HOME/.nvm"
+              if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+                echo "Node.js tidak ditemukan. Mengunduh dan memasang NVM di $NVM_DIR..."
+                curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+              fi
+
+              if [ -s "$NVM_DIR/nvm.sh" ]; then
+                # Load fungsi nvm ke shell saat ini
+                \. "$NVM_DIR/nvm.sh"
+              fi
+
+              if command -v nvm >/dev/null 2>&1; then
+                echo "Memasang Node.js v20 LTS via NVM..."
+                nvm install 20
+                nvm use 20
+                nvm alias default 20
+              fi
+            fi
+
+            # 3. Validasi ketersediaan Node & NPM
+            if ! command -v npm >/dev/null 2>&1; then
+              echo "❌ ERROR: Node.js / NPM tidak ditemukan di server dan gagal dipasang otomatis!"
+              echo "PATH saat ini: $PATH"
+              exit 1
+            fi
+
+            echo "Node version: $(node -v)"
+            echo "NPM version: $(npm -v)"
+
+            # Batasi alokasi memori Node agar aman di shared hosting / VPS
+            export NODE_OPTIONS="--max-old-space-size=1024"
 
             echo "Installing NPM dependencies..."
             npm ci --legacy-peer-deps
