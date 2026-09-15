@@ -33,23 +33,24 @@
                         </span>
                     </x-pos.table.td>
                     <x-pos.table.td class="whitespace-nowrap text-right">
-                        <div class="flex items-center justify-end gap-3">
-                            <button
+                        <div class="flex items-center justify-end gap-1.5">
+                            <x-pos.utility.button
+                                variant="warning"
+                                size="xs"
+                                icon="ph-pencil-simple"
                                 wire:click="openEdit({{ $row->id }})"
-                                class="inline-flex items-center gap-1 text-sm font-semibold text-primary dark:text-blue-400 hover:underline cursor-pointer"
                             >
-                                <i class="ph-bold ph-pencil-simple text-xs"></i>
-                                <span>Atur Hak Akses</span>
-                            </button>
+                                Atur Hak Akses
+                            </x-pos.utility.button>
                             @if ($row->name !== 'Super Admin' && $row->name !== 'admin')
-                                <span class="text-slate-300 dark:text-slate-700">|</span>
-                                <button
+                                <x-pos.utility.button
+                                    variant="danger"
+                                    size="xs"
+                                    icon="ph-trash"
                                     wire:click="confirmDelete({{ $row->id }})"
-                                    class="inline-flex items-center gap-1 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
                                 >
-                                    <i class="ph-bold ph-trash text-xs"></i>
-                                    <span>Hapus</span>
-                                </button>
+                                    Hapus
+                                </x-pos.utility.button>
                             @endif
                         </div>
                     </x-pos.table.td>
@@ -59,10 +60,5 @@
             @endforelse
         </tbody>
     </x-pos.table>
+    <x-pos.table.footer :paginator="$roles" />
 </x-pos.table.container>
-
-@if ($roles->total() > 0)
-    <div class="px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
-        {{ $roles->links() }}
-    </div>
-@endif

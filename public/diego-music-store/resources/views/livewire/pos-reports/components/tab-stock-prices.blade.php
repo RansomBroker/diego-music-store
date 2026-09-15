@@ -47,7 +47,10 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                    @forelse ($reportData['items'] ?? [] as $st)
+                    @php
+                        $displayItems = $reportData['paginated_items'] ?? ($reportData['items'] ?? []);
+                    @endphp
+                    @forelse ($displayItems as $st)
                         <x-pos.table.tr>
                             <x-pos.table.td class="font-mono text-xs text-slate-900 dark:text-white">
                                 <div class="font-bold text-primary dark:text-blue-400">{{ $st['sku'] }}</div>
@@ -68,6 +71,7 @@
                     @endforelse
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :paginator="$reportData['paginated_items'] ?? null" :total="count($reportData['items'] ?? [])" perPageModel="perPage" />
         </x-pos.table.container>
     </div>
 </div>

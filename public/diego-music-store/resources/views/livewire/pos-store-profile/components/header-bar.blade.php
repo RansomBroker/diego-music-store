@@ -24,11 +24,12 @@
         <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Register & Profil Toko</h1>
     </div>
 
-    <button
+    <x-pos.utility.button
         wire:click="openCreateStore"
-        class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition duration-150 cursor-pointer self-start sm:self-auto"
+        variant="primary"
+        icon="ph-plus"
+        class="self-start sm:self-auto"
     >
-        <i class="ph-bold ph-plus text-sm"></i>
-        <span>Register Toko Baru</span>
-    </button>
+        Register Toko Baru
+    </x-pos.utility.button>
 </div>

@@ -25,21 +25,22 @@
     </div>
 
     <div class="space-y-2">
-        <button 
+        <x-pos.utility.button 
             type="submit" 
-            class="w-full py-3.5 px-4 bg-primary hover:bg-primaryHover text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            variant="primary"
+            class="w-full justify-center !py-3.5 !rounded-2xl"
+            icon="ph-check"
         >
-            <span wire:loading wire:target="selectBranchAndCompleteLogin" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span>Konfirmasi & Masuk POS</span>
-            <i wire:loading.remove wire:target="selectBranchAndCompleteLogin" class="ph-bold ph-check text-lg"></i>
-        </button>
+            Konfirmasi & Masuk POS
+        </x-pos.utility.button>
 
-        <button 
+        <x-pos.utility.button 
             type="button" 
+            variant="secondary"
+            class="w-full justify-center !py-2.5 !rounded-xl"
             wire:click="backToCredentials"
-            class="w-full py-2.5 px-4 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
         >
             Batal & Kembali
-        </button>
+        </x-pos.utility.button>
     </div>
 </form>

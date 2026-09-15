@@ -80,19 +80,22 @@
                                 </x-pos.utility.pill>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                <button
+                                <x-pos.utility.button
                                     type="button"
+                                    variant="warning"
+                                    size="xs"
+                                    icon="ph-pencil-simple"
                                     wire:click="openTemplateModal({{ $tpl->id }})"
-                                    class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-bold text-[11px] rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
                                     title="Edit Template KPI"
                                 >
-                                    <i class="ph-bold ph-pencil-simple"></i> Edit
-                                </button>
+                                    Edit
+                                </x-pos.utility.button>
                             </x-pos.table.td>
                         </x-pos.table.tr>
                     @endforeach
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :total="count($templates)" />
         </x-pos.table.container>
     @else
         <div class="p-12 text-center text-slate-400">

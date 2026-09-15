@@ -104,18 +104,19 @@
                             @endforelse
                         </tbody>
                     </x-pos.table>
+                    <x-pos.table.footer :total="count($settlementHistory ?? [])" />
                 </x-pos.table.container>
             </div>
 
             <!-- Modal Footer -->
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button
+                <x-pos.utility.button
                     type="button"
+                    variant="secondary"
                     wire:click="closeDetails"
-                    class="px-5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl transition-colors cursor-pointer"
                 >
                     Tutup
-                </button>
+                </x-pos.utility.button>
             </div>
         </div>
     @endif

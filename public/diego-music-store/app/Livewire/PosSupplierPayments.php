@@ -83,6 +83,17 @@ class PosSupplierPayments extends Component
         $this->resetPage();
     }
 
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     public function sortBy(string $field): void
     {
         if ($this->sortField === $field) {
@@ -381,7 +392,7 @@ class PosSupplierPayments extends Component
                   ->orWhereHas('customer', fn ($sq) => $sq->where('name', 'like', "%{$this->search}%"));
             })
             ->latest()
-            ->paginate($this->perPage);
+            ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $userBranchId = Auth::user()?->branches()->first()?->id ?? Branch::first()?->id;
         $branch = $userBranchId ? Branch::find($userBranchId) : null;

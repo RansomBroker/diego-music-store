@@ -14,13 +14,14 @@
                     <p class="text-xs text-slate-700 dark:text-slate-300 font-semibold mt-0.5">Cari dan pilih produk untuk ditambahkan ke antrean cetak</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button
+                    <x-pos.utility.button
+                        variant="primary"
+                        size="sm"
+                        icon="ph-plus-circle"
                         wire:click="addAllProducts"
-                        class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white text-xs font-bold rounded-xl transition cursor-pointer"
                     >
-                        <i class="ph-bold ph-plus-circle text-sm text-primary dark:text-blue-400"></i>
-                        <span>Tambah Semua Produk</span>
-                    </button>
+                        Tambah Semua Produk
+                    </x-pos.utility.button>
                     <button wire:click="closeProductSearch" class="w-8 h-8 rounded-full bg-slate-150 hover:bg-slate-200 dark:bg-slate-700 text-slate-650 hover:text-slate-955 dark:text-slate-300 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer">
                         <i class="ph-bold ph-x text-lg"></i>
                     </button>

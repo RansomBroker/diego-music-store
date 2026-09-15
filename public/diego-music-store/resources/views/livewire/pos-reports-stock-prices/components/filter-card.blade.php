@@ -41,7 +41,7 @@
                 <div class="flex-1 min-w-0">
                     <x-pos.form.input model="search" :live="true" placeholder="Cari SKU / Barcode / Nama / Merk..." icon="ph-magnifying-glass" size="sm" />
                 </div>
-                <x-pos.utility.button variant="secondary" size="sm" icon="ph-arrow-counter-clockwise" class="shrink-0" wire:click="resetFilters" title="Reset Filter">
+                <x-pos.utility.button variant="danger" size="sm" icon="ph-arrow-counter-clockwise" class="shrink-0" wire:click="resetFilters" title="Reset Filter">
                     Reset
                 </x-pos.utility.button>
             </div>

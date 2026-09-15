@@ -59,11 +59,9 @@
             </x-pos.form.dropdown>
             <x-pos.form.input
                 label="Nominal Denda (Rp)"
-                type="number"
-                step="0.01"
+                :currency="true"
                 model="deductionAmount"
-                prefix="Rp"
-                placeholder="10000"
+                placeholder="0"
                 required
             />
         </div>

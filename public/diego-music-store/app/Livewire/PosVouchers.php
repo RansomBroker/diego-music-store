@@ -45,6 +45,17 @@ class PosVouchers extends Component
         $this->resetPage();
     }
 
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     public function updated($propertyName): void
     {
         if (in_array($propertyName, ['min_spend', 'value'])) {
@@ -158,7 +169,7 @@ class PosVouchers extends Component
               ->orWhere('name', 'like', "%{$this->search}%");
         })
         ->orderBy($this->sortField, $this->sortDirection)
-        ->paginate($this->perPage);
+        ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $userBranchId = Auth::user()?->branches()->first()?->id;
         $branch = $userBranchId ? Branch::find($userBranchId) : null;

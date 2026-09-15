@@ -88,13 +88,15 @@
 
                         <x-pos.table.td class="text-center">
                             <div class="flex items-center justify-center gap-1.5">
-                                <x-pos.utility.button variant="primary" size="xs" icon="ph-pencil-simple" wire:click="openEditModal({{ $so->id }})" title="Update Status & Catatan">
+                                <x-pos.utility.button variant="warning" size="xs" icon="ph-pencil-simple" wire:click="openEditModal({{ $so->id }})" title="Update Status & Catatan">
                                     Update
                                 </x-pos.utility.button>
 
-                                <a href="{{ $so->tracking_url }}" target="_blank" class="p-1.5 text-slate-500 hover:text-primary dark:hover:text-blue-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Buka Link Tracking Publik">
-                                    <i class="ph ph-arrow-square-out text-base"></i>
-                                </a>
+                                @if ($so->tracking_url)
+                                    <x-pos.utility.button variant="info" size="xs" icon="ph-arrow-square-out" href="{{ $so->tracking_url }}" target="_blank" title="Buka Link Tracking Publik">
+                                        Tracking
+                                    </x-pos.utility.button>
+                                @endif
                             </div>
                         </x-pos.table.td>
                     </x-pos.table.tr>
@@ -103,8 +105,6 @@
                 @endforelse
             </tbody>
         </x-pos.table>
+        <x-pos.table.footer :paginator="$orders" />
     </x-pos.table.container>
-
-    <!-- Table Footer / Pagination -->
-    <x-pos.table.footer :paginator="$orders" />
 </div>

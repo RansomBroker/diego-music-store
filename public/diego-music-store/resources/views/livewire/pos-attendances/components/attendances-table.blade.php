@@ -152,23 +152,12 @@
                         </x-pos.table.td>
                     </tr>
                 @empty
-                    <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
-                            <div class="flex flex-col items-center justify-center gap-2">
-                                <i class="ph ph-calendar text-4xl text-slate-300 dark:text-slate-600"></i>
-                                <span class="text-sm font-medium">Belum ada riwayat presensi untuk periode ini</span>
-                            </div>
-                        </td>
-                    </tr>
+                    <x-pos.table.empty colspan="8" icon="ph-calendar" message="Belum ada riwayat presensi untuk periode ini" />
                 @endforelse
             </tbody>
         </x-pos.table>
     </x-pos.table.container>
 
-    <!-- Pagination -->
-    @if ($attendances->hasPages())
-        <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            {{ $attendances->links() }}
-        </div>
-    @endif
+    <!-- Table Footer / Pagination -->
+    <x-pos.table.footer :paginator="$attendances" />
 </div>

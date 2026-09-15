@@ -175,8 +175,6 @@
                 </tbody>
             @endif
         </x-pos.table>
+        <x-pos.table.footer :paginator="$paginatedReportData['paginated_items'] ?? null" />
     </x-pos.table.container>
-
-    <!-- Table Footer Component -->
-    <x-pos.table.footer :paginator="$paginatedReportData['paginated_items'] ?? null" />
 </div>

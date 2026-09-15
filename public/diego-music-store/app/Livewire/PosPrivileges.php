@@ -17,6 +17,19 @@ class PosPrivileges extends Component
     use WithPagination;
 
     public string $search = '';
+    public int $perPage = 10;
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     public bool $showModal = false;
     public bool $isEditing = false;
     public ?int $editingId = null;
@@ -152,7 +165,7 @@ class PosPrivileges extends Component
         $roles = Role::withCount(['users', 'permissions'])
             ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->orderBy('name')
-            ->paginate(10);
+            ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $userBranchId = Auth::user()->branches()->first()?->id;
         $branch = $userBranchId ? Branch::find($userBranchId) : null;

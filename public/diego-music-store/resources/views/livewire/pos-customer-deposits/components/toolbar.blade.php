@@ -22,14 +22,13 @@
     </div>
 
     <!-- Add Action Button -->
-    <button
-        type="button"
+    <x-pos.utility.button
+        variant="primary"
+        icon="ph-plus"
         wire:click="openCreateModal"
-        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-xl shadow-sm hover:shadow transition duration-150 cursor-pointer active:scale-[0.98]"
     >
-        <i class="ph-bold ph-plus text-base"></i>
-        <span>Tambah Deposit Baru</span>
-    </button>
+        Tambah Deposit Baru
+    </x-pos.utility.button>
 </div>
 
 <!-- Toolbar (Search & Filter Status & Dates) -->

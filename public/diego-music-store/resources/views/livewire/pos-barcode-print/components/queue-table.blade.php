@@ -21,21 +21,26 @@
                 >
             </div>
 
-            <button
+            <x-pos.utility.button
+                type="button"
                 wire:click="openProductModal"
-                class="text-xs font-bold text-primary dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                variant="primary"
+                size="xs"
+                icon="ph-plus"
             >
-                <i class="ph-bold ph-plus"></i> Tambah
-            </button>
+                Tambah
+            </x-pos.utility.button>
 
             @if (!empty($printQueue))
-                <span class="text-slate-300 dark:text-slate-700">|</span>
-                <button
+                <x-pos.utility.button
+                    type="button"
                     wire:click="clearQueue"
-                    class="text-xs font-semibold text-rose-600 hover:underline cursor-pointer whitespace-nowrap"
+                    variant="danger"
+                    size="xs"
+                    icon="ph-trash"
                 >
                     Kosongkan
-                </button>
+                </x-pos.utility.button>
             @endif
         </div>
     </div>
@@ -97,12 +102,16 @@
                             </div>
                         </x-pos.table.td>
                         <x-pos.table.td class="text-right">
-                            <button
+                            <x-pos.utility.button
+                                type="button"
+                                variant="danger"
+                                size="xs"
+                                icon="ph-trash"
                                 wire:click="removeVariant({{ $variantId }})"
-                                class="text-rose-600 hover:underline text-xs font-semibold cursor-pointer"
+                                title="Hapus"
                             >
-                                <i class="ph-bold ph-trash"></i> Hapus
-                            </button>
+                                Hapus
+                            </x-pos.utility.button>
                         </x-pos.table.td>
                     </x-pos.table.tr>
                 @empty
@@ -110,17 +119,20 @@
                 @endforelse
             </tbody>
         </x-pos.table>
+        <x-pos.table.footer :total="count($filteredQueue)" />
     </x-pos.table.container>
 
     @if (!empty($printQueue))
         <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-            <button
+            <x-pos.utility.button
+                type="button"
+                variant="primary"
+                size="base"
+                icon="ph-printer"
                 wire:click="triggerPrint"
-                class="inline-flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition duration-150 cursor-pointer"
             >
-                <i class="ph-bold ph-printer text-base"></i>
-                <span>Cetak {{ array_sum(array_column($printQueue, 'qty')) }} Label Barcode</span>
-            </button>
+                Cetak {{ array_sum(array_column($printQueue, 'qty')) }} Label Barcode
+            </x-pos.utility.button>
         </div>
     @endif
 </div>

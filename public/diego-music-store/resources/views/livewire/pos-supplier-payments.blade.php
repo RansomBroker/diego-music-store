@@ -9,7 +9,7 @@
 
         <!-- Navbar -->
         <x-pos.navbar
-            pageTitle="Pelunasan Piutang"
+            pageTitle="Pelunasan Hutang"
             backLabel="Dashboard"
         />
 
@@ -29,23 +29,24 @@
                                 <li>
                                     <div class="flex items-center">
                                         <i class="ph ph-caret-right text-[10px] text-slate-355 dark:text-slate-650 mx-1"></i>
-                                        <span class="text-slate-650 dark:text-slate-300 font-bold">Pelunasan Piutang</span>
+                                        <span class="text-slate-650 dark:text-slate-300 font-bold">Pelunasan Hutang</span>
                                     </div>
                                 </li>
                             </ol>
                         </nav>
                         <!-- Page Title -->
-                        <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Pelunasan Piutang Pelanggan</h1>
+                        <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Pelunasan Hutang Supplier</h1>
                     </div>
 
                     <!-- Add Action -->
-                    <button
+                    <x-pos.utility.button
+                        type="button"
+                        variant="primary"
+                        icon="ph-plus"
                         wire:click="openCreate"
-                        class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition duration-150 cursor-pointer active:scale-[0.98]"
                     >
-                        <i class="ph-bold ph-plus text-sm"></i>
-                        <span>Pelunasan Piutang</span>
-                    </button>
+                        Pelunasan Hutang
+                    </x-pos.utility.button>
                 </div>
 
                 <!-- Filters & Table Card -->

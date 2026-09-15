@@ -98,6 +98,7 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                            <x-pos.table.footer :total="$selectedSale->items->count()" />
                         </div>
                     </div>
 
@@ -108,60 +109,77 @@
                             <span>Rp {{ number_format($selectedSale->subtotal, 0, ',', '.') }}</span>
                         </div>
                         @if($selectedSale->discount_amount > 0)
-                            <div class="flex items-center justify-between text-red-500 font-bold">
-                                <span>Diskon Invoice</span>
+                            <div class="flex items-center justify-between text-rose-500">
+                                <span>Diskon</span>
                                 <span>-Rp {{ number_format($selectedSale->discount_amount, 0, ',', '.') }}</span>
                             </div>
                         @endif
                         @if($selectedSale->tax_amount > 0)
                             <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
-                                <span>Pajak (11%)</span>
+                                <span>PPN ({{ $selectedSale->tax_rate }}%)</span>
                                 <span>Rp {{ number_format($selectedSale->tax_amount, 0, ',', '.') }}</span>
                             </div>
                         @endif
-                        <div class="flex items-center justify-between text-base font-black text-slate-900 dark:text-white pt-2 border-t border-slate-100 dark:border-slate-800">
-                            <span>Total Belanja</span>
-                            <span class="text-primary dark:text-blue-400">Rp {{ number_format($selectedSale->grand_total, 0, ',', '.') }}</span>
+                        <div class="flex items-center justify-between text-base font-black text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-800">
+                            <span>Grand Total</span>
+                            <span class="text-primary dark:text-primaryLight">Rp {{ number_format($selectedSale->grand_total, 0, ',', '.') }}</span>
                         </div>
                     </div>
+
+                    <!-- Payment Details -->
+                    <div class="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl space-y-2 text-xs border border-slate-200/60 dark:border-slate-850">
+                        <div class="flex items-center justify-between text-slate-500 font-bold">
+                            <span>Metode Pembayaran</span>
+                            <span class="text-slate-800 dark:text-slate-200 uppercase">{{ $selectedSale->payment_method ?? 'TUNAI' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-500 font-bold">
+                            <span>Nominal Dibayar</span>
+                            <span class="text-slate-800 dark:text-slate-200">Rp {{ number_format($selectedSale->paid_amount, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-500 font-bold">
+                            <span>Kembalian</span>
+                            <span class="text-emerald-600 font-black">Rp {{ number_format($selectedSale->change_amount, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- Modal Footer -->
                 <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-850 flex items-center justify-end gap-3">
                     @if ($selectedSale->status !== 'cancelled')
-                        <a
+                        <x-pos.utility.button
+                            variant="warning"
                             href="/pos?edit={{ $selectedSale->id }}"
-                            class="flex items-center gap-1.5 px-4 py-2.5 text-xs font-black text-white hover:text-white bg-amber-600 hover:bg-amber-700 active:scale-95 rounded-xl shadow-md shadow-amber-600/15 hover:shadow-amber-600/25 transition-all cursor-pointer"
+                            icon="ph-pencil"
                         >
-                            <i class="ph-bold ph-pencil text-sm"></i>
-                            <span>Edit Transaksi</span>
-                        </a>
+                            Edit Transaksi
+                        </x-pos.utility.button>
                     @endif
                     @if ($selectedSale->status !== 'cancelled' && $selectedSale->items->sum(fn($item) => $item->quantity - $item->returnItems()->sum('quantity')) > 0)
-                        <button
+                        <x-pos.utility.button
                             type="button"
+                            variant="danger"
                             wire:click="startReturn({{ $selectedSale->id }})"
-                            class="flex items-center gap-1.5 px-4 py-2.5 text-xs font-black text-white hover:text-white bg-rose-600 hover:bg-rose-700 active:scale-95 rounded-xl shadow-md shadow-rose-600/15 hover:shadow-rose-600/25 transition-all cursor-pointer"
+                            icon="ph-arrow-counter-clockwise"
                         >
-                            <i class="ph-bold ph-arrow-counter-clockwise text-sm"></i>
-                            <span>Retur Barang</span>
-                        </button>
+                            Retur Barang
+                        </x-pos.utility.button>
                     @endif
-                    <button
+                    <x-pos.utility.button
                         type="button"
+                        variant="success"
                         wire:click="printReceipt({{ $selectedSale->id }})"
-                        class="flex items-center gap-1.5 px-4 py-2.5 text-xs font-black text-white hover:text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 rounded-xl shadow-md shadow-emerald-650/15 hover:shadow-emerald-650/25 transition-all cursor-pointer"
+                        icon="ph-printer"
                     >
-                        <i class="ph-bold ph-printer text-sm"></i>
-                        <span>Cetak Struk</span>
-                    </button>
-                    <button
+                        Cetak Struk
+                    </x-pos.utility.button>
+                    <x-pos.utility.button
                         type="button"
+                        variant="secondary"
                         wire:click="closeDetails"
-                        class="px-4 py-2.5 text-xs font-black text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all"
                     >
                         Tutup
-                    </button>
+                    </x-pos.utility.button>
                 </div>
 
             </div>

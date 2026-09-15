@@ -31,6 +31,17 @@ class PosAttendances extends Component
     public string $filterMonth = '';
     public int $perPage = 15;
 
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     // ── Modal State (Catat Status Presensi / Off Day) ───────────────────
     public bool $showModal = false;
     public ?int $selectedEmployeeId = null;
@@ -315,7 +326,7 @@ class PosAttendances extends Component
 
         $attendances = $query->orderBy('date', 'desc')
             ->orderBy('id', 'desc')
-            ->paginate($this->perPage);
+            ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $employees = Employee::where('is_active', true)->get();
         $branches  = Branch::where('is_active', true)->get();

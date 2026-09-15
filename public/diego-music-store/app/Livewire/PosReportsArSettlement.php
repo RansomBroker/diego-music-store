@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\Helpers\ReportHelper;
 use App\Models\Branch;
 use Illuminate\Support\Carbon;
@@ -11,15 +13,45 @@ use Illuminate\Support\Facades\Storage;
 
 class PosReportsArSettlement extends Component
 {
+    use WithPagination;
+
     public ?string $dateFrom = null;
     public ?string $dateTo = null;
     public ?int $selectedBranchId = null;
     public ?string $search = '';
+    public int $perPage = 15;
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
+    public function updated($propertyName): void
+    {
+        if (in_array($propertyName, ['dateFrom', 'dateTo', 'selectedBranchId', 'search', 'perPage'])) {
+            $this->resetPage();
+        }
+    }
 
     public function mount()
     {
         $this->dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->dateTo = Carbon::now()->format('Y-m-d');
+    }
+
+    public function resetFilters(): void
+    {
+        $this->dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->dateTo = Carbon::now()->format('Y-m-d');
+        $this->selectedBranchId = null;
+        $this->search = '';
+        $this->resetPage();
     }
 
     public function setQuickDateRange(string $preset)
@@ -42,6 +74,7 @@ class PosReportsArSettlement extends Component
                 $this->dateTo = Carbon::now()->endOfYear()->format('Y-m-d');
                 break;
         }
+        $this->resetPage();
     }
 
     public function render()
@@ -60,6 +93,38 @@ class PosReportsArSettlement extends Component
             $this->selectedBranchId,
             $this->search
         );
+
+        // Paginate settlements
+        $rawSettlements = $reportData['settlements'] ?? [];
+        $totalSettlements = count($rawSettlements);
+
+        if ($this->perPage > 0) {
+            $currentPage = (int) $this->getPage('page');
+            $currentPageItems = array_slice($rawSettlements, max(0, ($currentPage - 1) * $this->perPage), $this->perPage);
+            $paginatedSettlements = new LengthAwarePaginator(
+                $currentPageItems,
+                $totalSettlements,
+                $this->perPage,
+                $currentPage,
+                [
+                    'path' => LengthAwarePaginator::resolveCurrentPath(),
+                    'pageName' => 'page',
+                ]
+            );
+        } else {
+            $paginatedSettlements = new LengthAwarePaginator(
+                $rawSettlements,
+                $totalSettlements,
+                max(1, $totalSettlements),
+                1,
+                [
+                    'path' => LengthAwarePaginator::resolveCurrentPath(),
+                    'pageName' => 'page',
+                ]
+            );
+        }
+
+        $reportData['paginated_settlements'] = $paginatedSettlements;
 
         return view('livewire.pos-reports-ar-settlement', [
             'branches' => $branches,

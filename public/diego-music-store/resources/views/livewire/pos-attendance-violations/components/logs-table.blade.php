@@ -102,7 +102,7 @@
                                         </x-pos.utility.button>
                                         <x-pos.utility.button
                                             type="button"
-                                            variant="secondary"
+                                            variant="warning"
                                             size="sm"
                                             wire:click="waiveLog({{ $l->id }})"
                                         >
@@ -115,18 +115,12 @@
                             </x-pos.table.td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="8" class="p-8 text-center text-slate-400">
-                                Belum ada log pelanggaran presensi pada periode bulan ini.
-                            </td>
-                        </tr>
+                        <x-pos.table.empty colspan="8" message="Belum ada log pelanggaran presensi pada periode bulan ini." />
                     @endforelse
                 </tbody>
             </x-pos.table>
         </x-pos.table.container>
 
-        <div class="mt-4">
-            {{ $logs->links() }}
-        </div>
+        <x-pos.table.footer :paginator="$logs" />
     </div>
 @endif

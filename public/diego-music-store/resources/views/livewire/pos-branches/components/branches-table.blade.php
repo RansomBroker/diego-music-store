@@ -64,7 +64,7 @@
 
                         <x-pos.table.td class="text-center">
                             <div class="flex items-center justify-center gap-1.5">
-                                <x-pos.utility.button variant="secondary" size="xs" icon="ph-pencil-simple" wire:click="openEdit({{ $b->id }})">
+                                <x-pos.utility.button variant="warning" size="xs" icon="ph-pencil-simple" wire:click="openEdit({{ $b->id }})">
                                     Edit Profil
                                 </x-pos.utility.button>
                             </div>
@@ -77,9 +77,5 @@
         </x-pos.table>
     </x-pos.table.container>
 
-    @if ($branches->hasPages())
-        <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800">
-            {{ $branches->links() }}
-        </div>
-    @endif
+    <x-pos.table.footer :paginator="$branches" />
 </div>

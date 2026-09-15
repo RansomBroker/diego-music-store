@@ -25,8 +25,11 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                @forelse ($reportData['rows'] ?? [] as $row)
-                    <x-pos.table.tr>
+                @php
+                    $displayRows = $reportData['paginated_rows'] ?? ($reportData['rows'] ?? []);
+                @endphp
+                @forelse ($displayRows as $row)
+                    <x-pos.table.tr wire:key="stock-row-{{ $row['sku'] ?? $loop->index }}">
                         <x-pos.table.td class="font-mono text-xs text-slate-900 dark:text-white">
                             <div class="font-bold text-primary dark:text-blue-400">{{ $row['sku'] }}</div>
                             <div class="text-[10px] text-slate-400">BC: {{ $row['barcode'] }}</div>
@@ -102,5 +105,6 @@
                 @endforelse
             </tbody>
         </x-pos.table>
+        <x-pos.table.footer :paginator="$reportData['paginated_rows'] ?? null" :total="count($reportData['rows'] ?? [])" perPageModel="perPage" />
     </x-pos.table.container>
 </div>

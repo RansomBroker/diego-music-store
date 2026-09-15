@@ -35,7 +35,10 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                    @forelse ($reportData['transactions'] ?? [] as $tx)
+                    @php
+                        $displayTx = $reportData['paginated_transactions'] ?? ($reportData['transactions'] ?? []);
+                    @endphp
+                    @forelse ($displayTx as $tx)
                         <x-pos.table.tr>
                             <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300 font-mono">{{ $tx->created_at->format('d/m/Y H:i') }}</x-pos.table.td>
                             <x-pos.table.td class="text-xs font-bold text-slate-900 dark:text-white">{{ $tx->creator?->name ?? $tx->user?->name ?? '-' }}</x-pos.table.td>
@@ -55,6 +58,7 @@
                     @endforelse
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :paginator="$reportData['paginated_transactions'] ?? null" :total="count($reportData['transactions'] ?? [])" perPageModel="perPage" />
         </x-pos.table.container>
     </div>
 </div>

@@ -107,10 +107,15 @@
         </div>
 
         <div class="mt-8 border-t border-slate-100 dark:border-slate-700/50 pt-6">
-            <button type="button" wire:click="confirmCloseSession" class="w-full flex items-center justify-center gap-2 h-13 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg transition-colors cursor-pointer">
-                <i class="ph-bold ph-power text-lg"></i>
-                <span>Tutup Shift & Cetak Z-Report</span>
-            </button>
+            <x-pos.utility.button
+                type="button"
+                variant="primary"
+                wire:click="confirmCloseSession"
+                class="w-full justify-center !py-3.5 !rounded-xl"
+                icon="ph-power"
+            >
+                Tutup Shift & Cetak Z-Report
+            </x-pos.utility.button>
         </div>
     </div>
 </div>

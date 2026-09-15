@@ -48,10 +48,10 @@
         @if ($activeTab !== 'ar-aging' && $activeTab !== 'stock-prices')
             <div class="flex items-center gap-1.5">
                 <span class="text-[11px] font-bold text-slate-400 uppercase mr-1">Preset:</span>
-                <button wire:click="setQuickDateRange('today')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer">Hari Ini</button>
-                <button wire:click="setQuickDateRange('this_week')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer">Minggu Ini</button>
-                <button wire:click="setQuickDateRange('this_month')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer">Bulan Ini</button>
-                <button wire:click="setQuickDateRange('this_year')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer">Tahun Ini</button>
+                <x-pos.utility.button variant="secondary" size="xs" wire:click="setQuickDateRange('today')">Hari Ini</x-pos.utility.button>
+                <x-pos.utility.button variant="secondary" size="xs" wire:click="setQuickDateRange('this_week')">Minggu Ini</x-pos.utility.button>
+                <x-pos.utility.button variant="secondary" size="xs" wire:click="setQuickDateRange('this_month')">Bulan Ini</x-pos.utility.button>
+                <x-pos.utility.button variant="secondary" size="xs" wire:click="setQuickDateRange('this_year')">Tahun Ini</x-pos.utility.button>
             </div>
         @endif
     </div>

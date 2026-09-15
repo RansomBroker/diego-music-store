@@ -94,16 +94,10 @@
                         </x-pos.table.td>
                     </tr>
                 @empty
-                    <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
-                            <div class="flex flex-col items-center justify-center gap-2">
-                                <i class="ph ph-check-circle text-4xl text-emerald-500"></i>
-                                <span class="text-sm font-medium">Tidak ada permohonan presensi susulan yang pending</span>
-                            </div>
-                        </td>
-                    </tr>
+                    <x-pos.table.empty colspan="8" icon="ph-check-circle" message="Tidak ada permohonan presensi susulan yang pending" />
                 @endforelse
             </tbody>
         </x-pos.table>
+        <x-pos.table.footer :total="count($pendingBackdateRequests)" />
     </x-pos.table.container>
 </div>

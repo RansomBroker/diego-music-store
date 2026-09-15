@@ -49,7 +49,7 @@
                                 <div class="inline-flex items-center justify-center gap-1.5">
                                     <x-pos.utility.button
                                         type="button"
-                                        variant="secondary"
+                                        variant="warning"
                                         size="sm"
                                         icon="ph-pencil-simple"
                                         wire:click="openRuleModal({{ $r->id }})"
@@ -68,14 +68,12 @@
                             </x-pos.table.td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="7" class="p-8 text-center text-slate-400">
-                                Belum ada aturan denda presensi terdaftar.
-                            </td>
-                        </tr>
+                        <x-pos.table.empty colspan="7" message="Belum ada aturan denda presensi terdaftar." />
                     @endforelse
                 </tbody>
             </x-pos.table>
         </x-pos.table.container>
+
+        <x-pos.table.footer :total="count($rules)" />
     </div>
 @endif

@@ -28,6 +28,17 @@ class PosAttendanceRadiuses extends Component
         $this->resetPage();
     }
 
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     // ── Open Edit Radius Modal ────────────────────────────────────────────
     public function openEditModal(int $branchId): void
     {
@@ -93,7 +104,7 @@ class PosAttendanceRadiuses extends Component
             });
         }
 
-        $branches = $query->orderBy('name', 'asc')->paginate($this->perPage);
+        $branches = $query->orderBy('name', 'asc')->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $activeBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
         $activeBranch = $activeBranchId ? Branch::find($activeBranchId) : Branch::first();

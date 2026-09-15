@@ -51,9 +51,13 @@
         </div>
 
         <!-- Submit -->
-        <button type="submit" class="w-full flex items-center justify-center gap-2 h-13 bg-primary hover:bg-primaryDark text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all cursor-pointer">
-            <i class="ph-bold ph-keyhole text-lg"></i>
-            <span>Buka Sesi & Mulai Transaksi</span>
-        </button>
+        <x-pos.utility.button
+            type="submit"
+            variant="primary"
+            class="w-full justify-center !py-3.5 !rounded-xl"
+            icon="ph-keyhole"
+        >
+            Buka Sesi & Mulai Transaksi
+        </x-pos.utility.button>
     </form>
 </div>

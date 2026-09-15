@@ -51,6 +51,12 @@ class PosCustomers extends Component
         $this->resetPage();
     }
 
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     // ── Sorting ──────────────────────────────────────────────────────────
     public function sortBy(string $field): void
     {
@@ -172,7 +178,7 @@ class PosCustomers extends Component
                   ->orWhere('email', 'like', "%{$this->search}%")
             )
             ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         // Logo untuk sidebar
         $userBranchId    = Auth::user()->branches()->first()?->id;

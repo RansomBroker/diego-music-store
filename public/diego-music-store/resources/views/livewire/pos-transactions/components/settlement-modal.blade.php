@@ -107,22 +107,23 @@
 
             <!-- Footer Buttons -->
             <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
-                <button
+                <x-pos.utility.button
                     type="button"
+                    variant="secondary"
                     wire:click="closeSettlementModal"
-                    class="px-5 py-2 border border-slate-350 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl transition-colors cursor-pointer"
                 >
                     Batal
-                </button>
-                <button
+                </x-pos.utility.button>
+                <x-pos.utility.button
                     type="button"
+                    variant="success"
                     wire:click="processSettlement"
                     wire:loading.attr="disabled"
-                    class="px-5 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-xl shadow-md hover:shadow transition duration-150 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                    icon="ph-check"
                 >
                     <span wire:loading.remove wire:target="processSettlement">Simpan & Posting Pelunasan</span>
                     <span wire:loading wire:target="processSettlement">Memproses...</span>
-                </button>
+                </x-pos.utility.button>
             </div>
         </div>
     @endif

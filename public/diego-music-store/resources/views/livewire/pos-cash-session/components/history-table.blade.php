@@ -49,15 +49,26 @@
                             @endif
                         </x-pos.table.td>
                         <x-pos.table.td class="whitespace-nowrap text-right">
-                            <div class="flex items-center justify-end gap-2">
+                            <div class="flex items-center justify-end gap-1.5">
                                 @if($item->status === 'closed')
-                                    <button onclick="window.open('{{ route('pos.z-report', $item->id) }}', '_blank', 'width=400,height=600,menubar=no,toolbar=no')" @click.stop class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer" title="Cetak Z-Report">
-                                        <i class="ph-bold ph-printer text-base"></i>
-                                    </button>
+                                    <x-pos.utility.button
+                                        type="button"
+                                        variant="primary"
+                                        size="xs"
+                                        icon="ph-printer"
+                                        onclick="window.open('{{ route('pos.z-report', $item->id) }}', '_blank', 'width=400,height=600,menubar=no,toolbar=no')"
+                                        @click.stop
+                                        title="Cetak Z-Report"
+                                    />
                                     @if($loop->first)
-                                        <button wire:click.stop="requestReopenSession({{ $item->id }})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:text-amber-700 transition-colors cursor-pointer" title="Buka Kembali Sesi">
-                                            <i class="ph-bold ph-key-return text-base"></i>
-                                        </button>
+                                        <x-pos.utility.button
+                                            type="button"
+                                            variant="warning"
+                                            size="xs"
+                                            icon="ph-key-return"
+                                            wire:click.stop="requestReopenSession({{ $item->id }})"
+                                            title="Buka Kembali Sesi"
+                                        />
                                     @endif
                                 @else
                                     -
@@ -70,5 +81,6 @@
                 @endforelse
             </tbody>
         </x-pos.table>
+        <x-pos.table.footer :total="count($history)" />
     </x-pos.table.container>
 </div>

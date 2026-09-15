@@ -127,6 +127,17 @@ class PosCustomerDeposits extends Component
         $this->resetPage();
     }
 
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     public function resetFilters(): void
     {
         $this->reset(['search', 'statusFilter', 'dateFrom', 'dateTo']);

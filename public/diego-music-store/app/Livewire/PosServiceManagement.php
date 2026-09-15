@@ -46,6 +46,12 @@ class PosServiceManagement extends Component
         $this->resetPage();
     }
 
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     // Modal state for managing service ticket
     public bool $showEditModal = false;
     public ?int $editingOrderId = null;

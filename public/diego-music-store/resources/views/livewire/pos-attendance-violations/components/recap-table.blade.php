@@ -15,7 +15,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold">
                     @forelse ($recapData as $row)
-                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                        <x-pos.table.tr>
                             <x-pos.table.td>
                                 <div class="font-extrabold text-slate-900 dark:text-slate-100">{{ $row['employee']->name }}</div>
                                 <div class="text-[10px] font-mono text-slate-400">NIK: {{ $row['employee']->nik }} &bull; {{ $row['employee']->branch?->name ?: '-' }}</div>
@@ -47,16 +47,13 @@
                                     </x-pos.utility.pill>
                                 @endif
                             </x-pos.table.td>
-                        </tr>
+                        </x-pos.table.tr>
                     @empty
-                        <tr>
-                            <td colspan="6" class="p-8 text-center text-slate-400">
-                                Belum ada data presensi & denda pada periode bulan ini.
-                            </td>
-                        </tr>
+                        <x-pos.table.empty colspan="6" icon="ph-user-list" message="Belum ada data presensi & denda pada periode bulan ini." />
                     @endforelse
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :total="count($recapData ?? [])" />
         </x-pos.table.container>
     </div>
 @endif

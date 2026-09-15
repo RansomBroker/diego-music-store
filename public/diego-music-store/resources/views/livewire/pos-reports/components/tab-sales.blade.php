@@ -51,7 +51,10 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                    @forelse ($reportData['sales'] ?? [] as $sale)
+                    @php
+                        $displaySales = $reportData['paginated_sales'] ?? ($reportData['sales'] ?? []);
+                    @endphp
+                    @forelse ($displaySales as $sale)
                         @php
                             $saleCOGS = 0;
                             foreach ($sale->items as $item) {
@@ -75,6 +78,7 @@
                     @endforelse
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :paginator="$reportData['paginated_sales'] ?? null" :total="count($reportData['sales'] ?? [])" perPageModel="perPage" />
         </x-pos.table.container>
     </div>
 </div>

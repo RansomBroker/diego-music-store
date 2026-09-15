@@ -32,12 +32,22 @@
             </div>
 
             <div class="flex gap-3 pt-2">
-                <button type="button" wire:click="$set('showSupervisorModal', false)" class="flex-1 h-12 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-650 dark:text-slate-200 font-bold rounded-xl text-sm transition-colors cursor-pointer">
+                <x-pos.utility.button
+                    type="button"
+                    variant="secondary"
+                    class="flex-1 justify-center !py-3 !rounded-xl"
+                    wire:click="$set('showSupervisorModal', false)"
+                >
                     Batal
-                </button>
-                <button type="submit" class="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-sm shadow-md shadow-amber-600/10 transition-colors cursor-pointer">
+                </x-pos.utility.button>
+                <x-pos.utility.button
+                    type="submit"
+                    variant="warning"
+                    class="flex-1 justify-center !py-3 !rounded-xl"
+                    icon="ph-check"
+                >
                     Otorisasi & Tutup
-                </button>
+                </x-pos.utility.button>
             </div>
         </form>
     </div>

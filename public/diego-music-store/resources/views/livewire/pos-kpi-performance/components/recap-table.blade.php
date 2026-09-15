@@ -96,9 +96,8 @@
                     @endforeach
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :paginator="$evaluations" />
         </x-pos.table.container>
-
-        <x-pos.table.footer :paginator="$evaluations" />
     @else
         <div class="p-12 text-center text-slate-400">
             <i class="ph-bold ph-chart-line-up text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>

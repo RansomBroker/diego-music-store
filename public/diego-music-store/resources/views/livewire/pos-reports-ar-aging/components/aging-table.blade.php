@@ -20,7 +20,10 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                @forelse ($reportData['items'] ?? [] as $ar)
+                @php
+                    $displayItems = $reportData['paginated_items'] ?? ($reportData['items'] ?? []);
+                @endphp
+                @forelse ($displayItems as $ar)
                     <x-pos.table.tr wire:click="showDetails({{ $ar['sale_id'] }})" class="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                         <x-pos.table.td class="font-bold text-xs text-slate-900 dark:text-white">{{ $ar['customer_name'] }}</x-pos.table.td>
                         <x-pos.table.td class="font-mono text-xs font-bold text-primary dark:text-blue-400">{{ $ar['invoice_number'] }}</x-pos.table.td>
@@ -40,5 +43,6 @@
                 @endforelse
             </tbody>
         </x-pos.table>
+        <x-pos.table.footer :paginator="$reportData['paginated_items'] ?? null" :total="count($reportData['items'] ?? [])" perPageModel="perPage" />
     </x-pos.table.container>
 </div>

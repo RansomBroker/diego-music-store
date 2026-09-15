@@ -52,7 +52,7 @@
                     </x-pos.table.td>
                     <x-pos.table.td class="text-right">
                         <x-pos.utility.button
-                            variant="secondary"
+                            variant="warning"
                             size="sm"
                             icon="ph-map-pin-line"
                             wire:click="openEditModal({{ $b->id }})"
@@ -63,22 +63,11 @@
                     </x-pos.table.td>
                 </tr>
             @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
-                        <div class="flex flex-col items-center justify-center gap-2">
-                            <i class="ph ph-storefront text-4xl text-slate-300 dark:text-slate-600"></i>
-                            <span class="text-sm font-medium">Belum ada data cabang ditemukan</span>
-                        </div>
-                    </td>
-                </tr>
+                <x-pos.table.empty colspan="6" icon="ph-storefront" message="Belum ada data cabang ditemukan" />
             @endforelse
         </tbody>
     </x-pos.table>
 </x-pos.table.container>
 
-<!-- Pagination -->
-@if ($branches->hasPages())
-    <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        {{ $branches->links() }}
-    </div>
-@endif
+<!-- Table Footer / Pagination -->
+<x-pos.table.footer :paginator="$branches" />

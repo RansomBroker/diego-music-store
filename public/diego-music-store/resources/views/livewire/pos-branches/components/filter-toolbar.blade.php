@@ -19,7 +19,7 @@
 
         <!-- Col 3: Reset -->
         <div class="flex items-end">
-            <x-pos.utility.button variant="secondary" size="sm" icon="ph-arrow-counter-clockwise" class="w-full" wire:click="resetFilters">
+            <x-pos.utility.button variant="danger" size="sm" icon="ph-arrow-counter-clockwise" class="w-full" wire:click="resetFilters">
                 Reset Filter
             </x-pos.utility.button>
         </div>

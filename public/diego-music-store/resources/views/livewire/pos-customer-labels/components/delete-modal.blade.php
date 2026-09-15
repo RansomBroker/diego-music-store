@@ -11,18 +11,23 @@
             Apakah Anda yakin ingin menghapus kategori penjualan ini? Tindakan ini tidak dapat dibatalkan.
         </p>
         <div class="flex gap-3 pt-2">
-            <button
+            <x-pos.utility.button
+                type="button"
+                variant="secondary"
+                class="flex-1 justify-center"
                 wire:click="$set('showDeleteModal', false)"
-                class="flex-1 py-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg transition-colors cursor-pointer"
             >
                 Batal
-            </button>
-            <button
+            </x-pos.utility.button>
+            <x-pos.utility.button
+                type="button"
+                variant="danger"
+                class="flex-1 justify-center"
+                icon="ph-trash"
                 wire:click="destroy"
-                class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition duration-150 cursor-pointer"
             >
                 Ya, Hapus
-            </button>
+            </x-pos.utility.button>
         </div>
     </div>
 </x-pos.modal>

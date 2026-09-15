@@ -19,6 +19,18 @@ class POSDailyCash extends Component
     public $activeSession = null;
     public $branches = [];
     public $selectedBranchId = null;
+    public int $perPage = 10;
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
 
     // Summary fields
     public $openingCash = 0;
@@ -242,7 +254,7 @@ class POSDailyCash extends Component
         if ($this->activeSession) {
             $transactions = CashTransaction::where('cash_session_id', $this->activeSession->id)
                 ->orderBy('created_at', 'desc')
-                ->paginate(10);
+                ->paginate($this->perPage > 0 ? $this->perPage : 1000);
         }
 
         $branch = Branch::find($this->selectedBranchId);

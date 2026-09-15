@@ -100,7 +100,7 @@
                                 <div class="flex items-center justify-center gap-1.5">
                                     <x-pos.utility.button
                                         type="button"
-                                        variant="info"
+                                        variant="warning"
                                         size="sm"
                                         icon="ph-pencil-simple"
                                         wire:click="openSchemeModal({{ $sch->id }})"
@@ -121,6 +121,7 @@
                     @endforeach
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :total="count($schemes)" />
         </x-pos.table.container>
     @else
         <div class="p-12 text-center text-slate-400 dark:text-slate-500">

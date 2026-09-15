@@ -94,36 +94,42 @@
                                 <span class="text-emerald-700 dark:text-emerald-300 font-black">Rp {{ number_format($item->net_salary, 0, ',', '.') }}</span>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                <div class="inline-flex items-center justify-center gap-1">
+                                <div class="inline-flex items-center justify-center gap-1.5">
                                     <!-- Preview Modal Button -->
-                                    <button
+                                    <x-pos.utility.button
                                         type="button"
+                                        variant="info"
+                                        size="xs"
+                                        icon="ph-eye"
                                         wire:click="openPreviewModal({{ $item->id }})"
-                                        class="px-2 py-1 bg-sky-50 hover:bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-bold text-[11px] rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
                                         title="Preview Slip & Detail Lembur"
                                     >
-                                        <i class="ph-bold ph-eye"></i> Detail
-                                    </button>
+                                        Detail
+                                    </x-pos.utility.button>
 
                                     <!-- Edit / Override Komponen Gaji -->
-                                    <button
+                                    <x-pos.utility.button
                                         type="button"
+                                        variant="warning"
+                                        size="xs"
+                                        icon="ph-pencil-simple"
                                         wire:click="openEditItemModal({{ $item->id }})"
-                                        class="px-2 py-1 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-bold text-[11px] rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
                                         title="Edit & Override Komponen Gaji"
                                     >
-                                        <i class="ph-bold ph-pencil-simple"></i> Edit
-                                    </button>
+                                        Edit
+                                    </x-pos.utility.button>
 
                                     <!-- Cetak Slip Gaji PDF -->
-                                    <a
+                                    <x-pos.utility.button
                                         href="{{ route('pos.payroll.payslip-pdf', $item->id) }}"
                                         target="_blank"
-                                        class="px-2 py-1 bg-primary hover:bg-primaryDark text-white font-bold text-[11px] rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                                        variant="primary"
+                                        size="xs"
+                                        icon="ph-printer"
                                         title="Cetak Slip Gaji PDF"
                                     >
-                                        <i class="ph-bold ph-printer"></i> Slip PDF
-                                    </a>
+                                        Slip PDF
+                                    </x-pos.utility.button>
                                 </div>
                             </x-pos.table.td>
                         </x-pos.table.tr>
@@ -164,6 +170,7 @@
                     </tr>
                 </tfoot>
             </x-pos.table>
+            <x-pos.table.footer :total="count($currentPayroll->items)" />
         </x-pos.table.container>
     @else
         <div class="p-12 text-center text-slate-400">

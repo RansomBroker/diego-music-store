@@ -106,6 +106,7 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                            <x-pos.table.footer :total="count($returnItems)" />
                         </div>
                     </div>
 
@@ -140,21 +141,21 @@
 
                 <!-- Modal Footer -->
                 <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-850 flex items-center justify-end gap-3 font-semibold">
-                    <button
+                    <x-pos.utility.button
                         type="button"
+                        variant="danger"
                         wire:click="processReturn"
-                        class="flex items-center gap-1.5 px-4 py-2.5 text-xs font-black text-white hover:text-white bg-rose-600 hover:bg-rose-700 active:scale-95 rounded-xl shadow-md shadow-rose-600/15 hover:shadow-rose-600/25 transition-all cursor-pointer"
+                        icon="ph-check"
                     >
-                        <i class="ph-bold ph-check text-sm"></i>
-                        <span>Proses Retur</span>
-                    </button>
-                    <button
+                        Proses Retur
+                    </x-pos.utility.button>
+                    <x-pos.utility.button
                         type="button"
+                        variant="secondary"
                         wire:click="cancelReturn"
-                        class="px-4 py-2.5 text-xs font-black text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-250 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all"
                     >
                         Batal
-                    </button>
+                    </x-pos.utility.button>
                 </div>
 
             </div>

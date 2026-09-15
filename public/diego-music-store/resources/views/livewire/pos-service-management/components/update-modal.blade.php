@@ -60,7 +60,7 @@
                 <div class="border-t border-slate-200 dark:border-slate-800 pt-3 space-y-2">
                     <div class="flex items-center justify-between">
                         <label class="font-bold text-slate-700 dark:text-slate-300">Sparepart & Layanan Tambahan</label>
-                        <x-pos.utility.button type="button" variant="secondary" size="xs" icon="ph-plus" wire:click="addAdditionalChargeRow">
+                        <x-pos.utility.button type="button" variant="primary" size="xs" icon="ph-plus" wire:click="addAdditionalChargeRow">
                             Tambah Item
                         </x-pos.utility.button>
                     </div>
@@ -71,11 +71,9 @@
                                 <x-pos.form.input model="editAdditionalCharges.{{ $idx }}.name" placeholder="Nama sparepart/jasa tambahan..." />
                             </div>
                             <div class="w-36">
-                                <x-pos.form.input type="number" model="editAdditionalCharges.{{ $idx }}.amount" placeholder="Nominal (Rp)" />
+                                <x-pos.form.input type="text" :currency="true" model="editAdditionalCharges.{{ $idx }}.amount" placeholder="Nominal (Rp)" />
                             </div>
-                            <button type="button" wire:click="removeAdditionalChargeRow({{ $idx }})" class="p-2 text-rose-500 hover:text-rose-700 cursor-pointer">
-                                <i class="ph ph-trash text-base"></i>
-                            </button>
+                            <x-pos.utility.button type="button" variant="danger" size="xs" icon="ph-trash" wire:click="removeAdditionalChargeRow({{ $idx }})" title="Hapus Item" />
                         </div>
                     @endforeach
                 </div>

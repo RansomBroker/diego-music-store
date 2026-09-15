@@ -44,19 +44,20 @@
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <button
+            <x-pos.utility.button
                 type="button"
+                variant="secondary"
                 wire:click="$set('showCreateModal', false)"
-                class="px-4 py-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg"
             >
                 Batal
-            </button>
-            <button
+            </x-pos.utility.button>
+            <x-pos.utility.button
                 type="submit"
-                class="px-4 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-lg"
+                variant="primary"
+                icon="ph-storefront"
             >
                 Register Toko
-            </button>
+            </x-pos.utility.button>
         </div>
     </form>
 </x-pos.modal>

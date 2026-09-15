@@ -45,6 +45,22 @@ class PosBranches extends Component
     public ?int $manager_id = null;
     public bool $is_active = true;
 
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     public function resetFilters()
     {
         $this->search = '';
@@ -171,7 +187,7 @@ class PosBranches extends Component
             $query->where('is_active', (bool) $this->selectedStatus);
         }
 
-        $branches = $query->paginate($this->perPage);
+        $branches = $query->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $managers = User::orderBy('name')->get();
 

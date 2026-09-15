@@ -1,10 +1,4 @@
-<!-- Table Scrollable Area -->
-<div class="overflow-x-auto relative">
-    <!-- Wire Loading Progress Bar -->
-    <div wire:loading.block class="absolute top-0 left-0 right-0 h-0.5 bg-primary/20 overflow-hidden">
-        <div class="h-full bg-primary animate-pulse w-1/3"></div>
-    </div>
-
+<x-pos.table.container>
     <x-pos.table>
         <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800">
             <tr>
@@ -116,36 +110,37 @@
                         <div class="inline-flex items-center gap-1.5 justify-center">
                             @if ($deposit->isPending())
                                 <!-- Pelunasan Button -->
-                                <button
+                                <x-pos.utility.button
                                     type="button"
+                                    variant="success"
+                                    size="xs"
+                                    icon="ph-check-circle"
                                     wire:click="openSettleModal({{ $deposit->id }})"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition active:scale-95 cursor-pointer"
                                     title="Pelunasan Pesanan"
                                 >
-                                    <i class="ph-bold ph-check-circle text-sm"></i>
-                                    <span>Pelunasan</span>
-                                </button>
+                                    Pelunasan
+                                </x-pos.utility.button>
 
                                 <!-- Edit Button -->
-                                <button
+                                <x-pos.utility.button
                                     type="button"
+                                    variant="warning"
+                                    size="xs"
+                                    icon="ph-pencil-simple"
                                     wire:click="openEditModal({{ $deposit->id }})"
-                                    class="p-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition active:scale-95 cursor-pointer"
                                     title="Edit Deposit"
-                                >
-                                    <i class="ph-bold ph-pencil-simple text-sm"></i>
-                                </button>
+                                />
 
                                 <!-- Delete / Cancel Button -->
-                                <button
+                                <x-pos.utility.button
                                     type="button"
+                                    variant="danger"
+                                    size="xs"
+                                    icon="ph-trash"
                                     wire:confirm="Yakin ingin membatalkan deposit ini? Jurnal setoran akan dibatalkan."
                                     wire:click="cancelDeposit({{ $deposit->id }})"
-                                    class="p-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white shadow-xs transition active:scale-95 cursor-pointer"
                                     title="Batalkan Deposit"
-                                >
-                                    <i class="ph-bold ph-trash text-sm"></i>
-                                </button>
+                                />
                             @else
                                 <span class="text-xs text-slate-400 italic">Selesai</span>
                             @endif
@@ -157,7 +152,5 @@
             @endforelse
         </tbody>
     </x-pos.table>
-</div>
-
-<!-- Table Footer Component -->
-<x-pos.table.footer :paginator="$deposits" perPageModel="perPage" />
+    <x-pos.table.footer :paginator="$deposits" perPageModel="perPage" />
+</x-pos.table.container>

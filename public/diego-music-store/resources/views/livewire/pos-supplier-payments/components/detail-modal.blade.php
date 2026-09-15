@@ -93,6 +93,7 @@
                             @endforeach
                         </tbody>
                     </x-pos.table>
+                    <x-pos.table.footer :total="count($detailPayment->items ?? [])" />
                 </x-pos.table.container>
 
                 <div class="mt-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 flex justify-between items-center transition-colors">
@@ -103,13 +104,13 @@
 
             <!-- Footer Buttons -->
             <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-700 flex-shrink-0">
-                <button
+                <x-pos.utility.button
                     type="button"
+                    variant="primary"
                     wire:click="$set('showDetailModal', false)"
-                    class="px-5 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-xl shadow-md hover:shadow transition duration-150 cursor-pointer active:scale-[0.98]"
                 >
                     Tutup
-                </button>
+                </x-pos.utility.button>
             </div>
         </div>
     @endif

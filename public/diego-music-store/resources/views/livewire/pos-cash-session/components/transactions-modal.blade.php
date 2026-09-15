@@ -68,17 +68,18 @@
                     @endforelse
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :total="count($selectedSessionTransactions ?? [])" />
         </x-pos.table.container>
 
         <!-- Footer Buttons -->
         <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-800">
-            <button
+            <x-pos.utility.button
                 type="button"
+                variant="secondary"
                 wire:click="$set('showTransactionsModal', false)"
-                class="px-5 py-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg transition-colors cursor-pointer"
             >
                 Tutup
-            </button>
+            </x-pos.utility.button>
         </div>
     </div>
 </x-pos.modal>

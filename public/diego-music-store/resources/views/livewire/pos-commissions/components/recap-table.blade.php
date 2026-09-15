@@ -99,6 +99,7 @@
                     @endforeach
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :total="count($recapData)" />
         </x-pos.table.container>
     @else
         <div class="p-12 text-center text-slate-400 dark:text-slate-500">

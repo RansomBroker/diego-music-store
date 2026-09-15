@@ -19,23 +19,40 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: 45022
+          debug: true
           script: |
-            # Exit immediately if a command exits with a non-zero status
-            set -e
+            echo "🚀 [Deploy] Memulai eksekusi deployment di server..."
+            # Exit immediately if a command exits with a non-zero status, and print execution trace
+            set -ex
 
             export RAYON_NUM_THREADS=1
             export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+            if [ -s "$NVM_DIR/nvm.sh" ]; then
+              source "$NVM_DIR/nvm.sh"
+            fi
             
             # Load user profiles and common paths for non-interactive shells
             export PATH="$HOME/.config/composer/vendor/bin:$HOME/.local/bin:$HOME/bin:/usr/local/bin:/usr/bin:$PATH"
-            [ -s "$HOME/.profile" ] && source "$HOME/.profile"
-            [ -s "$HOME/.bash_profile" ] && source "$HOME/.bash_profile"
+            if [ -s "$HOME/.profile" ]; then
+              source "$HOME/.profile"
+            fi
+            if [ -s "$HOME/.bash_profile" ]; then
+              source "$HOME/.bash_profile"
+            fi
+            if [ -s "$HOME/.bashrc" ]; then
+              source "$HOME/.bashrc"
+            fi
 
             # Define composer function since it is an alias on the server
             composer() {
               php "$HOME/composer.phar" "$@"
             }
+
+            # Verify required secrets
+            if [ -z "${{ secrets.DIR }}" ]; then
+              echo "❌ ERROR: Secret DIR belum dikonfigurasi di GitHub Secrets!"
+              exit 1
+            fi
 
             # Ensure target directory exists and resolve its absolute path
             mkdir -p "${{ secrets.DIR }}"
@@ -48,7 +65,7 @@ jobs:
             REPO_URL="https://${{ secrets.GH_TOKEN }}@github.com/${CLEAN_REPO}.git"
             LARAVEL_DIR="$TARGET_DIR/public/diego-music-store"
 
-            echo "Checking directory..."
+            echo "Checking directory: $TARGET_DIR..."
             if [ ! -d "$TARGET_DIR/.git" ]; then
               echo "Repository not found. Setup first-time clone..."
               cd "$TARGET_DIR"
@@ -70,7 +87,7 @@ jobs:
             fi
 
             # Check if APP_KEY is empty or not set in .env
-            APP_KEY_VAL=$(grep "^APP_KEY=" "$LARAVEL_DIR/.env" | cut -d'=' -f2-)
+            APP_KEY_VAL=$(grep "^APP_KEY=" "$LARAVEL_DIR/.env" 2>/dev/null | cut -d'=' -f2- || true)
             if [ -z "$APP_KEY_VAL" ]; then
               echo "APP_KEY is empty or missing. Marking for key generation..."
               NEEDS_KEY_GEN=true

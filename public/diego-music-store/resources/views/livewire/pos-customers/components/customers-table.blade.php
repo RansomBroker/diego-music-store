@@ -86,22 +86,27 @@
                     </x-pos.table.td>
                     <!-- Aksi Buttons -->
                     <x-pos.table.td class="whitespace-nowrap text-right">
-                        <div class="flex items-center justify-end gap-3">
-                            <button
+                        <div class="flex items-center justify-end gap-1.5">
+                            <x-pos.utility.button
+                                type="button"
+                                variant="warning"
+                                size="xs"
+                                icon="ph-pencil-simple"
                                 wire:click="openEdit({{ $customer->id }})"
-                                class="inline-flex items-center gap-1 text-sm font-semibold text-primary dark:text-blue-400 hover:underline cursor-pointer"
+                                title="Ubah Pelanggan"
                             >
-                                <i class="ph-bold ph-pencil-simple text-xs"></i>
-                                <span>Ubah</span>
-                            </button>
-                            <span class="text-slate-300 dark:text-slate-700">|</span>
-                            <button
+                                Ubah
+                            </x-pos.utility.button>
+                            <x-pos.utility.button
+                                type="button"
+                                variant="danger"
+                                size="xs"
+                                icon="ph-trash"
                                 wire:click="confirmDelete({{ $customer->id }})"
-                                class="inline-flex items-center gap-1 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                                title="Hapus Pelanggan"
                             >
-                                <i class="ph-bold ph-trash text-xs"></i>
-                                <span>Hapus</span>
-                            </button>
+                                Hapus
+                            </x-pos.utility.button>
                         </div>
                     </x-pos.table.td>
                 </x-pos.table.tr>
@@ -110,88 +115,5 @@
             @endforelse
         </tbody>
     </x-pos.table>
+    <x-pos.table.footer :paginator="$customers" perPageModel="perPage" />
 </x-pos.table.container>
-
-<!-- Footer (Pagination) -->
-@if ($customers->total() > 0)
-    <div class="px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
-        <!-- Left: Statistics & Per Page -->
-        <div class="flex items-center flex-wrap gap-4 text-sm text-slate-550 dark:text-slate-400">
-            <div>
-                Menampilkan
-                <span class="font-semibold text-slate-850 dark:text-slate-200">{{ $customers->firstItem() }}</span>
-                sampai
-                <span class="font-semibold text-slate-850 dark:text-slate-200">{{ $customers->lastItem() }}</span>
-                dari
-                <span class="font-semibold text-slate-850 dark:text-slate-200">{{ $customers->total() }}</span>
-                hasil
-            </div>
-            <span class="hidden sm:inline text-slate-300 dark:text-slate-700">|</span>
-            <div class="flex items-center gap-1.5">
-                <label class="text-xs">Per halaman:</label>
-                <select
-                    wire:model.live="perPage"
-                    class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-750 dark:text-slate-250 py-1 px-2 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition duration-150"
-                >
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Right: Navigation Pages -->
-        @if ($customers->hasPages())
-            <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center justify-end gap-1">
-                {{-- Previous Page Button --}}
-                @if ($customers->onFirstPage())
-                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-300 dark:text-slate-650 cursor-not-allowed">
-                        <i class="ph-bold ph-caret-left text-sm"></i>
-                    </span>
-                @else
-                    <button
-                        wire:click="previousPage"
-                        wire:loading.attr="disabled"
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-355 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition duration-150 cursor-pointer"
-                    >
-                        <i class="ph-bold ph-caret-left text-sm"></i>
-                    </button>
-                @endif
-
-                {{-- Page Numbers --}}
-                @foreach ($customers->getUrlRange(max(1, $customers->currentPage() - 2), min($customers->lastPage(), $customers->currentPage() + 2)) as $page => $url)
-                    @if ($page == $customers->currentPage())
-                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-white text-sm font-semibold shadow-sm">
-                            {{ $page }}
-                        </span>
-                    @else
-                        <button
-                            wire:click="gotoPage({{ $page }})"
-                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-355 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-sm font-semibold transition duration-150 cursor-pointer"
-                        >
-                            {{ $page }}
-                        </button>
-                    @endif
-                @endforeach
-
-                {{-- Next Page Button --}}
-                @if ($customers->hasMorePages())
-                    <button
-                        wire:click="nextPage"
-                        wire:loading.attr="disabled"
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-355 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition duration-150 cursor-pointer"
-                    >
-                        <i class="ph-bold ph-caret-right text-sm"></i>
-                    </button>
-                @else
-                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-300 dark:text-slate-650 cursor-not-allowed">
-                        <i class="ph-bold ph-caret-right text-sm"></i>
-                    </span>
-                @endif
-            </nav>
-        @endif
-    </div>
-@endif

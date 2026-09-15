@@ -61,7 +61,7 @@
                             $quotaOff = $emp->monthly_off_days_quota;
                             $isOver = $emp->is_off_days_over_quota;
                         @endphp
-                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition-colors">
+                        <x-pos.table.tr>
                             <x-pos.table.td>
                                 <div class="font-extrabold text-slate-800 dark:text-slate-100">{{ $emp->name }}</div>
                                 <div class="text-[10px] text-slate-400 font-mono">{{ $emp->nik }} &bull; {{ $emp->user?->roles->first()?->name ?? 'Kasir' }}</div>
@@ -109,16 +109,13 @@
                                     <span class="ml-1 text-[9px] bg-rose-500 text-white font-extrabold px-1.5 py-0.5 rounded-full uppercase">OVER!</span>
                                 @endif
                             </x-pos.table.td>
-                        </tr>
+                        </x-pos.table.tr>
                     @empty
-                        <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-slate-400">
-                                Belum ada staf karyawan terdaftar di cabang ini
-                            </td>
-                        </tr>
+                        <x-pos.table.empty colspan="5" icon="ph-users" message="Belum ada staf karyawan terdaftar di cabang ini" />
                     @endforelse
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :total="count($branchEmployees ?? [])" />
         </x-pos.table.container>
     </div>
 </div>

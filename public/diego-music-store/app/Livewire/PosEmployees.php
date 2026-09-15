@@ -54,6 +54,12 @@ class PosEmployees extends Component
         $this->resetPage();
     }
 
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     // ── Sorting ──────────────────────────────────────────────────────────
     public function sortBy(string $field): void
     {
@@ -217,7 +223,7 @@ class PosEmployees extends Component
         }
 
         $employees = $query->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $branches = Branch::where('is_active', true)->get();
         $users    = User::where('is_active', true)->get();

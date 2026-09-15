@@ -72,13 +72,8 @@
                     @endforeach
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :paginator="$logs" />
         </x-pos.table.container>
-
-        @if ($logs->hasPages())
-            <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-                {{ $logs->links() }}
-            </div>
-        @endif
     @else
         <div class="p-12 text-center text-slate-400 dark:text-slate-500">
             <i class="ph ph-list-bullets text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>

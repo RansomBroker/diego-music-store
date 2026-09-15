@@ -48,6 +48,12 @@ class PosUnits extends Component
         $this->resetPage();
     }
 
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     public function updatedBaseUnitId($value): void
     {
         if (blank($value)) {
@@ -170,7 +176,7 @@ class PosUnits extends Component
                   ->orWhere('code', 'like', "%{$this->search}%")
             )
             ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         // Options for base units (only base units that are active and not this record)
         $baseUnitsQuery = Unit::whereNull('base_unit_id')->where('is_active', true);

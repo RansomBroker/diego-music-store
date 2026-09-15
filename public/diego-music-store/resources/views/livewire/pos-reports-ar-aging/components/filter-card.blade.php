@@ -55,9 +55,7 @@
                 <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Pencarian</label>
                 <x-pos.form.input model="search" :live="true" placeholder="No Invoice / Nama..." icon="ph-magnifying-glass" size="sm" />
             </div>
-            <button wire:click="resetFilters" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-lg transition-colors cursor-pointer" title="Reset Filter">
-                <i class="ph ph-arrow-counter-clockwise text-sm"></i>
-            </button>
+            <x-pos.utility.button variant="danger" size="sm" icon="ph-arrow-counter-clockwise" wire:click="resetFilters" title="Reset Filter" />
         </div>
     </div>
 </div>

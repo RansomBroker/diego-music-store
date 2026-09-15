@@ -23,6 +23,18 @@ class PosAttendanceViolations extends Component
     public ?int $selectedEmployeeId = null;
     public string $activeTab = 'recap'; // 'recap', 'rules', 'logs'
     public string $search = '';
+    public int $perPage = 15;
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
 
     // ── Modal & Form State (Violation Rule) ──────────────────────────────
     public bool $showRuleModal = false;
@@ -330,7 +342,7 @@ class PosAttendanceViolations extends Component
             $logsQuery->where('employee_id', $this->selectedEmployeeId);
         }
 
-        $logs = $logsQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate(15);
+        $logs = $logsQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         return view('livewire.pos-attendance-violations', [
             'selectedLogoUrl'               => $selectedLogoUrl,

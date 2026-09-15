@@ -97,7 +97,7 @@
                     <x-pos.table>
                         <thead class="bg-slate-50 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-medium">
                             <tr>
-                                <th class="px-5 py-3 text-left w-12">Pilih</th>
+                                <x-pos.table.th class="w-12 text-left">Pilih</x-pos.table.th>
                                 <x-pos.table.th>No. Invoice</x-pos.table.th>
                                 <x-pos.table.th>Tanggal</x-pos.table.th>
                                 <x-pos.table.th class="text-right">Total</x-pos.table.th>
@@ -108,14 +108,14 @@
                         <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
                             @foreach ($items as $idx => $item)
                                 <x-pos.table.tr>
-                                    <td class="px-5 py-3">
+                                    <x-pos.table.td>
                                         <input
                                             type="checkbox"
                                             wire:model.live="items.{{ $idx }}.is_selected"
                                             wire:change="toggleItemSelection({{ $idx }})"
                                             class="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4.5 h-4.5 transition cursor-pointer"
                                         >
-                                    </td>
+                                    </x-pos.table.td>
                                     <x-pos.table.td class="whitespace-nowrap font-medium text-slate-900 dark:text-slate-100">
                                         <div class="font-mono font-bold">{{ $item['invoice_number'] }}</div>
                                     </x-pos.table.td>
@@ -139,6 +139,7 @@
                             @endforeach
                         </tbody>
                     </x-pos.table>
+                    <x-pos.table.footer :total="count($items ?? [])" />
                 </x-pos.table.container>
 
                 @php
@@ -162,22 +163,23 @@
 
         <!-- Footer Buttons -->
         <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-700 flex-shrink-0">
-            <button
+            <x-pos.utility.button
                 type="button"
+                variant="secondary"
                 wire:click="$set('showCreateModal', false)"
-                class="px-5 py-2 border border-slate-350 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl transition-colors cursor-pointer"
             >
                 Batal
-            </button>
-            <button
+            </x-pos.utility.button>
+            <x-pos.utility.button
                 type="button"
+                variant="primary"
+                icon="ph-check"
                 wire:click="save('posted')"
                 wire:loading.attr="disabled"
-                class="px-5 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-xl shadow-md hover:shadow transition duration-150 cursor-pointer active:scale-[0.98] disabled:opacity-50"
             >
                 <span wire:loading.remove wire:target="save('posted')">Simpan & Posting</span>
                 <span wire:loading wire:target="save('posted')">Memproses...</span>
-            </button>
+            </x-pos.utility.button>
         </div>
     </div>
 </x-pos.modal>

@@ -249,13 +249,14 @@
 
             <!-- Action Buttons -->
             <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-                <button
+                <x-pos.utility.button
                     type="submit"
-                    class="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary hover:bg-primaryDark text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition duration-150 cursor-pointer"
+                    variant="primary"
+                    size="base"
+                    icon="ph-floppy-disk"
                 >
-                    <i class="ph-bold ph-floppy-disk text-base"></i>
-                    <span>Simpan Profil Toko</span>
-                </button>
+                    Simpan Profil Toko
+                </x-pos.utility.button>
             </div>
         </form>
     </div>

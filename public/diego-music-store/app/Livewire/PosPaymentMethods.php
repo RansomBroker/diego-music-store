@@ -49,6 +49,12 @@ class PosPaymentMethods extends Component
         $this->resetPage();
     }
 
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     // ── Sorting ──────────────────────────────────────────────────────────
     public function sortBy(string $field): void
     {
@@ -175,7 +181,7 @@ class PosPaymentMethods extends Component
                   ->orWhere('code', 'like', "%{$this->search}%")
             )
             ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $accounts = Account::orderBy('code')->get();
 

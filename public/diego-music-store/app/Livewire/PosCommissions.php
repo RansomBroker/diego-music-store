@@ -26,6 +26,18 @@ class PosCommissions extends Component
     public ?int $selectedEmployeeId = null;
     public string $activeTab = 'recap'; // 'recap', 'schemes', 'logs'
     public string $search = '';
+    public int $perPage = 15;
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
 
     // ── Modal & Form State (Commission Scheme) ───────────────────────────
     public bool $showSchemeModal = false;
@@ -367,7 +379,7 @@ class PosCommissions extends Component
             $logsQuery->where('employee_id', $this->selectedEmployeeId);
         }
 
-        $logs = $logsQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate(15);
+        $logs = $logsQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         // Untracked / unavailable employee IDs for scheme assignment (1-on-1 constraint)
         $assignedIds = \Illuminate\Support\Facades\DB::table('commission_scheme_employee')

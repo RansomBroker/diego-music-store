@@ -55,8 +55,16 @@ class PosKpiPerformance extends Component
         $this->resetPage();
     }
 
-    public function updatedPerPage(): void
+    public function updatingPerPage(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value = null): void
+    {
+        if ($value !== null) {
+            $this->perPage = (int) $value;
+        }
         $this->resetPage();
     }
 

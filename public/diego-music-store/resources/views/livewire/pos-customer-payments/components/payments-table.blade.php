@@ -64,24 +64,5 @@
             @endforelse
         </tbody>
     </x-pos.table>
+    <x-pos.table.footer :paginator="$payments" />
 </x-pos.table.container>
-
-<!-- Pagination -->
-@if ($payments->total() > 0)
-    <div class="px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
-        <div class="flex items-center flex-wrap gap-4 text-sm text-slate-555 dark:text-slate-400">
-            <div>
-                Menampilkan
-                <span class="font-semibold text-slate-850 dark:text-slate-200">{{ $payments->firstItem() }}</span>
-                sampai
-                <span class="font-semibold text-slate-850 dark:text-slate-200">{{ $payments->lastItem() }}</span>
-                dari
-                <span class="font-semibold text-slate-850 dark:text-slate-200">{{ $payments->total() }}</span>
-                hasil
-            </div>
-        </div>
-        <div>
-            {{ $payments->links() }}
-        </div>
-    </div>
-@endif

@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\Helpers\ReportHelper;
 use App\Models\Branch;
 use App\Models\Customer;
@@ -12,12 +14,33 @@ use Illuminate\Support\Facades\Storage;
 
 class PosReportsArAging extends Component
 {
+    use WithPagination;
+
     public ?int $selectedBranchId = null;
     public ?string $search = '';
     public ?int $selectedCustomerId = null;
     public ?string $agingGroupFilter = '';
     public ?string $dateFrom = '';
     public ?string $dateTo = '';
+    public int $perPage = 15;
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
+    public function updated($propertyName): void
+    {
+        if (in_array($propertyName, ['selectedBranchId', 'search', 'selectedCustomerId', 'agingGroupFilter', 'dateFrom', 'dateTo', 'perPage'])) {
+            $this->resetPage();
+        }
+    }
 
     // ── Detail & History Modal State ───────────────────────────────────
     public bool $showDetailModal = false;
@@ -29,6 +52,7 @@ class PosReportsArAging extends Component
     public function resetFilters(): void
     {
         $this->reset(['search', 'selectedCustomerId', 'agingGroupFilter', 'dateFrom', 'dateTo']);
+        $this->resetPage();
     }
 
     public function showDetails(int $saleId): void
@@ -111,6 +135,38 @@ class PosReportsArAging extends Component
             $this->dateFrom,
             $this->dateTo
         );
+
+        // Paginate report items
+        $rawItems = $reportData['items'] ?? [];
+        $totalItems = count($rawItems);
+
+        if ($this->perPage > 0) {
+            $currentPage = (int) $this->getPage('page');
+            $currentPageItems = array_slice($rawItems, max(0, ($currentPage - 1) * $this->perPage), $this->perPage);
+            $paginatedItems = new LengthAwarePaginator(
+                $currentPageItems,
+                $totalItems,
+                $this->perPage,
+                $currentPage,
+                [
+                    'path' => LengthAwarePaginator::resolveCurrentPath(),
+                    'pageName' => 'page',
+                ]
+            );
+        } else {
+            $paginatedItems = new LengthAwarePaginator(
+                $rawItems,
+                $totalItems,
+                max(1, $totalItems),
+                1,
+                [
+                    'path' => LengthAwarePaginator::resolveCurrentPath(),
+                    'pageName' => 'page',
+                ]
+            );
+        }
+
+        $reportData['paginated_items'] = $paginatedItems;
 
         return view('livewire.pos-reports-ar-aging', [
             'branches' => $branches,

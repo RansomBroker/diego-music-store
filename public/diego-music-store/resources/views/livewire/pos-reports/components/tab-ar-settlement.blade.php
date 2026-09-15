@@ -28,7 +28,10 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                    @forelse ($reportData['settlements'] ?? [] as $st)
+                    @php
+                        $displaySettlements = $reportData['paginated_settlements'] ?? ($reportData['settlements'] ?? []);
+                    @endphp
+                    @forelse ($displaySettlements as $st)
                         <x-pos.table.tr>
                             <x-pos.table.td class="font-mono font-bold text-xs text-slate-900 dark:text-white">{{ $st['entry_no'] }}</x-pos.table.td>
                             <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300">{{ $st['date'] }}</x-pos.table.td>
@@ -42,6 +45,7 @@
                     @endforelse
                 </tbody>
             </x-pos.table>
+            <x-pos.table.footer :paginator="$reportData['paginated_settlements'] ?? null" :total="count($reportData['settlements'] ?? [])" perPageModel="perPage" />
         </x-pos.table.container>
     </div>
 </div>

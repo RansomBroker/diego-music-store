@@ -11,20 +11,21 @@
             Apakah Anda yakin ingin memposting pelunasan hutang ini? Transaksi ini akan memperbarui hutang supplier secara permanen dan mencatat jurnal akuntansi secara otomatis.
         </p>
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
-            <button
+            <x-pos.utility.button
                 type="button"
+                variant="secondary"
                 wire:click="$set('showPostConfirmation', false)"
-                class="px-4 py-2 border border-slate-350 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
                 Batal
-            </button>
-            <button
+            </x-pos.utility.button>
+            <x-pos.utility.button
                 type="button"
+                variant="success"
                 wire:click="postPayment"
-                class="px-4 py-2 bg-emerald-650 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-md transition duration-150"
+                icon="ph-check"
             >
                 Ya, Posting
-            </button>
+            </x-pos.utility.button>
         </div>
     </div>
 </x-pos.modal>
@@ -42,20 +43,21 @@
             Apakah Anda yakin ingin menghapus draft pelunasan hutang ini secara permanen? Tindakan ini tidak dapat dibatalkan.
         </p>
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
-            <button
+            <x-pos.utility.button
                 type="button"
+                variant="secondary"
                 wire:click="$set('showDeleteConfirmation', false)"
-                class="px-4 py-2 border border-slate-350 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
                 Batal
-            </button>
-            <button
+            </x-pos.utility.button>
+            <x-pos.utility.button
                 type="button"
+                variant="danger"
                 wire:click="deletePayment"
-                class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl shadow-md transition duration-150"
+                icon="ph-trash"
             >
                 Ya, Hapus
-            </button>
+            </x-pos.utility.button>
         </div>
     </div>
 </x-pos.modal>

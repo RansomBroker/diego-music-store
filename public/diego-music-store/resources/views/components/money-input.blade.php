@@ -26,7 +26,8 @@
                 this.displayVal = '';
                 return;
             }
-            const digits = String(val).replace(/[^\d]/g, '');
+            const cleanVal = typeof val === 'number' ? Math.round(val) : String(val).split('.')[0];
+            const digits = String(cleanVal).replace(/[^\d]/g, '');
             this.displayVal = digits ? new Intl.NumberFormat('id-ID').format(digits) : '';
         },
         onInput(e) {

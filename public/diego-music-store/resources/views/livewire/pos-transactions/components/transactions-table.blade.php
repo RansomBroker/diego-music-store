@@ -1,39 +1,39 @@
 <!-- Table List -->
-<div class="w-full overflow-x-auto no-scrollbar">
-    <table class="w-full text-left border-collapse">
-        <thead>
-            <tr class="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-[11px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider transition-colors">
-                <th class="px-6 py-4">Tanggal</th>
-                <th class="px-6 py-4">No. Invoice</th>
-                <th class="px-6 py-4">Cabang</th>
-                <th class="px-6 py-4">Pelanggan</th>
-                <th class="px-6 py-4">Kasir</th>
-                <th class="px-6 py-4">Metode Bayar</th>
-                <th class="px-6 py-4 text-right">Total</th>
-                <th class="px-6 py-4 text-center">Status</th>
-                <th class="px-6 py-4 text-center">Aksi</th>
+<x-pos.table.container>
+    <x-pos.table>
+        <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+            <tr>
+                <x-pos.table.th>Tanggal</x-pos.table.th>
+                <x-pos.table.th>No. Invoice</x-pos.table.th>
+                <x-pos.table.th>Cabang</x-pos.table.th>
+                <x-pos.table.th>Pelanggan</x-pos.table.th>
+                <x-pos.table.th>Kasir</x-pos.table.th>
+                <x-pos.table.th>Metode Bayar</x-pos.table.th>
+                <x-pos.table.th class="text-right">Total</x-pos.table.th>
+                <x-pos.table.th class="text-center">Status</x-pos.table.th>
+                <x-pos.table.th class="text-center">Aksi</x-pos.table.th>
             </tr>
         </thead>
         <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-300">
             @forelse ($sales as $sale)
-                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-950/30 transition-colors cursor-pointer" wire:click="showDetails({{ $sale->id }})">
-                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer" wire:click="showDetails({{ $sale->id }})">
+                    <x-pos.table.td class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
                         {{ $sale->invoice_date->format('d/m/Y') }}
                         <span class="block text-[10px] text-slate-400 mt-0.5">{{ $sale->created_at->format('H:i') }}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap font-black text-slate-900 dark:text-white">
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap font-black text-slate-900 dark:text-white">
                         {{ $sale->invoice_number }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap">
                         {{ $sale->branch->name ?? '-' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap">
                         {{ $sale->customer->name ?? 'Umum' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-xs">
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap text-xs">
                         {{ $sale->salesRep->name ?? '-' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300">
                             @if (str_contains(strtolower($sale->payment_method), 'tunai') || strtolower($sale->payment_method) === 'cash')
                                 <i class="ph ph-money text-emerald-500 text-sm"></i>
@@ -44,11 +44,11 @@
                             @endif
                             {{ $sale->payment_method }}
                         </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right font-bold text-slate-900 dark:text-white">
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap text-right font-bold text-slate-900 dark:text-white">
                         Rp {{ number_format($sale->grand_total, 0, ',', '.') }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap text-center">
                         @if ($sale->status === 'completed')
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/50 dark:border-emerald-800/40 rounded-full text-xs font-bold text-emerald-700 dark:text-emerald-400">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -70,73 +70,63 @@
                                 Dibatalkan
                             </span>
                         @endif
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center" wire:click.stop>
-                        <div class="flex items-center justify-center gap-2">
-                            <button
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap text-center" wire:click.stop>
+                        <div class="flex items-center justify-center gap-1.5">
+                            <x-pos.utility.button
                                 type="button"
+                                variant="info"
+                                size="xs"
+                                icon="ph-eye"
                                 wire:click="showDetails({{ $sale->id }})"
-                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-primary-light dark:bg-slate-800 dark:hover:bg-blue-950/50 text-slate-500 hover:text-primary dark:hover:text-blue-400 flex items-center justify-center transition-colors"
                                 title="Lihat Detail"
-                            >
-                                <i class="ph-bold ph-eye text-base"></i>
-                            </button>
+                            />
                             @if ($sale->status !== 'cancelled')
-                                <a
+                                <x-pos.utility.button
                                     href="/pos?edit={{ $sale->id }}"
-                                    class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-amber-50 dark:bg-slate-800 dark:hover:bg-amber-900/40 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 flex items-center justify-center transition-colors"
+                                    variant="warning"
+                                    size="xs"
+                                    icon="ph-pencil"
                                     title="Edit Transaksi"
-                                >
-                                    <i class="ph-bold ph-pencil text-base"></i>
-                                </a>
+                                />
                             @endif
                             @if ($sale->status !== 'cancelled' && $sale->items->sum(fn($item) => $item->quantity - $item->returnItems()->sum('quantity')) > 0)
-                                <button
+                                <x-pos.utility.button
                                     type="button"
+                                    variant="danger"
+                                    size="xs"
+                                    icon="ph-arrow-counter-clockwise"
                                     wire:click="startReturn({{ $sale->id }})"
-                                    class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-500 hover:text-rose-600 dark:hover:text-rose-450 flex items-center justify-center transition-colors"
                                     title="Retur Barang"
-                                >
-                                    <i class="ph-bold ph-arrow-counter-clockwise text-base"></i>
-                                </button>
+                                />
                             @endif
-                            <button
+                            <x-pos.utility.button
                                 type="button"
+                                variant="primary"
+                                size="xs"
+                                icon="ph-printer"
                                 wire:click="printReceipt({{ $sale->id }})"
-                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-emerald-950/40 text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center transition-colors"
                                 title="Cetak Struk"
-                            >
-                                <i class="ph-bold ph-printer text-base"></i>
-                            </button>
+                            />
                             @if ((str_contains(strtolower($sale->payment_method), 'piutang') || str_contains(strtolower($sale->payment_method), 'credit')) && !str_contains(strtolower($sale->payment_method), 'lunas'))
-                                <button
+                                <x-pos.utility.button
                                     type="button"
+                                    variant="success"
+                                    size="xs"
+                                    icon="ph-hand-coins"
                                     wire:click="openSettlementModal({{ $sale->id }})"
-                                    class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1 transition-colors shadow-sm cursor-pointer ml-1"
                                     title="Pelunasan Piutang"
                                 >
-                                    <i class="ph-bold ph-hand-coins text-sm"></i>
-                                    <span>Pelunasan</span>
-                                </button>
+                                    Pelunasan
+                                </x-pos.utility.button>
                             @endif
                         </div>
-                    </td>
+                    </x-pos.table.td>
                 </tr>
             @empty
-                <tr>
-                    <td colspan="9" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-medium">
-                        <i class="ph ph-receipt text-4xl mb-2 text-slate-300 dark:text-slate-700 block"></i>
-                        Tidak ada transaksi ditemukan untuk filter ini.
-                    </td>
-                </tr>
+                <x-pos.table.empty colspan="9" icon="ph-receipt" message="Tidak ada transaksi ditemukan untuk filter ini." />
             @endforelse
         </tbody>
-    </table>
-</div>
-
-<!-- Pagination -->
-@if ($sales->hasPages())
-    <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
-        {{ $sales->links() }}
-    </div>
-@endif
+    </x-pos.table>
+    <x-pos.table.footer :paginator="$sales" perPageModel="perPage" />
+</x-pos.table.container>

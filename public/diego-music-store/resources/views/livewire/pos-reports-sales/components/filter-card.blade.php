@@ -150,7 +150,7 @@
             <!-- Col 13: Actions (Reset) -->
             <div>
                 <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Reset</label>
-                <x-pos.utility.button variant="secondary" size="sm" icon="ph-arrow-counter-clockwise" class="w-full justify-center" wire:click="resetFilters">
+                <x-pos.utility.button variant="danger" size="sm" icon="ph-arrow-counter-clockwise" class="w-full justify-center" wire:click="resetFilters">
                     Reset Filter
                 </x-pos.utility.button>
             </div>

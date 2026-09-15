@@ -61,13 +61,12 @@
     </div>
 
     <!-- Submit Button -->
-    <button 
+    <x-pos.utility.button 
         type="submit" 
-        class="w-full py-3.5 px-4 bg-primary hover:bg-primaryHover text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+        variant="primary"
+        class="w-full justify-center !py-3.5 !rounded-2xl"
+        icon="ph-sign-in"
     >
-        <!-- Loading indicator -->
-        <span wire:loading wire:target="login" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-        <span>Masuk Kasir</span>
-        <i wire:loading.remove wire:target="login" class="ph-bold ph-sign-in text-lg"></i>
-    </button>
+        Masuk Kasir
+    </x-pos.utility.button>
 </form>

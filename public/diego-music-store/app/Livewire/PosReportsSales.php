@@ -33,6 +33,17 @@ class PosReportsSales extends Component
     public ?string $search = '';
     public int $perPage = 15;
 
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     public function updated($propertyName)
     {
         if (in_array($propertyName, [
@@ -129,8 +140,8 @@ class PosReportsSales extends Component
         $totalItems = count($rawItems);
 
         if ($this->perPage > 0) {
-            $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
-            $currentPageItems = array_slice($rawItems, ($currentPage - 1) * $this->perPage, $this->perPage);
+            $currentPage = (int) $this->getPage('page');
+            $currentPageItems = array_slice($rawItems, max(0, ($currentPage - 1) * $this->perPage), $this->perPage);
             $paginatedItems = new LengthAwarePaginator(
                 $currentPageItems,
                 $totalItems,

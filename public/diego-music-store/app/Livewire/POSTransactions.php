@@ -103,6 +103,17 @@ class POSTransactions extends Component
         $this->resetPage();
     }
 
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage($value): void
+    {
+        $this->perPage = (int) $value;
+        $this->resetPage();
+    }
+
     public function sortBy(string $field): void
     {
         if ($this->sortField === $field) {
@@ -456,7 +467,7 @@ class POSTransactions extends Component
                 $query->whereDate('invoice_date', '<=', $this->toDate);
             })
             ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $accounts = \App\Models\Account::where('classification', 'asset')
             ->where('is_header', false)

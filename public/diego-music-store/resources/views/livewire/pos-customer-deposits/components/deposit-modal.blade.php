@@ -145,20 +145,20 @@
 
         <!-- Modal Actions Footer -->
         <div class="pt-5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
-            <button
+            <x-pos.utility.button
                 type="button"
+                variant="secondary"
                 wire:click="$set('showFormModal', false)"
-                class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
                 Batal
-            </button>
-            <button
+            </x-pos.utility.button>
+            <x-pos.utility.button
                 type="submit"
-                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primaryDark text-white text-xs sm:text-sm font-black shadow-sm transition active:scale-95 cursor-pointer"
+                variant="primary"
+                icon="ph-floppy-disk"
             >
-                <i class="ph-bold ph-floppy-disk text-base"></i>
-                <span>{{ $isEditMode ? 'Simpan Perubahan' : 'Simpan Deposit' }}</span>
-            </button>
+                {{ $isEditMode ? 'Simpan Perubahan' : 'Simpan Deposit' }}
+            </x-pos.utility.button>
         </div>
 
     </form>

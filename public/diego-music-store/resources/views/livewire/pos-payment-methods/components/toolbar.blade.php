@@ -40,11 +40,11 @@
     </div>
 
     <!-- Add Action -->
-    <button
+    <x-pos.utility.button
+        variant="primary"
+        icon="ph-plus"
         wire:click="openCreate"
-        class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-primary hover:bg-primaryDark text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition duration-150 cursor-pointer active:scale-[0.98]"
     >
-        <i class="ph-bold ph-plus text-sm"></i>
-        <span>Tambah Metode</span>
-    </button>
+        Tambah Metode
+    </x-pos.utility.button>
 </div>

@@ -88,14 +88,15 @@
 
         <!-- Reset Button -->
         <div class="self-end">
-            <button
+            <x-pos.utility.button
                 type="button"
+                variant="danger"
+                size="sm"
+                icon="ph-arrows-counter-clockwise"
                 wire:click="resetFilters"
-                class="flex items-center gap-2 px-4 py-2 text-xs font-black text-slate-500 hover:text-red-650 bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-200 dark:hover:border-red-900/30 rounded-lg transition-all"
             >
-                <i class="ph-bold ph-arrows-counter-clockwise"></i>
-                <span>Reset Filter</span>
-            </button>
+                Reset Filter
+            </x-pos.utility.button>
         </div>
     </div>
 </div>

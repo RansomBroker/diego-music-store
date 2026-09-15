@@ -13,32 +13,31 @@
     </div>
 
     <!-- Pareto Summary Table -->
-    <div class="overflow-x-auto max-h-56 no-scrollbar">
-        <table class="w-full text-left text-xs">
+    <x-pos.table.container class="max-h-56 overflow-y-auto no-scrollbar !rounded-xl !border-0">
+        <x-pos.table>
             <thead class="bg-slate-200/70 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 uppercase text-[9px] font-bold">
                 <tr>
-                    <th class="px-3 py-2">Item / Pelanggan</th>
-                    <th class="px-3 py-2 text-right">Omzet</th>
-                    <th class="px-3 py-2 text-center">Pareto Class</th>
+                    <x-pos.table.th class="px-3 py-2">Item / Pelanggan</x-pos.table.th>
+                    <x-pos.table.th class="px-3 py-2 text-right">Omzet</x-pos.table.th>
+                    <x-pos.table.th class="px-3 py-2 text-center">Pareto Class</x-pos.table.th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 dark:divide-slate-700/50">
-                @forelse (array_slice($paretoChart['products']['items'], 0, 6) as $p)
-                    <tr class="hover:bg-slate-100 dark:hover:bg-slate-700/30 transition">
-                        <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200 truncate max-w-[150px]">{{ $p['name'] }}</td>
-                        <td class="px-3 py-2 text-right font-mono text-emerald-600 dark:text-emerald-400">Rp {{ number_format($p['value'], 0, ',', '.') }}</td>
-                        <td class="px-3 py-2 text-center">
+                @forelse (array_slice($paretoChart['products']['items'] ?? [], 0, 6) as $p)
+                    <x-pos.table.tr class="hover:bg-slate-100 dark:hover:bg-slate-700/30 transition">
+                        <x-pos.table.td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200 truncate max-w-[150px]">{{ $p['name'] }}</x-pos.table.td>
+                        <x-pos.table.td class="px-3 py-2 text-right font-mono text-emerald-600 dark:text-emerald-400">Rp {{ number_format($p['value'], 0, ',', '.') }}</x-pos.table.td>
+                        <x-pos.table.td class="px-3 py-2 text-center">
                             <span class="px-2 py-0.5 rounded text-[9px] font-extrabold {{ $p['is_top_80'] ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' }}">
                                 {{ $p['pareto_class'] }}
                             </span>
-                        </td>
-                    </tr>
+                        </x-pos.table.td>
+                    </x-pos.table.tr>
                 @empty
-                    <tr>
-                        <td colspan="3" class="px-3 py-4 text-center text-slate-400">Belum ada data transaksi</td>
-                    </tr>
+                    <x-pos.table.empty colspan="3" message="Belum ada data transaksi" />
                 @endforelse
             </tbody>
-        </table>
-    </div>
+        </x-pos.table>
+        <x-pos.table.footer :total="count(array_slice($paretoChart['products']['items'] ?? [], 0, 6))" />
+    </x-pos.table.container>
 </div>

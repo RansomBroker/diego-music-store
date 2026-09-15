@@ -60,7 +60,7 @@
         </thead>
         <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
             @forelse ($employees as $emp)
-                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                <x-pos.table.tr>
                     <!-- NIK -->
                     <x-pos.table.td class="font-mono text-xs text-slate-500 dark:text-slate-400">
                         {{ $emp->nik }}
@@ -135,25 +135,34 @@
 
                     <!-- Actions -->
                     <x-pos.table.td align="right">
-                        <x-pos.table.actions
-                            :editAction="'openEdit(' . $emp->id . ')'"
-                            :deleteAction="'confirmDelete(' . $emp->id . ')'"
-                        />
-                    </x-pos.table.td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="9" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
-                        <div class="flex flex-col items-center justify-center gap-2">
-                            <i class="ph ph-user-group text-4xl text-slate-300 dark:text-slate-600"></i>
-                            <span class="text-sm font-medium">Belum ada data karyawan</span>
+                        <div class="flex items-center justify-end gap-1.5">
+                            <x-pos.utility.button
+                                type="button"
+                                variant="warning"
+                                size="xs"
+                                icon="ph-pencil-simple"
+                                wire:click="openEdit({{ $emp->id }})"
+                                title="Ubah"
+                            >
+                                Ubah
+                            </x-pos.utility.button>
+                            <x-pos.utility.button
+                                type="button"
+                                variant="danger"
+                                size="xs"
+                                icon="ph-trash"
+                                wire:click="confirmDelete({{ $emp->id }})"
+                                title="Hapus"
+                            >
+                                Hapus
+                            </x-pos.utility.button>
                         </div>
-                    </td>
-                </tr>
+                    </x-pos.table.td>
+                </x-pos.table.tr>
+            @empty
+                <x-pos.table.empty colspan="9" icon="ph-user-group" message="Belum ada data karyawan" />
             @endforelse
         </tbody>
     </x-pos.table>
+    <x-pos.table.footer :paginator="$employees" />
 </x-pos.table.container>
-
-<!-- Table Footer / Pagination -->
-<x-pos.table.footer :paginator="$employees" />
