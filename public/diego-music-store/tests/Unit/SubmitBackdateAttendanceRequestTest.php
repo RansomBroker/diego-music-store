@@ -16,7 +16,7 @@ class SubmitBackdateAttendanceRequestTest extends TestCase
 
     public function test_submit_backdate_request_creates_pending_request()
     {
-        $branch = Branch::factory()->create();
+        $branch = Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
         $user = User::factory()->create();
         $employee = Employee::create([
             'user_id'   => $user->id,

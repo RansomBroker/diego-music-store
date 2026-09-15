@@ -255,6 +255,11 @@ class POSCashSession extends Component
                 ->success()
                 ->send();
 
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Sesi kasir berhasil dibuka kembali oleh supervisor.',
+            ]);
+
             $this->showSupervisorModal = false;
             $this->activeTab = 'sesi';
             $this->checkActiveSession();
@@ -283,6 +288,11 @@ class POSCashSession extends Component
                 ->body('Sesi kasir berhasil ditutup.')
                 ->success()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Sesi kasir berhasil ditutup dan Z-Report diterbitkan.',
+            ]);
 
             $this->activeSession = null;
             $this->showSupervisorModal = false;

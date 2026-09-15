@@ -20,7 +20,14 @@ class PosPayrollManagement extends Component
     // Modal Edit Payroll Item state
     public bool $showEditItemModal = false;
     public ?int $editingItemId = null;
+    public string $editingEmployeeName = '';
+    public string $editingEmployeeNik = '';
+    public float $editBasicSalary = 0.0;
     public float $editAllowanceAmount = 0.0;
+    public float $editOvertimeAmount = 0.0;
+    public float $editCommissionAmount = 0.0;
+    public float $editKpiBonusAmount = 0.0;
+    public float $editViolationDeductionAmount = 0.0;
     public float $editOtherDeductionAmount = 0.0;
     public string $editNotes = '';
 
@@ -45,12 +52,22 @@ class PosPayrollManagement extends Component
                 ->body("Berhasil memproses rekapitulasi gaji untuk {$payroll->total_employees} karyawan.")
                 ->success()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => "Berhasil memproses rekapitulasi gaji untuk {$payroll->total_employees} karyawan.",
+            ]);
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Gagal Memproses')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'error',
+                'message' => 'Gagal Memproses: ' . $e->getMessage(),
+            ]);
         }
     }
 
@@ -70,9 +87,16 @@ class PosPayrollManagement extends Component
 
     public function openEditItemModal(int $itemId): void
     {
-        $item = PayrollItem::findOrFail($itemId);
+        $item = PayrollItem::with('employee')->findOrFail($itemId);
         $this->editingItemId = $item->id;
+        $this->editingEmployeeName = $item->employee->name ?? 'Karyawan';
+        $this->editingEmployeeNik = $item->employee->nik ?? '';
+        $this->editBasicSalary = (float) $item->basic_salary;
         $this->editAllowanceAmount = (float) $item->allowance_amount;
+        $this->editOvertimeAmount = (float) $item->overtime_amount;
+        $this->editCommissionAmount = (float) $item->commission_amount;
+        $this->editKpiBonusAmount = (float) $item->kpi_bonus_amount;
+        $this->editViolationDeductionAmount = (float) $item->violation_deduction_amount;
         $this->editOtherDeductionAmount = (float) $item->other_deduction_amount;
         $this->editNotes = $item->notes ?: '';
         $this->showEditItemModal = true;
@@ -85,29 +109,44 @@ class PosPayrollManagement extends Component
         }
 
         $item = PayrollItem::findOrFail($this->editingItemId);
-        $item->allowance_amount = $this->editAllowanceAmount;
-        $item->other_deduction_amount = $this->editOtherDeductionAmount;
+        $item->basic_salary = max(0.0, (float) $this->editBasicSalary);
+        $item->allowance_amount = max(0.0, (float) $this->editAllowanceAmount);
+        $item->overtime_amount = max(0.0, (float) $this->editOvertimeAmount);
+        $item->commission_amount = max(0.0, (float) $this->editCommissionAmount);
+        $item->kpi_bonus_amount = max(0.0, (float) $this->editKpiBonusAmount);
+        $item->violation_deduction_amount = max(0.0, (float) $this->editViolationDeductionAmount);
+        $item->other_deduction_amount = max(0.0, (float) $this->editOtherDeductionAmount);
         $item->notes = $this->editNotes;
 
-        // Recalculate net salary including overtime_amount
-        $item->net_salary = max(0.0, ($item->basic_salary + $item->allowance_amount + $item->overtime_amount + $item->commission_amount + $item->kpi_bonus_amount) - ($item->violation_deduction_amount + $item->other_deduction_amount));
+        // Recalculate net salary including all components
+        $earnings = $item->basic_salary + $item->allowance_amount + $item->overtime_amount + $item->commission_amount + $item->kpi_bonus_amount;
+        $deductions = $item->violation_deduction_amount + $item->other_deduction_amount;
+        $item->net_salary = max(0.0, $earnings - $deductions);
         $item->save();
 
         // Recalculate parent Payroll header totals
         $payroll = $item->payroll;
         $payroll->update([
-            'total_allowances' => $payroll->items()->sum(DB::raw('allowance_amount + overtime_amount')),
-            'total_deductions' => $payroll->items()->sum(DB::raw('violation_deduction_amount + other_deduction_amount')),
-            'total_net_salary' => $payroll->items()->sum('net_salary'),
+            'total_basic_salary' => (float) $payroll->items()->sum('basic_salary'),
+            'total_allowances' => (float) $payroll->items()->sum(DB::raw('allowance_amount + overtime_amount')),
+            'total_commissions' => (float) $payroll->items()->sum('commission_amount'),
+            'total_kpi_bonuses' => (float) $payroll->items()->sum('kpi_bonus_amount'),
+            'total_deductions' => (float) $payroll->items()->sum(DB::raw('violation_deduction_amount + other_deduction_amount')),
+            'total_net_salary' => (float) $payroll->items()->sum('net_salary'),
         ]);
 
         $this->showEditItemModal = false;
 
         Notification::make()
-            ->title('Detail Gaji Diperbarui')
-            ->body('Tunjangan/Potongan manual karyawan berhasil disimpan.')
+            ->title('Data Payroll Berhasil Diperbarui')
+            ->body('Komponen gaji karyawan berhasil disimpan & disesuaikan.')
             ->success()
             ->send();
+
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => 'Komponen gaji karyawan berhasil disimpan & disesuaikan.',
+        ]);
     }
 
     public function approvePayroll(int $payrollId): void
@@ -120,12 +159,22 @@ class PosPayrollManagement extends Component
                 ->body('Status payroll diperbarui menjadi Approved.')
                 ->success()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Status payroll diperbarui menjadi Approved.',
+            ]);
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Gagal Memproses')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'error',
+                'message' => 'Gagal Memproses: ' . $e->getMessage(),
+            ]);
         }
     }
 
@@ -139,12 +188,22 @@ class PosPayrollManagement extends Component
                 ->body('Payroll berhasil dibatalkan. Anda dapat membuat ulang payroll untuk periode ini.')
                 ->warning()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'warning',
+                'message' => 'Payroll berhasil dibatalkan.',
+            ]);
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Gagal Membatalkan')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'error',
+                'message' => 'Gagal Membatalkan: ' . $e->getMessage(),
+            ]);
         }
     }
 
@@ -158,12 +217,22 @@ class PosPayrollManagement extends Component
                 ->body('Status payroll diperbarui menjadi Paid.')
                 ->success()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Status payroll diperbarui menjadi Paid.',
+            ]);
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Gagal Memproses')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'error',
+                'message' => 'Gagal Memproses: ' . $e->getMessage(),
+            ]);
         }
     }
 

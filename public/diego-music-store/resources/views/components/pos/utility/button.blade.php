@@ -3,7 +3,9 @@
     'variant' => 'primary',
     'size' => 'md',
     'icon' => null,
-    'disabled' => false
+    'disabled' => false,
+    'href' => null,
+    'target' => null,
 ])
 
 @php
@@ -11,6 +13,7 @@
     
     // Sizes
     $sizes = [
+        'xs' => 'px-2.5 py-1 text-xs',
         'sm' => 'px-3.5 py-2 text-xs',
         'md' => 'px-4.5 py-3 text-sm',
         'lg' => 'w-full py-2.5 text-sm rounded-xl font-black shadow-md',
@@ -38,13 +41,26 @@
     }
 @endphp
 
-<button 
-    type="{{ $type }}"
-    {{ $disabled ? 'disabled' : '' }}
-    {{ $attributes->merge(['class' => $classes]) }}
->
-    @if ($icon)
-        <i class="ph {{ $icon }} {{ $size === 'lg' ? 'text-xl group-hover:scale-110 transition-transform' : 'text-sm' }} font-bold"></i>
-    @endif
-    <span>{{ $slot }}</span>
-</button>
+@if ($href)
+    <a 
+        href="{{ $href }}"
+        @if ($target) target="{{ $target }}" @endif
+        {{ $attributes->merge(['class' => $classes]) }}
+    >
+        @if ($icon)
+            <i class="ph {{ $icon }} {{ $size === 'lg' ? 'text-xl group-hover:scale-110 transition-transform' : 'text-sm' }} font-bold"></i>
+        @endif
+        <span>{{ $slot }}</span>
+    </a>
+@else
+    <button 
+        type="{{ $type }}"
+        {{ $disabled ? 'disabled' : '' }}
+        {{ $attributes->merge(['class' => $classes]) }}
+    >
+        @if ($icon)
+            <i class="ph {{ $icon }} {{ $size === 'lg' ? 'text-xl group-hover:scale-110 transition-transform' : 'text-sm' }} font-bold"></i>
+        @endif
+        <span>{{ $slot }}</span>
+    </button>
+@endif

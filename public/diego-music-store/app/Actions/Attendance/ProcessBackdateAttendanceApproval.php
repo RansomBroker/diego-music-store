@@ -51,6 +51,8 @@ class ProcessBackdateAttendanceApproval
                         'status'                => 'hadir',
                         'clock_in_photo_path'   => $request->proof_photo_path,
                         'notes'                 => 'Presensi Backdate (Disetujui Owner)',
+                        'is_backdate'           => true,
+                        'approved_by'           => $approverUser?->id,
                     ]
                 );
             } else {

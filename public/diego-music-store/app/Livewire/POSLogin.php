@@ -76,6 +76,7 @@ class POSLogin extends Component
                 ->body('Selamat datang kembali di sistem kasir.')
                 ->success()
                 ->send();
+            $this->dispatch('toast', type: 'success', title: 'Berhasil Masuk', body: 'Selamat datang kembali di sistem kasir.');
 
             return $this->redirect('/pos');
         }
@@ -83,6 +84,7 @@ class POSLogin extends Component
         RateLimiter::hit($throttleKey, 60);
 
         $this->addError('email', 'Kredensial yang dimasukkan tidak cocok dengan data kami.');
+        $this->dispatch('toast', type: 'danger', title: 'Gagal Masuk', body: 'Kredensial yang dimasukkan tidak cocok dengan data kami.');
     }
 
     public function selectBranchAndCompleteLogin()
@@ -96,6 +98,7 @@ class POSLogin extends Component
 
         if (!$branch && !$user->hasRole(['owner', 'admin', 'super_admin'])) {
             $this->addError('selectedBranchId', 'Anda tidak memiliki hak akses ke lokasi cabang ini.');
+            $this->dispatch('toast', type: 'danger', title: 'Akses Ditolak', body: 'Anda tidak memiliki hak akses ke lokasi cabang ini.');
             return;
         }
 
@@ -106,6 +109,7 @@ class POSLogin extends Component
             ->body('Cabang Aktif: ' . ($branch?->name ?: 'POS Store'))
             ->success()
             ->send();
+        $this->dispatch('toast', type: 'success', title: 'Berhasil Masuk', body: 'Cabang Aktif: ' . ($branch?->name ?: 'POS Store'));
 
         return $this->redirect('/pos');
     }

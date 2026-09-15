@@ -94,9 +94,11 @@ class PosSaleCategories extends Component
             $category = SaleCategory::findOrFail($this->editingId);
             $updateAction->execute($category, $data);
             Notification::make()->title('Kategori Penjualan Berhasil Diperbarui')->success()->send();
+            $this->dispatch('toast', type: 'success', message: 'Kategori Penjualan Berhasil Diperbarui');
         } else {
             $createAction->execute($data);
             Notification::make()->title('Kategori Penjualan Berhasil Ditambahkan')->success()->send();
+            $this->dispatch('toast', type: 'success', message: 'Kategori Penjualan Berhasil Ditambahkan');
         }
 
         $this->showModal = false;
@@ -118,6 +120,7 @@ class PosSaleCategories extends Component
         $existsInSales = \App\Models\Sale::where('sale_category', $category->name)->exists();
         if ($existsInSales) {
             Notification::make()->title('Gagal Hapus')->body('Kategori penjualan ini telah digunakan dalam transaksi penjualan.')->danger()->send();
+            $this->dispatch('toast', type: 'error', message: 'Kategori penjualan ini telah digunakan dalam transaksi penjualan.');
             $this->showDeleteModal = false;
             return;
         }
@@ -125,6 +128,7 @@ class PosSaleCategories extends Component
         $category->delete();
 
         Notification::make()->title('Kategori Penjualan Berhasil Dihapus')->success()->send();
+        $this->dispatch('toast', type: 'success', message: 'Kategori Penjualan Berhasil Dihapus');
 
         $this->showDeleteModal = false;
         $this->deletingId      = null;

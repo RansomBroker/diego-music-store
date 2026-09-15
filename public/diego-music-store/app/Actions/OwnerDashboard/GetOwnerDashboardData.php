@@ -33,7 +33,8 @@ class GetOwnerDashboardData
         // Base Sale Query
         $salesQuery = Sale::query()
             ->where('status', 'completed')
-            ->whereBetween('invoice_date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')]);
+            ->whereDate('invoice_date', '>=', $dateFrom->format('Y-m-d'))
+            ->whereDate('invoice_date', '<=', $dateTo->format('Y-m-d'));
 
         if ($branchId) {
             $salesQuery->where('branch_id', $branchId);

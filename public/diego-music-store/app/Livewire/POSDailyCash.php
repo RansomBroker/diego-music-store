@@ -152,6 +152,11 @@ class POSDailyCash extends Component
                 ->success()
                 ->send();
 
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Kas Masuk Berhasil Dicatat',
+            ]);
+
             $this->showInModal = false;
             $this->checkActiveSession();
         } catch (\Exception $e) {
@@ -160,6 +165,11 @@ class POSDailyCash extends Component
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'error',
+                'message' => 'Gagal Mencatat Kas Masuk: ' . $e->getMessage(),
+            ]);
         }
     }
 
@@ -205,6 +215,11 @@ class POSDailyCash extends Component
                 ->success()
                 ->send();
 
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Kas Keluar Berhasil Dicatat',
+            ]);
+
             $this->showOutModal = false;
             $this->checkActiveSession();
         } catch (\Exception $e) {
@@ -213,6 +228,11 @@ class POSDailyCash extends Component
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'error',
+                'message' => 'Gagal Mencatat Kas Keluar: ' . $e->getMessage(),
+            ]);
         }
     }
 

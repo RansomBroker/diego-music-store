@@ -51,7 +51,7 @@ class ProcessBackdateAttendanceApprovalTest extends TestCase
 
         $this->assertDatabaseHas('employee_attendances', [
             'employee_id' => $employee->id,
-            'date'        => $backdateDate,
+            'date'        => $backdateDate . ' 00:00:00',
             'status'      => 'hadir',
         ]);
     }

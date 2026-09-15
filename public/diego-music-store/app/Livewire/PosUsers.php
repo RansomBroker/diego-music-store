@@ -125,9 +125,11 @@ class PosUsers extends Component
             $user = User::findOrFail($this->editingId);
             $updateUser->execute($user, $data);
             Notification::make()->title('User Berhasil Diperbarui')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'User Berhasil Diperbarui');
         } else {
             $createUser->execute($data);
             Notification::make()->title('User Berhasil Ditambahkan')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'User Berhasil Ditambahkan');
         }
 
         $this->showModal = false;
@@ -139,6 +141,7 @@ class PosUsers extends Component
     {
         if (Auth::id() === $id) {
             Notification::make()->title('Gagal Hapus')->body('Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif digunakan.')->danger()->send();
+            $this->dispatch('toast', type: 'danger', title: 'Gagal Hapus', body: 'Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif digunakan.');
             return;
         }
         $this->deletingId      = $id;
@@ -150,6 +153,7 @@ class PosUsers extends Component
         User::findOrFail($this->deletingId)->delete();
 
         Notification::make()->title('User Berhasil Dihapus')->success()->send();
+        $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'User Berhasil Dihapus');
 
         $this->showDeleteModal = false;
         $this->deletingId      = null;

@@ -34,7 +34,7 @@ class PosEmployees extends Component
     public string $address = '';
     public ?string $join_date = null;
     public int $monthly_off_days_quota = 4;
-    public float $basic_salary = 0;
+    public float|int|string $basic_salary = 0;
     public ?int $branch_id = null;
     public ?int $user_id = null;
     public bool $is_active = true;
@@ -120,26 +120,46 @@ class PosEmployees extends Component
         $validated['join_date'] = $this->join_date ?: null;
         $validated['is_active'] = $this->is_active;
 
-        if ($this->isEditing && $this->editingId) {
-            $employee = Employee::findOrFail($this->editingId);
-            $updateEmployee->execute($employee, $validated);
+        try {
+            if ($this->isEditing && $this->editingId) {
+                $employee = Employee::findOrFail($this->editingId);
+                $updateEmployee->execute($employee, $validated);
 
-            Notification::make()
-                ->title('Karyawan Diperbarui')
-                ->body("Data karyawan \"{$this->name}\" berhasil diperbarui.")
-                ->success()
-                ->send();
-        } else {
-            $createEmployee->execute($validated);
+                $this->dispatch('toast', [
+                    'type'  => 'success',
+                    'title' => 'Karyawan Diperbarui',
+                    'body'  => "Data karyawan \"{$this->name}\" berhasil diperbarui."
+                ]);
 
-            Notification::make()
-                ->title('Karyawan Dibuat')
-                ->body("Karyawan baru \"{$this->name}\" berhasil ditambahkan.")
-                ->success()
-                ->send();
+                Notification::make()
+                    ->title('Karyawan Diperbarui')
+                    ->body("Data karyawan \"{$this->name}\" berhasil diperbarui.")
+                    ->success()
+                    ->send();
+            } else {
+                $createEmployee->execute($validated);
+
+                $this->dispatch('toast', [
+                    'type'  => 'success',
+                    'title' => 'Karyawan Ditambahkan',
+                    'body'  => "Karyawan baru \"{$this->name}\" berhasil ditambahkan."
+                ]);
+
+                Notification::make()
+                    ->title('Karyawan Dibuat')
+                    ->body("Karyawan baru \"{$this->name}\" berhasil ditambahkan.")
+                    ->success()
+                    ->send();
+            }
+
+            $this->showModal = false;
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', [
+                'type'  => 'error',
+                'title' => 'Gagal Menyimpan Data',
+                'body'  => $e->getMessage()
+            ]);
         }
-
-        $this->showModal = false;
     }
 
     // ── Hapus ────────────────────────────────────────────────────────────
@@ -152,15 +172,29 @@ class PosEmployees extends Component
     public function delete(): void
     {
         if ($this->deletingId) {
-            $employee = Employee::findOrFail($this->deletingId);
-            $name     = $employee->name;
-            $employee->delete();
+            try {
+                $employee = Employee::findOrFail($this->deletingId);
+                $name     = $employee->name;
+                $employee->delete();
 
-            Notification::make()
-                ->title('Karyawan Dihapus')
-                ->body("Data karyawan \"{$name}\" berhasil dihapus.")
-                ->success()
-                ->send();
+                $this->dispatch('toast', [
+                    'type'  => 'success',
+                    'title' => 'Karyawan Dihapus',
+                    'body'  => "Data karyawan \"{$name}\" berhasil dihapus."
+                ]);
+
+                Notification::make()
+                    ->title('Karyawan Dihapus')
+                    ->body("Data karyawan \"{$name}\" berhasil dihapus.")
+                    ->success()
+                    ->send();
+            } catch (\Throwable $e) {
+                $this->dispatch('toast', [
+                    'type'  => 'error',
+                    'title' => 'Gagal Menghapus Data',
+                    'body'  => $e->getMessage()
+                ]);
+            }
         }
 
         $this->showDeleteModal = false;

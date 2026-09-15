@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\ServiceOrder;
 use App\Models\Branch;
 use App\Models\User;
@@ -12,10 +13,38 @@ use Illuminate\Support\Facades\Storage;
 
 class PosServiceManagement extends Component
 {
+    use WithPagination;
+
     public ?int $selectedBranchId = null;
     public ?string $selectedStatus = null;
     public ?int $selectedTechnicianId = null;
     public ?string $search = '';
+    public int $perPage = 25;
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSelectedStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSelectedBranchId(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSelectedTechnicianId(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
 
     // Modal state for managing service ticket
     public bool $showEditModal = false;
@@ -33,6 +62,7 @@ class PosServiceManagement extends Component
         $this->selectedStatus = null;
         $this->selectedTechnicianId = null;
         $this->search = '';
+        $this->resetPage();
     }
 
     public function openEditModal(int $orderId)
@@ -101,6 +131,7 @@ class PosServiceManagement extends Component
             'type'    => 'success',
             'message' => 'Status Tiket Service #' . $order->ticket_code . ' berhasil diperbarui.',
         ]);
+        $this->dispatch('toast', type: 'success', message: 'Status Tiket Service #' . $order->ticket_code . ' berhasil diperbarui.');
 
         $this->closeEditModal();
     }
@@ -144,7 +175,9 @@ class PosServiceManagement extends Component
             });
         }
 
-        $orders = $query->paginate(25);
+        $orders = $this->perPage > 0
+            ? $query->paginate($this->perPage)
+            : $query->paginate(max(1, $query->count()));
 
         // Status Summary counts
         $statusCounts = [

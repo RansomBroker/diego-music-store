@@ -123,9 +123,17 @@ class PosCustomers extends Component
         if ($this->isEditing) {
             Customer::findOrFail($this->editingId)->update($data);
             Notification::make()->title('Pelanggan Diperbarui')->success()->send();
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Pelanggan berhasil diperbarui.',
+            ]);
         } else {
             Customer::create($data);
             Notification::make()->title('Pelanggan Ditambahkan')->success()->send();
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Pelanggan baru berhasil ditambahkan.',
+            ]);
         }
 
         $this->showModal = false;
@@ -144,6 +152,10 @@ class PosCustomers extends Component
         Customer::findOrFail($this->deletingId)->delete();
 
         Notification::make()->title('Pelanggan Dihapus')->success()->send();
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => 'Pelanggan berhasil dihapus.',
+        ]);
 
         $this->showDeleteModal = false;
         $this->deletingId      = null;

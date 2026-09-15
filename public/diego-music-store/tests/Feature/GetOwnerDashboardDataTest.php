@@ -61,6 +61,7 @@ class GetOwnerDashboardDataTest extends TestCase
             'quantity' => 1,
             'unit_price' => 1500000,
             'subtotal' => 1500000,
+            'total_price' => 1500000,
         ]);
 
         $action = new GetOwnerDashboardData();

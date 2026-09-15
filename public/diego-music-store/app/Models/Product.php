@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Product extends Model
@@ -73,11 +74,25 @@ class Product extends Model
     }
 
     /**
+     * Get the default/first variant relation.
+     */
+    public function defaultVariant(): HasOne
+    {
+        return $this->hasOne(ProductVariant::class)->oldestOfMany();
+    }
+
+    /**
      * Helper to get the default/first variant.
      */
     public function getDefaultVariantAttribute(): ?ProductVariant
     {
-        return $this->variants()->first();
+        if ($this->relationLoaded('defaultVariant')) {
+            return $this->getRelation('defaultVariant');
+        }
+
+        return $this->relationLoaded('variants')
+            ? $this->variants->first()
+            : $this->variants()->first();
     }
 
     /**

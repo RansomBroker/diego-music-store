@@ -67,6 +67,7 @@ class PosBarcodePrint extends Component
         $variants = ProductVariant::with('product')->get();
         if ($variants->isEmpty()) {
             Notification::make()->title('Perhatian')->body('Tidak ada data produk ditemukan.')->warning()->send();
+            $this->dispatch('toast', type: 'warning', title: 'Perhatian', body: 'Tidak ada data produk ditemukan.');
             return;
         }
 
@@ -92,6 +93,7 @@ class PosBarcodePrint extends Component
             ->body("Sebanyak {$addedCount} produk/varian telah dimasukkan ke dalam antrean cetak barcode.")
             ->success()
             ->send();
+        $this->dispatch('toast', type: 'success', title: 'Berhasil Menambahkan Semua Produk', body: "Sebanyak {$addedCount} produk/varian telah dimasukkan ke dalam antrean cetak barcode.");
     }
 
     public function updatedPaperLayout(string $value): void
@@ -158,6 +160,7 @@ class PosBarcodePrint extends Component
             ->body("{$variant->product->name} berhasil ditambahkan ke antrean.")
             ->success()
             ->send();
+        $this->dispatch('toast', type: 'success', title: 'Produk Ditambahkan', body: "{$variant->product->name} berhasil ditambahkan ke antrean.");
     }
 
     public function updateQty(int $variantId, int $qty): void
@@ -184,6 +187,7 @@ class PosBarcodePrint extends Component
     {
         if (empty($this->printQueue)) {
             Notification::make()->title('Antrean Cetak Kosong')->body('Pilih setidaknya satu produk untuk dicetak barcode.')->warning()->send();
+            $this->dispatch('toast', type: 'warning', title: 'Antrean Cetak Kosong', body: 'Pilih setidaknya satu produk untuk dicetak barcode.');
             return;
         }
 

@@ -50,6 +50,10 @@ class PosBranches extends Component
         $this->search = '';
         $this->selectedStatus = null;
         $this->resetPage();
+        $this->dispatch('toast', [
+            'type' => 'info',
+            'message' => 'Filter pencarian cabang direset.',
+        ]);
     }
 
     public function openCreate()
@@ -128,6 +132,10 @@ class PosBranches extends Component
             $branch = Branch::findOrFail($this->editingId);
             UpdateBranch::execute($branch, $data);
             Notification::make()->title('Cabang Berhasil Diperbarui')->success()->send();
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Cabang ' . $branch->name . ' berhasil diperbarui.',
+            ]);
         } else {
             $branch = CreateBranch::execute($data);
             Notification::make()
@@ -135,6 +143,10 @@ class PosBranches extends Component
                 ->body('Cabang baru ' . $branch->name . ' telah disetup lengkap dengan stok awal & pengaturannya.')
                 ->success()
                 ->send();
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Cabang baru ' . $branch->name . ' berhasil dibuat.',
+            ]);
         }
 
         $this->showModal = false;

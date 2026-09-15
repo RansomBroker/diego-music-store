@@ -43,6 +43,12 @@ class PosBranchPerformance extends Component
                 $this->dateTo = Carbon::now()->endOfYear()->format('Y-m-d');
                 break;
         }
+        $this->dispatch('toast', ['type' => 'info', 'message' => 'Filter rentang tanggal diperbarui']);
+    }
+
+    public function updatedSelectedBranchId()
+    {
+        $this->dispatch('toast', ['type' => 'info', 'message' => 'Filter cabang diperbarui']);
     }
 
     public function render()

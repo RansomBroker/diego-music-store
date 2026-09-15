@@ -85,6 +85,7 @@ class PosReceiptSettings extends Component
         ]);
 
         Notification::make()->title('Setting Struk & Invoice Berhasil Disimpan')->success()->send();
+        $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'Setting Struk & Invoice Berhasil Disimpan');
     }
 
     public function render()

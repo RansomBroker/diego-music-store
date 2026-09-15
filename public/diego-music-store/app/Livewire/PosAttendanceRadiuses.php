@@ -71,6 +71,11 @@ class PosAttendanceRadiuses extends Component
             ->success()
             ->send();
 
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => "Pengaturan radius presensi untuk \"{$branch->name}\" berhasil diperbarui ke {$this->attendance_radius_meters} meter.",
+        ]);
+
         $this->showEditModal = false;
     }
 

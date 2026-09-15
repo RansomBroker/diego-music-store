@@ -5,9 +5,15 @@
     'sortDirection' => 'asc'
 ])
 
-<th {{ $attributes->merge(['class' => 'px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400']) }}>
+@php
+    $classes = $attributes->get('class', '');
+    $hasTextColor = preg_match('/\b!?text-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|white|black|primary)\b/', $classes);
+    $defaultColor = $hasTextColor ? '' : 'text-slate-550 dark:text-slate-400';
+@endphp
+
+<th {{ $attributes->merge(['class' => "px-6 py-3 text-xs font-semibold uppercase tracking-wider {$defaultColor}"]) }}>
     @if($sortable && $field)
-        <button type="button" wire:click="sortBy('{{ $field }}')" class="group inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none">
+        <button type="button" wire:click="sortBy('{{ $field }}')" class="group inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider {{ $hasTextColor ? '' : 'text-slate-550 dark:text-slate-400' }} hover:text-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none">
             {{ $slot }}
             <span class="inline-flex">
                 @if ($sortField === $field)
@@ -21,3 +27,4 @@
         {{ $slot }}
     @endif
 </th>
+

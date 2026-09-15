@@ -89,6 +89,15 @@ class PosCommissions extends Component
 
     public function saveScheme(): void
     {
+        if (is_string($this->rate)) {
+            $cleaned = preg_replace('/[^\d.]/', '', str_replace(',', '.', $this->rate));
+            $this->rate = $cleaned !== '' ? (float) $cleaned : 0;
+        }
+        if (is_string($this->minMonthlySalesTarget)) {
+            $cleaned = preg_replace('/[^\d.]/', '', str_replace(',', '.', $this->minMonthlySalesTarget));
+            $this->minMonthlySalesTarget = $cleaned !== '' ? (float) $cleaned : 0;
+        }
+
         $this->validate([
             'schemeName' => 'required|string|max:255',
             'calculationType' => 'required|in:percentage,fixed_amount',
@@ -151,28 +160,45 @@ class PosCommissions extends Component
 
     public function toggleSchemeStatus(int $id): void
     {
-        $scheme = CommissionScheme::findOrFail($id);
-        $scheme->is_active = !$scheme->is_active;
-        $scheme->save();
+        try {
+            $scheme = CommissionScheme::findOrFail($id);
+            $scheme->is_active = !$scheme->is_active;
+            $scheme->save();
 
-        $statusText = $scheme->is_active ? 'diaktifkan' : 'dinonaktifkan';
-        $this->dispatch('toast', [
-            'type' => 'info',
-            'title' => 'Status Skema Berubah',
-            'body' => "Skema komisi \"{$scheme->name}\" berhasil {$statusText}."
-        ]);
+            $statusText = $scheme->is_active ? 'diaktifkan' : 'dinonaktifkan';
+            $this->dispatch('toast', [
+                'type' => 'info',
+                'title' => 'Status Skema Berubah',
+                'body' => "Skema komisi \"{$scheme->name}\" berhasil {$statusText}."
+            ]);
+        } catch (Throwable $e) {
+            $this->dispatch('toast', [
+                'type' => 'danger',
+                'title' => 'Gagal Mengubah Status',
+                'body' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function deleteScheme(int $id): void
     {
-        $scheme = CommissionScheme::findOrFail($id);
-        $scheme->delete();
+        try {
+            $scheme = CommissionScheme::findOrFail($id);
+            $schemeName = $scheme->name;
+            $scheme->delete();
 
-        $this->dispatch('toast', [
-            'type' => 'success',
-            'title' => 'Skema Komisi Dihapus',
-            'body' => "Skema komisi \"{$scheme->name}\" berhasil dihapus."
-        ]);
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'title' => 'Skema Komisi Dihapus',
+                'body' => "Skema komisi \"{$schemeName}\" berhasil dihapus."
+            ]);
+        } catch (Throwable $e) {
+            $this->dispatch('toast', [
+                'type' => 'danger',
+                'title' => 'Gagal Menghapus Skema',
+                'body' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function approveEmployeeRecap(int $employeeId): void

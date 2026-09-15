@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 
 class ClockIn
@@ -54,6 +55,28 @@ class ClockIn
 
                 if ($dist > $allowedRadius) {
                     throw new InvalidArgumentException("Gagal presensi! Anda berada {$dist} meter dari lokasi cabang (Batas maksimal radius: {$allowedRadius} meter). Mohon lakukan presensi dari area cabang.");
+                }
+            }
+
+            // Resolve Base64 Data URL or raw base64 string to a storage file path
+            if ($photoPath && str_starts_with($photoPath, 'data:image')) {
+                $parts = explode(',', $photoPath, 2);
+                if (count($parts) === 2) {
+                    $imageData = base64_decode($parts[1]);
+                    if ($imageData !== false) {
+                        $fileName = 'attendance-selfies/' . uniqid('selfie_') . '.jpg';
+                        Storage::disk('public')->put($fileName, $imageData);
+                        $photoPath = $fileName;
+                    }
+                }
+            } elseif ($photoPath && strlen($photoPath) > 255) {
+                $imageData = base64_decode($photoPath, true);
+                if ($imageData !== false) {
+                    $fileName = 'attendance-selfies/' . uniqid('selfie_') . '.jpg';
+                    Storage::disk('public')->put($fileName, $imageData);
+                    $photoPath = $fileName;
+                } else {
+                    $photoPath = substr($photoPath, 0, 255);
                 }
             }
 

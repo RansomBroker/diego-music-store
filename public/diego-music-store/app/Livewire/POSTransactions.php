@@ -122,6 +122,11 @@ class POSTransactions extends Component
         $this->fromDate = now()->format('Y-m-d');
         $this->toDate = now()->format('Y-m-d');
         $this->resetPage();
+
+        $this->dispatch('toast', [
+            'type' => 'info',
+            'message' => 'Filter transaksi berhasil direset.',
+        ]);
     }
 
     public function showDetails(int $saleId): void
@@ -267,6 +272,11 @@ class POSTransactions extends Component
                 ->success()
                 ->send();
 
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Retur penjualan berhasil diproses.',
+            ]);
+
             $this->cancelReturn();
             $this->resetPage();
         } catch (\Exception $e) {
@@ -391,6 +401,11 @@ class POSTransactions extends Component
                 ->body("Pelunasan piutang untuk transaksi {$this->settlementSale->invoice_number} berhasil diproses.")
                 ->success()
                 ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => "Pelunasan piutang untuk transaksi {$this->settlementSale->invoice_number} berhasil diproses.",
+            ]);
 
             $this->closeSettlementModal();
             $this->resetPage();

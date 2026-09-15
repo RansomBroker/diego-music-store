@@ -22,6 +22,9 @@ class PosAttendances extends Component
 {
     use WithPagination, WithFileUploads;
 
+    // ── Tab State ────────────────────────────────────────────────────────
+    public string $activeTab = 'attendances'; // 'attendances' or 'backdate_requests'
+
     // ── Filter State ─────────────────────────────────────────────────────
     public string $search = '';
     public ?int $filterBranchId = null;
@@ -61,6 +64,10 @@ class PosAttendances extends Component
         $this->backdateDate = now()->subDay()->format('Y-m-d');
         $this->filterBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
 
+        if (request()->query('tab') === 'backdate_requests') {
+            $this->activeTab = 'backdate_requests';
+        }
+
         if (request()->query('action') === 'clock_in') {
             $this->openClockModal('in');
         } elseif (request()->query('action') === 'clock_out') {
@@ -92,14 +99,120 @@ class PosAttendances extends Component
                 throw new \Exception('Data karyawan tidak ditemukan.');
             }
 
-            $actionClass->execute($employee, [
-                'branch_id'           => $this->filterBranchId ?: $employee->branch_id,
-                'clock_in_photo_path' => $this->webcamDataUrl,
-            ]);
+            $photoPath = $this->storeWebcamPhoto($this->webcamDataUrl);
+
+            $actionClass->execute(
+                $employee,
+                $this->filterBranchId ?: $employee->branch_id,
+                $this->notes,
+                $this->userLatitude,
+                $this->userLongitude,
+                $photoPath
+            );
 
             $this->dispatch('toast', ['type' => 'success', 'title' => 'Clock In Berhasil', 'body' => 'Clock In berhasil dicatat.']);
+            $this->showClockModal = false;
         } catch (Throwable $e) {
+            $this->errorMessage = $e->getMessage();
             $this->dispatch('toast', ['type' => 'danger', 'title' => 'Gagal Clock In', 'body' => $e->getMessage()]);
+        }
+    }
+
+    public function quickClockOut(ClockOut $actionClass): void
+    {
+        try {
+            $employee = auth()->user()?->employee;
+            if (!$employee) {
+                throw new \Exception('Data karyawan tidak ditemukan.');
+            }
+
+            $photoPath = $this->storeWebcamPhoto($this->webcamDataUrl);
+
+            $actionClass->execute(
+                $employee,
+                $this->notes,
+                $this->userLatitude,
+                $this->userLongitude,
+                $photoPath
+            );
+
+            $this->dispatch('toast', ['type' => 'success', 'title' => 'Clock Out Berhasil', 'body' => 'Clock Out berhasil dicatat.']);
+            $this->showClockModal = false;
+        } catch (Throwable $e) {
+            $this->errorMessage = $e->getMessage();
+            $this->dispatch('toast', ['type' => 'danger', 'title' => 'Gagal Clock Out', 'body' => $e->getMessage()]);
+        }
+    }
+
+    protected function storeWebcamPhoto(?string $dataUrl): ?string
+    {
+        if (!$dataUrl) {
+            return null;
+        }
+
+        if (str_starts_with($dataUrl, 'data:image')) {
+            $parts = explode(',', $dataUrl, 2);
+            if (count($parts) === 2) {
+                $imageData = base64_decode($parts[1]);
+                if ($imageData !== false) {
+                    $fileName = 'attendance-selfies/' . uniqid('selfie_') . '.jpg';
+                    Storage::disk('public')->put($fileName, $imageData);
+                    return $fileName;
+                }
+            }
+        }
+
+        if (strlen($dataUrl) > 255) {
+            $imageData = base64_decode($dataUrl, true);
+            if ($imageData !== false) {
+                $fileName = 'attendance-selfies/' . uniqid('selfie_') . '.jpg';
+                Storage::disk('public')->put($fileName, $imageData);
+                return $fileName;
+            }
+            return substr($dataUrl, 0, 255);
+        }
+
+        return $dataUrl;
+    }
+
+    public function openRecordModal(): void
+    {
+        $this->selectedEmployeeId = auth()->user()?->employee?->id;
+        $this->attendanceDate = now()->format('Y-m-d');
+        $this->status = 'off_day';
+        $this->notes = '';
+        $this->showModal = true;
+    }
+
+    public function saveRecord(RecordAttendance $actionClass): void
+    {
+        $this->validate([
+            'selectedEmployeeId' => 'required|exists:employees,id',
+            'attendanceDate' => 'required|date',
+            'status' => 'required|in:hadir,off_day,izin,sakit,alpha',
+        ]);
+
+        try {
+            $employee = Employee::findOrFail($this->selectedEmployeeId);
+
+            $actionClass->execute($employee, [
+                'branch_id' => $this->filterBranchId ?: $employee->branch_id,
+                'date' => $this->attendanceDate,
+                'status' => $this->status,
+                'notes' => $this->notes,
+            ]);
+
+            $this->dispatch('toast', ['type' => 'success', 'title' => 'Presensi Disimpan', 'body' => 'Data presensi berhasil disimpan.']);
+            Notification::make()
+                ->title('Presensi Berhasil Disimpan')
+                ->body("Data presensi {$employee->name} berhasil diperbarui.")
+                ->success()
+                ->send();
+
+            $this->showModal = false;
+            $this->reset(['selectedEmployeeId', 'notes']);
+        } catch (Throwable $e) {
+            $this->dispatch('toast', ['type' => 'danger', 'title' => 'Gagal Simpan Presensi', 'body' => $e->getMessage()]);
         }
     }
 
@@ -146,6 +259,7 @@ class PosAttendances extends Component
                 ->send();
 
             $this->showBackdateModal = false;
+            $this->activeTab = 'backdate_requests';
         } catch (Throwable $e) {
             $this->dispatch('toast', ['type' => 'danger', 'title' => 'Gagal Kirim Pengajuan', 'body' => $e->getMessage()]);
         }
@@ -171,6 +285,7 @@ class PosAttendances extends Component
                 ->send();
 
             $this->adminNotes = '';
+            $this->activeTab = 'backdate_requests';
         } catch (Throwable $e) {
             $this->dispatch('toast', ['type' => 'danger', 'title' => 'Gagal Memproses Pengajuan', 'body' => $e->getMessage()]);
         }

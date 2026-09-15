@@ -103,9 +103,17 @@ class PosCustomerLabels extends Component
             $label = CustomerLabel::findOrFail($this->editingId);
             $updateAction->execute($label, $data);
             Notification::make()->title('Kategori Penjualan Berhasil Diperbarui')->success()->send();
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Kategori penjualan berhasil diperbarui.',
+            ]);
         } else {
             $createAction->execute($data);
             Notification::make()->title('Kategori Penjualan Berhasil Ditambahkan')->success()->send();
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Kategori penjualan berhasil ditambahkan.',
+            ]);
         }
 
         $this->showModal = false;
@@ -126,6 +134,10 @@ class PosCustomerLabels extends Component
         // Check if this label is assigned to any customers
         if ($label->customers()->exists()) {
             Notification::make()->title('Gagal Hapus')->body('Kategori penjualan ini masih terhubung dengan data pelanggan.')->danger()->send();
+            $this->dispatch('toast', [
+                'type' => 'error',
+                'message' => 'Kategori penjualan ini masih terhubung dengan data pelanggan.',
+            ]);
             $this->showDeleteModal = false;
             return;
         }
@@ -133,6 +145,10 @@ class PosCustomerLabels extends Component
         $label->delete();
 
         Notification::make()->title('Kategori Penjualan Berhasil Dihapus')->success()->send();
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => 'Kategori penjualan berhasil dihapus.',
+        ]);
 
         $this->showDeleteModal = false;
         $this->deletingId      = null;

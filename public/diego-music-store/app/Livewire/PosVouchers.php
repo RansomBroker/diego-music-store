@@ -121,9 +121,11 @@ class PosVouchers extends Component
             $voucher = Voucher::findOrFail($this->editingId);
             $updateAction->execute($voucher, $data);
             Notification::make()->title('Voucher Berhasil Diperbarui')->success()->send();
+            $this->dispatch('toast', type: 'success', message: 'Voucher Berhasil Diperbarui');
         } else {
             $createAction->execute($data);
             Notification::make()->title('Voucher Berhasil Ditambahkan')->success()->send();
+            $this->dispatch('toast', type: 'success', message: 'Voucher Berhasil Ditambahkan');
         }
 
         $this->showModal = false;
@@ -142,6 +144,7 @@ class PosVouchers extends Component
         $voucher->delete();
 
         Notification::make()->title('Voucher Berhasil Dihapus')->success()->send();
+        $this->dispatch('toast', type: 'success', message: 'Voucher Berhasil Dihapus');
 
         $this->showDeleteModal = false;
         $this->deletingId = null;

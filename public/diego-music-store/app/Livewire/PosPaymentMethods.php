@@ -117,9 +117,11 @@ class PosPaymentMethods extends Component
             $method = PaymentMethod::findOrFail($this->editingId);
             $updateAction->execute($method, $data);
             Notification::make()->title('Metode Pembayaran Berhasil Diperbarui')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'Metode Pembayaran Berhasil Diperbarui');
         } else {
             $createAction->execute($data);
             Notification::make()->title('Metode Pembayaran Berhasil Ditambahkan')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'Metode Pembayaran Berhasil Ditambahkan');
         }
 
         $this->showModal = false;
@@ -141,6 +143,7 @@ class PosPaymentMethods extends Component
         $existsInSales = \App\Models\Sale::where('payment_method', 'like', "%{$method->name}%")->exists();
         if ($existsInSales) {
             Notification::make()->title('Gagal Hapus')->body('Metode pembayaran ini telah digunakan dalam transaksi penjualan.')->danger()->send();
+            $this->dispatch('toast', type: 'danger', title: 'Gagal Hapus', body: 'Metode pembayaran ini telah digunakan dalam transaksi penjualan.');
             $this->showDeleteModal = false;
             return;
         }
@@ -148,6 +151,7 @@ class PosPaymentMethods extends Component
         // Check if has children
         if ($method->children()->exists()) {
             Notification::make()->title('Gagal Hapus')->body('Metode pembayaran ini memiliki sub-metode. Hapus atau pindahkan sub-metode terlebih dahulu.')->danger()->send();
+            $this->dispatch('toast', type: 'danger', title: 'Gagal Hapus', body: 'Metode pembayaran ini memiliki sub-metode. Hapus atau pindahkan sub-metode terlebih dahulu.');
             $this->showDeleteModal = false;
             return;
         }
@@ -155,6 +159,7 @@ class PosPaymentMethods extends Component
         $method->delete();
 
         Notification::make()->title('Metode Pembayaran Berhasil Dihapus')->success()->send();
+        $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'Metode Pembayaran Berhasil Dihapus');
 
         $this->showDeleteModal = false;
         $this->deletingId      = null;

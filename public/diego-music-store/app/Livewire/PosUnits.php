@@ -121,9 +121,11 @@ class PosUnits extends Component
             $unit = Unit::findOrFail($this->editingId);
             $updateUnit->execute($unit, $data);
             Notification::make()->title('Satuan Berhasil Diperbarui')->success()->send();
+            $this->dispatch('toast', type: 'success', message: 'Satuan Berhasil Diperbarui');
         } else {
             $createUnit->execute($data);
             Notification::make()->title('Satuan Berhasil Ditambahkan')->success()->send();
+            $this->dispatch('toast', type: 'success', message: 'Satuan Berhasil Ditambahkan');
         }
 
         $this->showModal = false;
@@ -144,6 +146,7 @@ class PosUnits extends Component
         // Check if this unit is referenced as a base unit for others
         if ($unit->conversionUnits()->exists()) {
             Notification::make()->title('Gagal Hapus')->body('Satuan ini digunakan sebagai referensi satuan dasar oleh satuan konversi lain.')->danger()->send();
+            $this->dispatch('toast', type: 'error', message: 'Satuan ini digunakan sebagai referensi satuan dasar oleh satuan konversi lain.');
             $this->showDeleteModal = false;
             return;
         }
@@ -151,6 +154,7 @@ class PosUnits extends Component
         $unit->delete();
 
         Notification::make()->title('Satuan Berhasil Dihapus')->success()->send();
+        $this->dispatch('toast', type: 'success', message: 'Satuan Berhasil Dihapus');
 
         $this->showDeleteModal = false;
         $this->deletingId      = null;

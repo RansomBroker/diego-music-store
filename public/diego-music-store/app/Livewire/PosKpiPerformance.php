@@ -20,6 +20,7 @@ class PosKpiPerformance extends Component
     public string $activeTab = 'recap'; // 'recap', 'dashboard', 'templates'
     public string $filterMonth = '';
     public string $filterBranchId = '';
+    public int $perPage = 15;
 
     // Modal state for Template CRUD
     public bool $showTemplateModal = false;
@@ -27,15 +28,15 @@ class PosKpiPerformance extends Component
     public string $templateName = '';
     public string $templatePosition = '';
     public ?int $templateEmployeeId = null;
-    public float $maxBonusAmount = 500000;
-    public float $targetSalesAmount = 10000000;
-    public float $weightSales = 40.0;
-    public float $targetAtvAmount = 250000;
-    public float $weightAtv = 20.0;
-    public float $targetAttendancePct = 95.0;
-    public float $weightAttendance = 20.0;
-    public float $targetPunctualityPct = 95.0;
-    public float $weightPunctuality = 20.0;
+    public mixed $maxBonusAmount = 500000;
+    public mixed $targetSalesAmount = 10000000;
+    public mixed $weightSales = 40.0;
+    public mixed $targetAtvAmount = 250000;
+    public mixed $weightAtv = 20.0;
+    public mixed $targetAttendancePct = 95.0;
+    public mixed $weightAttendance = 20.0;
+    public mixed $targetPunctualityPct = 95.0;
+    public mixed $weightPunctuality = 20.0;
     public bool $isActiveTemplate = true;
 
     public function mount(): void
@@ -50,6 +51,11 @@ class PosKpiPerformance extends Component
     }
 
     public function updatedFilterBranchId(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage(): void
     {
         $this->resetPage();
     }
@@ -71,6 +77,11 @@ class PosKpiPerformance extends Component
             ->body("Berhasil memperbarui kalkulasi skor KPI & insentif bonus untuk {$count} karyawan.")
             ->success()
             ->send();
+
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => "Kalkulasi skor KPI & bonus selesai untuk {$count} karyawan.",
+        ]);
     }
 
     // ── Template Modal Handlers ──────────────────────────────────────────
@@ -114,8 +125,22 @@ class PosKpiPerformance extends Component
         $this->showTemplateModal = true;
     }
 
+    private function parseCurrencyValue(mixed $value): float
+    {
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        $cleaned = preg_replace('/[^\d]/', '', (string) $value);
+        return (float) ($cleaned ?: 0);
+    }
+
     public function saveTemplate(): void
     {
+        $this->maxBonusAmount = $this->parseCurrencyValue($this->maxBonusAmount);
+        $this->targetSalesAmount = $this->parseCurrencyValue($this->targetSalesAmount);
+        $this->targetAtvAmount = $this->parseCurrencyValue($this->targetAtvAmount);
+
         $this->validate([
             'templateName' => 'required|string|max:255',
             'maxBonusAmount' => 'required|numeric|min:0',
@@ -160,6 +185,11 @@ class PosKpiPerformance extends Component
             ->body('Data template KPI & tiering bonus berhasil diperbarui.')
             ->success()
             ->send();
+
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => 'Data template KPI & tiering bonus berhasil disimpan.',
+        ]);
     }
 
     public function render()
@@ -183,7 +213,7 @@ class PosKpiPerformance extends Component
             $evaluationsQuery->where('branch_id', $this->filterBranchId);
         }
 
-        $evaluations = $evaluationsQuery->paginate(12);
+        $evaluations = $evaluationsQuery->paginate($this->perPage > 0 ? $this->perPage : 999999);
 
         // 3. Templates list query for Tab 3
         $templates = KpiTemplate::with('employee')

@@ -22,10 +22,14 @@ class GetSalesEmployeeDashboardDataTest extends TestCase
     {
         $branch = Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
         $user = User::factory()->create();
-        $employee = Employee::create([
+        $employee = $user->employee ?: Employee::create([
             'user_id'                => $user->id,
             'name'                   => $user->name,
             'nik'                    => 'EMP-0099',
+            'monthly_off_days_quota' => 4,
+            'is_active'              => true,
+        ]);
+        $employee->update([
             'monthly_off_days_quota' => 4,
             'is_active'              => true,
         ]);
@@ -64,6 +68,7 @@ class GetSalesEmployeeDashboardDataTest extends TestCase
             'product_variant_id' => $variant->id,
             'quantity'           => 1,
             'unit_price'         => 4500000,
+            'total_price'        => 4500000,
             'subtotal'           => 4500000,
         ]);
 
@@ -75,6 +80,7 @@ class GetSalesEmployeeDashboardDataTest extends TestCase
             'date'              => now()->format('Y-m-d'),
         ]);
 
+        $user->refresh();
         $action = new GetSalesEmployeeDashboardData();
         $data = $action->execute($user);
 

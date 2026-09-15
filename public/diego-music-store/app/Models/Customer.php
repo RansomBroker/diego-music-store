@@ -46,6 +46,14 @@ class Customer extends Model
     }
 
     /**
+     * Get the deposits associated with the customer.
+     */
+    public function deposits()
+    {
+        return $this->hasMany(CustomerDeposit::class);
+    }
+
+    /**
      * Calculate total outstanding piutang dynamically across all unpaid sales.
      */
     public function getTotalPiutangAttribute(): float

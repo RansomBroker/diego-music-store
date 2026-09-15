@@ -109,12 +109,14 @@ class PosPrivileges extends Component
                 'permissions' => $this->selectedPermissions,
             ]);
             Notification::make()->title('Role & Hak Akses Berhasil Diperbarui')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'Role & Hak Akses Berhasil Diperbarui');
         } else {
             $createRole->execute([
                 'name' => $this->roleName,
                 'permissions' => $this->selectedPermissions,
             ]);
             Notification::make()->title('Role Baru Berhasil Dibuat')->success()->send();
+            $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'Role Baru Berhasil Dibuat');
         }
 
         $this->showModal = false;
@@ -126,6 +128,7 @@ class PosPrivileges extends Component
         $role = Role::findOrFail($id);
         if ($role->name === 'Super Admin' || $role->name === 'admin') {
             Notification::make()->title('Gagal Hapus')->body('Role utama tidak dapat dihapus.')->danger()->send();
+            $this->dispatch('toast', type: 'danger', title: 'Gagal Hapus', body: 'Role utama tidak dapat dihapus.');
             return;
         }
         $this->deletingId = $id;
@@ -138,6 +141,7 @@ class PosPrivileges extends Component
         $role->delete();
 
         Notification::make()->title('Role Berhasil Dihapus')->success()->send();
+        $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'Role Berhasil Dihapus');
         $this->showDeleteModal = false;
         $this->deletingId = null;
         $this->resetPage();

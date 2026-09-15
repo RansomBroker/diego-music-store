@@ -101,6 +101,7 @@ class PosStoreProfile extends Component
         $this->loadBranchData($branch);
 
         Notification::make()->title('Profil Toko Berhasil Disimpan')->success()->send();
+        $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'Profil Toko Berhasil Disimpan');
     }
 
     public function openCreateStore(): void
@@ -141,6 +142,7 @@ class PosStoreProfile extends Component
         $this->loadBranchData($newBranch);
 
         Notification::make()->title('Toko / Cabang Baru Berhasil Didaftarkan')->success()->send();
+        $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'Toko / Cabang Baru Berhasil Didaftarkan');
     }
 
     public function render()

@@ -23,7 +23,7 @@ class GetSalesEmployeeDashboardData
             $user = auth()->user();
         }
 
-        $employee = $user?->employee;
+        $employee = $user?->employee ?: ($user ? Employee::where('user_id', $user->id)->first() : null);
         $employeeId = $employee?->id;
         $userId = $user?->id;
 
@@ -86,7 +86,8 @@ class GetSalesEmployeeDashboardData
         $monthlyCommission = 0.0;
         if ($employeeId) {
             $monthlyCommission = (float) SalesCommissionLog::where('employee_id', $employeeId)
-                ->whereBetween('date', [$startOfMonth, $endOfMonth])
+                ->whereDate('date', '>=', $startOfMonth)
+                ->whereDate('date', '<=', $endOfMonth)
                 ->sum('commission_amount');
         }
 

@@ -34,6 +34,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/session', App\Livewire\POSCashSession::class)->name('pos.session');
     Route::get('/pos/session/{cashSession}/z-report', [App\Http\Controllers\POS\ZReportController::class, 'show'])->name('pos.z-report');
     Route::get('/pos/transactions', App\Livewire\POSTransactions::class)->name('pos.transactions');
+    Route::get('/pos/customer-deposits', App\Livewire\PosCustomerDeposits::class)->name('pos.customer-deposits');
     Route::get('/pos/daily-cash', App\Livewire\POSDailyCash::class)->name('pos.daily-cash');
     Route::get('/pos/customer-payments', App\Livewire\PosCustomerPayments::class)->name('pos.customer-payments');
     // Laporan ERP Routes

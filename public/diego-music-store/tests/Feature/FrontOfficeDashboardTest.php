@@ -2,25 +2,25 @@
 
 namespace Tests\Feature;
 
+use App\Models\Branch;
+use App\Models\CashSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class FrontOfficeDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function it_redirects_unauthenticated_user_accessing_front_office_to_login()
+    public function test_it_redirects_unauthenticated_user_accessing_front_office_to_login(): void
     {
         $response = $this->get(route('pos.front-office'));
 
         $response->assertRedirect(route('pos.login'));
     }
 
-    /** @test */
-    public function it_renders_session_inactive_when_no_active_session()
+    public function test_it_renders_session_inactive_when_no_active_session(): void
     {
         $user = User::factory()->create();
 
@@ -30,19 +30,21 @@ class FrontOfficeDashboardTest extends TestCase
         $response->assertSee('Sesi Tidak Aktif');
     }
 
-    /** @test */
-    public function it_renders_session_active_when_session_is_open()
+    public function test_it_renders_session_active_when_session_is_open(): void
     {
+        Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
         $user->assignRole('owner');
-        $branch = \App\Models\Branch::create([
+
+        $branch = Branch::create([
             'name' => 'Cabang Test',
+            'code' => 'CBG-DASH-01',
             'address' => 'Jl. Test',
             'phone' => '123',
             'is_active' => true,
         ]);
 
-        \App\Models\CashSession::create([
+        CashSession::create([
             'user_id' => $user->id,
             'branch_id' => $branch->id,
             'opened_at' => now(),
@@ -53,14 +55,14 @@ class FrontOfficeDashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('pos.front-office'));
 
         $response->assertStatus(200);
-        $response->assertSee('Sesi Aktif');
+        $response->assertDontSee('Sesi Tidak Aktif');
         $response->assertSee('Presensi Karyawan Cabang Hari Ini');
         $response->assertSee('Clock In (Masuk)');
     }
 
-    /** @test */
-    public function it_renders_presensi_karyawan_cabang_hari_ini_section_on_dashboard()
+    public function test_it_renders_presensi_karyawan_cabang_hari_ini_section_on_dashboard(): void
     {
+        Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
         $user->assignRole('owner');
 

@@ -77,6 +77,12 @@ class AccountSeeder extends Seeder
                 'parent_code' => '2-0000',
             ],
             [
+                'code' => '2-1200',
+                'name' => 'Penitipan Dana',
+                'classification' => 'liability',
+                'parent_code' => '2-0000',
+            ],
+            [
                 'code' => '3-1000',
                 'name' => 'Modal Pemilik',
                 'classification' => 'equity',
