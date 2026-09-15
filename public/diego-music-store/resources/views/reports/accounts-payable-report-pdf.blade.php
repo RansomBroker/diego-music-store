@@ -56,7 +56,7 @@
         .text-center {
             text-align: center;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -126,11 +126,11 @@
                 @forelse($data['suppliers'] as $sup)
                     <tr>
                         <td class="font-bold">{{ $sup['supplier_name'] }}</td>
-                        <td class="font-mono">{{ $sup['supplier_phone'] }}</td>
-                        <td class="text-center font-mono font-bold">{{ number_format($sup['count_invoices'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono">{{ number_format($sup['grand_total'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono">{{ number_format($sup['paid_amount'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($sup['unpaid_amount'], 0, ',', '.') }}</td>
+                        <td class="">{{ $sup['supplier_phone'] }}</td>
+                        <td class="text-center  font-bold">{{ number_format($sup['count_invoices'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ number_format($sup['grand_total'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ number_format($sup['paid_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ number_format($sup['unpaid_amount'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -156,12 +156,12 @@
                 @forelse($data['suppliers'] as $sup)
                     <tr>
                         <td class="font-bold">{{ $sup['supplier_name'] }}</td>
-                        <td class="text-right font-mono">{{ $sup['current'] > 0 ? number_format($sup['current'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ $sup['aging_1_30'] > 0 ? number_format($sup['aging_1_30'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ $sup['aging_31_60'] > 0 ? number_format($sup['aging_31_60'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ $sup['aging_61_90'] > 0 ? number_format($sup['aging_61_90'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ $sup['aging_90_plus'] > 0 ? number_format($sup['aging_90_plus'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($sup['unpaid_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ $sup['current'] > 0 ? number_format($sup['current'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $sup['aging_1_30'] > 0 ? number_format($sup['aging_1_30'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $sup['aging_31_60'] > 0 ? number_format($sup['aging_31_60'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $sup['aging_61_90'] > 0 ? number_format($sup['aging_61_90'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $sup['aging_90_plus'] > 0 ? number_format($sup['aging_90_plus'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right  font-bold">{{ number_format($sup['unpaid_amount'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -187,14 +187,14 @@
             <tbody>
                 @forelse($data['invoices'] as $inv)
                     <tr>
-                        <td class="font-mono font-bold">{{ $inv['transaction_no'] }}</td>
-                        <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($inv['date'])->format('d/m/Y') }}</td>
-                        <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($inv['due_date'])->format('d/m/Y') }}</td>
+                        <td class=" font-bold">{{ $inv['transaction_no'] }}</td>
+                        <td class="">{{ \Illuminate\Support\Carbon::parse($inv['date'])->format('d/m/Y') }}</td>
+                        <td class="">{{ \Illuminate\Support\Carbon::parse($inv['due_date'])->format('d/m/Y') }}</td>
                         <td class="font-bold">{{ $inv['supplier_name'] }}</td>
                         <td>{{ $inv['is_overdue'] ? ('Jatuh Tempo (' . $inv['overdue_days'] . ' hr)') : 'Lancar' }}</td>
-                        <td class="text-right font-mono">{{ number_format($inv['grand_total'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono">{{ number_format($inv['paid_amount'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($inv['unpaid_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ number_format($inv['grand_total'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ number_format($inv['paid_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ number_format($inv['unpaid_amount'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -209,7 +209,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>RINGKASAN AP: {{ number_format($data['total_invoices'], 0, ',', '.') }} Faktur &bull; Belum Jt Tempo: Rp {{ number_format($data['total_current'], 0, ',', '.') }} &bull; Sudah Jt Tempo: Rp {{ number_format($data['total_overdue'], 0, ',', '.') }}</td>
-                <td class="text-right font-mono">TOTAL SISA HUTANG: Rp {{ number_format($data['total_unpaid'], 0, ',', '.') }}</td>
+                <td class="text-right ">TOTAL SISA HUTANG: Rp {{ number_format($data['total_unpaid'], 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

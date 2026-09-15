@@ -68,7 +68,7 @@
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             @forelse($data['assets']['items'] as $item)
                                 <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
-                                    <td class="py-2.5 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
+                                    <td class="py-2.5 px-4  text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
                                     <td class="py-2.5 px-4">
                                         <div class="flex items-center gap-1.5" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
                                             @if($item['is_header'])
@@ -82,7 +82,7 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td class="py-2.5 px-4 text-right font-mono text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
+                                    <td class="py-2.5 px-4 text-right  text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
                                         {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
                                     </td>
                                     <td class="py-2.5 px-2 text-center">
@@ -114,7 +114,7 @@
                     {{-- Assets Total Footer Bar (Monochrome High Contrast) --}}
                     <div class="p-4 px-6 bg-gray-100 dark:bg-white/10 border-t-2 border-gray-400 dark:border-gray-600 flex justify-between items-center text-gray-900 dark:text-white">
                         <span class="font-extrabold text-sm uppercase tracking-wider">TOTAL ASET (AKTIVA)</span>
-                        <span class="font-mono text-base font-extrabold text-gray-900 dark:text-white">
+                        <span class=" text-base font-extrabold text-gray-900 dark:text-white">
                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_assets']) }}
                         </span>
                     </div>
@@ -153,7 +153,7 @@
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             @forelse($data['liabilities']['items'] as $item)
                                 <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
-                                    <td class="py-2 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
+                                    <td class="py-2 px-4  text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
                                     <td class="py-2 px-4">
                                         <div class="flex items-center gap-1" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
                                             @if($item['is_header'])
@@ -164,7 +164,7 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td class="py-2 px-4 text-right font-mono text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
+                                    <td class="py-2 px-4 text-right  text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
                                         {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
                                     </td>
                                     <td class="py-2 px-2 text-center">
@@ -195,7 +195,7 @@
 
                     <div class="p-3.5 px-4 bg-gray-100 dark:bg-white/10 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center text-gray-900 dark:text-white">
                         <span class="font-bold text-xs uppercase tracking-wider">TOTAL KEWAJIBAN</span>
-                        <span class="font-mono text-sm font-bold text-gray-900 dark:text-white">
+                        <span class=" text-sm font-bold text-gray-900 dark:text-white">
                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_liabilities']) }}
                         </span>
                     </div>
@@ -230,7 +230,7 @@
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             @foreach($data['equity']['items'] as $item)
                                 <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
-                                    <td class="py-2 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
+                                    <td class="py-2 px-4  text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
                                     <td class="py-2 px-4">
                                         <div class="flex items-center gap-1" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
                                             @if($item['is_header'])
@@ -241,7 +241,7 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td class="py-2 px-4 text-right font-mono text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
+                                    <td class="py-2 px-4 text-right  text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
                                         {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
                                     </td>
                                     <td class="py-2 px-2 text-center">
@@ -264,14 +264,14 @@
 
                             {{-- Dynamic Current Net Income Line --}}
                             <tr class="bg-gray-100/80 font-bold dark:bg-white/10 text-gray-900 dark:text-white">
-                                <td class="py-2.5 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-2.5 px-4  text-xs text-gray-500">-</td>
                                 <td class="py-2.5 px-4 flex items-center gap-2">
                                     <span>Laba / (Rugi) Periode Berjalan</span>
                                     <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
                                         Auto-Calculate
                                     </span>
                                 </td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-bold text-gray-900 dark:text-white">
+                                <td class="py-2.5 px-4 text-right  text-xs font-bold text-gray-900 dark:text-white">
                                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['equity']['current_net_income']) }}
                                 </td>
                                 <td></td>
@@ -281,7 +281,7 @@
 
                     <div class="p-3.5 px-4 bg-gray-100 dark:bg-white/10 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center text-gray-900 dark:text-white">
                         <span class="font-bold text-xs uppercase tracking-wider">TOTAL EKUITAS</span>
-                        <span class="font-mono text-sm font-bold text-gray-900 dark:text-white">
+                        <span class=" text-sm font-bold text-gray-900 dark:text-white">
                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_equity']) }}
                         </span>
                     </div>
@@ -291,7 +291,7 @@
             {{-- COMBINED LIABILITIES & EQUITY TOTAL FOOTER (Monochrome High Contrast) --}}
             <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl flex justify-between items-center text-gray-900 dark:text-white shadow-sm">
                 <span class="font-extrabold text-sm uppercase tracking-wider">TOTAL KEWAJIBAN & EKUITAS</span>
-                <span class="font-mono text-base font-extrabold text-gray-900 dark:text-white">
+                <span class=" text-base font-extrabold text-gray-900 dark:text-white">
                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_liabilities_and_equity']) }}
                 </span>
             </div>
@@ -309,7 +309,7 @@
                 <div class="p-5 bg-gray-50/80 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 flex justify-between items-center">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="px-2 py-0.5 text-xs font-mono font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded">
+                            <span class="px-2 py-0.5 text-xs  font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded">
                                 {{ $this->selectedAccount['code'] }}
                             </span>
                             <h3 class="text-base font-extrabold text-gray-900 dark:text-white">
@@ -349,12 +349,12 @@
                             <tbody class="divide-y divide-gray-100 dark:divide-white/10">
                                 @foreach($this->ledgerTransactions as $tx)
                                     <tr class="hover:bg-gray-50/50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                                        <td class="py-2 px-3 font-mono text-xs whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($tx['date'])->format('d/m/Y') }}</td>
-                                        <td class="py-2 px-3 font-mono text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ $tx['entry_no'] }}</td>
+                                        <td class="py-2 px-3  text-xs whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($tx['date'])->format('d/m/Y') }}</td>
+                                        <td class="py-2 px-3  text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ $tx['entry_no'] }}</td>
                                         <td class="py-2 px-3 text-xs">{{ $tx['description'] }}</td>
-                                        <td class="py-2 px-3 text-right font-mono text-xs">{{ $tx['debit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['debit']) : '-' }}</td>
-                                        <td class="py-2 px-3 text-right font-mono text-xs">{{ $tx['credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['credit']) : '-' }}</td>
-                                        <td class="py-2 px-3 text-right font-mono text-xs font-bold text-gray-900 dark:text-white">
+                                        <td class="py-2 px-3 text-right  text-xs">{{ $tx['debit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['debit']) : '-' }}</td>
+                                        <td class="py-2 px-3 text-right  text-xs">{{ $tx['credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['credit']) : '-' }}</td>
+                                        <td class="py-2 px-3 text-right  text-xs font-bold text-gray-900 dark:text-white">
                                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($tx['running_balance']) }}
                                         </td>
                                     </tr>
@@ -375,7 +375,7 @@
                 {{-- Modal Footer --}}
                 <div class="p-4 bg-gray-50/80 dark:bg-white/5 border-t border-gray-200 dark:border-white/10 flex justify-between items-center">
                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                        Total Saldo Akhir: <strong class="font-mono text-gray-900 dark:text-white text-sm ml-1">{{ \App\Helpers\FinancialReportHelper::formatRupiah($this->selectedAccount['total_balance']) }}</strong>
+                        Total Saldo Akhir: <strong class=" text-gray-900 dark:text-white text-sm ml-1">{{ \App\Helpers\FinancialReportHelper::formatRupiah($this->selectedAccount['total_balance']) }}</strong>
                     </div>
 
                     <button 

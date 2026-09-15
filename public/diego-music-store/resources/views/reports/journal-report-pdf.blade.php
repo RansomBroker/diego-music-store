@@ -72,7 +72,7 @@
         .text-right {
             text-align: right;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -149,11 +149,11 @@
             <tbody>
                 @foreach($entry['items'] as $item)
                     <tr>
-                        <td class="font-mono">{{ $item['account_code'] }}</td>
+                        <td class="">{{ $item['account_code'] }}</td>
                         <td class="font-bold">{{ $item['account_name'] }}</td>
                         <td>{{ $item['notes'] ?: '-' }}</td>
-                        <td class="text-right font-mono">{{ $item['debit'] > 0 ? number_format($item['debit'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ $item['credit'] > 0 ? number_format($item['credit'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $item['debit'] > 0 ? number_format($item['debit'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $item['credit'] > 0 ? number_format($item['credit'], 0, ',', '.') : '-' }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -163,7 +163,7 @@
             <table style="width: 100%;">
                 <tr>
                     <td>TOTAL BUKTI JURNAL</td>
-                    <td class="text-right font-mono">Debit: {{ number_format($entry['total_debit'], 0, ',', '.') }} | Kredit: {{ number_format($entry['total_credit'], 0, ',', '.') }}</td>
+                    <td class="text-right ">Debit: {{ number_format($entry['total_debit'], 0, ',', '.') }} | Kredit: {{ number_format($entry['total_credit'], 0, ',', '.') }}</td>
                 </tr>
             </table>
         </div>
@@ -173,7 +173,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>GRAND TOTAL DEBIT & KREDIT ({{ $data['total_entries'] }} BUKTI JURNAL)</td>
-                <td class="text-right font-mono">Debit: {{ number_format($data['grand_total_debit'], 0, ',', '.') }} | Kredit: {{ number_format($data['grand_total_credit'], 0, ',', '.') }}</td>
+                <td class="text-right ">Debit: {{ number_format($data['grand_total_debit'], 0, ',', '.') }} | Kredit: {{ number_format($data['grand_total_credit'], 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

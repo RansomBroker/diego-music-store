@@ -25,13 +25,13 @@
                                     {{ $r->violation_type === 'late_in' ? 'Keterlambatan (Late In)' : ($r->violation_type === 'early_out' ? 'Pulang Cepat (Early Out)' : $r->violation_type) }}
                                 </x-pos.utility.pill>
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono font-bold text-slate-700 dark:text-slate-300">
+                            <x-pos.table.td class=" font-bold text-slate-700 dark:text-slate-300">
                                 {{ $r->min_minutes }}m - {{ $r->max_minutes ? $r->max_minutes . 'm' : 'Tanpa Batas' }}
                             </x-pos.table.td>
                             <x-pos.table.td class="text-slate-600 dark:text-slate-300 capitalize">
                                 {{ str_replace('_', ' ', $r->deduction_type) }}
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono font-black text-slate-900 dark:text-slate-100">
+                            <x-pos.table.td class=" font-black text-slate-900 dark:text-slate-100">
                                 Rp {{ number_format($r->deduction_amount, 0, ',', '.') }}
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">

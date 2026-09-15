@@ -29,7 +29,7 @@
 
             <!-- Code and Name -->
             <span class="text-sm tracking-wide text-gray-700 dark:text-gray-200">
-                <span class="font-mono text-gray-400 dark:text-gray-500 mr-1">{{ $account->code }}</span> - {{ $account->name }}
+                <span class=" text-gray-400 dark:text-gray-500 mr-1">{{ $account->code }}</span> - {{ $account->name }}
             </span>
 
             <!-- Badge for Classification -->
@@ -51,7 +51,7 @@
 
         <!-- Right side: balance and ledger action -->
         <div class="flex items-center gap-4">
-            <span class="font-mono text-sm font-bold {{ $account->balance >= 0 ? 'text-gray-900 dark:text-white' : 'text-rose-600 dark:text-rose-400' }}">
+            <span class=" text-sm font-bold {{ $account->balance >= 0 ? 'text-gray-900 dark:text-white' : 'text-rose-600 dark:text-rose-400' }}">
                 Rp {{ number_format($account->balance, 0, ',', '.') }}
             </span>
 

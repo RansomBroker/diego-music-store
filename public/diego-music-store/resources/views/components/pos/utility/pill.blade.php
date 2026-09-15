@@ -15,7 +15,7 @@
 
     // Variants
     $variants = [
-        'default' => 'bg-slate-150 dark:bg-slate-700 text-slate-900 dark:text-slate-200 border border-slate-300 dark:border-slate-600 font-mono',
+        'default' => 'bg-slate-150 dark:bg-slate-700 text-slate-900 dark:text-slate-200 border border-slate-300 dark:border-slate-600 ',
         'primary' => 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-blue-900',
         'warning' => 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60 font-black uppercase tracking-wider',
         'danger' => 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-900/60 font-black uppercase tracking-wider',

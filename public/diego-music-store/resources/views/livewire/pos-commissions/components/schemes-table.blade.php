@@ -68,7 +68,7 @@
                                     {{ $sch->calculation_type === 'percentage' ? 'Persentase (%)' : 'Flat Nominal (Rp)' }}
                                 </x-pos.utility.pill>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-mono font-medium text-slate-800 dark:text-slate-200">
+                            <x-pos.table.td class="text-right  font-medium text-slate-800 dark:text-slate-200">
                                 @if ($sch->calculation_type === 'percentage')
                                     {{ $sch->rate }}%
                                 @else

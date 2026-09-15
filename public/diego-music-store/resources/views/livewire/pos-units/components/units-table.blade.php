@@ -47,7 +47,7 @@
                     <!-- Conversion Factor -->
                     <x-pos.table.td class="whitespace-nowrap text-center">
                         @if ($row->base_unit_id)
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 font-mono text-xs">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60  text-xs">
                                 1 {{ $row->code }} = {{ $row->conversion_factor }} {{ $row->baseUnit->code ?? '' }}
                             </span>
                         @else

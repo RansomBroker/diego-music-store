@@ -22,7 +22,7 @@
                 @endphp
                 @forelse ($displayTx as $tx)
                     <x-pos.table.tr>
-                        <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300 font-mono">{{ $tx->created_at->format('d/m/Y H:i') }}</x-pos.table.td>
+                        <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300 ">{{ $tx->created_at->format('d/m/Y H:i') }}</x-pos.table.td>
                         <x-pos.table.td class="text-xs font-bold text-slate-900 dark:text-white">{{ $tx->creator?->name ?? $tx->user?->name ?? '-' }}</x-pos.table.td>
                         <x-pos.table.td class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ $tx->category }}</x-pos.table.td>
                         <x-pos.table.td class="text-center">

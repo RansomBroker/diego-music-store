@@ -12,7 +12,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Sesi Stok Opname</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ number_format($data['total_opname_sessions'], 0, ',', '.') }} Sesi
             </div>
             <span class="text-xs text-gray-400">Total Audit Periode Ini</span>
@@ -20,7 +20,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Item Di-Audit</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ number_format($data['total_items_audited'], 0, ',', '.') }} Item
             </div>
             <span class="text-xs text-gray-400">Kuantitas Barang Terperiksa</span>
@@ -28,7 +28,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Net Selisih Qty</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ $data['total_net_variance_qty'] > 0 ? '+' : '' }}{{ number_format($data['total_net_variance_qty'], 0, ',', '.') }} Unit
             </div>
             <span class="text-xs text-gray-400">Physical vs System Variance</span>
@@ -36,7 +36,7 @@
 
         <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
             <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Grand Total Stock Adjustment</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_adjustment_value']) }}
             </div>
             <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Valuasi Penyesuaian HPP</span>
@@ -55,7 +55,7 @@
         </x-slot>
 
         <x-slot name="headerEnd">
-            <span class="text-xs font-mono text-gray-500 dark:text-gray-400">
+            <span class="text-xs  text-gray-500 dark:text-gray-400">
                 Periode: <strong>{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }} - {{ \Illuminate\Support\Carbon::parse($data['to_date'])->format('d/m/Y') }}</strong> &bull; Cabang: <strong>{{ $data['branch_name'] }}</strong>
             </span>
         </x-slot>
@@ -68,8 +68,8 @@
                         <div class="border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
                             <div class="p-3.5 px-6 bg-gray-100 dark:bg-white/5 flex flex-col sm:flex-row justify-between sm:items-center gap-2 text-xs border-b border-gray-300 dark:border-gray-700">
                                 <div class="flex items-center gap-3">
-                                    <span class="font-mono font-extrabold text-sm text-gray-900 dark:text-white">{{ $op['opname_number'] }}</span>
-                                    <span class="text-gray-500 font-mono">Tgl: {{ \Illuminate\Support\Carbon::parse($op['opname_date'])->format('d/m/Y') }}</span>
+                                    <span class=" font-extrabold text-sm text-gray-900 dark:text-white">{{ $op['opname_number'] }}</span>
+                                    <span class="text-gray-500 ">Tgl: {{ \Illuminate\Support\Carbon::parse($op['opname_date'])->format('d/m/Y') }}</span>
                                     <x-filament::badge :color="$op['status_badge_color']">
                                         {{ $op['status'] }}
                                     </x-filament::badge>
@@ -77,7 +77,7 @@
                                 <div class="flex items-center gap-4 text-gray-700 dark:text-gray-300">
                                     <span>Cabang: <strong>{{ $op['branch_name'] }}</strong></span>
                                     <span>Item Di-audit: <strong>{{ number_format($op['items_count'], 0, ',', '.') }} SKU</strong></span>
-                                    <span>Adjustment: <strong class="font-mono text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($op['session_adjustment_value']) }}</strong></span>
+                                    <span>Adjustment: <strong class=" text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($op['session_adjustment_value']) }}</strong></span>
                                 </div>
                             </div>
 
@@ -97,11 +97,11 @@
                                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-xs">
                                     @foreach($op['items'] as $item)
                                         <tr class="hover:bg-gray-50/50 dark:hover:bg-white/5">
-                                            <td class="py-2 px-6 font-mono text-gray-500">{{ $item['sku'] }}</td>
+                                            <td class="py-2 px-6  text-gray-500">{{ $item['sku'] }}</td>
                                             <td class="py-2 px-6 font-semibold text-gray-900 dark:text-white">{{ $item['full_name'] }}</td>
-                                            <td class="py-2 px-6 text-center font-mono text-gray-500">{{ number_format($item['system_qty'], 0, ',', '.') }} {{ $item['unit'] }}</td>
-                                            <td class="py-2 px-6 text-center font-mono font-bold text-gray-900 dark:text-white">{{ number_format($item['physical_qty'], 0, ',', '.') }} {{ $item['unit'] }}</td>
-                                            <td class="py-2 px-6 text-center font-mono font-extrabold {{ $item['difference'] < 0 ? 'text-rose-600 dark:text-rose-400' : ($item['difference'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white') }}">
+                                            <td class="py-2 px-6 text-center  text-gray-500">{{ number_format($item['system_qty'], 0, ',', '.') }} {{ $item['unit'] }}</td>
+                                            <td class="py-2 px-6 text-center  font-bold text-gray-900 dark:text-white">{{ number_format($item['physical_qty'], 0, ',', '.') }} {{ $item['unit'] }}</td>
+                                            <td class="py-2 px-6 text-center  font-extrabold {{ $item['difference'] < 0 ? 'text-rose-600 dark:text-rose-400' : ($item['difference'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white') }}">
                                                 {{ $item['difference'] > 0 ? '+' : '' }}{{ number_format($item['difference'], 0, ',', '.') }}
                                             </td>
                                             <td class="py-2 px-6 text-center whitespace-nowrap">
@@ -109,8 +109,8 @@
                                                     {{ $item['item_status_label'] }}
                                                 </x-filament::badge>
                                             </td>
-                                            <td class="py-2 px-6 text-right font-mono text-gray-500">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['cost_price']) }}</td>
-                                            <td class="py-2 px-6 text-right font-mono font-extrabold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['adjustment_value']) }}</td>
+                                            <td class="py-2 px-6 text-right  text-gray-500">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['cost_price']) }}</td>
+                                            <td class="py-2 px-6 text-right  font-extrabold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['adjustment_value']) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -143,10 +143,10 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @forelse($data['opnames'] as $op)
                             <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                                <td class="py-2.5 px-4 font-mono text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ $op['opname_number'] }}
                                 </td>
-                                <td class="py-2.5 px-4 font-mono text-xs text-gray-500 whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs text-gray-500 whitespace-nowrap">
                                     {{ \Illuminate\Support\Carbon::parse($op['opname_date'])->format('d/m/Y') }}
                                 </td>
                                 <td class="py-2.5 px-4 text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
@@ -157,19 +157,19 @@
                                         {{ $op['status'] }}
                                     </x-filament::badge>
                                 </td>
-                                <td class="py-2.5 px-4 text-center font-mono text-xs font-bold whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-center  text-xs font-bold whitespace-nowrap">
                                     {{ number_format($op['items_count'], 0, ',', '.') }} SKU
                                 </td>
-                                <td class="py-2.5 px-4 text-center font-mono text-xs text-gray-500 whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-center  text-xs text-gray-500 whitespace-nowrap">
                                     {{ number_format($op['session_system_qty'], 0, ',', '.') }}
                                 </td>
-                                <td class="py-2.5 px-4 text-center font-mono text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-center  text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ number_format($op['session_physical_qty'], 0, ',', '.') }}
                                 </td>
-                                <td class="py-2.5 px-4 text-center font-mono text-xs font-extrabold whitespace-nowrap {{ $op['session_diff_qty'] < 0 ? 'text-rose-600 dark:text-rose-400' : ($op['session_diff_qty'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white') }}">
+                                <td class="py-2.5 px-4 text-center  text-xs font-extrabold whitespace-nowrap {{ $op['session_diff_qty'] < 0 ? 'text-rose-600 dark:text-rose-400' : ($op['session_diff_qty'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white') }}">
                                     {{ $op['session_diff_qty'] > 0 ? '+' : '' }}{{ number_format($op['session_diff_qty'], 0, ',', '.') }}
                                 </td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($op['session_adjustment_value']) }}
                                 </td>
                                 <td class="py-2.5 px-4 text-xs text-gray-500 truncate max-w-xs">
@@ -205,7 +205,7 @@
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-gray-50 dark:bg-white/5 p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                     <div>
                         <span class="text-gray-500 block">Tanggal Audit:</span>
-                        <strong class="font-mono text-gray-900 dark:text-white">{{ $selectedOpnameDetail['opname_date'] }}</strong>
+                        <strong class=" text-gray-900 dark:text-white">{{ $selectedOpnameDetail['opname_date'] }}</strong>
                     </div>
                     <div>
                         <span class="text-gray-500 block">Cabang:</span>
@@ -240,11 +240,11 @@
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             @foreach($selectedOpnameDetail['items'] as $item)
                                 <tr class="hover:bg-gray-50/50 dark:hover:bg-white/5">
-                                    <td class="py-2 px-4 font-mono text-gray-500">{{ $item['sku'] }}</td>
+                                    <td class="py-2 px-4  text-gray-500">{{ $item['sku'] }}</td>
                                     <td class="py-2 px-4 font-semibold text-gray-900 dark:text-white">{{ $item['full_name'] }}</td>
-                                    <td class="py-2 px-4 text-center font-mono text-gray-500">{{ number_format($item['system_qty'], 0, ',', '.') }} {{ $item['unit'] }}</td>
-                                    <td class="py-2 px-4 text-center font-mono font-bold text-gray-900 dark:text-white">{{ number_format($item['physical_qty'], 0, ',', '.') }} {{ $item['unit'] }}</td>
-                                    <td class="py-2 px-4 text-center font-mono font-extrabold {{ $item['difference'] < 0 ? 'text-rose-600 dark:text-rose-400' : ($item['difference'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white') }}">
+                                    <td class="py-2 px-4 text-center  text-gray-500">{{ number_format($item['system_qty'], 0, ',', '.') }} {{ $item['unit'] }}</td>
+                                    <td class="py-2 px-4 text-center  font-bold text-gray-900 dark:text-white">{{ number_format($item['physical_qty'], 0, ',', '.') }} {{ $item['unit'] }}</td>
+                                    <td class="py-2 px-4 text-center  font-extrabold {{ $item['difference'] < 0 ? 'text-rose-600 dark:text-rose-400' : ($item['difference'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white') }}">
                                         {{ $item['difference'] > 0 ? '+' : '' }}{{ number_format($item['difference'], 0, ',', '.') }}
                                     </td>
                                     <td class="py-2 px-4 text-center">
@@ -252,8 +252,8 @@
                                             {{ $item['item_status_label'] }}
                                         </x-filament::badge>
                                     </td>
-                                    <td class="py-2 px-4 text-right font-mono text-gray-500">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['cost_price']) }}</td>
-                                    <td class="py-2 px-4 text-right font-mono font-extrabold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['adjustment_value']) }}</td>
+                                    <td class="py-2 px-4 text-right  text-gray-500">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['cost_price']) }}</td>
+                                    <td class="py-2 px-4 text-right  font-extrabold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['adjustment_value']) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

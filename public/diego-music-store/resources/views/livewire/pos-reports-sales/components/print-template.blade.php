@@ -30,7 +30,7 @@
             }
             .text-right { text-align: right; }
             .text-center { text-align: center; }
-            .font-mono { font-family: 'Courier New', Courier, monospace; }
+            . { font-family: 'Courier New', Courier, monospace; }
         }
     </style>
 
@@ -48,7 +48,7 @@
                     {{ $currentBranch?->address ?: 'Jl. Utama Music Store ERP' }} | Telp: {{ $currentBranch?->phone ?: '-' }}
                 </div>
             </div>
-            <div style="text-align: right; font-size: 8pt;" class="font-mono">
+            <div style="text-align: right; font-size: 8pt;" class="">
                 <div>TGL CETAK: {{ now()->format('d/m/Y H:i:s') }}</div>
                 <div>PETUGAS: {{ strtoupper(auth()->user()?->name ?: 'ADMIN') }}</div>
                 <div>STATUS: DOKUMEN RESMI ERP</div>
@@ -96,22 +96,22 @@
                             <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top; text-align: center;">{{ $idx + 1 }}</td>
                             <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['invoice_date'] }}</td>
                             <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['sale_category'] }}</td>
-                            <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;" class="font-mono font-bold">{{ $item['invoice_number'] }}</td>
+                            <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;" class=" font-bold">{{ $item['invoice_number'] }}</td>
                             <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['customer_name'] }}</td>
                             <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top; font-style: italic;">{{ $item['notes'] }}</td>
                             <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['cashier_name'] }}</td>
                             <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['sales_rep_name'] }}</td>
                             <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;">{{ $item['payment_method'] }}</td>
                         @endif
-                        <td class="font-mono">{{ $item['sku'] }}</td>
+                        <td class="">{{ $item['sku'] }}</td>
                         <td style="font-weight: bold;">{{ $item['product_name'] }}</td>
                         <td class="text-center font-bold">{{ $item['quantity'] }}</td>
-                        <td class="text-right font-mono">Rp {{ number_format($item['unit_price'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono">Rp {{ number_format($item['discount_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($item['unit_price'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($item['discount_amount'], 0, ',', '.') }}</td>
                         @if (!empty($item['is_first_item']))
-                            <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;" class="text-right font-mono">Rp {{ number_format($item['tax_amount'], 0, ',', '.') }}</td>
+                            <td rowspan="{{ $item['rowspan'] }}" style="vertical-align: top;" class="text-right ">Rp {{ number_format($item['tax_amount'], 0, ',', '.') }}</td>
                         @endif
-                        <td class="text-right font-mono font-bold">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -137,10 +137,10 @@
                         <td class="text-center">{{ $idx + 1 }}</td>
                         <td style="font-weight: bold;">{{ $row['date'] }}</td>
                         <td class="text-center font-bold">{{ $row['invoice_count'] }} Nota</td>
-                        <td class="text-right font-mono">Rp {{ number_format($row['subtotal'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono">Rp {{ number_format($row['discount_amount'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono">Rp {{ number_format($row['tax_amount'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">Rp {{ number_format($row['grand_total'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($row['subtotal'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($row['discount_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($row['tax_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">Rp {{ number_format($row['grand_total'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -170,7 +170,7 @@
                 @forelse ($reportData['items'] ?? [] as $idx => $nota)
                     <tr>
                         <td class="text-center">{{ $idx + 1 }}</td>
-                        <td class="font-mono font-bold">{{ $nota['invoice_number'] }}</td>
+                        <td class=" font-bold">{{ $nota['invoice_number'] }}</td>
                         <td>{{ $nota['date'] }}</td>
                         <td>{{ $nota['sale_category'] }}</td>
                         <td style="font-weight: bold;">{{ $nota['customer_name'] }}</td>
@@ -178,10 +178,10 @@
                         <td>{{ $nota['sales_rep_name'] }}</td>
                         <td>{{ $nota['payment_method'] }}</td>
                         <td class="text-center font-bold">{{ $nota['item_count'] }}</td>
-                        <td class="text-right font-mono">Rp {{ number_format($nota['subtotal'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono">Rp {{ number_format($nota['discount_amount'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono">Rp {{ number_format($nota['tax_amount'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">Rp {{ number_format($nota['grand_total'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($nota['subtotal'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($nota['discount_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($nota['tax_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">Rp {{ number_format($nota['grand_total'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -204,11 +204,11 @@
                 @forelse ($reportData['items'] ?? [] as $rank => $prod)
                     <tr>
                         <td class="text-center font-bold">#{{ $rank + 1 }}</td>
-                        <td class="font-mono">{{ $prod['sku'] }}</td>
+                        <td class="">{{ $prod['sku'] }}</td>
                         <td style="font-weight: bold;">{{ $prod['product_name'] }}</td>
                         <td>{{ $prod['category_name'] }}</td>
                         <td class="text-center font-bold">{{ number_format($prod['total_qty'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">Rp {{ number_format($prod['total_revenue'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">Rp {{ number_format($prod['total_revenue'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>

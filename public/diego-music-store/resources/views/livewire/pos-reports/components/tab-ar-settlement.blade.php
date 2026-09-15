@@ -33,10 +33,10 @@
                     @endphp
                     @forelse ($displaySettlements as $st)
                         <x-pos.table.tr>
-                            <x-pos.table.td class="font-mono font-bold text-xs text-slate-900 dark:text-white">{{ $st['entry_no'] }}</x-pos.table.td>
+                            <x-pos.table.td class=" font-bold text-xs text-slate-900 dark:text-white">{{ $st['entry_no'] }}</x-pos.table.td>
                             <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300">{{ $st['date'] }}</x-pos.table.td>
                             <x-pos.table.td class="text-xs font-bold text-slate-900 dark:text-white">{{ $st['customer_name'] }}</x-pos.table.td>
-                            <x-pos.table.td class="font-mono text-xs font-bold text-primary dark:text-blue-400">{{ $st['invoice_no'] }}</x-pos.table.td>
+                            <x-pos.table.td class=" text-xs font-bold text-primary dark:text-blue-400">{{ $st['invoice_no'] }}</x-pos.table.td>
                             <x-pos.table.td class="text-xs text-slate-700 dark:text-slate-300"><span class="bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded font-bold">{{ $st['account_name'] }}</span></x-pos.table.td>
                             <x-pos.table.td class="text-right font-bold text-xs text-emerald-600 dark:text-emerald-400">Rp {{ number_format($st['amount'], 0, ',', '.') }}</x-pos.table.td>
                         </x-pos.table.tr>

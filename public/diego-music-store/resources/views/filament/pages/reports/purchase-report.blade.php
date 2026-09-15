@@ -12,7 +12,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Faktur Pembelian</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ number_format($data['total_transactions'], 0, ',', '.') }} Transaksi
             </div>
             <span class="text-xs text-gray-400">Total Qty: {{ number_format($data['total_qty'], 0, ',', '.') }} Item</span>
@@ -20,7 +20,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Grand Total Pembelian</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_grand_total']) }}
             </div>
             <span class="text-xs text-gray-400">Subtotal: {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_subtotal']) }}</span>
@@ -28,7 +28,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Terbayar</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_paid']) }}
             </div>
             <span class="text-xs text-gray-400">Diskon/Pajak: {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_discount']) }} / {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_tax']) }}</span>
@@ -36,7 +36,7 @@
 
         <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
             <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Total Sisa Hutang Usaha</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_unpaid']) }}
             </div>
             <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Periode {{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }} - {{ \Illuminate\Support\Carbon::parse($data['to_date'])->format('d/m/Y') }}</span>
@@ -55,7 +55,7 @@
         </x-slot>
 
         <x-slot name="headerEnd">
-            <span class="text-xs font-mono text-gray-500 dark:text-gray-400">
+            <span class="text-xs  text-gray-500 dark:text-gray-400">
                 Mode: <strong>{{ strtoupper($data['mode']) }}</strong> &bull; Tipe: <strong>{{ strtoupper($data['purchase_type']) }}</strong>
             </span>
         </x-slot>
@@ -68,8 +68,8 @@
                         <div class="border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
                             <div class="p-3.5 px-6 bg-gray-100 dark:bg-white/5 flex flex-col sm:flex-row justify-between sm:items-center gap-2 text-xs border-b border-gray-300 dark:border-gray-700">
                                 <div class="flex items-center gap-3">
-                                    <span class="font-mono font-extrabold text-sm text-gray-900 dark:text-white">{{ $p['transaction_no'] }}</span>
-                                    <span class="text-gray-500 font-mono">Inv: {{ $p['invoice_number'] }}</span>
+                                    <span class=" font-extrabold text-sm text-gray-900 dark:text-white">{{ $p['transaction_no'] }}</span>
+                                    <span class="text-gray-500 ">Inv: {{ $p['invoice_number'] }}</span>
                                     <x-filament::badge :color="$p['purchase_type'] === 'Kredit' ? 'warning' : 'gray'">
                                         {{ $p['purchase_type'] }}
                                     </x-filament::badge>
@@ -77,7 +77,7 @@
                                 <div class="flex items-center gap-4 text-gray-700 dark:text-gray-300">
                                     <span>Supplier: <strong>{{ $p['supplier_name'] }}</strong></span>
                                     <span>Tgl: <strong>{{ \Illuminate\Support\Carbon::parse($p['date'])->format('d/m/Y') }}</strong></span>
-                                    <span>Total: <strong class="font-mono text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['grand_total']) }}</strong></span>
+                                    <span>Total: <strong class=" text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['grand_total']) }}</strong></span>
                                 </div>
                             </div>
 
@@ -96,13 +96,13 @@
                                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-xs">
                                     @foreach($p['items'] as $item)
                                         <tr class="hover:bg-gray-50/50 dark:hover:bg-white/5">
-                                            <td class="py-2 px-6 font-mono text-gray-500">{{ $item['sku'] }}</td>
+                                            <td class="py-2 px-6  text-gray-500">{{ $item['sku'] }}</td>
                                             <td class="py-2 px-6 font-semibold text-gray-900 dark:text-white">{{ $item['product_name'] }}</td>
-                                            <td class="py-2 px-6 text-center font-mono font-bold">{{ number_format($item['qty'], 0, ',', '.') }}</td>
+                                            <td class="py-2 px-6 text-center  font-bold">{{ number_format($item['qty'], 0, ',', '.') }}</td>
                                             <td class="py-2 px-6 text-center text-gray-500">{{ $item['unit'] }}</td>
-                                            <td class="py-2 px-6 text-right font-mono">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['price']) }}</td>
-                                            <td class="py-2 px-6 text-right font-mono text-gray-500">{{ $item['discount'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['discount']) : '-' }}</td>
-                                            <td class="py-2 px-6 text-right font-mono font-bold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['subtotal']) }}</td>
+                                            <td class="py-2 px-6 text-right ">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['price']) }}</td>
+                                            <td class="py-2 px-6 text-right  text-gray-500">{{ $item['discount'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['discount']) : '-' }}</td>
+                                            <td class="py-2 px-6 text-right  font-bold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['subtotal']) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -135,11 +135,11 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @forelse($data['purchases'] as $p)
                             <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                                <td class="py-2.5 px-4 font-mono text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ $p['transaction_no'] }}
                                     <div class="text-[10px] text-gray-400 font-normal">Inv: {{ $p['invoice_number'] }}</div>
                                 </td>
-                                <td class="py-2.5 px-4 font-mono text-xs text-gray-500 whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs text-gray-500 whitespace-nowrap">
                                     {{ \Illuminate\Support\Carbon::parse($p['date'])->format('d/m/Y') }}
                                 </td>
                                 <td class="py-2.5 px-4 text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
@@ -155,11 +155,11 @@
                                         {{ $p['payment_status'] }}
                                     </x-filament::badge>
                                 </td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['subtotal']) }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs text-gray-500 whitespace-nowrap">{{ $p['discount'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($p['discount']) : '-' }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs text-gray-500 whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['tax'] + $p['shipping']) }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['grand_total']) }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['unpaid_amount']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['subtotal']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs text-gray-500 whitespace-nowrap">{{ $p['discount'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($p['discount']) : '-' }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs text-gray-500 whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['tax'] + $p['shipping']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['grand_total']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($p['unpaid_amount']) }}</td>
                                 <td class="py-2.5 px-4 text-xs text-center whitespace-nowrap">
                                     <x-filament::button size="xs" color="gray" wire:click="openPurchaseDetailModal({{ $p['id'] }})">
                                         Lihat Detail
@@ -190,7 +190,7 @@
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-gray-50 dark:bg-white/5 p-3 rounded-lg border border-gray-200 dark:border-gray-800">
                     <div>
                         <span class="text-gray-500 block">No. Invoice Supplier:</span>
-                        <strong class="font-mono text-gray-900 dark:text-white">{{ $selectedPurchaseDetail['invoice_number'] }}</strong>
+                        <strong class=" text-gray-900 dark:text-white">{{ $selectedPurchaseDetail['invoice_number'] }}</strong>
                     </div>
                     <div>
                         <span class="text-gray-500 block">Tanggal & Supplier:</span>
@@ -204,7 +204,7 @@
                     </div>
                     <div>
                         <span class="text-gray-500 block">Grand Total:</span>
-                        <strong class="font-mono text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($selectedPurchaseDetail['grand_total']) }}</strong>
+                        <strong class=" text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($selectedPurchaseDetail['grand_total']) }}</strong>
                     </div>
                 </div>
 
@@ -224,13 +224,13 @@
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             @foreach($selectedPurchaseDetail['items'] as $item)
                                 <tr class="hover:bg-gray-50/50 dark:hover:bg-white/5">
-                                    <td class="py-2 px-4 font-mono text-gray-500">{{ $item['sku'] }}</td>
+                                    <td class="py-2 px-4  text-gray-500">{{ $item['sku'] }}</td>
                                     <td class="py-2 px-4 font-semibold text-gray-900 dark:text-white">{{ $item['product_name'] }}</td>
-                                    <td class="py-2 px-4 text-center font-mono font-bold">{{ number_format($item['qty'], 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center  font-bold">{{ number_format($item['qty'], 0, ',', '.') }}</td>
                                     <td class="py-2 px-4 text-center text-gray-500">{{ $item['unit'] }}</td>
-                                    <td class="py-2 px-4 text-right font-mono">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['price']) }}</td>
-                                    <td class="py-2 px-4 text-right font-mono text-gray-500">{{ $item['discount'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['discount']) : '-' }}</td>
-                                    <td class="py-2 px-4 text-right font-mono font-bold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['subtotal']) }}</td>
+                                    <td class="py-2 px-4 text-right ">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['price']) }}</td>
+                                    <td class="py-2 px-4 text-right  text-gray-500">{{ $item['discount'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['discount']) : '-' }}</td>
+                                    <td class="py-2 px-4 text-right  font-bold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['subtotal']) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

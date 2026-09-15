@@ -76,7 +76,7 @@
                 <p class="text-xs text-slate-600 font-bold mt-0.5">Periode: {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') : 'Awal' }} s/d {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d/m/Y') : 'Sekarang' }}</p>
             @endif
         </div>
-        <div class="text-right text-xs text-slate-600 font-mono space-y-1">
+        <div class="text-right text-xs text-slate-600  space-y-1">
             <div><strong>TGL CETAK:</strong> {{ now()->format('d/m/Y H:i:s') }}</div>
             <div><strong>DICETAK OLEH:</strong> {{ auth()->user()?->name ?: 'Admin Kasir' }}</div>
             <div><strong>SISTEM:</strong> Diego Music Store ERP</div>

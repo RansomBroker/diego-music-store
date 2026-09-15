@@ -12,7 +12,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Cut-Off Tanggal</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \Illuminate\Support\Carbon::parse($data['as_of_date'])->format('d/m/Y') }}
             </div>
             <span class="text-xs text-gray-400">Periode Persediaan Akhir</span>
@@ -20,7 +20,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Variasi Produk</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ number_format($data['total_variants'], 0, ',', '.') }} SKU
             </div>
             <span class="text-xs text-gray-400">Total item terdaftar</span>
@@ -28,7 +28,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Qty Persediaan Akhir</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ number_format($data['total_ending_qty'], 0, ',', '.') }} Unit
             </div>
             <span class="text-xs text-gray-400">Kuantitas persediaan fisik</span>
@@ -36,7 +36,7 @@
 
         <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
             <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Grand Total Nilai Aset Persediaan</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_valuation']) }}
             </div>
             <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Valuasi HPP Persediaan</span>
@@ -55,7 +55,7 @@
         </x-slot>
 
         <x-slot name="headerEnd">
-            <span class="text-xs font-mono text-gray-500 dark:text-gray-400">
+            <span class="text-xs  text-gray-500 dark:text-gray-400">
                 Per Tanggal: <strong>{{ \Illuminate\Support\Carbon::parse($data['as_of_date'])->format('d/m/Y') }}</strong> &bull; Cabang: <strong>{{ $data['branch_name'] }}</strong>
             </span>
         </x-slot>
@@ -76,9 +76,9 @@
                         @forelse($data['categories'] as $cat)
                             <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
                                 <td class="py-2.5 px-4 font-extrabold text-xs text-gray-900 dark:text-white whitespace-nowrap">{{ $cat['category_name'] }}</td>
-                                <td class="py-2.5 px-4 text-center font-mono text-xs font-bold whitespace-nowrap">{{ number_format($cat['variant_count'], 0, ',', '.') }} SKU</td>
-                                <td class="py-2.5 px-4 text-center font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ number_format($cat['total_qty'], 0, ',', '.') }} Unit</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-center  text-xs font-bold whitespace-nowrap">{{ number_format($cat['variant_count'], 0, ',', '.') }} SKU</td>
+                                <td class="py-2.5 px-4 text-center  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ number_format($cat['total_qty'], 0, ',', '.') }} Unit</td>
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($cat['total_valuation']) }}
                                 </td>
                             </tr>
@@ -110,7 +110,7 @@
                                 wire:click="openVariantDetail({{ $row['id'] }})" 
                                 class="hover:bg-primary-50/60 dark:hover:bg-primary-950/40 text-gray-700 dark:text-gray-300 cursor-pointer transition-colors"
                                 title="Klik untuk melihat riwayat HPP & pergerakan stok">
-                                <td class="py-2.5 px-4 font-mono text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ $row['sku'] }}
                                     <div class="text-[10px] text-gray-400 font-normal">BC: {{ $row['barcode'] }}</div>
                                 </td>
@@ -118,22 +118,22 @@
                                     <span>{{ $row['full_name'] }}</span>
                                     <x-heroicon-o-information-circle class="w-4 h-4 text-primary-500 shrink-0" />
                                 </td>
-                                <td class="py-2.5 px-4 text-xs font-mono text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-xs  text-gray-600 dark:text-gray-300 whitespace-nowrap">
                                     {{ $row['category'] }}
                                 </td>
                                 <td class="py-2.5 px-4 text-xs text-gray-500 whitespace-nowrap">
                                     {{ $row['brand'] }}
                                 </td>
-                                <td class="py-2.5 px-4 text-center font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-center  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ number_format($row['ending_qty'], 0, ',', '.') }}
                                 </td>
                                 <td class="py-2.5 px-4 text-center text-xs text-gray-500 whitespace-nowrap">
                                     {{ $row['unit'] }}
                                 </td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-right  text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['cost_price']) }}
                                 </td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['valuation']) }}
                                 </td>
                             </tr>
@@ -166,7 +166,7 @@
                                 {{ $selectedVariantDetail['full_name'] }}
                             </h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                SKU: <span class="font-mono font-semibold text-gray-800 dark:text-gray-200">{{ $selectedVariantDetail['sku'] }}</span> &bull; Kategori: {{ $selectedVariantDetail['category'] }} &bull; Merk: {{ $selectedVariantDetail['brand'] }}
+                                SKU: <span class=" font-semibold text-gray-800 dark:text-gray-200">{{ $selectedVariantDetail['sku'] }}</span> &bull; Kategori: {{ $selectedVariantDetail['category'] }} &bull; Merk: {{ $selectedVariantDetail['brand'] }}
                             </p>
                         </div>
                     </div>
@@ -185,21 +185,21 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
                             <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Stok Akhir</span>
-                            <div class="text-lg font-bold font-mono text-gray-900 dark:text-white mt-0.5">
+                            <div class="text-lg font-bold  text-gray-900 dark:text-white mt-0.5">
                                 {{ number_format($selectedVariantDetail['total_stock'], 0, ',', '.') }} {{ $selectedVariantDetail['unit'] }}
                             </div>
                         </div>
 
                         <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
                             <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">HPP Terakhir / Unit</span>
-                            <div class="text-lg font-bold font-mono text-primary-600 dark:text-primary-400 mt-0.5">
+                            <div class="text-lg font-bold  text-primary-600 dark:text-primary-400 mt-0.5">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($selectedVariantDetail['current_hpp']) }}
                             </div>
                         </div>
 
                         <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
                             <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Total Nilai Persediaan</span>
-                            <div class="text-lg font-bold font-mono text-gray-900 dark:text-white mt-0.5">
+                            <div class="text-lg font-bold  text-gray-900 dark:text-white mt-0.5">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($selectedVariantDetail['total_valuation']) }}
                             </div>
                         </div>
@@ -212,7 +212,7 @@
                                 <x-heroicon-o-arrows-right-left class="w-4 h-4 text-primary-500" />
                                 Audit Riwayat HPP dan Pergerakan Stok Waktu ke Waktu
                             </h4>
-                            <span class="text-xs text-gray-500 font-mono">{{ count($hppHistory) }} Transaksi Recorded</span>
+                            <span class="text-xs text-gray-500 ">{{ count($hppHistory) }} Transaksi Recorded</span>
                         </div>
 
                         <div class="overflow-x-auto">
@@ -232,7 +232,7 @@
                                 <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
                                     @forelse($hppHistory as $item)
                                         <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                                            <td class="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap text-gray-900 dark:text-white">
+                                            <td class="py-2.5 px-3  text-[11px] whitespace-nowrap text-gray-900 dark:text-white">
                                                 {{ $item['date'] }}
                                             </td>
                                             <td class="py-2.5 px-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
@@ -249,19 +249,19 @@
                                                     </span>
                                                 @endif
                                             </td>
-                                            <td class="py-2.5 px-3 text-center font-mono font-bold whitespace-nowrap {{ $item['type'] === 'Masuk' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400' }}">
+                                            <td class="py-2.5 px-3 text-center  font-bold whitespace-nowrap {{ $item['type'] === 'Masuk' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400' }}">
                                                 {{ $item['qty_change'] }}
                                             </td>
-                                            <td class="py-2.5 px-3 text-right font-mono text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                            <td class="py-2.5 px-3 text-right  text-gray-700 dark:text-gray-300 whitespace-nowrap">
                                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['unit_cost']) }}
                                             </td>
-                                            <td class="py-2.5 px-3 text-center font-mono font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                            <td class="py-2.5 px-3 text-center  font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                                 {{ number_format($item['running_qty'], 0, ',', '.') }}
                                             </td>
-                                            <td class="py-2.5 px-3 text-right font-mono font-bold text-primary-600 dark:text-primary-400 whitespace-nowrap">
+                                            <td class="py-2.5 px-3 text-right  font-bold text-primary-600 dark:text-primary-400 whitespace-nowrap">
                                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['running_hpp']) }}
                                             </td>
-                                            <td class="py-2.5 px-3 text-right font-mono font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                            <td class="py-2.5 px-3 text-right  font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['total_valuation']) }}
                                             </td>
                                         </tr>

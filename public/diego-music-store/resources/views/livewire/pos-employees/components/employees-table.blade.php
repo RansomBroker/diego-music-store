@@ -62,7 +62,7 @@
             @forelse ($employees as $emp)
                 <x-pos.table.tr>
                     <!-- NIK -->
-                    <x-pos.table.td class="font-mono text-xs text-slate-500 dark:text-slate-400">
+                    <x-pos.table.td class=" text-xs text-slate-500 dark:text-slate-400">
                         {{ $emp->nik }}
                     </x-pos.table.td>
 

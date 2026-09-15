@@ -102,7 +102,7 @@
         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
             <div class="flex items-center justify-between text-xs sm:text-sm font-extrabold text-slate-700 dark:text-slate-300">
                 <span>Total Harga Pesanan:</span>
-                <span class="text-base text-slate-900 dark:text-white font-mono">
+                <span class="text-base text-slate-900 dark:text-white ">
                     Rp {{ number_format($total_amount, 0, ',', '.') }}
                 </span>
             </div>
@@ -121,7 +121,7 @@
                     <span class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         Sisa Tagihan / Pelunasan:
                     </span>
-                    <span class="text-lg font-black text-amber-600 dark:text-amber-400 mt-1 font-mono">
+                    <span class="text-lg font-black text-amber-600 dark:text-amber-400 mt-1 ">
                         Rp {{ number_format($remaining_amount, 0, ',', '.') }}
                     </span>
                 </div>

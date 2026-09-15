@@ -32,7 +32,7 @@
 
         <div class="flex items-center gap-3">
             <span class="text-xs font-bold text-slate-500 dark:text-slate-400">
-                Periode: <span class="font-mono text-slate-900 dark:text-slate-100 font-bold">{{ $filterMonth }}</span>
+                Periode: <span class=" text-slate-900 dark:text-slate-100 font-bold">{{ $filterMonth }}</span>
             </span>
             <x-pos.utility.pill variant="primary" size="sm">
                 TOTAL: {{ $evaluations->total() }} KARYAWAN
@@ -69,10 +69,10 @@
                             <x-pos.table.td class="font-medium text-slate-600 dark:text-slate-400">
                                 {{ $eval->template->name ?? 'Default' }}
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-blue-600 dark:text-blue-400">
+                            <x-pos.table.td class="text-right font-semibold  text-blue-600 dark:text-blue-400">
                                 <span class="text-blue-600 dark:text-blue-400">Rp {{ number_format($eval->actual_sales_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-sky-600 dark:text-sky-400">
+                            <x-pos.table.td class="text-right font-semibold  text-sky-600 dark:text-sky-400">
                                 <span class="text-sky-600 dark:text-sky-400">Rp {{ number_format($eval->actual_atv_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center font-bold text-emerald-600 dark:text-emerald-400">
@@ -89,7 +89,7 @@
                                     {{ $eval->final_kpi_score }}%
                                 </x-pos.utility.pill>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-black font-mono text-purple-600 dark:text-purple-400">
+                            <x-pos.table.td class="text-right font-black  text-purple-600 dark:text-purple-400">
                                 <span class="text-purple-600 dark:text-purple-400 font-black">Rp {{ number_format($eval->earned_bonus_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
                         </x-pos.table.tr>

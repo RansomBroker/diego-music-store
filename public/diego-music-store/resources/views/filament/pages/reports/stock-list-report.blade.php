@@ -12,7 +12,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Variasi Produk</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ number_format($data['total_variants'], 0, ',', '.') }} SKU
             </div>
             <span class="text-xs text-gray-400">Total item terdaftar</span>
@@ -20,7 +20,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Qty Stok Fisik</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ number_format($data['total_physical_qty'], 0, ',', '.') }} Unit
             </div>
             <span class="text-xs text-gray-400">Kuantitas fisik gudang</span>
@@ -28,7 +28,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Peringatan Stok</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ number_format($data['total_low_stock_count'], 0, ',', '.') }} <span class="text-xs font-normal text-amber-600 dark:text-amber-400">Rendah</span> / {{ number_format($data['total_out_of_stock_count'], 0, ',', '.') }} <span class="text-xs font-normal text-rose-600 dark:text-rose-400">Habis</span>
             </div>
             <span class="text-xs text-gray-400">Memerlukan Restok / PO</span>
@@ -36,7 +36,7 @@
 
         <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
             <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Grand Total Nilai Aset Stok</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_valuation']) }}
             </div>
             <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Valuasi HPP Persediaan</span>
@@ -55,7 +55,7 @@
         </x-slot>
 
         <x-slot name="headerEnd">
-            <span class="text-xs font-mono text-gray-500 dark:text-gray-400">
+            <span class="text-xs  text-gray-500 dark:text-gray-400">
                 Cabang: <strong>{{ $data['branch_name'] }}</strong> &bull; Kategori: <strong>{{ $data['category'] }}</strong>
             </span>
         </x-slot>
@@ -81,7 +81,7 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @forelse($data['rows'] as $row)
                         <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                            <td class="py-2.5 px-4 font-mono text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                            <td class="py-2.5 px-4  text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                 {{ $row['sku'] }}
                                 <div class="text-[10px] text-gray-400 font-normal">BC: {{ $row['barcode'] }}</div>
                             </td>
@@ -91,13 +91,13 @@
                                     <span class="text-[10px] font-normal text-gray-500 block">Brand: {{ $row['brand'] }}</span>
                                 @endif
                             </td>
-                            <td class="py-2.5 px-4 text-xs font-mono text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                            <td class="py-2.5 px-4 text-xs  text-gray-600 dark:text-gray-300 whitespace-nowrap">
                                 {{ $row['category'] }}
                             </td>
-                            <td class="py-2.5 px-4 text-center font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
+                            <td class="py-2.5 px-4 text-center  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                 {{ number_format($row['stock'], 0, ',', '.') }}
                             </td>
-                            <td class="py-2.5 px-4 text-center font-mono text-xs text-gray-500 whitespace-nowrap">
+                            <td class="py-2.5 px-4 text-center  text-xs text-gray-500 whitespace-nowrap">
                                 {{ number_format($row['min_stock'], 0, ',', '.') }}
                             </td>
                             <td class="py-2.5 px-4 text-center text-xs text-gray-500 whitespace-nowrap">
@@ -108,19 +108,19 @@
                                     {{ $row['status_label'] }}
                                 </x-filament::badge>
                             </td>
-                            <td class="py-2.5 px-4 text-center font-mono text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                            <td class="py-2.5 px-4 text-center  text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                 {{ $row['discount'] }}
                             </td>
-                            <td class="py-2.5 px-4 text-center font-mono text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                            <td class="py-2.5 px-4 text-center  text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                 {{ $row['tax'] }}
                             </td>
-                            <td class="py-2.5 px-4 text-right font-mono text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                            <td class="py-2.5 px-4 text-right  text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['cost_price']) }}
                             </td>
-                            <td class="py-2.5 px-4 text-right font-mono text-xs text-gray-900 dark:text-white whitespace-nowrap">
+                            <td class="py-2.5 px-4 text-right  text-xs text-gray-900 dark:text-white whitespace-nowrap">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['retail_price']) }}
                             </td>
-                            <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
+                            <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['valuation']) }}
                             </td>
                         </tr>

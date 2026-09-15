@@ -66,7 +66,7 @@
         .text-right {
             text-align: right;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -132,24 +132,24 @@
             </thead>
             <tbody>
                 <tr style="background-color: #f9fafb; font-weight: bold;">
-                    <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</td>
+                    <td class="">{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</td>
                     <td>-</td>
-                    <td class="font-mono">-</td>
+                    <td class="">-</td>
                     <td>SALDO AWAL HUTANG SUPPLIER (BEGINNING BALANCE)</td>
-                    <td class="text-right font-mono">-</td>
-                    <td class="text-right font-mono">-</td>
-                    <td class="text-right font-mono">{{ number_format($vendor['beginning_balance'], 0, ',', '.') }}</td>
+                    <td class="text-right ">-</td>
+                    <td class="text-right ">-</td>
+                    <td class="text-right ">{{ number_format($vendor['beginning_balance'], 0, ',', '.') }}</td>
                 </tr>
 
                 @forelse($vendor['transactions'] as $tx)
                     <tr>
-                        <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($tx['date'])->format('d/m/Y') }}</td>
+                        <td class="">{{ \Illuminate\Support\Carbon::parse($tx['date'])->format('d/m/Y') }}</td>
                         <td>{{ $tx['type'] }}</td>
-                        <td class="font-mono">{{ $tx['ref_no'] }}</td>
+                        <td class="">{{ $tx['ref_no'] }}</td>
                         <td>{{ $tx['description'] }}</td>
-                        <td class="text-right font-mono">{{ $tx['addition'] > 0 ? number_format($tx['addition'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ $tx['payment'] > 0 ? number_format($tx['payment'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($tx['running_balance'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ $tx['addition'] > 0 ? number_format($tx['addition'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $tx['payment'] > 0 ? number_format($tx['payment'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right  font-bold">{{ number_format($tx['running_balance'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -163,7 +163,7 @@
             <table style="width: 100%;">
                 <tr>
                     <td>TOTAL MUTASI SUPPLIER: Pembelian {{ number_format($vendor['total_additions'], 0, ',', '.') }} | Pelunasan {{ number_format($vendor['total_payments'], 0, ',', '.') }}</td>
-                    <td class="text-right font-mono">SALDO AKHIR HUTANG: Rp {{ number_format($vendor['ending_balance'], 0, ',', '.') }}</td>
+                    <td class="text-right ">SALDO AKHIR HUTANG: Rp {{ number_format($vendor['ending_balance'], 0, ',', '.') }}</td>
                 </tr>
             </table>
         </div>

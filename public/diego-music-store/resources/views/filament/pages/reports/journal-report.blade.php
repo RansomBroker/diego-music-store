@@ -27,11 +27,11 @@
             <div class="text-right flex items-center gap-6">
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Grand Total Debit</span>
-                    <div class="text-sm font-extrabold font-mono">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_debit']) }}</div>
+                    <div class="text-sm font-extrabold ">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_debit']) }}</div>
                 </div>
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Grand Total Kredit</span>
-                    <div class="text-sm font-extrabold font-mono">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_credit']) }}</div>
+                    <div class="text-sm font-extrabold ">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_credit']) }}</div>
                 </div>
             </div>
         </div>
@@ -43,7 +43,7 @@
             <x-filament::section>
                 <x-slot name="heading">
                     <div class="flex items-center gap-3">
-                        <span class="px-2.5 py-1 text-xs font-mono font-extrabold bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600">
+                        <span class="px-2.5 py-1 text-xs  font-extrabold bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600">
                             {{ $entry['entry_no'] }}
                         </span>
                         <span class="text-xs text-gray-500 font-normal">
@@ -82,13 +82,13 @@
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             @foreach($entry['items'] as $item)
                                 <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                                    <td class="py-2 px-6 font-mono text-xs text-gray-500 dark:text-gray-400">{{ $item['account_code'] }}</td>
+                                    <td class="py-2 px-6  text-xs text-gray-500 dark:text-gray-400">{{ $item['account_code'] }}</td>
                                     <td class="py-2 px-6 font-semibold text-gray-900 dark:text-white">{{ $item['account_name'] }}</td>
                                     <td class="py-2 px-6 text-xs text-gray-500 dark:text-gray-400">{{ $item['notes'] ?: '-' }}</td>
-                                    <td class="py-2 px-6 text-right font-mono text-xs">
+                                    <td class="py-2 px-6 text-right  text-xs">
                                         {{ $item['debit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['debit']) : '-' }}
                                     </td>
-                                    <td class="py-2 px-6 text-right font-mono text-xs">
+                                    <td class="py-2 px-6 text-right  text-xs">
                                         {{ $item['credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['credit']) : '-' }}
                                     </td>
                                 </tr>
@@ -99,7 +99,7 @@
                     {{-- Entry Subtotal Footer Bar --}}
                     <div class="p-3 px-6 bg-gray-100 dark:bg-white/10 flex justify-between items-center text-gray-900 dark:text-white">
                         <span class="font-bold text-xs uppercase tracking-wider">TOTAL BUKTI JURNAL</span>
-                        <div class="flex items-center gap-6 text-xs font-mono font-bold">
+                        <div class="flex items-center gap-6 text-xs  font-bold">
                             <span>Debit: {{ \App\Helpers\FinancialReportHelper::formatRupiah($entry['total_debit']) }}</span>
                             <span>Kredit: {{ \App\Helpers\FinancialReportHelper::formatRupiah($entry['total_credit']) }}</span>
                         </div>

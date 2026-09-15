@@ -26,7 +26,7 @@
         <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
             @forelse ($payments as $payment)
                 <x-pos.table.tr>
-                    <x-pos.table.td class="whitespace-nowrap font-mono font-medium text-slate-900 dark:text-slate-100">
+                    <x-pos.table.td class="whitespace-nowrap  font-medium text-slate-900 dark:text-slate-100">
                         {{ $payment->invoice_number }}
                     </x-pos.table.td>
                     <x-pos.table.td class="whitespace-nowrap text-sm text-slate-600 dark:text-slate-355">

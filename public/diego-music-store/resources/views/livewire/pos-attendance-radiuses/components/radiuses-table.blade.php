@@ -23,7 +23,7 @@
                     </x-pos.table.td>
                     <x-pos.table.td>
                         @if ($b->latitude !== null && $b->longitude !== null)
-                            <div class="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                            <div class=" text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
                                 <i class="ph-bold ph-map-pin text-primary text-sm"></i>
                                 {{ number_format($b->latitude, 6) }}, {{ number_format($b->longitude, 6) }}
                             </div>

@@ -12,7 +12,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Saldo Awal Periode</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['initial_balance']) }}
             </div>
             <span class="text-xs text-gray-400">Sebelum {{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</span>
@@ -20,7 +20,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Kas Masuk (Inflow)</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_inflow']) }}
             </div>
             <span class="text-xs text-gray-400">Penerimaan Kas & Bank</span>
@@ -28,7 +28,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Kas Keluar (Outflow)</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_outflow']) }}
             </div>
             <span class="text-xs text-gray-400">Pengeluaran Kas & Bank</span>
@@ -36,7 +36,7 @@
 
         <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
             <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Saldo Akhir Periode</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['ending_balance']) }}
             </div>
             <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Per Tanggal {{ \Illuminate\Support\Carbon::parse($data['to_date'])->format('d/m/Y') }}</span>
@@ -55,7 +55,7 @@
         </x-slot>
 
         <x-slot name="headerEnd">
-            <span class="text-xs font-mono text-gray-500 dark:text-gray-400">
+            <span class="text-xs  text-gray-500 dark:text-gray-400">
                 Akun: <strong>{{ $data['account_name'] }}</strong> &bull; Cabang: <strong>{{ $data['branch_name'] }}</strong>
             </span>
         </x-slot>
@@ -76,9 +76,9 @@
                         @forelse($data['categories'] as $cat)
                             <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
                                 <td class="py-2.5 px-4 font-extrabold text-xs text-gray-900 dark:text-white whitespace-nowrap">{{ $cat['category_name'] }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ $cat['inflow'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($cat['inflow']) : '-' }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ $cat['outflow'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($cat['outflow']) : '-' }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ $cat['inflow'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($cat['inflow']) : '-' }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ $cat['outflow'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($cat['outflow']) : '-' }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($cat['net_amount']) }}
                                 </td>
                             </tr>
@@ -107,25 +107,25 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         {{-- Row Saldo Awal --}}
                         <tr class="bg-gray-50/70 dark:bg-white/5 text-gray-900 dark:text-white font-semibold">
-                            <td class="py-2.5 px-4 font-mono text-xs text-gray-400 whitespace-nowrap">-</td>
-                            <td class="py-2.5 px-4 font-mono text-xs text-gray-500 whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</td>
-                            <td class="py-2.5 px-4 text-xs font-mono whitespace-nowrap">{{ $data['account_name'] }}</td>
+                            <td class="py-2.5 px-4  text-xs text-gray-400 whitespace-nowrap">-</td>
+                            <td class="py-2.5 px-4  text-xs text-gray-500 whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</td>
+                            <td class="py-2.5 px-4 text-xs  whitespace-nowrap">{{ $data['account_name'] }}</td>
                             <td class="py-2.5 px-4 text-xs font-bold whitespace-nowrap">SALDO AWAL PERIODE</td>
                             <td class="py-2.5 px-4 text-xs text-gray-500 whitespace-nowrap">Saldo Kas/Bank sebelum {{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</td>
-                            <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">-</td>
-                            <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">-</td>
-                            <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['initial_balance']) }}</td>
+                            <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">-</td>
+                            <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">-</td>
+                            <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['initial_balance']) }}</td>
                         </tr>
 
                         @forelse($data['rows'] as $row)
                             <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                                <td class="py-2.5 px-4 font-mono text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ $row['entry_no'] }}
                                 </td>
-                                <td class="py-2.5 px-4 font-mono text-xs text-gray-500 whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs text-gray-500 whitespace-nowrap">
                                     {{ \Illuminate\Support\Carbon::parse($row['date'])->format('d/m/Y') }}
                                 </td>
-                                <td class="py-2.5 px-4 text-xs font-mono text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-xs  text-gray-600 dark:text-gray-300 whitespace-nowrap">
                                     {{ $row['account_name'] }}
                                 </td>
                                 <td class="py-2.5 px-4 text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
@@ -134,13 +134,13 @@
                                 <td class="py-2.5 px-4 text-xs text-gray-500 truncate max-w-xs">
                                     {{ $row['description'] }}
                                 </td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-right  text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ $row['inflow'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($row['inflow']) : '-' }}
                                 </td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs text-gray-500 whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-right  text-xs text-gray-500 whitespace-nowrap">
                                     {{ $row['outflow'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($row['outflow']) : '-' }}
                                 </td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['running_balance']) }}
                                 </td>
                             </tr>

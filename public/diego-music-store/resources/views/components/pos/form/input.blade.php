@@ -112,7 +112,7 @@
                 @input="onInput($event)"
                 placeholder="{{ $placeholder ?: '0' }}"
                 {{ $attributes->whereDoesntStartWith('wire:model')->merge([
-                    'class' => "w-full {$paddingClass} {$paddingRight} {$paddingY} bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 {$rounded} outline-hidden focus:outline-hidden font-medium font-mono {$textSize} focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 text-slate-800 dark:text-slate-100"
+                    'class' => "w-full {$paddingClass} {$paddingRight} {$paddingY} bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 {$rounded} outline-hidden focus:outline-hidden font-medium  {$textSize} focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 text-slate-800 dark:text-slate-100"
                 ]) }}
                 @if ($required) required @endif
             />

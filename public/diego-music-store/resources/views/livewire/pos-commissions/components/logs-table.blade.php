@@ -42,19 +42,19 @@
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                     @foreach ($logs as $log)
                         <x-pos.table.tr>
-                            <x-pos.table.td class="font-mono text-slate-600 dark:text-slate-400 font-normal">
+                            <x-pos.table.td class=" text-slate-600 dark:text-slate-400 font-normal">
                                 {{ $log->date->format('d/m/Y') }}
                             </x-pos.table.td>
                             <x-pos.table.td class="font-semibold text-slate-900 dark:text-slate-100">
                                 {{ $log->employee?->name ?: '-' }}
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono text-slate-600 dark:text-slate-400 font-normal">
+                            <x-pos.table.td class=" text-slate-600 dark:text-slate-400 font-normal">
                                 #{{ $log->sale_id ?: '-' }}
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-mono font-medium text-slate-700 dark:text-slate-300">
+                            <x-pos.table.td class="text-right  font-medium text-slate-700 dark:text-slate-300">
                                 <span class="text-slate-700 dark:text-slate-300">Rp {{ number_format($log->sale_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                            <x-pos.table.td class="text-right  font-semibold text-emerald-600 dark:text-emerald-400">
                                 <span class="text-emerald-600 dark:text-emerald-400">Rp {{ number_format($log->commission_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">

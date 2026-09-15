@@ -29,7 +29,7 @@
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
                 @forelse ($orders as $so)
                     <x-pos.table.tr>
-                        <x-pos.table.td class="font-mono text-xs text-slate-900 dark:text-white">
+                        <x-pos.table.td class=" text-xs text-slate-900 dark:text-white">
                             <div class="font-semibold text-primary dark:text-blue-400">{{ $so->ticket_code }}</div>
                             <div class="text-[10px] text-slate-400">{{ $so->created_at->format('d/m/Y H:i') }}</div>
                         </x-pos.table.td>
@@ -37,13 +37,13 @@
                         <x-pos.table.td class="text-xs font-semibold text-slate-900 dark:text-white">
                             <div>{{ $so->device_name }}</div>
                             @if ($so->serial_number)
-                                <div class="text-[10px] font-mono text-slate-400">S/N: {{ $so->serial_number }}</div>
+                                <div class="text-[10px]  text-slate-400">S/N: {{ $so->serial_number }}</div>
                             @endif
                         </x-pos.table.td>
 
                         <x-pos.table.td class="text-xs font-semibold text-slate-800 dark:text-slate-200">
                             <div>{{ $so->customer_name }}</div>
-                            <div class="text-[10px] font-mono text-slate-400">{{ $so->customer_phone ?: '-' }}</div>
+                            <div class="text-[10px]  text-slate-400">{{ $so->customer_phone ?: '-' }}</div>
                         </x-pos.table.td>
 
                         <x-pos.table.td class="text-xs text-slate-700 dark:text-slate-300">
@@ -82,7 +82,7 @@
                             @endif
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-right font-mono font-semibold text-xs text-emerald-600 dark:text-emerald-400">
+                        <x-pos.table.td class="text-right  font-semibold text-xs text-emerald-600 dark:text-emerald-400">
                             Rp {{ number_format($so->total_cost ?: $so->estimated_cost, 0, ',', '.') }}
                         </x-pos.table.td>
 

@@ -57,7 +57,7 @@
         .text-right {
             text-align: right;
         }
-        .font-mono {
+        . {
             font-family: 'Consolas', 'Courier New', Courier, monospace;
             font-weight: bold;
         }
@@ -148,14 +148,14 @@
             @forelse($data['revenue']['items'] as $item)
                 <tr class="{{ $item['is_header'] ? 'font-bold bg-category' : '' }}">
                     <td style="padding-left: {{ max(4, ($item['level'] - 1) * 10) }}px;">
-                        <span class="font-mono" style="color: #4b5563;">{{ $item['code'] }}</span> {{ $item['name'] }}
+                        <span class="" style="color: #4b5563;">{{ $item['code'] }}</span> {{ $item['name'] }}
                     </td>
-                    <td class="text-right font-mono">{{ $fmt($item['balance_toko']) }}</td>
-                    <td class="text-right font-mono">{{ $fmt($item['balance_gudang']) }}</td>
-                    <td class="text-right font-mono font-bold">{{ $fmt($item['balance']) }}</td>
-                    <td class="text-right font-mono">{{ $fmt($item['ytd_toko']) }}</td>
-                    <td class="text-right font-mono">{{ $fmt($item['ytd_gudang']) }}</td>
-                    <td class="text-right font-mono font-bold">{{ $fmt($item['ytd_total']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['balance_toko']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['balance_gudang']) }}</td>
+                    <td class="text-right  font-bold">{{ $fmt($item['balance']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['ytd_toko']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['ytd_gudang']) }}</td>
+                    <td class="text-right  font-bold">{{ $fmt($item['ytd_total']) }}</td>
                 </tr>
             @empty
                 <tr>
@@ -164,12 +164,12 @@
             @endforelse
             <tr class="bg-subtotal">
                 <td>TOTAL PENJUALAN</td>
-                <td class="text-right font-mono">{{ $fmt($data['revenue']['toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($data['revenue']['gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($data['revenue']['total']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($data['revenue']['ytd_toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($data['revenue']['ytd_gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($data['revenue']['ytd_total']) }}</td>
+                <td class="text-right ">{{ $fmt($data['revenue']['toko']) }}</td>
+                <td class="text-right ">{{ $fmt($data['revenue']['gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($data['revenue']['total']) }}</td>
+                <td class="text-right ">{{ $fmt($data['revenue']['ytd_toko']) }}</td>
+                <td class="text-right ">{{ $fmt($data['revenue']['ytd_gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($data['revenue']['ytd_total']) }}</td>
             </tr>
 
             {{-- 2. PEMBELIAN DAN HPP --}}
@@ -179,14 +179,14 @@
             @forelse($data['cogs']['items'] as $item)
                 <tr class="{{ $item['is_header'] ? 'font-bold bg-category' : '' }}">
                     <td style="padding-left: {{ max(4, ($item['level'] - 1) * 10) }}px;">
-                        <span class="font-mono" style="color: #4b5563;">{{ $item['code'] }}</span> {{ $item['name'] }}
+                        <span class="" style="color: #4b5563;">{{ $item['code'] }}</span> {{ $item['name'] }}
                     </td>
-                    <td class="text-right font-mono">{{ $fmt($item['balance_toko']) }}</td>
-                    <td class="text-right font-mono">{{ $fmt($item['balance_gudang']) }}</td>
-                    <td class="text-right font-mono font-bold">{{ $fmt($item['balance']) }}</td>
-                    <td class="text-right font-mono">{{ $fmt($item['ytd_toko']) }}</td>
-                    <td class="text-right font-mono">{{ $fmt($item['ytd_gudang']) }}</td>
-                    <td class="text-right font-mono font-bold">{{ $fmt($item['ytd_total']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['balance_toko']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['balance_gudang']) }}</td>
+                    <td class="text-right  font-bold">{{ $fmt($item['balance']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['ytd_toko']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['ytd_gudang']) }}</td>
+                    <td class="text-right  font-bold">{{ $fmt($item['ytd_total']) }}</td>
                 </tr>
             @empty
                 <tr>
@@ -195,24 +195,24 @@
             @endforelse
             <tr class="bg-subtotal">
                 <td>TOTAL PEMBELIAN DAN HPP</td>
-                <td class="text-right font-mono">{{ $fmt($data['cogs']['toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($data['cogs']['gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($data['cogs']['total']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($data['cogs']['ytd_toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($data['cogs']['ytd_gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($data['cogs']['ytd_total']) }}</td>
+                <td class="text-right ">{{ $fmt($data['cogs']['toko']) }}</td>
+                <td class="text-right ">{{ $fmt($data['cogs']['gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($data['cogs']['total']) }}</td>
+                <td class="text-right ">{{ $fmt($data['cogs']['ytd_toko']) }}</td>
+                <td class="text-right ">{{ $fmt($data['cogs']['ytd_gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($data['cogs']['ytd_total']) }}</td>
             </tr>
 
             {{-- SUMMARY: LABA KOTOR --}}
             @php $gp = $data['gross_profit_details']; @endphp
             <tr class="bg-gross">
                 <td>LABA KOTOR (GROSS PROFIT)</td>
-                <td class="text-right font-mono">{{ $fmt($gp['toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($gp['gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($gp['total']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($gp['ytd_toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($gp['ytd_gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($gp['ytd_total']) }}</td>
+                <td class="text-right ">{{ $fmt($gp['toko']) }}</td>
+                <td class="text-right ">{{ $fmt($gp['gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($gp['total']) }}</td>
+                <td class="text-right ">{{ $fmt($gp['ytd_toko']) }}</td>
+                <td class="text-right ">{{ $fmt($gp['ytd_gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($gp['ytd_total']) }}</td>
             </tr>
 
             {{-- 3. BEBAN OPERASIONAL --}}
@@ -222,14 +222,14 @@
             @forelse($data['operating_expenses']['items'] as $item)
                 <tr class="{{ $item['is_header'] ? 'font-bold bg-category' : '' }}">
                     <td style="padding-left: {{ max(4, ($item['level'] - 1) * 10) }}px;">
-                        <span class="font-mono" style="color: #4b5563;">{{ $item['code'] }}</span> {{ $item['name'] }}
+                        <span class="" style="color: #4b5563;">{{ $item['code'] }}</span> {{ $item['name'] }}
                     </td>
-                    <td class="text-right font-mono">{{ $fmt($item['balance_toko']) }}</td>
-                    <td class="text-right font-mono">{{ $fmt($item['balance_gudang']) }}</td>
-                    <td class="text-right font-mono font-bold">{{ $fmt($item['balance']) }}</td>
-                    <td class="text-right font-mono">{{ $fmt($item['ytd_toko']) }}</td>
-                    <td class="text-right font-mono">{{ $fmt($item['ytd_gudang']) }}</td>
-                    <td class="text-right font-mono font-bold">{{ $fmt($item['ytd_total']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['balance_toko']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['balance_gudang']) }}</td>
+                    <td class="text-right  font-bold">{{ $fmt($item['balance']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['ytd_toko']) }}</td>
+                    <td class="text-right ">{{ $fmt($item['ytd_gudang']) }}</td>
+                    <td class="text-right  font-bold">{{ $fmt($item['ytd_total']) }}</td>
                 </tr>
             @empty
                 <tr>
@@ -238,36 +238,36 @@
             @endforelse
             <tr class="bg-subtotal">
                 <td>TOTAL BEBAN OPERASIONAL</td>
-                <td class="text-right font-mono">{{ $fmt($data['operating_expenses']['toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($data['operating_expenses']['gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($data['operating_expenses']['total']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($data['operating_expenses']['ytd_toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($data['operating_expenses']['ytd_gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($data['operating_expenses']['ytd_total']) }}</td>
+                <td class="text-right ">{{ $fmt($data['operating_expenses']['toko']) }}</td>
+                <td class="text-right ">{{ $fmt($data['operating_expenses']['gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($data['operating_expenses']['total']) }}</td>
+                <td class="text-right ">{{ $fmt($data['operating_expenses']['ytd_toko']) }}</td>
+                <td class="text-right ">{{ $fmt($data['operating_expenses']['ytd_gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($data['operating_expenses']['ytd_total']) }}</td>
             </tr>
 
             {{-- SUMMARY: LABA / (RUGI) OPERASIONAL --}}
             @php $opInc = $data['operating_income_details']; @endphp
             <tr class="bg-subtotal" style="border-top: 1.5px solid #111827;">
                 <td>LABA / (RUGI) OPERASIONAL</td>
-                <td class="text-right font-mono">{{ $fmt($opInc['toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($opInc['gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($opInc['total']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($opInc['ytd_toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($opInc['ytd_gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($opInc['ytd_total']) }}</td>
+                <td class="text-right ">{{ $fmt($opInc['toko']) }}</td>
+                <td class="text-right ">{{ $fmt($opInc['gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($opInc['total']) }}</td>
+                <td class="text-right ">{{ $fmt($opInc['ytd_toko']) }}</td>
+                <td class="text-right ">{{ $fmt($opInc['ytd_gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($opInc['ytd_total']) }}</td>
             </tr>
 
             {{-- FINAL GRAND TOTAL: LABA BERSIH --}}
             @php $netInc = $data['net_income_details']; @endphp
             <tr class="bg-net">
                 <td>{{ $data['is_profit'] ? 'LABA BERSIH (NET PROFIT)' : 'RUGI BERSIH (NET LOSS)' }}</td>
-                <td class="text-right font-mono">{{ $fmt($netInc['toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($netInc['gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($netInc['total']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($netInc['ytd_toko']) }}</td>
-                <td class="text-right font-mono">{{ $fmt($netInc['ytd_gudang']) }}</td>
-                <td class="text-right font-mono font-bold">{{ $fmt($netInc['ytd_total']) }}</td>
+                <td class="text-right ">{{ $fmt($netInc['toko']) }}</td>
+                <td class="text-right ">{{ $fmt($netInc['gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($netInc['total']) }}</td>
+                <td class="text-right ">{{ $fmt($netInc['ytd_toko']) }}</td>
+                <td class="text-right ">{{ $fmt($netInc['ytd_gudang']) }}</td>
+                <td class="text-right  font-bold">{{ $fmt($netInc['ytd_total']) }}</td>
             </tr>
         </tbody>
     </table>

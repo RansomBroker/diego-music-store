@@ -27,15 +27,15 @@
             <div class="text-right flex items-center gap-6">
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Total Pembelian Baru</span>
-                    <div class="text-sm font-extrabold font-mono text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_additions']) }}</div>
+                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_additions']) }}</div>
                 </div>
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Total Pelunasan</span>
-                    <div class="text-sm font-extrabold font-mono text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_payments']) }}</div>
+                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_payments']) }}</div>
                 </div>
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Saldo Akhir Hutang</span>
-                    <div class="text-base font-extrabold font-mono text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_ending']) }}</div>
+                    <div class="text-base font-extrabold  text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_ending']) }}</div>
                 </div>
             </div>
         </div>
@@ -47,7 +47,7 @@
             <x-filament::section>
                 <x-slot name="heading">
                     <div class="flex items-center gap-2">
-                        <span class="px-2.5 py-1 text-xs font-mono font-extrabold bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600">
+                        <span class="px-2.5 py-1 text-xs  font-extrabold bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600">
                             {{ $vendor['supplier_code'] }}
                         </span>
                         <span class="font-extrabold tracking-wide text-gray-900 dark:text-white">{{ $vendor['supplier_name'] }}</span>
@@ -55,7 +55,7 @@
                 </x-slot>
 
                 <x-slot name="headerEnd">
-                    <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                    <span class="text-xs text-gray-500 dark:text-gray-400 ">
                         Telp: <strong>{{ $vendor['supplier_phone'] }}</strong>
                     </span>
                 </x-slot>
@@ -76,14 +76,14 @@
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             {{-- Beginning AP Balance Row --}}
                             <tr class="bg-gray-50/80 font-bold dark:bg-white/5 text-gray-900 dark:text-white">
-                                <td class="py-2.5 px-6 font-mono text-xs text-gray-500" colspan="2">
+                                <td class="py-2.5 px-6  text-xs text-gray-500" colspan="2">
                                     {{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}
                                 </td>
                                 <td class="py-2.5 px-6 font-semibold uppercase text-xs tracking-wider" colspan="2">
                                     SALDO AWAL HUTANG SUPPLIER (BEGINNING BALANCE)
                                 </td>
-                                <td class="py-2.5 px-6 text-right font-mono text-xs" colspan="2">-</td>
-                                <td class="py-2.5 px-6 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white">
+                                <td class="py-2.5 px-6 text-right  text-xs" colspan="2">-</td>
+                                <td class="py-2.5 px-6 text-right  text-xs font-extrabold text-gray-900 dark:text-white">
                                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['beginning_balance']) }}
                                 </td>
                             </tr>
@@ -91,25 +91,25 @@
                             {{-- Transaction Rows --}}
                             @forelse($vendor['transactions'] as $tx)
                                 <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                                    <td class="py-2 px-6 font-mono text-xs text-gray-500 whitespace-nowrap">
+                                    <td class="py-2 px-6  text-xs text-gray-500 whitespace-nowrap">
                                         {{ \Illuminate\Support\Carbon::parse($tx['date'])->format('d/m/Y') }}
                                     </td>
                                     <td class="py-2 px-6 text-xs font-medium whitespace-nowrap">
                                         {{ $tx['type'] }}
                                     </td>
-                                    <td class="py-2 px-6 font-mono text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                                    <td class="py-2 px-6  text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                                         {{ $tx['ref_no'] }}
                                     </td>
                                     <td class="py-2 px-6 text-xs">
                                         {{ $tx['description'] }}
                                     </td>
-                                    <td class="py-2 px-6 text-right font-mono text-xs text-gray-900 dark:text-white">
+                                    <td class="py-2 px-6 text-right  text-xs text-gray-900 dark:text-white">
                                         {{ $tx['addition'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['addition']) : '-' }}
                                     </td>
-                                    <td class="py-2 px-6 text-right font-mono text-xs text-gray-900 dark:text-white">
+                                    <td class="py-2 px-6 text-right  text-xs text-gray-900 dark:text-white">
                                         {{ $tx['payment'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['payment']) : '-' }}
                                     </td>
-                                    <td class="py-2 px-6 text-right font-mono text-xs font-bold text-gray-900 dark:text-white">
+                                    <td class="py-2 px-6 text-right  text-xs font-bold text-gray-900 dark:text-white">
                                         {{ \App\Helpers\FinancialReportHelper::formatRupiah($tx['running_balance']) }}
                                     </td>
                                 </tr>
@@ -127,12 +127,12 @@
                     <div class="p-3.5 px-6 bg-gray-100 dark:bg-white/10 flex justify-between items-center text-gray-900 dark:text-white">
                         <div class="flex items-center gap-6">
                             <span class="font-bold text-xs uppercase tracking-wider">TOTAL MUTASI SUPPLIER</span>
-                            <span class="text-xs font-mono">Pembelian: <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['total_additions']) }}</strong></span>
-                            <span class="text-xs font-mono">Pelunasan: <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['total_payments']) }}</strong></span>
+                            <span class="text-xs ">Pembelian: <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['total_additions']) }}</strong></span>
+                            <span class="text-xs ">Pelunasan: <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['total_payments']) }}</strong></span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-xs uppercase tracking-wider">SALDO AKHIR HUTANG:</span>
-                            <span class="font-mono text-sm font-extrabold text-gray-900 dark:text-white">
+                            <span class=" text-sm font-extrabold text-gray-900 dark:text-white">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['ending_balance']) }}
                             </span>
                         </div>

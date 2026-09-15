@@ -36,7 +36,7 @@
     <!-- Card 4: Diskon & Pajak -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
         <span class="text-sm font-semibold text-slate-400 uppercase">Diskon & Pajak</span>
-        <div class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-1 space-y-0.5 font-mono">
+        <div class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-1 space-y-0.5 ">
             <div>Disc: <span class="text-rose-600">Rp {{ number_format($summaryData['total_discount'] ?? 0, 0, ',', '.') }}</span></div>
             <div>Pajak: <span class="text-blue-600">Rp {{ number_format($summaryData['total_tax'] ?? 0, 0, ',', '.') }}</span></div>
         </div>

@@ -39,7 +39,7 @@
                                 class="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
                             />
                             <span>{{ $emp->name }}</span>
-                            <span class="text-[10px] font-mono text-slate-400">({{ $emp->nik }})</span>
+                            <span class="text-[10px]  text-slate-400">({{ $emp->nik }})</span>
                         </label>
                     @endif
                 @endforeach

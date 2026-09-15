@@ -50,7 +50,7 @@
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
                             @foreach($backups as $backup)
                                 <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                                    <td class="px-6 py-4 font-mono text-xs text-gray-900 dark:text-white flex items-center gap-x-2">
+                                    <td class="px-6 py-4  text-xs text-gray-900 dark:text-white flex items-center gap-x-2">
                                         <x-heroicon-o-archive-box class="w-5 h-5 text-primary-500 shrink-0" />
                                         <span>{{ $backup['name'] }}</span>
                                     </td>

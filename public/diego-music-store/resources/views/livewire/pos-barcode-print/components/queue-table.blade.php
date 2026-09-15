@@ -62,7 +62,7 @@
                             {{ $item['name'] }}
                             <div class="text-xs font-normal text-slate-400">Rp {{ number_format($item['price'], 0, ',', '.') }}</div>
                         </x-pos.table.td>
-                        <x-pos.table.td class="font-mono text-xs text-slate-600 dark:text-slate-300">
+                        <x-pos.table.td class=" text-xs text-slate-600 dark:text-slate-300">
                             <div class="space-y-0.5">
                                 @if (!empty($item['sku']))
                                     <div class="flex items-center gap-1">

@@ -111,7 +111,7 @@
         .text-right {
             text-align: right;
         }
-        .font-mono {
+        . {
             font-family: 'Consolas', 'Courier New', Courier, monospace;
             font-weight: bold;
         }
@@ -199,9 +199,9 @@
                     <tbody>
                         @forelse($data['assets']['current_assets'] as $item)
                             <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
-                                <td class="font-mono">{{ $item['code'] }}</td>
+                                <td class="">{{ $item['code'] }}</td>
                                 <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                <td class="text-right font-mono">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -213,7 +213,7 @@
                 <table style="width: 100%;" class="subtotal-row">
                     <tr>
                         <td>Total Aset Lancar</td>
-                        <td class="text-right font-mono">Rp {{ number_format($data['assets']['total_current_assets'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($data['assets']['total_current_assets'], 0, ',', '.') }}</td>
                     </tr>
                 </table>
 
@@ -231,9 +231,9 @@
                         <tbody>
                             @foreach($data['assets']['fixed_assets'] as $item)
                                 <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
-                                    <td class="font-mono">{{ $item['code'] }}</td>
+                                    <td class="">{{ $item['code'] }}</td>
                                     <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                    <td class="text-right font-mono">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                    <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -241,7 +241,7 @@
                     <table style="width: 100%;" class="subtotal-row">
                         <tr>
                             <td>Total Aset Tetap</td>
-                            <td class="text-right font-mono">Rp {{ number_format($data['assets']['total_fixed_assets'], 0, ',', '.') }}</td>
+                            <td class="text-right ">Rp {{ number_format($data['assets']['total_fixed_assets'], 0, ',', '.') }}</td>
                         </tr>
                     </table>
                 @endif
@@ -250,7 +250,7 @@
                     <table style="width: 100%;">
                         <tr>
                             <td>TOTAL ASET (AKTIVA)</td>
-                            <td class="text-right font-mono" style="font-size: 11px;">Rp {{ number_format($data['total_assets'], 0, ',', '.') }}</td>
+                            <td class="text-right " style="font-size: 11px;">Rp {{ number_format($data['total_assets'], 0, ',', '.') }}</td>
                         </tr>
                     </table>
                 </div>
@@ -275,9 +275,9 @@
                     <tbody>
                         @forelse($data['liabilities']['current_liabilities'] as $item)
                             <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
-                                <td class="font-mono">{{ $item['code'] }}</td>
+                                <td class="">{{ $item['code'] }}</td>
                                 <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                <td class="text-right font-mono">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -289,7 +289,7 @@
                 <table style="width: 100%;" class="subtotal-row">
                     <tr>
                         <td>Total Kewajiban Jangka Pendek</td>
-                        <td class="text-right font-mono">Rp {{ number_format($data['liabilities']['total_current_liabilities'], 0, ',', '.') }}</td>
+                        <td class="text-right ">Rp {{ number_format($data['liabilities']['total_current_liabilities'], 0, ',', '.') }}</td>
                     </tr>
                 </table>
 
@@ -307,9 +307,9 @@
                         <tbody>
                             @foreach($data['liabilities']['long_term_liabilities'] as $item)
                                 <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
-                                    <td class="font-mono">{{ $item['code'] }}</td>
+                                    <td class="">{{ $item['code'] }}</td>
                                     <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                    <td class="text-right font-mono">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                    <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -317,7 +317,7 @@
                     <table style="width: 100%;" class="subtotal-row">
                         <tr>
                             <td>Total Kewajiban Jangka Panjang</td>
-                            <td class="text-right font-mono">Rp {{ number_format($data['liabilities']['total_long_term_liabilities'], 0, ',', '.') }}</td>
+                            <td class="text-right ">Rp {{ number_format($data['liabilities']['total_long_term_liabilities'], 0, ',', '.') }}</td>
                         </tr>
                     </table>
                 @endif
@@ -326,7 +326,7 @@
                     <table style="width: 100%;">
                         <tr>
                             <td>TOTAL KEWAJIBAN</td>
-                            <td class="text-right font-mono">Rp {{ number_format($data['total_liabilities'], 0, ',', '.') }}</td>
+                            <td class="text-right ">Rp {{ number_format($data['total_liabilities'], 0, ',', '.') }}</td>
                         </tr>
                     </table>
                 </div>
@@ -344,15 +344,15 @@
                     <tbody>
                         @foreach($data['equity']['items'] as $item)
                             <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
-                                <td class="font-mono">{{ $item['code'] }}</td>
+                                <td class="">{{ $item['code'] }}</td>
                                 <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                <td class="text-right font-mono">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
                             </tr>
                         @endforeach
                         <tr style="background-color: #f3f4f6; font-weight: bold;">
-                            <td class="font-mono">-</td>
+                            <td class="">-</td>
                             <td class="pl-detail">Laba / (Rugi) Periode Berjalan</td>
-                            <td class="text-right font-mono">{{ number_format($data['equity']['current_net_income'], 0, ',', '.') }}</td>
+                            <td class="text-right ">{{ number_format($data['equity']['current_net_income'], 0, ',', '.') }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -360,7 +360,7 @@
                     <table style="width: 100%;">
                         <tr>
                             <td>TOTAL EKUITAS</td>
-                            <td class="text-right font-mono">Rp {{ number_format($data['total_equity'], 0, ',', '.') }}</td>
+                            <td class="text-right ">Rp {{ number_format($data['total_equity'], 0, ',', '.') }}</td>
                         </tr>
                     </table>
                 </div>
@@ -369,7 +369,7 @@
                     <table style="width: 100%;">
                         <tr>
                             <td>TOTAL LIABILITAS & EKUITAS</td>
-                            <td class="text-right font-mono" style="font-size: 11px;">Rp {{ number_format($data['total_liabilities_and_equity'], 0, ',', '.') }}</td>
+                            <td class="text-right " style="font-size: 11px;">Rp {{ number_format($data['total_liabilities_and_equity'], 0, ',', '.') }}</td>
                         </tr>
                     </table>
                 </div>

@@ -12,7 +12,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-slate-50 dark:bg-slate-900/60 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800 transition-colors">
                 <div>
                     <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">No. Pembayaran</span>
-                    <span class="text-sm font-mono font-bold text-slate-900 dark:text-white">{{ $detailPayment->payment_no }}</span>
+                    <span class="text-sm  font-bold text-slate-900 dark:text-white">{{ $detailPayment->payment_no }}</span>
                 </div>
                 <div>
                     <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Tanggal Pembayaran</span>
@@ -48,7 +48,7 @@
                 </div>
                 <div>
                     <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Journal No</span>
-                    <span class="text-sm font-mono text-slate-850 dark:text-slate-250">{{ $detailPayment->journal_no ?? '-' }}</span>
+                    <span class="text-sm  text-slate-850 dark:text-slate-250">{{ $detailPayment->journal_no ?? '-' }}</span>
                 </div>
                 @if ($detailPayment->notes)
                     <div class="col-span-full border-t border-slate-200 dark:border-slate-800 pt-3 mt-1">
@@ -75,18 +75,18 @@
                             @foreach ($detailPayment->items as $det)
                                 <x-pos.table.tr>
                                     <x-pos.table.td class="whitespace-nowrap font-medium text-slate-900 dark:text-slate-100">
-                                        <div class="font-mono font-bold">{{ $det->purchaseTransaction->transaction_no }}</div>
+                                        <div class=" font-bold">{{ $det->purchaseTransaction->transaction_no }}</div>
                                         @if ($det->purchaseTransaction->invoice_number)
-                                            <span class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 block font-mono">Inv: {{ $det->purchaseTransaction->invoice_number }}</span>
+                                            <span class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 block ">Inv: {{ $det->purchaseTransaction->invoice_number }}</span>
                                         @endif
                                     </x-pos.table.td>
                                     <x-pos.table.td class="whitespace-nowrap text-sm text-slate-650 dark:text-slate-350">
                                         {{ $det->purchaseTransaction->transaction_date->format('d/m/Y') }}
                                     </x-pos.table.td>
-                                    <x-pos.table.td class="whitespace-nowrap text-right text-sm text-slate-650 dark:text-slate-350 font-mono">
+                                    <x-pos.table.td class="whitespace-nowrap text-right text-sm text-slate-650 dark:text-slate-350 ">
                                         Rp {{ number_format($det->amount_due, 0, ',', '.') }}
                                     </x-pos.table.td>
-                                    <x-pos.table.td class="whitespace-nowrap text-right font-black text-primary dark:text-blue-400 text-sm font-mono">
+                                    <x-pos.table.td class="whitespace-nowrap text-right font-black text-primary dark:text-blue-400 text-sm ">
                                         Rp {{ number_format($det->amount_paid, 0, ',', '.') }}
                                     </x-pos.table.td>
                                 </x-pos.table.tr>
@@ -98,7 +98,7 @@
 
                 <div class="mt-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 flex justify-between items-center transition-colors">
                     <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Pelunasan</span>
-                    <span class="text-2xl font-black text-primary dark:text-blue-400 font-mono">Rp {{ number_format($detailPayment->total_amount, 0, ',', '.') }}</span>
+                    <span class="text-2xl font-black text-primary dark:text-blue-400 ">Rp {{ number_format($detailPayment->total_amount, 0, ',', '.') }}</span>
                 </div>
             </div>
 

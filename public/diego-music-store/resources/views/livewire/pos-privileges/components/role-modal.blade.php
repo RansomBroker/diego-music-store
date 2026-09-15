@@ -42,7 +42,7 @@
                                     >
                                     <div>
                                         <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 block">{{ $permLabel }}</span>
-                                        <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{{ $permName }}</span>
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-500 ">{{ $permName }}</span>
                                     </div>
                                 </label>
                             @endforeach

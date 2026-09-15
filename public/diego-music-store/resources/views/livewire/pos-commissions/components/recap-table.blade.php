@@ -32,7 +32,7 @@
 
         <div class="flex items-center gap-3">
             <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                Periode: <span class="font-mono text-slate-900 dark:text-slate-100 font-semibold">{{ \Carbon\Carbon::parse($filterMonth . '-01')->translatedFormat('F Y') }}</span>
+                Periode: <span class=" text-slate-900 dark:text-slate-100 font-semibold">{{ \Carbon\Carbon::parse($filterMonth . '-01')->translatedFormat('F Y') }}</span>
             </span>
             <x-pos.utility.pill variant="primary" size="sm">
                 TOTAL: {{ count($recapData) }} STAF
@@ -59,21 +59,21 @@
                         <x-pos.table.tr>
                             <x-pos.table.td>
                                 <div class="font-semibold text-slate-900 dark:text-slate-100">{{ $row['employee']->name }}</div>
-                                <div class="text-[10px] font-mono text-slate-400 font-normal">NIK: {{ $row['employee']->nik }}</div>
+                                <div class="text-[10px]  text-slate-400 font-normal">NIK: {{ $row['employee']->nik }}</div>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-slate-600 dark:text-slate-400 font-normal">
                                 {{ $row['employee']->branch?->name ?: 'Cabang Utama' }}
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-mono font-medium text-slate-700 dark:text-slate-300">
+                            <x-pos.table.td class="text-right  font-medium text-slate-700 dark:text-slate-300">
                                 <span class="text-slate-700 dark:text-slate-300">Rp {{ number_format($row['sales_total'], 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                            <x-pos.table.td class="text-right  font-semibold text-emerald-600 dark:text-emerald-400">
                                 <span class="text-emerald-600 dark:text-emerald-400">Rp {{ number_format($row['commission_total'], 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-mono font-medium text-purple-600 dark:text-purple-400">
+                            <x-pos.table.td class="text-right  font-medium text-purple-600 dark:text-purple-400">
                                 <span class="text-purple-600 dark:text-purple-400">Rp {{ number_format($row['approved_total'], 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-mono font-medium text-amber-600 dark:text-amber-400">
+                            <x-pos.table.td class="text-right  font-medium text-amber-600 dark:text-amber-400">
                                 <span class="text-amber-600 dark:text-amber-400">Rp {{ number_format($row['pending_total'], 0, ',', '.') }}</span>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">

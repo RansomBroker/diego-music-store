@@ -9,7 +9,7 @@
         </div>
         <div class="text-right">
             <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">Proyeksi Bulan Depan</div>
-            <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono">
+            <div class="text-xs font-black text-emerald-600 dark:text-emerald-400 ">
                 Rp {{ number_format($monthlyTrendChart['predicted_next_val'], 0, ',', '.') }}
             </div>
         </div>

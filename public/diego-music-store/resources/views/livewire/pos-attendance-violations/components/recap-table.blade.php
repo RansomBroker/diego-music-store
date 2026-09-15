@@ -18,18 +18,18 @@
                         <x-pos.table.tr>
                             <x-pos.table.td>
                                 <div class="font-extrabold text-slate-900 dark:text-slate-100">{{ $row['employee']->name }}</div>
-                                <div class="text-[10px] font-mono text-slate-400">NIK: {{ $row['employee']->nik }} &bull; {{ $row['employee']->branch?->name ?: '-' }}</div>
+                                <div class="text-[10px]  text-slate-400">NIK: {{ $row['employee']->nik }} &bull; {{ $row['employee']->branch?->name ?: '-' }}</div>
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono font-bold text-amber-600 dark:text-amber-400">
+                            <x-pos.table.td class=" font-bold text-amber-600 dark:text-amber-400">
                                 {{ number_format($row['late_minutes']) }}m
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono font-bold text-purple-600 dark:text-purple-400">
+                            <x-pos.table.td class=" font-bold text-purple-600 dark:text-purple-400">
                                 {{ number_format($row['early_minutes']) }}m
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono font-black text-rose-600 dark:text-rose-400">
+                            <x-pos.table.td class=" font-black text-rose-600 dark:text-rose-400">
                                 Rp {{ number_format($row['total_deduction'], 0, ',', '.') }}
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono font-black text-emerald-600 dark:text-emerald-400">
+                            <x-pos.table.td class=" font-black text-emerald-600 dark:text-emerald-400">
                                 Rp {{ number_format($row['approved_deduction'], 0, ',', '.') }}
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">

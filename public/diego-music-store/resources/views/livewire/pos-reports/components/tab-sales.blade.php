@@ -64,7 +64,7 @@
                             $profit = $sale->grand_total - $saleCOGS;
                         @endphp
                         <x-pos.table.tr>
-                            <x-pos.table.td class="font-bold text-xs text-primary dark:text-blue-400 font-mono">{{ $sale->invoice_number }}</x-pos.table.td>
+                            <x-pos.table.td class="font-bold text-xs text-primary dark:text-blue-400 ">{{ $sale->invoice_number }}</x-pos.table.td>
                             <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300">{{ $sale->invoice_date->format('d/m/Y') }}</x-pos.table.td>
                             <x-pos.table.td class="text-xs font-semibold text-slate-900 dark:text-white">{{ $sale->customer->name ?? 'Walk-in / Umum' }}</x-pos.table.td>
                             <x-pos.table.td class="text-xs"><span class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-bold">{{ $sale->sale_category ?: 'Store' }}</span></x-pos.table.td>

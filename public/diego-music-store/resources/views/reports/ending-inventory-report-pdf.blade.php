@@ -56,7 +56,7 @@
         .text-center {
             text-align: center;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -118,9 +118,9 @@
                 @forelse($data['categories'] as $cat)
                     <tr>
                         <td class="font-bold">{{ $cat['category_name'] }}</td>
-                        <td class="text-center font-mono font-bold">{{ number_format($cat['variant_count'], 0, ',', '.') }}</td>
-                        <td class="text-center font-mono font-bold">{{ number_format($cat['total_qty'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($cat['total_valuation'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">{{ number_format($cat['variant_count'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">{{ number_format($cat['total_qty'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ number_format($cat['total_valuation'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -146,14 +146,14 @@
             <tbody>
                 @forelse($data['rows'] as $row)
                     <tr>
-                        <td class="font-mono font-bold">{{ $row['sku'] }}</td>
+                        <td class=" font-bold">{{ $row['sku'] }}</td>
                         <td class="font-bold">{{ $row['full_name'] }}</td>
                         <td>{{ $row['category'] }}</td>
                         <td>{{ $row['brand'] }}</td>
-                        <td class="text-center font-mono font-bold">{{ number_format($row['ending_qty'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">{{ number_format($row['ending_qty'], 0, ',', '.') }}</td>
                         <td class="text-center">{{ $row['unit'] }}</td>
-                        <td class="text-right font-mono">{{ number_format($row['cost_price'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($row['valuation'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ number_format($row['cost_price'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ number_format($row['valuation'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -168,7 +168,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>RINGKASAN PERSEDIAAN AKHIR: {{ number_format($data['total_variants'], 0, ',', '.') }} SKU &bull; Total Qty Akhir: {{ number_format($data['total_ending_qty'], 0, ',', '.') }} Unit</td>
-                <td class="text-right font-mono">GRAND TOTAL NILAI ASET: Rp {{ number_format($data['grand_total_valuation'], 0, ',', '.') }}</td>
+                <td class="text-right ">GRAND TOTAL NILAI ASET: Rp {{ number_format($data['grand_total_valuation'], 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

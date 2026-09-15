@@ -14,7 +14,7 @@
                     }}">
                         {{ $product->type === 'physical' ? 'Fisik' : ($product->type === 'bundle' ? 'Paket / Bundle' : 'Jasa') }}
                     </span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">ID: #{{ $product->id }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 ">ID: #{{ $product->id }}</span>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $product->name }}</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ $product->description ?: 'Tidak ada deskripsi produk.' }}</p>
@@ -22,7 +22,7 @@
             
             <div class="flex flex-col items-start md:items-end">
                 <span class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold">Total Stok (Semua Cabang)</span>
-                <span class="text-2xl font-black text-gray-900 dark:text-white font-mono mt-1">
+                <span class="text-2xl font-black text-gray-900 dark:text-white  mt-1">
                     @if($product->isService())
                         &infin;
                     @else
@@ -67,21 +67,21 @@
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                             </div>
                             <div>
-                                <span class="text-xs font-semibold text-purple-600 dark:text-purple-400 font-mono">Komponen #{{ $index + 1 }}</span>
+                                <span class="text-xs font-semibold text-purple-600 dark:text-purple-400 ">Komponen #{{ $index + 1 }}</span>
                                 <h5 class="text-sm font-bold text-gray-900 dark:text-white mt-0.5">{{ $childProduct->name }}</h5>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-mono">SKU: {{ $childVariant->sku }} | Barcode: {{ $childVariant->barcode ?: '-' }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 ">SKU: {{ $childVariant->sku }} | Barcode: {{ $childVariant->barcode ?: '-' }}</p>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-6 mt-3 sm:mt-0 ml-10 sm:ml-0">
                             <div class="text-right">
                                 <span class="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold block">Kebutuhan / Bundle</span>
-                                <span class="text-sm font-bold text-gray-900 dark:text-white font-mono">{{ $item->quantity }} {{ $childProduct->unit->name ?? 'Unit' }}</span>
+                                <span class="text-sm font-bold text-gray-900 dark:text-white ">{{ $item->quantity }} {{ $childProduct->unit->name ?? 'Unit' }}</span>
                             </div>
 
                             <div class="text-right">
                                 <span class="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold block">Stok Komponen</span>
-                                <span class="text-sm font-bold text-gray-900 dark:text-white font-mono">{{ number_format($childVariant->totalStock(), 0, ',', '.') }} {{ $childProduct->unit->name ?? 'Unit' }}</span>
+                                <span class="text-sm font-bold text-gray-900 dark:text-white ">{{ number_format($childVariant->totalStock(), 0, ',', '.') }} {{ $childProduct->unit->name ?? 'Unit' }}</span>
                             </div>
 
                             <!-- Chevron Icon -->
@@ -98,7 +98,7 @@
                             @foreach($branches as $branch)
                                 <div class="p-2.5 rounded-lg bg-gray-50/50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-800 text-center">
                                     <span class="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold block">{{ $branch->name }}</span>
-                                    <span class="text-sm font-extrabold text-gray-900 dark:text-gray-200 font-mono block mt-0.5">
+                                    <span class="text-sm font-extrabold text-gray-900 dark:text-gray-200  block mt-0.5">
                                         {{ number_format($childVariant->stockForBranch($branch->id), 0, ',', '.') }}
                                     </span>
                                 </div>
@@ -124,7 +124,7 @@
                                     <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
                                         @forelse($movements as $mv)
                                             <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                                                <td class="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-400">
+                                                <td class="px-4 py-2.5  text-gray-700 dark:text-gray-400">
                                                     {{ $mv->created_at->format('d/m/Y H:i') }}
                                                 </td>
                                                 <td class="px-4 py-2.5 font-semibold text-gray-900 dark:text-gray-200">
@@ -143,16 +143,16 @@
                                                         </span>
                                                     @endif
                                                 </td>
-                                                <td class="px-4 py-2.5 text-right font-mono font-bold text-gray-900 dark:text-gray-200">
+                                                <td class="px-4 py-2.5 text-right  font-bold text-gray-900 dark:text-gray-200">
                                                     {{ number_format($mv->quantity, 0, ',', '.') }}
                                                 </td>
-                                                <td class="px-4 py-2.5 text-right font-mono text-gray-900 dark:text-white">
+                                                <td class="px-4 py-2.5 text-right  text-gray-900 dark:text-white">
                                                     Rp {{ number_format($mv->unit_cost, 0, ',', '.') }}
                                                 </td>
-                                                <td class="px-4 py-2.5 text-right font-mono text-gray-900 dark:text-white">
+                                                <td class="px-4 py-2.5 text-right  text-gray-900 dark:text-white">
                                                     Rp {{ number_format($mv->hpp, 0, ',', '.') }}
                                                 </td>
-                                                <td class="px-4 py-2.5 text-right font-mono text-gray-900 dark:text-white">
+                                                <td class="px-4 py-2.5 text-right  text-gray-900 dark:text-white">
                                                     Rp {{ number_format($mv->quantity * $mv->unit_cost, 0, ',', '.') }}
                                                 </td>
                                                 <td class="px-4 py-2.5 text-gray-800 dark:text-gray-300 font-medium">
@@ -188,10 +188,10 @@
                         <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200">
                             Varian: <span class="text-blue-600 dark:text-blue-400">{{ $variant->name ?: 'Varian ' . ($vIndex + 1) }}</span>
                         </h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">SKU: {{ $variant->sku }} | Barcode: {{ $variant->barcode ?: '-' }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400  mt-0.5">SKU: {{ $variant->sku }} | Barcode: {{ $variant->barcode ?: '-' }}</p>
                     </div>
                 @else
-                    <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 font-mono">
+                    <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 ">
                         <span>SKU: <strong class="text-gray-700 dark:text-gray-300 font-semibold">{{ $variant->sku }}</strong></span>
                         <span>|</span>
                         <span>Barcode: <strong class="text-gray-700 dark:text-gray-300 font-semibold">{{ $variant->barcode ?: '-' }}</strong></span>
@@ -203,7 +203,7 @@
                     @foreach($branches as $branch)
                         <div class="p-2.5 rounded-lg bg-gray-50/50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-800 text-center">
                             <span class="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold block">{{ $branch->name }}</span>
-                            <span class="text-sm font-extrabold text-gray-900 dark:text-gray-200 font-mono block mt-0.5">
+                            <span class="text-sm font-extrabold text-gray-900 dark:text-gray-200  block mt-0.5">
                                 {{ number_format($variant->stockForBranch($branch->id), 0, ',', '.') }}
                             </span>
                         </div>
@@ -233,7 +233,7 @@
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-800 bg-white dark:bg-gray-900">
                                 @forelse($movements as $mv)
                                     <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                                        <td class="px-4 py-3 font-mono text-gray-700 dark:text-gray-400">
+                                        <td class="px-4 py-3  text-gray-700 dark:text-gray-400">
                                             {{ $mv->created_at->format('d/m/Y H:i') }}
                                         </td>
                                         <td class="px-4 py-3 font-semibold text-gray-900 dark:text-gray-200">
@@ -252,16 +252,16 @@
                                                 </span>
                                             @endif
                                         </td>
-                                        <td class="px-4 py-3 text-right font-mono font-bold text-gray-900 dark:text-gray-200">
+                                        <td class="px-4 py-3 text-right  font-bold text-gray-900 dark:text-gray-200">
                                             {{ number_format($mv->quantity, 0, ',', '.') }}
                                         </td>
-                                        <td class="px-4 py-3 text-right font-mono text-gray-900 dark:text-white">
+                                        <td class="px-4 py-3 text-right  text-gray-900 dark:text-white">
                                             Rp {{ number_format($mv->unit_cost, 0, ',', '.') }}
                                         </td>
-                                        <td class="px-4 py-3 text-right font-mono text-gray-900 dark:text-white">
+                                        <td class="px-4 py-3 text-right  text-gray-900 dark:text-white">
                                             Rp {{ number_format($mv->hpp, 0, ',', '.') }}
                                         </td>
-                                        <td class="px-4 py-3 text-right font-mono text-gray-900 text-gray-900 dark:text-white">
+                                        <td class="px-4 py-3 text-right  text-gray-900 text-gray-900 dark:text-white">
                                             Rp {{ number_format($mv->quantity * $mv->unit_cost, 0, ',', '.') }}
                                         </td>
                                         <td class="px-4 py-3 text-gray-800 dark:text-gray-300 font-medium">

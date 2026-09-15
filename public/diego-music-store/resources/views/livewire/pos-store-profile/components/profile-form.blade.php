@@ -193,7 +193,7 @@
                             step="any"
                             wire:model.live="latitude"
                             placeholder="-0.03470087552402962"
-                            class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-900 dark:text-white outline-none"
+                            class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs  text-slate-900 dark:text-white outline-none"
                         >
                     </div>
                     <div>
@@ -203,7 +203,7 @@
                             step="any"
                             wire:model.live="longitude"
                             placeholder="109.33239215349418"
-                            class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-900 dark:text-white outline-none"
+                            class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs  text-slate-900 dark:text-white outline-none"
                         >
                     </div>
                     <div>

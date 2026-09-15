@@ -56,7 +56,7 @@
         .text-center {
             text-align: center;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -124,12 +124,12 @@
                 <tbody>
                     @foreach($pay['items'] as $item)
                         <tr>
-                            <td class="font-mono font-bold">{{ $item['transaction_no'] }}</td>
-                            <td class="font-mono">{{ $item['invoice_number'] }}</td>
-                            <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($item['purchase_date'])->format('d/m/Y') }}</td>
-                            <td class="text-right font-mono">{{ number_format($item['grand_total'], 0, ',', '.') }}</td>
-                            <td class="text-right font-mono">{{ number_format($item['amount_due'], 0, ',', '.') }}</td>
-                            <td class="text-right font-mono font-bold">{{ number_format($item['amount_paid'], 0, ',', '.') }}</td>
+                            <td class=" font-bold">{{ $item['transaction_no'] }}</td>
+                            <td class="">{{ $item['invoice_number'] }}</td>
+                            <td class="">{{ \Illuminate\Support\Carbon::parse($item['purchase_date'])->format('d/m/Y') }}</td>
+                            <td class="text-right ">{{ number_format($item['grand_total'], 0, ',', '.') }}</td>
+                            <td class="text-right ">{{ number_format($item['amount_due'], 0, ',', '.') }}</td>
+                            <td class="text-right  font-bold">{{ number_format($item['amount_paid'], 0, ',', '.') }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -152,14 +152,14 @@
             <tbody>
                 @forelse($data['payments'] as $pay)
                     <tr>
-                        <td class="font-mono font-bold">{{ $pay['payment_no'] }}</td>
-                        <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($pay['payment_date'])->format('d/m/Y') }}</td>
+                        <td class=" font-bold">{{ $pay['payment_no'] }}</td>
+                        <td class="">{{ \Illuminate\Support\Carbon::parse($pay['payment_date'])->format('d/m/Y') }}</td>
                         <td class="font-bold">{{ $pay['supplier_name'] }}</td>
                         <td>{{ $pay['payment_method'] }}</td>
                         <td>{{ $pay['account_name'] }}</td>
-                        <td class="font-mono">{{ $pay['payment_reference'] }}</td>
-                        <td class="text-center font-mono font-bold">{{ number_format($pay['items_count'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($pay['total_amount'], 0, ',', '.') }}</td>
+                        <td class="">{{ $pay['payment_reference'] }}</td>
+                        <td class="text-center  font-bold">{{ number_format($pay['items_count'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ number_format($pay['total_amount'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -174,7 +174,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>RINGKASAN PELUNASAN: {{ number_format($data['total_payments_count'], 0, ',', '.') }} Bukti Pelunasan &bull; {{ number_format($data['total_invoices_paid'], 0, ',', '.') }} Faktur Dilunasi &bull; {{ number_format($data['total_suppliers_paid'], 0, ',', '.') }} Supplier Terbayar</td>
-                <td class="text-right font-mono">GRAND TOTAL PELUNASAN: Rp {{ number_format($data['total_amount_paid'], 0, ',', '.') }}</td>
+                <td class="text-right ">GRAND TOTAL PELUNASAN: Rp {{ number_format($data['total_amount_paid'], 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

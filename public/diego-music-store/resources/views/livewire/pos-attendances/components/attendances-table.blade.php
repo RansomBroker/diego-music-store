@@ -71,15 +71,15 @@
                         </x-pos.table.td>
                         <x-pos.table.td class="font-bold text-slate-900 dark:text-slate-100">
                             {{ $emp->name ?? '-' }}
-                            <div class="text-[10px] text-slate-400 font-mono">{{ $emp->nik ?? '' }}</div>
+                            <div class="text-[10px] text-slate-400 ">{{ $emp->nik ?? '' }}</div>
                         </x-pos.table.td>
                         <x-pos.table.td>{{ $row->branch->name ?? 'Cabang Utama' }}</x-pos.table.td>
                         <x-pos.table.td>
                             <div class="space-y-0.5">
-                                <div class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                                <div class=" text-emerald-600 dark:text-emerald-400 font-bold">
                                     In: {{ $row->clock_in ? $row->clock_in->format('H:i:s') : '-' }}
                                 </div>
-                                <div class="font-mono text-amber-600 dark:text-amber-400 font-bold">
+                                <div class=" text-amber-600 dark:text-amber-400 font-bold">
                                     Out: {{ $row->clock_out ? $row->clock_out->format('H:i:s') : '-' }}
                                 </div>
                             </div>

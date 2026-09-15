@@ -127,7 +127,7 @@
                             <div class="font-bold text-sm text-slate-800 dark:text-slate-100">
                                 {{ $held->customer_name }}
                             </div>
-                            <div class="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mt-0.5">
+                            <div class="text-[10px]  font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mt-0.5">
                                 HLD-{{ strtoupper(substr($held->id, 0, 8)) }}
                             </div>
                             <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">

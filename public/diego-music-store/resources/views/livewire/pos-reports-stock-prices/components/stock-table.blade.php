@@ -30,7 +30,7 @@
                 @endphp
                 @forelse ($displayRows as $row)
                     <x-pos.table.tr wire:key="stock-row-{{ $row['sku'] ?? $loop->index }}">
-                        <x-pos.table.td class="font-mono text-xs text-slate-900 dark:text-white">
+                        <x-pos.table.td class=" text-xs text-slate-900 dark:text-white">
                             <div class="font-bold text-primary dark:text-blue-400">{{ $row['sku'] }}</div>
                             <div class="text-[10px] text-slate-400">BC: {{ $row['barcode'] }}</div>
                         </x-pos.table.td>
@@ -44,11 +44,11 @@
                             <span class="text-[10px] text-slate-400 block mt-0.5">{{ $row['brand'] }}</span>
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-center font-mono font-extrabold text-xs text-slate-900 dark:text-white">
+                        <x-pos.table.td class="text-center  font-extrabold text-xs text-slate-900 dark:text-white">
                             {{ number_format($row['stock'], 0, ',', '.') }}
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-center font-mono text-xs text-slate-500">
+                        <x-pos.table.td class="text-center  text-xs text-slate-500">
                             {{ number_format($row['min_stock'], 0, ',', '.') }}
                         </x-pos.table.td>
 
@@ -76,27 +76,27 @@
                             @endif
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-center font-mono text-xs text-slate-600 dark:text-slate-300">
+                        <x-pos.table.td class="text-center  text-xs text-slate-600 dark:text-slate-300">
                             {{ $row['discount'] }}
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-center font-mono text-xs text-slate-600 dark:text-slate-300">
+                        <x-pos.table.td class="text-center  text-xs text-slate-600 dark:text-slate-300">
                             {{ $row['tax'] }}
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-right font-mono text-xs text-rose-600 dark:text-rose-400 font-semibold">
+                        <x-pos.table.td class="text-right  text-xs text-rose-600 dark:text-rose-400 font-semibold">
                             Rp {{ number_format($row['cost_price'], 0, ',', '.') }}
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-right font-mono text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                        <x-pos.table.td class="text-right  text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
                             Rp {{ number_format($row['retail_price'], 0, ',', '.') }}
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-right font-mono font-extrabold text-xs text-blue-600 dark:text-blue-400">
+                        <x-pos.table.td class="text-right  font-extrabold text-xs text-blue-600 dark:text-blue-400">
                             Rp {{ number_format($row['valuation'], 0, ',', '.') }}
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-right font-mono font-extrabold text-xs text-purple-600 dark:text-purple-400">
+                        <x-pos.table.td class="text-right  font-extrabold text-xs text-purple-600 dark:text-purple-400">
                             Rp {{ number_format($row['retail_value'], 0, ',', '.') }}
                         </x-pos.table.td>
                     </x-pos.table.tr>

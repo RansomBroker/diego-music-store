@@ -56,7 +56,7 @@
         .text-center {
             text-align: center;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -121,18 +121,18 @@
         <tbody>
             @forelse($data['rows'] as $row)
                 <tr>
-                    <td class="font-mono font-bold">{{ $row['sku'] }}</td>
+                    <td class=" font-bold">{{ $row['sku'] }}</td>
                     <td class="font-bold">{{ $row['full_name'] }}</td>
                     <td>{{ $row['category'] }}</td>
-                    <td class="text-center font-mono font-bold">{{ number_format($row['stock'], 0, ',', '.') }}</td>
-                    <td class="text-center font-mono" style="color: #6b7280;">{{ number_format($row['min_stock'], 0, ',', '.') }}</td>
+                    <td class="text-center  font-bold">{{ number_format($row['stock'], 0, ',', '.') }}</td>
+                    <td class="text-center " style="color: #6b7280;">{{ number_format($row['min_stock'], 0, ',', '.') }}</td>
                     <td class="text-center">{{ $row['unit'] }}</td>
                     <td class="text-center font-bold">{{ $row['status_label'] }}</td>
-                    <td class="text-center font-mono">{{ $row['discount'] }}</td>
-                    <td class="text-center font-mono">{{ $row['tax'] }}</td>
-                    <td class="text-right font-mono">{{ number_format($row['cost_price'], 0, ',', '.') }}</td>
-                    <td class="text-right font-mono">{{ number_format($row['retail_price'], 0, ',', '.') }}</td>
-                    <td class="text-right font-mono font-bold">{{ number_format($row['valuation'], 0, ',', '.') }}</td>
+                    <td class="text-center ">{{ $row['discount'] }}</td>
+                    <td class="text-center ">{{ $row['tax'] }}</td>
+                    <td class="text-right ">{{ number_format($row['cost_price'], 0, ',', '.') }}</td>
+                    <td class="text-right ">{{ number_format($row['retail_price'], 0, ',', '.') }}</td>
+                    <td class="text-right  font-bold">{{ number_format($row['valuation'], 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
@@ -146,7 +146,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>RINGKASAN STOK: {{ number_format($data['total_variants'], 0, ',', '.') }} SKU &bull; Total Qty: {{ number_format($data['total_physical_qty'], 0, ',', '.') }} Unit &bull; Stok Rendah: {{ number_format($data['total_low_stock_count'], 0, ',', '.') }} &bull; Stok Habis: {{ number_format($data['total_out_of_stock_count'], 0, ',', '.') }}</td>
-                <td class="text-right font-mono">GRAND TOTAL NILAI ASET: Rp {{ number_format($data['grand_total_valuation'], 0, ',', '.') }}</td>
+                <td class="text-right ">GRAND TOTAL NILAI ASET: Rp {{ number_format($data['grand_total_valuation'], 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

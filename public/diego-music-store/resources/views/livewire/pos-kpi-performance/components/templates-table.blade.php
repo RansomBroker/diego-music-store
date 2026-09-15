@@ -52,11 +52,11 @@
                                     </span>
                                 @endif
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-blue-600 dark:text-blue-400">
+                            <x-pos.table.td class="text-right font-semibold  text-blue-600 dark:text-blue-400">
                                 <span class="text-blue-600 dark:text-blue-400">Rp {{ number_format($tpl->target_sales_amount, 0, ',', '.') }}</span>
                                 <span class="block text-[10px] text-slate-400 font-normal">Bobot: {{ $tpl->weight_sales }}%</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-sky-600 dark:text-sky-400">
+                            <x-pos.table.td class="text-right font-semibold  text-sky-600 dark:text-sky-400">
                                 <span class="text-sky-600 dark:text-sky-400">Rp {{ number_format($tpl->target_atv_amount, 0, ',', '.') }}</span>
                                 <span class="block text-[10px] text-slate-400 font-normal">Bobot: {{ $tpl->weight_atv }}%</span>
                             </x-pos.table.td>
@@ -68,7 +68,7 @@
                                 <span class="text-amber-600 dark:text-amber-400">{{ $tpl->target_punctuality_pct }}%</span>
                                 <span class="block text-[10px] text-slate-400 font-normal">Bobot: {{ $tpl->weight_punctuality }}%</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-black font-mono text-purple-600 dark:text-purple-400">
+                            <x-pos.table.td class="text-right font-black  text-purple-600 dark:text-purple-400">
                                 <span class="text-purple-600 dark:text-purple-400 font-black">Rp {{ number_format($tpl->max_bonus_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">

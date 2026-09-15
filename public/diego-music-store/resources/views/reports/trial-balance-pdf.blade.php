@@ -68,7 +68,7 @@
         .text-right {
             text-align: right;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -141,14 +141,14 @@
         <tbody>
             @forelse($data['items'] as $item)
                 <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
-                    <td class="font-mono">{{ $item['code'] }}</td>
+                    <td class="">{{ $item['code'] }}</td>
                     <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                    <td class="text-right font-mono">{{ $item['beginning_debit'] > 0 ? number_format($item['beginning_debit'], 0, ',', '.') : '-' }}</td>
-                    <td class="text-right font-mono">{{ $item['beginning_credit'] > 0 ? number_format($item['beginning_credit'], 0, ',', '.') : '-' }}</td>
-                    <td class="text-right font-mono">{{ $item['period_debit'] > 0 ? number_format($item['period_debit'], 0, ',', '.') : '-' }}</td>
-                    <td class="text-right font-mono">{{ $item['period_credit'] > 0 ? number_format($item['period_credit'], 0, ',', '.') : '-' }}</td>
-                    <td class="text-right font-mono font-bold">{{ $item['ending_debit'] > 0 ? number_format($item['ending_debit'], 0, ',', '.') : '-' }}</td>
-                    <td class="text-right font-mono font-bold">{{ $item['ending_credit'] > 0 ? number_format($item['ending_credit'], 0, ',', '.') : '-' }}</td>
+                    <td class="text-right ">{{ $item['beginning_debit'] > 0 ? number_format($item['beginning_debit'], 0, ',', '.') : '-' }}</td>
+                    <td class="text-right ">{{ $item['beginning_credit'] > 0 ? number_format($item['beginning_credit'], 0, ',', '.') : '-' }}</td>
+                    <td class="text-right ">{{ $item['period_debit'] > 0 ? number_format($item['period_debit'], 0, ',', '.') : '-' }}</td>
+                    <td class="text-right ">{{ $item['period_credit'] > 0 ? number_format($item['period_credit'], 0, ',', '.') : '-' }}</td>
+                    <td class="text-right  font-bold">{{ $item['ending_debit'] > 0 ? number_format($item['ending_debit'], 0, ',', '.') : '-' }}</td>
+                    <td class="text-right  font-bold">{{ $item['ending_credit'] > 0 ? number_format($item['ending_credit'], 0, ',', '.') : '-' }}</td>
                 </tr>
             @empty
                 <tr>
@@ -159,12 +159,12 @@
         <tfoot>
             <tr class="total-row">
                 <td colspan="2" class="font-bold">TOTAL GRAND TOTAL</td>
-                <td class="text-right font-mono">{{ number_format($data['total_beginning_debit'], 0, ',', '.') }}</td>
-                <td class="text-right font-mono">{{ number_format($data['total_beginning_credit'], 0, ',', '.') }}</td>
-                <td class="text-right font-mono">{{ number_format($data['total_period_debit'], 0, ',', '.') }}</td>
-                <td class="text-right font-mono">{{ number_format($data['total_period_credit'], 0, ',', '.') }}</td>
-                <td class="text-right font-mono font-bold">{{ number_format($data['total_ending_debit'], 0, ',', '.') }}</td>
-                <td class="text-right font-mono font-bold">{{ number_format($data['total_ending_credit'], 0, ',', '.') }}</td>
+                <td class="text-right ">{{ number_format($data['total_beginning_debit'], 0, ',', '.') }}</td>
+                <td class="text-right ">{{ number_format($data['total_beginning_credit'], 0, ',', '.') }}</td>
+                <td class="text-right ">{{ number_format($data['total_period_debit'], 0, ',', '.') }}</td>
+                <td class="text-right ">{{ number_format($data['total_period_credit'], 0, ',', '.') }}</td>
+                <td class="text-right  font-bold">{{ number_format($data['total_ending_debit'], 0, ',', '.') }}</td>
+                <td class="text-right  font-bold">{{ number_format($data['total_ending_credit'], 0, ',', '.') }}</td>
             </tr>
         </tfoot>
     </table>

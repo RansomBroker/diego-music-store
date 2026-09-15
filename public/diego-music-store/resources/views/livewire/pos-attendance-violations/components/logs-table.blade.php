@@ -58,17 +58,17 @@
                             </td>
                             <x-pos.table.td>
                                 <div class="font-extrabold text-slate-900 dark:text-slate-100">{{ $l->employee?->name }}</div>
-                                <div class="text-[10px] font-mono text-slate-400">{{ $l->date->format('d M Y') }}</div>
+                                <div class="text-[10px]  text-slate-400">{{ $l->date->format('d M Y') }}</div>
                             </x-pos.table.td>
                             <x-pos.table.td>
                                 <x-pos.utility.pill :variant="$l->violation_type === 'late_in' ? 'warning' : 'primary'" size="xs">
                                     {{ $l->violation_type === 'late_in' ? 'Terlambat Masuk' : 'Pulang Cepat' }}
                                 </x-pos.utility.pill>
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono font-bold text-slate-800 dark:text-slate-200">
+                            <x-pos.table.td class=" font-bold text-slate-800 dark:text-slate-200">
                                 {{ $l->late_early_minutes }} Menit
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono font-black text-rose-600 dark:text-rose-400">
+                            <x-pos.table.td class=" font-black text-rose-600 dark:text-rose-400">
                                 Rp {{ number_format($l->deduction_amount, 0, ',', '.') }}
                             </x-pos.table.td>
                             <x-pos.table.td class="text-slate-500 max-w-xs truncate">
@@ -110,7 +110,7 @@
                                         </x-pos.utility.button>
                                     </div>
                                 @else
-                                    <span class="text-[10px] text-slate-400 font-mono">Selesai</span>
+                                    <span class="text-[10px] text-slate-400 ">Selesai</span>
                                 @endif
                             </x-pos.table.td>
                         </tr>

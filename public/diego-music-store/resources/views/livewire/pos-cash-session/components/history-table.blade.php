@@ -23,7 +23,7 @@
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
                 @forelse($history as $item)
                     <x-pos.table.tr wire:key="session-{{ $item->id }}" wire:click="showTransactions({{ $item->id }})" class="cursor-pointer">
-                        <x-pos.table.td class="whitespace-nowrap text-sm font-mono font-medium text-slate-900 dark:text-slate-100">#{{ str_pad($item->id, 5, '0', STR_PAD_LEFT) }}</x-pos.table.td>
+                        <x-pos.table.td class="whitespace-nowrap text-sm  font-medium text-slate-900 dark:text-slate-100">#{{ str_pad($item->id, 5, '0', STR_PAD_LEFT) }}</x-pos.table.td>
                         <x-pos.table.td class="whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100">{{ $item->branch->name }}</x-pos.table.td>
                         <x-pos.table.td class="whitespace-nowrap text-sm text-slate-600 dark:text-slate-355">{{ $item->opened_at->format('d/m H:i') }}</x-pos.table.td>
                         <x-pos.table.td class="whitespace-nowrap text-sm text-slate-600 dark:text-slate-355">{{ $item->closed_at ? $item->closed_at->format('d/m H:i') : '-' }}</x-pos.table.td>

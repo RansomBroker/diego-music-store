@@ -26,7 +26,7 @@
                 @forelse (array_slice($paretoChart['products']['items'] ?? [], 0, 6) as $p)
                     <x-pos.table.tr class="hover:bg-slate-100 dark:hover:bg-slate-700/30 transition">
                         <x-pos.table.td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200 truncate max-w-[150px]">{{ $p['name'] }}</x-pos.table.td>
-                        <x-pos.table.td class="px-3 py-2 text-right font-mono text-emerald-600 dark:text-emerald-400">Rp {{ number_format($p['value'], 0, ',', '.') }}</x-pos.table.td>
+                        <x-pos.table.td class="px-3 py-2 text-right  text-emerald-600 dark:text-emerald-400">Rp {{ number_format($p['value'], 0, ',', '.') }}</x-pos.table.td>
                         <x-pos.table.td class="px-3 py-2 text-center">
                             <span class="px-2 py-0.5 rounded text-[9px] font-extrabold {{ $p['is_top_80'] ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' }}">
                                 {{ $p['pareto_class'] }}

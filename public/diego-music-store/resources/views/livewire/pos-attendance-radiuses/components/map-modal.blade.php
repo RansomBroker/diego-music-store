@@ -172,7 +172,7 @@
                 readonly
                 icon="ph-map-pin"
                 size="sm"
-                class="cursor-not-allowed bg-slate-100 dark:bg-slate-800/60 font-mono"
+                class="cursor-not-allowed bg-slate-100 dark:bg-slate-800/60 "
                 placeholder="-0.03470087552402962"
                 required
             />
@@ -184,7 +184,7 @@
                 readonly
                 icon="ph-map-pin"
                 size="sm"
-                class="cursor-not-allowed bg-slate-100 dark:bg-slate-800/60 font-mono"
+                class="cursor-not-allowed bg-slate-100 dark:bg-slate-800/60 "
                 placeholder="109.33239215349418"
                 required
             />

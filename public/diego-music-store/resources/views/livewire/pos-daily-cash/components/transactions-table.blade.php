@@ -29,7 +29,7 @@
                         <x-pos.table.td class="whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400">
                             {{ $tx->created_at->format('d M Y, H:i') }}
                         </x-pos.table.td>
-                        <x-pos.table.td class="whitespace-nowrap font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
+                        <x-pos.table.td class="whitespace-nowrap  text-xs font-bold text-slate-900 dark:text-slate-100">
                             {{ $tx->transaction_no }}
                         </x-pos.table.td>
                         <x-pos.table.td class="whitespace-nowrap">

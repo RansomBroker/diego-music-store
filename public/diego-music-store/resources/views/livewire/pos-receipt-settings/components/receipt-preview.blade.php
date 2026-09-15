@@ -6,7 +6,7 @@
     </div>
 
     <!-- Thermal Receipt Simulator Container -->
-    <div class="bg-white text-slate-900 font-mono text-xs p-5 shadow-2xl rounded-lg border border-slate-200 max-w-xs mx-auto space-y-3 relative overflow-hidden select-none">
+    <div class="bg-white text-slate-900  text-xs p-5 shadow-2xl rounded-lg border border-slate-200 max-w-xs mx-auto space-y-3 relative overflow-hidden select-none">
         <div class="w-full text-center border-b-2 border-dashed border-slate-900 pb-3 space-y-1">
             @if ($show_logo && $selectedLogoUrl)
                 <div class="w-10 h-10 mx-auto rounded overflow-hidden mb-1">

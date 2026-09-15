@@ -28,7 +28,7 @@
                     <p class="text-[11px] text-slate-500 font-medium">Tracking Reparasi & Service Instrument</p>
                 </div>
             </div>
-            <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
+            <span class="px-3 py-1 rounded-full text-xs  font-bold bg-blue-50 text-blue-700 border border-blue-200">
                 {{ $so->ticket_code }}
             </span>
         </div>
@@ -43,7 +43,7 @@
                 <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
                     Status Terkini
                 </span>
-                <span class="text-xs text-slate-500 font-mono">
+                <span class="text-xs text-slate-500 ">
                     Dibuat: {{ $so->created_at->format('d M Y, H:i') }}
                 </span>
             </div>
@@ -117,7 +117,7 @@
                     @if ($so->serial_number)
                         <div>
                             <span class="text-slate-400 block text-[11px]">Nomor Seri (S/N):</span>
-                            <span class="font-mono text-slate-700 font-semibold">{{ $so->serial_number }}</span>
+                            <span class=" text-slate-700 font-semibold">{{ $so->serial_number }}</span>
                         </div>
                     @endif
                     <div>
@@ -162,7 +162,7 @@
             <div class="space-y-2 text-xs">
                 <div class="flex justify-between py-1.5 border-b border-slate-100">
                     <span class="text-slate-600">Estimasi Biaya Jasa Service Awal</span>
-                    <span class="font-mono font-semibold text-slate-900">Rp {{ number_format($so->estimated_cost, 0, ',', '.') }}</span>
+                    <span class=" font-semibold text-slate-900">Rp {{ number_format($so->estimated_cost, 0, ',', '.') }}</span>
                 </div>
 
                 @if (!empty($so->additional_charges) && is_array($so->additional_charges))
@@ -171,7 +171,7 @@
                         @foreach ($so->additional_charges as $chg)
                             <div class="flex justify-between py-1 border-b border-slate-100 text-slate-700">
                                 <span>+ {{ $chg['name'] ?? 'Item Tambahan' }}</span>
-                                <span class="font-mono">Rp {{ number_format($chg['amount'] ?? 0, 0, ',', '.') }}</span>
+                                <span class="">Rp {{ number_format($chg['amount'] ?? 0, 0, ',', '.') }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -179,7 +179,7 @@
 
                 <div class="flex justify-between py-2 border-t border-slate-200 font-bold text-sm text-slate-900 pt-3">
                     <span>Total Estimasi Biaya</span>
-                    <span class="font-mono text-base text-emerald-600">Rp {{ number_format($so->total_cost ?: $so->estimated_cost, 0, ',', '.') }}</span>
+                    <span class=" text-base text-emerald-600">Rp {{ number_format($so->total_cost ?: $so->estimated_cost, 0, ',', '.') }}</span>
                 </div>
             </div>
         </div>

@@ -55,7 +55,7 @@
             <div class="flex flex-col">
                 <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Transaksi Saat Ini</h2>
                 <div class="flex items-center gap-2 mt-1">
-                    <span class="text-xs font-mono font-bold text-slate-900 dark:text-slate-100">
+                    <span class="text-xs  font-bold text-slate-900 dark:text-slate-100">
                         {{ $this->previewInvoiceNumber }}
                     </span>
                     @if ($editingSaleId)

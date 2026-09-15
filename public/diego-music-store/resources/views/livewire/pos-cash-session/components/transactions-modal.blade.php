@@ -41,7 +41,7 @@
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
                     @forelse($selectedSessionTransactions as $sale)
                         <x-pos.table.tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition duration-100">
-                            <x-pos.table.td class="whitespace-nowrap text-sm font-mono font-medium text-slate-900 dark:text-slate-100">
+                            <x-pos.table.td class="whitespace-nowrap text-sm  font-medium text-slate-900 dark:text-slate-100">
                                 {{ $sale->invoice_number ?? '-' }}
                             </x-pos.table.td>
                             <x-pos.table.td class="whitespace-nowrap text-sm text-slate-600 dark:text-slate-350">

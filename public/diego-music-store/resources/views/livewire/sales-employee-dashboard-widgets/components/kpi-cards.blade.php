@@ -9,7 +9,7 @@
             </div>
         </div>
         <div>
-            <div class="text-lg font-black text-slate-900 dark:text-white font-mono">
+            <div class="text-lg font-black text-slate-900 dark:text-white ">
                 Rp {{ number_format($monthlyTarget['achieved_amount'], 0, ',', '.') }}
             </div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400">
@@ -36,7 +36,7 @@
             </div>
         </div>
         <div>
-            <div class="text-lg font-black text-slate-900 dark:text-white font-mono">
+            <div class="text-lg font-black text-slate-900 dark:text-white ">
                 Rp {{ number_format($dailyTarget['achieved_amount'], 0, ',', '.') }}
             </div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400">
@@ -63,7 +63,7 @@
             </div>
         </div>
         <div>
-            <div class="text-xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1">
+            <div class="text-xl font-black text-amber-600 dark:text-amber-400  mt-1">
                 Rp {{ number_format($monthlyCommission, 0, ',', '.') }}
             </div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -87,7 +87,7 @@
             <div class="text-xs font-extrabold text-purple-700 dark:text-purple-300">
                 Target {{ $tierInfo['next_tier'] }}
             </div>
-            <div class="text-sm font-black text-slate-900 dark:text-white font-mono mt-0.5">
+            <div class="text-sm font-black text-slate-900 dark:text-white  mt-0.5">
                 Sisa: Rp {{ number_format($tierInfo['remaining_to_next'], 0, ',', '.') }}
             </div>
         </div>

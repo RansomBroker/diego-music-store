@@ -56,7 +56,7 @@
         .text-center {
             text-align: center;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -122,14 +122,14 @@
             <tbody>
                 @forelse($data['summary_rows'] as $row)
                     <tr>
-                        <td class="font-mono font-bold">{{ $row['sku'] }}</td>
+                        <td class=" font-bold">{{ $row['sku'] }}</td>
                         <td class="font-bold">{{ $row['full_name'] }}</td>
                         <td>{{ $row['category'] }}</td>
-                        <td class="text-center font-mono font-bold">+{{ number_format($row['in_qty'], 0, ',', '.') }}</td>
-                        <td class="text-center font-mono font-bold">-{{ number_format($row['out_qty'], 0, ',', '.') }}</td>
-                        <td class="text-center font-mono font-bold">{{ $row['net_qty'] > 0 ? '+' : '' }}{{ number_format($row['net_qty'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">+{{ number_format($row['in_qty'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">-{{ number_format($row['out_qty'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">{{ $row['net_qty'] > 0 ? '+' : '' }}{{ number_format($row['net_qty'], 0, ',', '.') }}</td>
                         <td class="text-center">{{ $row['unit'] }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($row['total_value'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ number_format($row['total_value'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -155,14 +155,14 @@
             <tbody>
                 @forelse($data['rows'] as $row)
                     <tr>
-                        <td class="font-mono">{{ $row['date'] }}</td>
-                        <td class="font-mono font-bold">{{ $row['ref_label'] }}</td>
-                        <td class="font-mono">{{ $row['sku'] }}</td>
+                        <td class="">{{ $row['date'] }}</td>
+                        <td class=" font-bold">{{ $row['ref_label'] }}</td>
+                        <td class="">{{ $row['sku'] }}</td>
                         <td class="font-bold">{{ $row['full_name'] }}</td>
                         <td>{{ $row['branch_name'] }}</td>
                         <td class="text-center font-bold">{{ $row['type'] }}</td>
-                        <td class="text-center font-mono font-bold">{{ $row['type'] === 'IN' ? '+' : '-' }}{{ number_format($row['quantity'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($row['total_value'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">{{ $row['type'] === 'IN' ? '+' : '-' }}{{ number_format($row['quantity'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ number_format($row['total_value'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -177,7 +177,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>RINGKASAN MUTASI: {{ number_format($data['total_transactions'], 0, ',', '.') }} Transaksi &bull; Total Masuk: +{{ number_format($data['total_in_qty'], 0, ',', '.') }} Unit &bull; Total Keluar: -{{ number_format($data['total_out_qty'], 0, ',', '.') }} Unit &bull; Net Qty: {{ $data['total_net_qty'] > 0 ? '+' : '' }}{{ number_format($data['total_net_qty'], 0, ',', '.') }} Unit</td>
-                <td class="text-right font-mono">GRAND TOTAL VALUASI: Rp {{ number_format($data['grand_total_valuation'], 0, ',', '.') }}</td>
+                <td class="text-right ">GRAND TOTAL VALUASI: Rp {{ number_format($data['grand_total_valuation'], 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

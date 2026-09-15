@@ -40,7 +40,7 @@
                         Override Komponen Gaji Karyawan
                     </h3>
                     <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                        {{ $editingEmployeeName }} <span class="font-mono text-primary font-bold">({{ $editingEmployeeNik ?: '-' }})</span>
+                        {{ $editingEmployeeName }} <span class=" text-primary font-bold">({{ $editingEmployeeNik ?: '-' }})</span>
                     </p>
                 </div>
                 <button 
@@ -62,7 +62,7 @@
                             <i class="ph-bold ph-trend-up text-emerald-600"></i>
                             Pendapatan & Tunjangan (Penambahan)
                         </span>
-                        <span class="text-xs font-black text-emerald-700 dark:text-emerald-400 font-mono" x-text="formatRp(totalEarnings)"></span>
+                        <span class="text-xs font-black text-emerald-700 dark:text-emerald-400 " x-text="formatRp(totalEarnings)"></span>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -127,7 +127,7 @@
                             <i class="ph-bold ph-trend-down text-rose-600"></i>
                             Potongan & Denda (Pengurangan)
                         </span>
-                        <span class="text-xs font-black text-rose-700 dark:text-rose-400 font-mono" x-text="'- ' + formatRp(totalDeductions)"></span>
+                        <span class="text-xs font-black text-rose-700 dark:text-rose-400 " x-text="'- ' + formatRp(totalDeductions)"></span>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -170,11 +170,11 @@
                 <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl flex items-center justify-between shadow-sm transition-colors">
                     <div>
                         <div class="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-300 tracking-wider">Estimasi Gaji Bersih (Take Home Pay)</div>
-                        <div class="text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-400 font-mono tracking-tight" x-text="formatRp(netSalary)"></div>
+                        <div class="text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-400  tracking-tight" x-text="formatRp(netSalary)"></div>
                     </div>
                     <div class="text-right text-[11px] text-slate-600 dark:text-slate-400 space-y-0.5">
-                        <div>Pendapatan: <span class="text-slate-900 dark:text-slate-100 font-bold font-mono" x-text="formatRp(totalEarnings)"></span></div>
-                        <div>Potongan: <span class="text-rose-600 dark:text-rose-400 font-bold font-mono" x-text="'- ' + formatRp(totalDeductions)"></span></div>
+                        <div>Pendapatan: <span class="text-slate-900 dark:text-slate-100 font-bold " x-text="formatRp(totalEarnings)"></span></div>
+                        <div>Potongan: <span class="text-rose-600 dark:text-rose-400 font-bold " x-text="'- ' + formatRp(totalDeductions)"></span></div>
                     </div>
                 </div>
 

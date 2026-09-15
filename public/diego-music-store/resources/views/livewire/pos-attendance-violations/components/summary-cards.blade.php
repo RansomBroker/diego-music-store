@@ -7,7 +7,7 @@
         </div>
         <div>
             <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Total Keterlambatan</div>
-            <div class="text-lg font-mono font-black text-slate-900 dark:text-slate-100">
+            <div class="text-lg  font-black text-slate-900 dark:text-slate-100">
                 {{ number_format($totalLateMinutesPeriod) }} <span class="text-xs font-normal text-slate-400">Menit</span>
             </div>
         </div>
@@ -20,7 +20,7 @@
         </div>
         <div>
             <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Total Pulang Cepat</div>
-            <div class="text-lg font-mono font-black text-slate-900 dark:text-slate-100">
+            <div class="text-lg  font-black text-slate-900 dark:text-slate-100">
                 {{ number_format($totalEarlyMinutesPeriod) }} <span class="text-xs font-normal text-slate-400">Menit</span>
             </div>
         </div>
@@ -33,7 +33,7 @@
         </div>
         <div>
             <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Total Nominal Denda</div>
-            <div class="text-lg font-mono font-black text-slate-900 dark:text-slate-100">
+            <div class="text-lg  font-black text-slate-900 dark:text-slate-100">
                 Rp {{ number_format($totalDeductionPeriod, 0, ',', '.') }}
             </div>
         </div>
@@ -46,7 +46,7 @@
         </div>
         <div>
             <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Disetujui ke Payroll</div>
-            <div class="text-lg font-mono font-black text-slate-900 dark:text-slate-100">
+            <div class="text-lg  font-black text-slate-900 dark:text-slate-100">
                 Rp {{ number_format($totalApprovedDeductionPeriod, 0, ',', '.') }}
             </div>
         </div>

@@ -21,7 +21,7 @@
             @forelse ($labels as $row)
                 <x-pos.table.tr>
                     <!-- Key -->
-                    <x-pos.table.td class="whitespace-nowrap text-sm text-slate-750 dark:text-slate-200 font-mono">
+                    <x-pos.table.td class="whitespace-nowrap text-sm text-slate-750 dark:text-slate-200 ">
                         {{ $row->key }}
                     </x-pos.table.td>
                     <!-- Name -->

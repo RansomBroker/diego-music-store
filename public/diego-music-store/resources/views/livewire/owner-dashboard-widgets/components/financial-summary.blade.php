@@ -8,7 +8,7 @@
                 <i class="ph-bold ph-trend-up text-lg"></i>
             </div>
         </div>
-        <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-2">
+        <div class="text-xl font-black text-emerald-600 dark:text-emerald-400  mt-2">
             Rp {{ number_format($financialSummary['total_penjualan'], 0, ',', '.') }}
         </div>
         <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -24,7 +24,7 @@
                 <i class="ph-bold ph-receipt text-lg"></i>
             </div>
         </div>
-        <div class="text-xl font-black text-rose-600 dark:text-rose-400 font-mono mt-2">
+        <div class="text-xl font-black text-rose-600 dark:text-rose-400  mt-2">
             Rp {{ number_format($financialSummary['total_pengeluaran'], 0, ',', '.') }}
         </div>
         <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -40,7 +40,7 @@
                 <i class="ph-bold ph-hand-coins text-lg"></i>
             </div>
         </div>
-        <div class="text-xl font-black text-amber-600 dark:text-amber-400 font-mono mt-2">
+        <div class="text-xl font-black text-amber-600 dark:text-amber-400  mt-2">
             Rp {{ number_format($financialSummary['total_hutang'], 0, ',', '.') }}
         </div>
         <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -56,7 +56,7 @@
                 <i class="ph-bold ph-vault text-lg"></i>
             </div>
         </div>
-        <div class="text-xl font-black text-blue-600 dark:text-blue-400 font-mono mt-2">
+        <div class="text-xl font-black text-blue-600 dark:text-blue-400  mt-2">
             Rp {{ number_format($financialSummary['saldo_kas_bank'], 0, ',', '.') }}
         </div>
         <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">

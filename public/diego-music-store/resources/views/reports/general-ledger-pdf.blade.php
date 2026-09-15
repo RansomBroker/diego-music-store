@@ -66,7 +66,7 @@
         .text-right {
             text-align: right;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -131,22 +131,22 @@
             </thead>
             <tbody>
                 <tr style="background-color: #f9fafb; font-weight: bold;">
-                    <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</td>
-                    <td class="font-mono">-</td>
+                    <td class="">{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</td>
+                    <td class="">-</td>
                     <td>SALDO AWAL (BEGINNING BALANCE)</td>
-                    <td class="text-right font-mono">-</td>
-                    <td class="text-right font-mono">-</td>
-                    <td class="text-right font-mono">{{ number_format($ledger['beginning_balance'], 0, ',', '.') }}</td>
+                    <td class="text-right ">-</td>
+                    <td class="text-right ">-</td>
+                    <td class="text-right ">{{ number_format($ledger['beginning_balance'], 0, ',', '.') }}</td>
                 </tr>
 
                 @forelse($ledger['transactions'] as $tx)
                     <tr>
-                        <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($tx['date'])->format('d/m/Y') }}</td>
-                        <td class="font-mono">{{ $tx['entry_no'] }}</td>
+                        <td class="">{{ \Illuminate\Support\Carbon::parse($tx['date'])->format('d/m/Y') }}</td>
+                        <td class="">{{ $tx['entry_no'] }}</td>
                         <td>{{ $tx['description'] }}</td>
-                        <td class="text-right font-mono">{{ $tx['debit'] > 0 ? number_format($tx['debit'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ $tx['credit'] > 0 ? number_format($tx['credit'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($tx['running_balance'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ $tx['debit'] > 0 ? number_format($tx['debit'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $tx['credit'] > 0 ? number_format($tx['credit'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right  font-bold">{{ number_format($tx['running_balance'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -160,7 +160,7 @@
             <table style="width: 100%;">
                 <tr>
                     <td>TOTAL MUTASI PERIODE: Debit {{ number_format($ledger['total_debit'], 0, ',', '.') }} | Kredit {{ number_format($ledger['total_credit'], 0, ',', '.') }}</td>
-                    <td class="text-right font-mono">SALDO AKHIR: Rp {{ number_format($ledger['ending_balance'], 0, ',', '.') }}</td>
+                    <td class="text-right ">SALDO AKHIR: Rp {{ number_format($ledger['ending_balance'], 0, ',', '.') }}</td>
                 </tr>
             </table>
         </div>

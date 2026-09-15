@@ -15,7 +15,7 @@
                 <div>
                     <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[130px]">{{ $item['name'] }}</div>
                     <div class="text-[10px] text-slate-400">{{ $item['category'] }}</div>
-                    <div class="text-xs font-mono font-black text-primary dark:text-blue-400 mt-1">
+                    <div class="text-xs  font-black text-primary dark:text-blue-400 mt-1">
                         Rp {{ number_format($item['price'], 0, ',', '.') }}
                     </div>
                 </div>

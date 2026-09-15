@@ -36,17 +36,17 @@
                         </x-pos.table.td>
                         <x-pos.table.td class="font-bold text-slate-900 dark:text-slate-100">
                             {{ $req->employee->name ?? '-' }}
-                            <div class="text-[10px] text-slate-400 font-mono">{{ $req->employee->nik ?? '' }}</div>
+                            <div class="text-[10px] text-slate-400 ">{{ $req->employee->nik ?? '' }}</div>
                         </x-pos.table.td>
                         <x-pos.table.td>
                             {{ $req->branch?->name ?: 'Cabang Utama' }}
                         </x-pos.table.td>
                         <x-pos.table.td>
                             <div class="space-y-0.5">
-                                <div class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                                <div class=" text-emerald-600 dark:text-emerald-400 font-bold">
                                     In: {{ substr($req->clock_in, 0, 5) }}
                                 </div>
-                                <div class="font-mono text-amber-600 dark:text-amber-400 font-bold">
+                                <div class=" text-amber-600 dark:text-amber-400 font-bold">
                                     Out: {{ substr($req->clock_out ?: '17:00', 0, 5) }}
                                 </div>
                             </div>

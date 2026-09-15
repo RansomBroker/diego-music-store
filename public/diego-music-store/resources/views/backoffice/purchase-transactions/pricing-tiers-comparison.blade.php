@@ -68,10 +68,10 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-right font-mono">
+                            <td class="px-4 py-3 text-right ">
                                 {{ \App\Helpers\FormatHelper::rupiah($currentTierPrice) }}
                             </td>
-                            <td class="px-4 py-3 text-right font-semibold font-mono">
+                            <td class="px-4 py-3 text-right font-semibold ">
                                 @if ($isUpdated)
                                     <div class="flex items-center justify-end gap-1.5">
                                         <span class="text-xs line-through text-gray-400">

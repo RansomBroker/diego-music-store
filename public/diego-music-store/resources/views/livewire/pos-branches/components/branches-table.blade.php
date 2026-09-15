@@ -43,7 +43,7 @@
 
                         <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-400">
                             <div class="truncate max-w-xs" title="{{ $b->address }}">{{ $b->address ?: '-' }}</div>
-                            <div class="text-[10px] font-mono text-slate-400">Telp: {{ $b->phone ?: '-' }}</div>
+                            <div class="text-[10px]  text-slate-400">Telp: {{ $b->phone ?: '-' }}</div>
                         </x-pos.table.td>
 
                         <x-pos.table.td class="text-xs text-slate-800 dark:text-slate-200">

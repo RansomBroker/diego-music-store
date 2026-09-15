@@ -106,7 +106,7 @@
                             <span class="text-slate-500 dark:text-slate-400 font-medium">Total Bobot:</span>
                             <span 
                                 :class="totalWeight === 100 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-400'"
-                                class="px-2 py-0.5 rounded-full font-mono font-semibold"
+                                class="px-2 py-0.5 rounded-full  font-semibold"
                                 x-text="totalWeight + '%'"
                             >100%</span>
                         </div>

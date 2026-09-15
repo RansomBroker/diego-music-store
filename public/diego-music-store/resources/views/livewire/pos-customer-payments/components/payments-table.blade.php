@@ -26,7 +26,7 @@
         <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
             @forelse ($payments as $payment)
                 <x-pos.table.tr wire:click="showDetails({{ $payment->id }})" class="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <x-pos.table.td class="whitespace-nowrap font-mono font-medium text-slate-900 dark:text-slate-100">
+                    <x-pos.table.td class="whitespace-nowrap  font-medium text-slate-900 dark:text-slate-100">
                         {{ $payment->invoice_number }}
                     </x-pos.table.td>
                     <x-pos.table.td class="whitespace-nowrap text-sm text-slate-600 dark:text-slate-355">
@@ -41,7 +41,7 @@
                     @php
                         $piutangDue = $payment->getPiutangAmount();
                     @endphp
-                    <x-pos.table.td class="whitespace-nowrap text-right font-mono">
+                    <x-pos.table.td class="whitespace-nowrap text-right ">
                         <div class="font-bold text-slate-900 dark:text-slate-100">Rp {{ number_format($payment->grand_total, 0, ',', '.') }}</div>
                         @if ($piutangDue > 0)
                             <div class="text-[11px] font-bold text-rose-500">Sisa: Rp {{ number_format($piutangDue, 0, ',', '.') }}</div>

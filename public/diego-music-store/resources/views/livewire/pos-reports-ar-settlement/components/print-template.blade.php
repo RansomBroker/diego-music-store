@@ -30,7 +30,7 @@
             }
             .text-right { text-align: right; }
             .text-center { text-align: center; }
-            .font-mono { font-family: 'Courier New', Courier, monospace; }
+            . { font-family: 'Courier New', Courier, monospace; }
         }
     </style>
 
@@ -48,7 +48,7 @@
                     {{ $currentBranch?->address ?: 'Jl. Utama Music Store ERP' }} | Telp: {{ $currentBranch?->phone ?: '-' }}
                 </div>
             </div>
-            <div style="text-align: right; font-size: 8pt;" class="font-mono">
+            <div style="text-align: right; font-size: 8pt;" class="">
                 <div>TGL CETAK: {{ now()->format('d/m/Y H:i:s') }}</div>
                 <div>PETUGAS: {{ strtoupper(auth()->user()?->name ?: 'ADMIN') }}</div>
                 <div>STATUS: DOKUMEN RESMI ERP</div>
@@ -70,9 +70,9 @@
     <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px; font-size: 9pt;">
         <tr>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 30%;">Total Pelunasan Diterima</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class="font-mono text-right">Rp {{ number_format($reportData['total_settled'] ?? 0, 0, ',', '.') }}</td>
+            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['total_settled'] ?? 0, 0, ',', '.') }}</td>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 30%;">Jumlah Transaksi Pelunasan</td>
-            <td style="border: 1px solid #000; padding: 5px;" class="font-mono text-right">{{ $reportData['total_count'] ?? 0 }} Transaksi</td>
+            <td style="border: 1px solid #000; padding: 5px;" class=" text-right">{{ $reportData['total_count'] ?? 0 }} Transaksi</td>
         </tr>
     </table>
 
@@ -93,12 +93,12 @@
             @forelse ($reportData['settlements'] ?? [] as $idx => $st)
                 <tr>
                     <td class="text-center">{{ $idx + 1 }}</td>
-                    <td class="font-mono font-bold">{{ $st['entry_no'] }}</td>
+                    <td class=" font-bold">{{ $st['entry_no'] }}</td>
                     <td>{{ $st['date'] }}</td>
                     <td style="font-weight: bold;">{{ $st['customer_name'] }}</td>
-                    <td class="font-mono">{{ $st['invoice_no'] }}</td>
+                    <td class="">{{ $st['invoice_no'] }}</td>
                     <td>{{ $st['account_name'] }}</td>
-                    <td class="text-right font-mono font-bold">Rp {{ number_format($st['amount'], 0, ',', '.') }}</td>
+                    <td class="text-right  font-bold">Rp {{ number_format($st['amount'], 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>

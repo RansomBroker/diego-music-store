@@ -56,7 +56,7 @@
         .text-center {
             text-align: center;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -125,14 +125,14 @@
                 <tbody>
                     @foreach($op['items'] as $item)
                         <tr>
-                            <td class="font-mono font-bold">{{ $item['sku'] }}</td>
+                            <td class=" font-bold">{{ $item['sku'] }}</td>
                             <td class="font-bold">{{ $item['full_name'] }}</td>
-                            <td class="text-center font-mono">{{ number_format($item['system_qty'], 0, ',', '.') }}</td>
-                            <td class="text-center font-mono font-bold">{{ number_format($item['physical_qty'], 0, ',', '.') }}</td>
-                            <td class="text-center font-mono font-bold">{{ $item['difference'] > 0 ? '+' : '' }}{{ number_format($item['difference'], 0, ',', '.') }}</td>
+                            <td class="text-center ">{{ number_format($item['system_qty'], 0, ',', '.') }}</td>
+                            <td class="text-center  font-bold">{{ number_format($item['physical_qty'], 0, ',', '.') }}</td>
+                            <td class="text-center  font-bold">{{ $item['difference'] > 0 ? '+' : '' }}{{ number_format($item['difference'], 0, ',', '.') }}</td>
                             <td class="text-center font-bold">{{ $item['item_status_label'] }}</td>
-                            <td class="text-right font-mono">{{ number_format($item['cost_price'], 0, ',', '.') }}</td>
-                            <td class="text-right font-mono font-bold">{{ number_format($item['adjustment_value'], 0, ',', '.') }}</td>
+                            <td class="text-right ">{{ number_format($item['cost_price'], 0, ',', '.') }}</td>
+                            <td class="text-right  font-bold">{{ number_format($item['adjustment_value'], 0, ',', '.') }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -156,15 +156,15 @@
             <tbody>
                 @forelse($data['opnames'] as $op)
                     <tr>
-                        <td class="font-mono font-bold">{{ $op['opname_number'] }}</td>
-                        <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($op['opname_date'])->format('d/m/Y') }}</td>
+                        <td class=" font-bold">{{ $op['opname_number'] }}</td>
+                        <td class="">{{ \Illuminate\Support\Carbon::parse($op['opname_date'])->format('d/m/Y') }}</td>
                         <td class="font-bold">{{ $op['branch_name'] }}</td>
                         <td class="text-center font-bold">{{ $op['status'] }}</td>
-                        <td class="text-center font-mono font-bold">{{ number_format($op['items_count'], 0, ',', '.') }}</td>
-                        <td class="text-center font-mono">{{ number_format($op['session_system_qty'], 0, ',', '.') }}</td>
-                        <td class="text-center font-mono font-bold">{{ number_format($op['session_physical_qty'], 0, ',', '.') }}</td>
-                        <td class="text-center font-mono font-bold">{{ $op['session_diff_qty'] > 0 ? '+' : '' }}{{ number_format($op['session_diff_qty'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($op['session_adjustment_value'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">{{ number_format($op['items_count'], 0, ',', '.') }}</td>
+                        <td class="text-center ">{{ number_format($op['session_system_qty'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">{{ number_format($op['session_physical_qty'], 0, ',', '.') }}</td>
+                        <td class="text-center  font-bold">{{ $op['session_diff_qty'] > 0 ? '+' : '' }}{{ number_format($op['session_diff_qty'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ number_format($op['session_adjustment_value'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -179,7 +179,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>RINGKASAN AUDIT: {{ number_format($data['total_opname_sessions'], 0, ',', '.') }} Sesi Opname &bull; {{ number_format($data['total_items_audited'], 0, ',', '.') }} Item Audited &bull; Net Selisih Qty: {{ $data['total_net_variance_qty'] > 0 ? '+' : '' }}{{ number_format($data['total_net_variance_qty'], 0, ',', '.') }} Unit</td>
-                <td class="text-right font-mono">TOTAL ADJUSTMENT: Rp {{ number_format($data['grand_total_adjustment_value'], 0, ',', '.') }}</td>
+                <td class="text-right ">TOTAL ADJUSTMENT: Rp {{ number_format($data['grand_total_adjustment_value'], 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

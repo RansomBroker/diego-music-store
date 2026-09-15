@@ -30,7 +30,7 @@
             }
             .text-right { text-align: right; }
             .text-center { text-align: center; }
-            .font-mono { font-family: 'Courier New', Courier, monospace; }
+            . { font-family: 'Courier New', Courier, monospace; }
         }
     </style>
 
@@ -48,7 +48,7 @@
                     {{ $currentBranch?->address ?: 'Jl. Utama Music Store ERP' }} | Telp: {{ $currentBranch?->phone ?: '-' }}
                 </div>
             </div>
-            <div style="text-align: right; font-size: 8pt;" class="font-mono">
+            <div style="text-align: right; font-size: 8pt;" class="">
                 <div>TGL CETAK: {{ now()->format('d/m/Y H:i:s') }}</div>
                 <div>PETUGAS: {{ strtoupper(auth()->user()?->name ?: 'ADMIN') }}</div>
                 <div>STATUS: DOKUMEN RESMI ERP</div>
@@ -70,21 +70,21 @@
     <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px; font-size: 9pt;">
         <tr>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 20%;">Total Saldo Piutang</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class="font-mono text-right">Rp {{ number_format($reportData['total_outstanding'] ?? 0, 0, ',', '.') }}</td>
+            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['total_outstanding'] ?? 0, 0, ',', '.') }}</td>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 20%;">0 - 30 Hari (Lancar)</td>
-            <td style="border: 1px solid #000; padding: 5px;" class="font-mono text-right">Rp {{ number_format($reportData['aging_0_30'] ?? 0, 0, ',', '.') }}</td>
+            <td style="border: 1px solid #000; padding: 5px;" class=" text-right">Rp {{ number_format($reportData['aging_0_30'] ?? 0, 0, ',', '.') }}</td>
         </tr>
         <tr>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">31 - 60 Hari</td>
-            <td style="border: 1px solid #000; padding: 5px;" class="font-mono text-right">Rp {{ number_format($reportData['aging_31_60'] ?? 0, 0, ',', '.') }}</td>
+            <td style="border: 1px solid #000; padding: 5px;" class=" text-right">Rp {{ number_format($reportData['aging_31_60'] ?? 0, 0, ',', '.') }}</td>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">61 - 90 Hari</td>
-            <td style="border: 1px solid #000; padding: 5px;" class="font-mono text-right">Rp {{ number_format($reportData['aging_61_90'] ?? 0, 0, ',', '.') }}</td>
+            <td style="border: 1px solid #000; padding: 5px;" class=" text-right">Rp {{ number_format($reportData['aging_61_90'] ?? 0, 0, ',', '.') }}</td>
         </tr>
         <tr>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">> 90 Hari (Menunggak)</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class="font-mono text-right">Rp {{ number_format($reportData['aging_over_90'] ?? 0, 0, ',', '.') }}</td>
+            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['aging_over_90'] ?? 0, 0, ',', '.') }}</td>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">Total Invoice Active</td>
-            <td style="border: 1px solid #000; padding: 5px;" class="font-mono text-right">{{ $reportData['count_invoices'] ?? 0 }} Invoice</td>
+            <td style="border: 1px solid #000; padding: 5px;" class=" text-right">{{ $reportData['count_invoices'] ?? 0 }} Invoice</td>
         </tr>
     </table>
 
@@ -108,12 +108,12 @@
                 <tr>
                     <td class="text-center">{{ $idx + 1 }}</td>
                     <td style="font-weight: bold;">{{ $ar['customer_name'] }}</td>
-                    <td class="font-mono font-bold">{{ $ar['invoice_number'] }}</td>
+                    <td class=" font-bold">{{ $ar['invoice_number'] }}</td>
                     <td>{{ $ar['invoice_date'] }}</td>
                     <td>{{ $ar['due_date'] }}</td>
-                    <td class="text-right font-mono">Rp {{ number_format($ar['grand_total'], 0, ',', '.') }}</td>
-                    <td class="text-right font-mono">Rp {{ number_format($ar['paid_amount'], 0, ',', '.') }}</td>
-                    <td class="text-right font-mono font-bold">Rp {{ number_format($ar['outstanding'], 0, ',', '.') }}</td>
+                    <td class="text-right ">Rp {{ number_format($ar['grand_total'], 0, ',', '.') }}</td>
+                    <td class="text-right ">Rp {{ number_format($ar['paid_amount'], 0, ',', '.') }}</td>
+                    <td class="text-right  font-bold">Rp {{ number_format($ar['outstanding'], 0, ',', '.') }}</td>
                     <td class="text-center" style="font-size: 8pt;">{{ $ar['age_days'] }} Hari ({{ $ar['aging_group'] }})</td>
                 </tr>
             @empty

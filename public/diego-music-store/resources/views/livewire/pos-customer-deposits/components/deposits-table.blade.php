@@ -73,12 +73,12 @@
                     </x-pos.table.td>
 
                     <!-- Total Amount -->
-                    <x-pos.table.td class="text-right font-bold text-slate-900 dark:text-white font-mono">
+                    <x-pos.table.td class="text-right font-bold text-slate-900 dark:text-white ">
                         Rp {{ number_format($deposit->total_amount, 0, ',', '.') }}
                     </x-pos.table.td>
 
                     <!-- Deposit Paid -->
-                    <x-pos.table.td class="text-right font-mono">
+                    <x-pos.table.td class="text-right ">
                         <span class="font-bold text-emerald-600 dark:text-emerald-400">
                             Rp {{ number_format($deposit->deposit_amount, 0, ',', '.') }}
                         </span>
@@ -86,7 +86,7 @@
                     </x-pos.table.td>
 
                     <!-- Remaining Amount -->
-                    <x-pos.table.td class="text-right font-mono">
+                    <x-pos.table.td class="text-right ">
                         @if ($deposit->remaining_amount > 0 && $deposit->isPending())
                             <span class="font-extrabold text-amber-600 dark:text-amber-400">
                                 Rp {{ number_format($deposit->remaining_amount, 0, ',', '.') }}

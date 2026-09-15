@@ -90,18 +90,18 @@
                                 $itemSku = $item->sku ?? $item->default_variant?->sku ?? $item['sku'] ?? null;
                             @endphp
                             @if (!empty($itemSku))
-                                <div class="text-[11px] text-slate-400 font-mono">SKU: {{ $itemSku }}</div>
+                                <div class="text-[11px] text-slate-400 ">SKU: {{ $itemSku }}</div>
                             @elseif (!empty($item->phone ?? $item['phone'] ?? null))
                                 <div class="text-[11px] text-slate-400">{{ $item->phone ?? $item['phone'] }}</div>
                             @elseif (!empty($item->code ?? $item['code'] ?? null))
-                                <div class="text-[11px] text-slate-400 font-mono">{{ $item->code ?? $item['code'] }}</div>
+                                <div class="text-[11px] text-slate-400 ">{{ $item->code ?? $item['code'] }}</div>
                             @endif
                         </div>
                         @php
                             $itemPrice = $item->default_variant?->price ?? $item->price ?? $item['price'] ?? null;
                         @endphp
                         @if ($itemPrice !== null && $itemPrice > 0)
-                            <div class="text-xs text-primary dark:text-blue-400 font-semibold font-mono">
+                            <div class="text-xs text-primary dark:text-blue-400 font-semibold ">
                                 Rp {{ number_format($itemPrice, 0, ',', '.') }}
                             </div>
                         @endif

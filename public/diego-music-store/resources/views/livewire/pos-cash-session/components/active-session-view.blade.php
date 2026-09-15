@@ -22,7 +22,7 @@
                 </div>
                 <div class="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl space-y-1">
                     <div class="text-xs text-slate-400">Sesi ID</div>
-                    <div class="text-base font-mono font-bold text-slate-650 dark:text-slate-400">#{{ str_pad($activeSession->id, 6, '0', STR_PAD_LEFT) }}</div>
+                    <div class="text-base  font-bold text-slate-650 dark:text-slate-400">#{{ str_pad($activeSession->id, 6, '0', STR_PAD_LEFT) }}</div>
                 </div>
             </div>
         </div>

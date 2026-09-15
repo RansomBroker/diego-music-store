@@ -8,7 +8,7 @@
                     <h3 class="font-bold text-slate-900 dark:text-white text-base">
                         Update Tiket Service
                     </h3>
-                    <p class="text-xs text-slate-500 font-mono">Kode Tiket: {{ \App\Models\ServiceOrder::find($editingOrderId)?->ticket_code }}</p>
+                    <p class="text-xs text-slate-500 ">Kode Tiket: {{ \App\Models\ServiceOrder::find($editingOrderId)?->ticket_code }}</p>
                 </div>
                 <button wire:click="closeEditModal" type="button" class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg cursor-pointer">
                     <i class="ph ph-x text-xl"></i>

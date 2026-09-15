@@ -25,11 +25,11 @@
                 </div>
                 <div class="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
                     <span class="text-slate-500">Total Nilai Pesanan:</span>
-                    <span class="font-bold text-slate-900 dark:text-white font-mono">Rp {{ number_format($settlingDeposit->total_amount, 0, ',', '.') }}</span>
+                    <span class="font-bold text-slate-900 dark:text-white ">Rp {{ number_format($settlingDeposit->total_amount, 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-500">Deposit Awal (Penitipan Dana):</span>
-                    <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">Rp {{ number_format($settlingDeposit->deposit_amount, 0, ',', '.') }}</span>
+                    <span class="font-bold text-emerald-600 dark:text-emerald-400 ">Rp {{ number_format($settlingDeposit->deposit_amount, 0, ',', '.') }}</span>
                 </div>
 
                 <!-- Sisa yang Harus Dibayar Saat Pelunasan -->
@@ -37,7 +37,7 @@
                     <span class="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
                         Sisa Pelunasan Dibayar:
                     </span>
-                    <span class="text-lg font-black text-amber-700 dark:text-amber-400 font-mono">
+                    <span class="text-lg font-black text-amber-700 dark:text-amber-400 ">
                         Rp {{ number_format($settlingDeposit->remaining_amount, 0, ',', '.') }}
                     </span>
                 </div>

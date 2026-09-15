@@ -126,21 +126,21 @@
                                         >
                                     </x-pos.table.td>
                                     <x-pos.table.td class="whitespace-nowrap font-medium text-slate-900 dark:text-slate-100">
-                                        <div class="font-mono font-bold">{{ $item['invoice_number'] }}</div>
+                                        <div class=" font-bold">{{ $item['invoice_number'] }}</div>
                                     </x-pos.table.td>
                                     <x-pos.table.td class="whitespace-nowrap text-sm text-slate-650 dark:text-slate-355">
                                         {{ date('d/m/Y', strtotime($item['transaction_date'])) }}
                                     </x-pos.table.td>
-                                    <x-pos.table.td class="whitespace-nowrap text-right text-sm text-slate-650 dark:text-slate-355 font-mono">
+                                    <x-pos.table.td class="whitespace-nowrap text-right text-sm text-slate-650 dark:text-slate-355 ">
                                         Rp {{ number_format($item['grand_total'], 0, ',', '.') }}
                                     </x-pos.table.td>
-                                    <x-pos.table.td class="whitespace-nowrap text-right font-semibold text-slate-900 dark:text-slate-200 font-mono">
+                                    <x-pos.table.td class="whitespace-nowrap text-right font-semibold text-slate-900 dark:text-slate-200 ">
                                         Rp {{ number_format($item['amount_due'], 0, ',', '.') }}
                                     </x-pos.table.td>
                                     <x-pos.table.td class="whitespace-nowrap text-right">
                                         <x-money-input
                                             wire:model.live.debounce.300ms="items.{{ $idx }}.amount_paid"
-                                            class="w-full px-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-right text-slate-900 dark:text-white font-bold focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors font-mono"
+                                            class="w-full px-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-right text-slate-900 dark:text-white font-bold focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors "
                                             placeholder="0"
                                         />
                                     </x-pos.table.td>
@@ -160,11 +160,11 @@
                 <div class="mt-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors">
                     <div>
                         <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Total Outstanding</span>
-                        <span class="text-lg font-black text-slate-850 dark:text-slate-100 font-mono">Rp {{ number_format($totalOutstanding, 0, ',', '.') }}</span>
+                        <span class="text-lg font-black text-slate-850 dark:text-slate-100 ">Rp {{ number_format($totalOutstanding, 0, ',', '.') }}</span>
                     </div>
                     <div class="text-right">
                         <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Total Pembayaran</span>
-                        <span class="text-2xl font-black text-primary dark:text-blue-400 font-mono">Rp {{ number_format($totalPayment, 0, ',', '.') }}</span>
+                        <span class="text-2xl font-black text-primary dark:text-blue-400 ">Rp {{ number_format($totalPayment, 0, ',', '.') }}</span>
                     </div>
                 </div>
             @endif

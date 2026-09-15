@@ -16,7 +16,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl">
                 <div>
                     <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">No. Invoice</span>
-                    <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white">{{ $selectedSale->invoice_number }}</span>
+                    <span class="text-base  font-extrabold text-slate-900 dark:text-white">{{ $selectedSale->invoice_number }}</span>
                 </div>
                 <div>
                     <span class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Pelanggan</span>
@@ -44,15 +44,15 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
                     <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Total Belanja Invoice</span>
-                    <span class="text-lg font-mono font-black text-slate-900 dark:text-white">Rp {{ number_format($selectedSale->grand_total, 0, ',', '.') }}</span>
+                    <span class="text-lg  font-black text-slate-900 dark:text-white">Rp {{ number_format($selectedSale->grand_total, 0, ',', '.') }}</span>
                 </div>
                 <div class="bg-emerald-50/40 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 text-center">
                     <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider block mb-1">Total Sudah Dibayar</span>
-                    <span class="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400">Rp {{ number_format($totalPaidCalculated, 0, ',', '.') }}</span>
+                    <span class="text-lg  font-black text-emerald-600 dark:text-emerald-400">Rp {{ number_format($totalPaidCalculated, 0, ',', '.') }}</span>
                 </div>
                 <div class="bg-rose-50/40 dark:bg-rose-950/20 p-4 rounded-xl border border-rose-200/60 dark:border-rose-900/40 text-center">
                     <span class="text-xs text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider block mb-1">Sisa Piutang / Tagihan</span>
-                    <span class="text-xl font-mono font-black text-rose-600 dark:text-rose-400">Rp {{ number_format($piutangRemaining, 0, ',', '.') }}</span>
+                    <span class="text-xl  font-black text-rose-600 dark:text-rose-400">Rp {{ number_format($piutangRemaining, 0, ',', '.') }}</span>
                 </div>
             </div>
 
@@ -74,7 +74,7 @@
                         <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
                             @forelse ($settlementHistory as $history)
                                 <x-pos.table.tr>
-                                    <x-pos.table.td class="whitespace-nowrap font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
+                                    <x-pos.table.td class="whitespace-nowrap  font-bold text-xs text-slate-900 dark:text-slate-100">
                                         {{ $history['entry_number'] }}
                                     </x-pos.table.td>
                                     <x-pos.table.td class="whitespace-nowrap text-xs text-slate-600 dark:text-slate-355">
@@ -89,7 +89,7 @@
                                     <x-pos.table.td class="whitespace-nowrap text-xs text-slate-600 dark:text-slate-355">
                                         {{ $history['user_name'] }}
                                     </x-pos.table.td>
-                                    <x-pos.table.td class="whitespace-nowrap text-right font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+                                    <x-pos.table.td class="whitespace-nowrap text-right  font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
                                         Rp {{ number_format($history['amount'], 0, ',', '.') }}
                                     </x-pos.table.td>
                                 </x-pos.table.tr>

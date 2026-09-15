@@ -209,7 +209,7 @@
                 <i class="ph-bold ph-sign-out text-base group-hover:scale-110 transition-transform"></i>
                 <div class="hidden sm:flex flex-col text-left leading-none">
                     <span class="font-extrabold">Clock Out</span>
-                    <span class="text-[9px] opacity-90 mt-0.5 font-mono">In: {{ $clockInTimeText }}</span>
+                    <span class="text-[9px] opacity-90 mt-0.5 ">In: {{ $clockInTimeText }}</span>
                 </div>
             </a>
         @else
@@ -221,7 +221,7 @@
                 <div class="hidden sm:flex flex-col text-left leading-none">
                     <span class="font-extrabold text-[11px]">Selesai</span>
                     @if ($clockInTimeText && $clockOutTimeText)
-                        <span class="text-[9px] opacity-75 font-mono">{{ $clockInTimeText }} - {{ $clockOutTimeText }}</span>
+                        <span class="text-[9px] opacity-75 ">{{ $clockInTimeText }} - {{ $clockOutTimeText }}</span>
                     @endif
                 </div>
             </div>
@@ -416,7 +416,7 @@
             <span class="text-xs font-black text-slate-800 dark:text-slate-200">
                 {{ now()->format('d M Y') }}
             </span>
-            <span id="pos-realtime-clock" class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+            <span id="pos-realtime-clock" class="text-[11px]  font-bold text-slate-500 dark:text-slate-400 mt-0.5">
                 00:00:00
             </span>
         </div>

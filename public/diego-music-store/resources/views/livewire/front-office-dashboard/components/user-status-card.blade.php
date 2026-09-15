@@ -34,12 +34,12 @@
                 <div class="flex items-center gap-3 text-xs">
                     <div class="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
                         <span class="w-2.5 h-2.5 rounded-full {{ $currentUserTodayAttendance?->clock_in ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600' }}"></span>
-                        <span>Masuk: <strong class="font-mono text-slate-900 dark:text-slate-100">{{ $currentUserTodayAttendance?->clock_in ? $currentUserTodayAttendance->clock_in->format('H:i') : '-' }}</strong></span>
+                        <span>Masuk: <strong class=" text-slate-900 dark:text-slate-100">{{ $currentUserTodayAttendance?->clock_in ? $currentUserTodayAttendance->clock_in->format('H:i') : '-' }}</strong></span>
                     </div>
                     <span class="text-slate-300 dark:text-slate-600">&bull;</span>
                     <div class="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
                         <span class="w-2.5 h-2.5 rounded-full {{ $currentUserTodayAttendance?->clock_out ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600' }}"></span>
-                        <span>Pulang: <strong class="font-mono text-slate-900 dark:text-slate-100">{{ $currentUserTodayAttendance?->clock_out ? $currentUserTodayAttendance->clock_out->format('H:i') : '-' }}</strong></span>
+                        <span>Pulang: <strong class=" text-slate-900 dark:text-slate-100">{{ $currentUserTodayAttendance?->clock_out ? $currentUserTodayAttendance->clock_out->format('H:i') : '-' }}</strong></span>
                     </div>
                 </div>
 
@@ -52,14 +52,14 @@
                         <span>&bull;</span>
                         <a href="/pos/commissions" class="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-extrabold">
                             <i class="ph-bold ph-percent text-xs"></i>
-                            <span>Komisi: <strong class="font-mono text-slate-900 dark:text-slate-100">Rp {{ number_format($currentUserMonthlyCommission, 0, ',', '.') }}</strong></span>
+                            <span>Komisi: <strong class=" text-slate-900 dark:text-slate-100">Rp {{ number_format($currentUserMonthlyCommission, 0, ',', '.') }}</strong></span>
                         </a>
                     </div>
 
                     <!-- Progress Bar Capaian Target Omset Sales -->
                     <div class="pt-2 space-y-1">
                         <div class="flex items-center justify-between text-[10px] font-extrabold text-slate-500 dark:text-slate-400">
-                            <span>Target Omset: <strong class="font-mono text-slate-800 dark:text-slate-200">Rp {{ number_format($currentUserMonthlySales, 0, ',', '.') }} / Rp {{ number_format($currentUserTargetSales, 0, ',', '.') }}</strong></span>
+                            <span>Target Omset: <strong class=" text-slate-800 dark:text-slate-200">Rp {{ number_format($currentUserMonthlySales, 0, ',', '.') }} / Rp {{ number_format($currentUserTargetSales, 0, ',', '.') }}</strong></span>
                             <span class="px-1.5 py-0.2 bg-primary/10 text-primary dark:bg-blue-950/60 dark:text-blue-300 rounded-full font-black">{{ $currentUserProgressPercent }}%</span>
                         </div>
                         <div class="w-full h-2 bg-slate-100 dark:bg-slate-700/80 rounded-full overflow-hidden">

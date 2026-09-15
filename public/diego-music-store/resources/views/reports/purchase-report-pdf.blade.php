@@ -56,7 +56,7 @@
         .text-center {
             text-align: center;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -122,12 +122,12 @@
                 <tbody>
                     @foreach($p['items'] as $item)
                         <tr>
-                            <td class="font-mono">{{ $item['sku'] }}</td>
+                            <td class="">{{ $item['sku'] }}</td>
                             <td class="font-bold">{{ $item['product_name'] }}</td>
-                            <td class="text-center font-mono font-bold">{{ number_format($item['qty'], 0, ',', '.') }}</td>
+                            <td class="text-center  font-bold">{{ number_format($item['qty'], 0, ',', '.') }}</td>
                             <td class="text-center">{{ $item['unit'] }}</td>
-                            <td class="text-right font-mono">{{ number_format($item['price'], 0, ',', '.') }}</td>
-                            <td class="text-right font-mono font-bold">{{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                            <td class="text-right ">{{ number_format($item['price'], 0, ',', '.') }}</td>
+                            <td class="text-right  font-bold">{{ number_format($item['subtotal'], 0, ',', '.') }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -151,15 +151,15 @@
             <tbody>
                 @forelse($data['purchases'] as $p)
                     <tr>
-                        <td class="font-mono font-bold">{{ $p['transaction_no'] }}</td>
-                        <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($p['date'])->format('d/m/Y') }}</td>
+                        <td class=" font-bold">{{ $p['transaction_no'] }}</td>
+                        <td class="">{{ \Illuminate\Support\Carbon::parse($p['date'])->format('d/m/Y') }}</td>
                         <td class="font-bold">{{ $p['supplier_name'] }}</td>
                         <td>{{ $p['purchase_type'] }}</td>
                         <td>{{ $p['payment_status'] }}</td>
-                        <td class="text-right font-mono">{{ number_format($p['subtotal'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono">{{ $p['discount'] > 0 ? number_format($p['discount'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ number_format($p['tax'] + $p['shipping'], 0, ',', '.') }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($p['grand_total'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ number_format($p['subtotal'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ $p['discount'] > 0 ? number_format($p['discount'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ number_format($p['tax'] + $p['shipping'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ number_format($p['grand_total'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -174,7 +174,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>RINGKASAN TOTAL PEMBELIAN: {{ number_format($data['total_transactions'], 0, ',', '.') }} Transaksi ({{ number_format($data['total_qty'], 0, ',', '.') }} Qty Produk)</td>
-                <td class="text-right font-mono">GRAND TOTAL: Rp {{ number_format($data['total_grand_total'], 0, ',', '.') }} | TERBAYAR: Rp {{ number_format($data['total_paid'], 0, ',', '.') }} | SISA HUTANG: Rp {{ number_format($data['total_unpaid'], 0, ',', '.') }}</td>
+                <td class="text-right ">GRAND TOTAL: Rp {{ number_format($data['total_grand_total'], 0, ',', '.') }} | TERBAYAR: Rp {{ number_format($data['total_paid'], 0, ',', '.') }} | SISA HUTANG: Rp {{ number_format($data['total_unpaid'], 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

@@ -10,7 +10,7 @@
     <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
         <div class="flex items-center justify-between text-xs font-extrabold">
             <span class="text-slate-600 dark:text-slate-300">Total Kehadiran:</span>
-            <span class="text-emerald-600 dark:text-emerald-400 font-mono text-sm">{{ $attendanceInfo['total_hadir'] }} Hari</span>
+            <span class="text-emerald-600 dark:text-emerald-400  text-sm">{{ $attendanceInfo['total_hadir'] }} Hari</span>
         </div>
 
         <div class="space-y-1">

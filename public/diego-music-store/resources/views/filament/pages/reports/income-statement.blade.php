@@ -37,7 +37,7 @@
             </div>
             <div class="text-right">
                 <span class="text-xs font-medium uppercase opacity-75">Net Income (Current Period)</span>
-                <div class="text-base font-extrabold font-mono">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['net_income']) }}</div>
+                <div class="text-base font-extrabold ">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['net_income']) }}</div>
             </div>
         </div>
     </div>
@@ -80,7 +80,7 @@
                             <td class="py-2 px-4 border-r border-gray-200 dark:border-gray-800">
                                 <div class="flex items-center justify-between gap-2" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="font-mono text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
+                                        <span class=" text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
                                         <span class="{{ $item['is_header'] ? 'font-bold' : '' }}">{{ $item['name'] }}</span>
                                     </div>
                                     @if(!$item['is_header'])
@@ -98,12 +98,12 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
+                            <td class="py-2 px-3 text-right  font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -114,12 +114,12 @@
                     {{-- TOTAL PENJUALAN --}}
                     <tr class="bg-emerald-100/70 dark:bg-emerald-950/50 text-emerald-950 dark:text-emerald-100 font-extrabold border-t-2 border-b-2 border-emerald-300 dark:border-emerald-700">
                         <td class="py-2.5 px-4 uppercase tracking-wide border-r border-emerald-300 dark:border-emerald-700">TOTAL PENJUALAN</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-emerald-300 dark:border-emerald-700">{{ $fmt($data['revenue']['toko']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-emerald-300 dark:border-emerald-700">{{ $fmt($data['revenue']['gudang']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-emerald-400 dark:border-emerald-600 bg-emerald-200/50 dark:bg-emerald-900/60 font-black text-sm">{{ $fmt($data['revenue']['total']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-emerald-300 dark:border-emerald-700">{{ $fmt($data['revenue']['ytd_toko']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-emerald-300 dark:border-emerald-700">{{ $fmt($data['revenue']['ytd_gudang']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono bg-emerald-200/40 dark:bg-emerald-900/40 font-black text-sm">{{ $fmt($data['revenue']['ytd_total']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-emerald-300 dark:border-emerald-700">{{ $fmt($data['revenue']['toko']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-emerald-300 dark:border-emerald-700">{{ $fmt($data['revenue']['gudang']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-emerald-400 dark:border-emerald-600 bg-emerald-200/50 dark:bg-emerald-900/60 font-black text-sm">{{ $fmt($data['revenue']['total']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-emerald-300 dark:border-emerald-700">{{ $fmt($data['revenue']['ytd_toko']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-emerald-300 dark:border-emerald-700">{{ $fmt($data['revenue']['ytd_gudang']) }}</td>
+                        <td class="py-2.5 px-3 text-right  bg-emerald-200/40 dark:bg-emerald-900/40 font-black text-sm">{{ $fmt($data['revenue']['ytd_total']) }}</td>
                     </tr>
 
                     {{-- 2. PEMBELIAN DAN HPP / COGS --}}
@@ -133,7 +133,7 @@
                             <td class="py-2 px-4 border-r border-gray-200 dark:border-gray-800">
                                 <div class="flex items-center justify-between gap-2" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="font-mono text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
+                                        <span class=" text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
                                         <span class="{{ $item['is_header'] ? 'font-bold' : '' }}">{{ $item['name'] }}</span>
                                     </div>
                                     @if(!$item['is_header'])
@@ -151,12 +151,12 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
+                            <td class="py-2 px-3 text-right  font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -167,24 +167,24 @@
                     {{-- TOTAL PEMBELIAN DAN HPP --}}
                     <tr class="bg-slate-200/80 dark:bg-slate-800/80 text-gray-900 dark:text-white font-extrabold border-t-2 border-b-2 border-gray-300 dark:border-gray-700">
                         <td class="py-2.5 px-4 uppercase tracking-wide border-r border-gray-300 dark:border-gray-700">TOTAL PEMBELIAN DAN HPP</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['cogs']['toko']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['cogs']['gudang']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-400 dark:border-gray-600 bg-slate-300/50 dark:bg-slate-700/60 font-black text-sm">{{ $fmt($data['cogs']['total']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['cogs']['ytd_toko']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['cogs']['ytd_gudang']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono bg-slate-300/30 dark:bg-slate-700/40 font-black text-sm">{{ $fmt($data['cogs']['ytd_total']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['cogs']['toko']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['cogs']['gudang']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-400 dark:border-gray-600 bg-slate-300/50 dark:bg-slate-700/60 font-black text-sm">{{ $fmt($data['cogs']['total']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['cogs']['ytd_toko']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['cogs']['ytd_gudang']) }}</td>
+                        <td class="py-2.5 px-3 text-right  bg-slate-300/30 dark:bg-slate-700/40 font-black text-sm">{{ $fmt($data['cogs']['ytd_total']) }}</td>
                     </tr>
 
                     {{-- SUMMARY ROW: LABA KOTOR --}}
                     @php $gp = $data['gross_profit_details']; @endphp
                     <tr class="bg-amber-100 dark:bg-amber-950/60 text-amber-950 dark:text-amber-100 font-black border-y-2 border-amber-400 dark:border-amber-600 text-sm">
                         <td class="py-3 px-4 uppercase tracking-wider border-r border-amber-300 dark:border-amber-700">LABA KOTOR (GROSS PROFIT)</td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-amber-300 dark:border-amber-700">{{ $fmt($gp['toko']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-amber-300 dark:border-amber-700">{{ $fmt($gp['gudang']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-amber-400 dark:border-amber-600 bg-amber-200/60 dark:bg-amber-900/60 font-extrabold text-base">{{ $fmt($gp['total']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-amber-300 dark:border-amber-700">{{ $fmt($gp['ytd_toko']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-amber-300 dark:border-amber-700">{{ $fmt($gp['ytd_gudang']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono bg-amber-200/40 dark:bg-amber-900/40 font-extrabold text-base">{{ $fmt($gp['ytd_total']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-amber-300 dark:border-amber-700">{{ $fmt($gp['toko']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-amber-300 dark:border-amber-700">{{ $fmt($gp['gudang']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-amber-400 dark:border-amber-600 bg-amber-200/60 dark:bg-amber-900/60 font-extrabold text-base">{{ $fmt($gp['total']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-amber-300 dark:border-amber-700">{{ $fmt($gp['ytd_toko']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-amber-300 dark:border-amber-700">{{ $fmt($gp['ytd_gudang']) }}</td>
+                        <td class="py-3 px-3 text-right  bg-amber-200/40 dark:bg-amber-900/40 font-extrabold text-base">{{ $fmt($gp['ytd_total']) }}</td>
                     </tr>
 
                     {{-- 3. BEBAN OPERASIONAL --}}
@@ -198,7 +198,7 @@
                             <td class="py-2 px-4 border-r border-gray-200 dark:border-gray-800">
                                 <div class="flex items-center justify-between gap-2" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="font-mono text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
+                                        <span class=" text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
                                         <span class="{{ $item['is_header'] ? 'font-bold' : '' }}">{{ $item['name'] }}</span>
                                     </div>
                                     @if(!$item['is_header'])
@@ -216,12 +216,12 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
-                            <td class="py-2 px-3 text-right font-mono font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
+                            <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
+                            <td class="py-2 px-3 text-right  font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -232,24 +232,24 @@
                     {{-- TOTAL BEBAN OPERASIONAL --}}
                     <tr class="bg-slate-200/80 dark:bg-slate-800/80 text-gray-900 dark:text-white font-extrabold border-t-2 border-b-2 border-gray-300 dark:border-gray-700">
                         <td class="py-2.5 px-4 uppercase tracking-wide border-r border-gray-300 dark:border-gray-700">TOTAL BEBAN OPERASIONAL</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['operating_expenses']['toko']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['operating_expenses']['gudang']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-400 dark:border-gray-600 bg-slate-300/50 dark:bg-slate-700/60 font-black text-sm">{{ $fmt($data['operating_expenses']['total']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['operating_expenses']['ytd_toko']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['operating_expenses']['ytd_gudang']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono bg-slate-300/30 dark:bg-slate-700/40 font-black text-sm">{{ $fmt($data['operating_expenses']['ytd_total']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['operating_expenses']['toko']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['operating_expenses']['gudang']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-400 dark:border-gray-600 bg-slate-300/50 dark:bg-slate-700/60 font-black text-sm">{{ $fmt($data['operating_expenses']['total']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['operating_expenses']['ytd_toko']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">{{ $fmt($data['operating_expenses']['ytd_gudang']) }}</td>
+                        <td class="py-2.5 px-3 text-right  bg-slate-300/30 dark:bg-slate-700/40 font-black text-sm">{{ $fmt($data['operating_expenses']['ytd_total']) }}</td>
                     </tr>
 
                     {{-- SUMMARY ROW: LABA / (RUGI) OPERASIONAL --}}
                     @php $opInc = $data['operating_income_details']; @endphp
                     <tr class="bg-sky-100/70 dark:bg-sky-950/60 text-gray-900 dark:text-white font-extrabold border-y-2 border-sky-300 dark:border-sky-700 text-xs sm:text-sm">
                         <td class="py-2.5 px-4 uppercase tracking-wider border-r border-sky-300 dark:border-sky-700">LABA / (RUGI) OPERASIONAL</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-sky-300 dark:border-sky-700">{{ $fmt($opInc['toko']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-sky-300 dark:border-sky-700">{{ $fmt($opInc['gudang']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-sky-400 dark:border-sky-600 bg-sky-200/50 dark:bg-sky-900/60 font-black text-sm">{{ $fmt($opInc['total']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-sky-300 dark:border-sky-700">{{ $fmt($opInc['ytd_toko']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono border-r border-sky-300 dark:border-sky-700">{{ $fmt($opInc['ytd_gudang']) }}</td>
-                        <td class="py-2.5 px-3 text-right font-mono bg-sky-200/30 dark:bg-sky-900/40 font-black text-sm">{{ $fmt($opInc['ytd_total']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-sky-300 dark:border-sky-700">{{ $fmt($opInc['toko']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-sky-300 dark:border-sky-700">{{ $fmt($opInc['gudang']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-sky-400 dark:border-sky-600 bg-sky-200/50 dark:bg-sky-900/60 font-black text-sm">{{ $fmt($opInc['total']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-sky-300 dark:border-sky-700">{{ $fmt($opInc['ytd_toko']) }}</td>
+                        <td class="py-2.5 px-3 text-right  border-r border-sky-300 dark:border-sky-700">{{ $fmt($opInc['ytd_gudang']) }}</td>
+                        <td class="py-2.5 px-3 text-right  bg-sky-200/30 dark:bg-sky-900/40 font-black text-sm">{{ $fmt($opInc['ytd_total']) }}</td>
                     </tr>
 
                     {{-- 4. PENDAPATAN & BEBAN LAIN-LAIN (IF ANY) --}}
@@ -264,17 +264,17 @@
                                 <td class="py-2 px-4 border-r border-gray-200 dark:border-gray-800">
                                     <div class="flex items-center justify-between gap-2" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
                                         <div class="flex items-center gap-1.5">
-                                            <span class="font-mono text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
+                                            <span class=" text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
                                             <span>{{ $item['name'] }}</span>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
+                                <td class="py-2 px-3 text-right  font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
                             </tr>
                         @endforeach
                         @foreach($data['other_expenses']['items'] as $item)
@@ -282,17 +282,17 @@
                                 <td class="py-2 px-4 border-r border-gray-200 dark:border-gray-800">
                                     <div class="flex items-center justify-between gap-2" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
                                         <div class="flex items-center gap-1.5">
-                                            <span class="font-mono text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
+                                            <span class=" text-[11px] text-gray-500 dark:text-gray-400 mr-1">{{ $item['code'] }}</span>
                                             <span>{{ $item['name'] }}</span>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
-                                <td class="py-2 px-3 text-right font-mono font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_toko']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['balance_gudang']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-300 dark:border-gray-700 font-bold bg-sky-50/40 dark:bg-sky-950/30 text-gray-900 dark:text-white">{{ $fmt($item['balance']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_toko']) }}</td>
+                                <td class="py-2 px-3 text-right  border-r border-gray-200 dark:border-gray-800 font-semibold">{{ $fmt($item['ytd_gudang']) }}</td>
+                                <td class="py-2 px-3 text-right  font-bold bg-sky-50/20 dark:bg-sky-950/20 text-gray-900 dark:text-white">{{ $fmt($item['ytd_total']) }}</td>
                             </tr>
                         @endforeach
                     @endif
@@ -303,12 +303,12 @@
                         <td class="py-3 px-4 uppercase tracking-wider border-r border-gray-400 dark:border-gray-600">
                             {{ $data['is_profit'] ? 'LABA BERSIH (NET PROFIT)' : 'RUGI BERSIH (NET LOSS)' }}
                         </td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-gray-400 dark:border-gray-600">{{ $fmt($netInc['toko']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-gray-400 dark:border-gray-600">{{ $fmt($netInc['gudang']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-gray-500 dark:border-gray-500 bg-gray-300/70 dark:bg-gray-700/80 font-black text-base">{{ $fmt($netInc['total']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-gray-400 dark:border-gray-600">{{ $fmt($netInc['ytd_toko']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono border-r border-gray-400 dark:border-gray-600">{{ $fmt($netInc['ytd_gudang']) }}</td>
-                        <td class="py-3 px-3 text-right font-mono bg-gray-300/50 dark:bg-gray-700/50 font-black text-base">{{ $fmt($netInc['ytd_total']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-gray-400 dark:border-gray-600">{{ $fmt($netInc['toko']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-gray-400 dark:border-gray-600">{{ $fmt($netInc['gudang']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-gray-500 dark:border-gray-500 bg-gray-300/70 dark:bg-gray-700/80 font-black text-base">{{ $fmt($netInc['total']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-gray-400 dark:border-gray-600">{{ $fmt($netInc['ytd_toko']) }}</td>
+                        <td class="py-3 px-3 text-right  border-r border-gray-400 dark:border-gray-600">{{ $fmt($netInc['ytd_gudang']) }}</td>
+                        <td class="py-3 px-3 text-right  bg-gray-300/50 dark:bg-gray-700/50 font-black text-base">{{ $fmt($netInc['ytd_total']) }}</td>
                     </tr>
 
                 </tbody>
@@ -325,7 +325,7 @@
                 <div class="p-5 bg-gray-50/80 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 flex justify-between items-center">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="px-2 py-0.5 text-xs font-mono font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded">
+                            <span class="px-2 py-0.5 text-xs  font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded">
                                 {{ $this->selectedAccount['code'] }}
                             </span>
                             <h3 class="text-base font-extrabold text-gray-900 dark:text-white">
@@ -365,12 +365,12 @@
                             <tbody class="divide-y divide-gray-100 dark:divide-white/10">
                                 @foreach($this->ledgerTransactions as $tx)
                                     <tr class="hover:bg-gray-50/50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                                        <td class="py-2 px-3 font-mono text-xs whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($tx['date'])->format('d/m/Y') }}</td>
-                                        <td class="py-2 px-3 font-mono text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ $tx['entry_no'] }}</td>
+                                        <td class="py-2 px-3  text-xs whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($tx['date'])->format('d/m/Y') }}</td>
+                                        <td class="py-2 px-3  text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ $tx['entry_no'] }}</td>
                                         <td class="py-2 px-3 text-xs">{{ $tx['description'] }}</td>
-                                        <td class="py-2 px-3 text-right font-mono text-xs">{{ $tx['debit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['debit']) : '-' }}</td>
-                                        <td class="py-2 px-3 text-right font-mono text-xs">{{ $tx['credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['credit']) : '-' }}</td>
-                                        <td class="py-2 px-3 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white">
+                                        <td class="py-2 px-3 text-right  text-xs">{{ $tx['debit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['debit']) : '-' }}</td>
+                                        <td class="py-2 px-3 text-right  text-xs">{{ $tx['credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['credit']) : '-' }}</td>
+                                        <td class="py-2 px-3 text-right  text-xs font-extrabold text-gray-900 dark:text-white">
                                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($tx['running_balance']) }}
                                         </td>
                                     </tr>
@@ -391,7 +391,7 @@
                 {{-- Modal Footer --}}
                 <div class="p-4 bg-gray-50/80 dark:bg-white/5 border-t border-gray-200 dark:border-white/10 flex justify-between items-center">
                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                        Total Mutasi Periode: <strong class="font-mono text-gray-900 dark:text-white text-sm ml-1">{{ \App\Helpers\FinancialReportHelper::formatRupiah($this->selectedAccount['total_balance']) }}</strong>
+                        Total Mutasi Periode: <strong class=" text-gray-900 dark:text-white text-sm ml-1">{{ \App\Helpers\FinancialReportHelper::formatRupiah($this->selectedAccount['total_balance']) }}</strong>
                     </div>
 
                     <button 

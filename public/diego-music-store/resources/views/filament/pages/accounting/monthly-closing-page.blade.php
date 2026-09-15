@@ -29,14 +29,14 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl">
                     <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Pendapatan (Revenue)</span>
-                    <div class="text-lg font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+                    <div class="text-lg font-extrabold  text-gray-900 dark:text-white mt-1">
                         {{ \App\Helpers\FinancialReportHelper::formatRupiah($info['total_revenue']) }}
                     </div>
                 </div>
 
                 <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl">
                     <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total HPP & Beban Operasional</span>
-                    <div class="text-lg font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+                    <div class="text-lg font-extrabold  text-gray-900 dark:text-white mt-1">
                         {{ \App\Helpers\FinancialReportHelper::formatRupiah($info['total_cogs'] + $info['total_expense']) }}
                     </div>
                 </div>
@@ -45,7 +45,7 @@
                     <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">
                         {{ $info['is_profit'] ? 'LABA BERSIH (NET PROFIT)' : 'RUGI BERSIH (NET LOSS)' }}
                     </span>
-                    <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+                    <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                         {{ \App\Helpers\FinancialReportHelper::formatRupiah($info['net_income']) }}
                     </div>
                 </div>
@@ -107,17 +107,17 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @forelse($history as $item)
                         <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                            <td class="py-2.5 px-6 font-mono text-xs font-bold text-gray-900 dark:text-white">{{ $item['period_key'] }}</td>
+                            <td class="py-2.5 px-6  text-xs font-bold text-gray-900 dark:text-white">{{ $item['period_key'] }}</td>
                             <td class="py-2.5 px-6 text-xs">{{ $item->branch?->name ?? 'Konsolidasi' }}</td>
                             <td class="py-2.5 px-6">
                                 <span class="text-xs font-semibold px-2 py-0.5 rounded border {{ $item['status'] === 'closed' ? 'bg-gray-900 text-white dark:bg-gray-800 dark:text-white dark:border-gray-600 border-gray-900' : 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100 border-blue-300 dark:border-blue-500 font-extrabold' }}">
                                     {{ strtoupper($item['status']) }}
                                 </span>
                             </td>
-                            <td class="py-2.5 px-6 text-right font-mono text-xs">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['total_revenue']) }}</td>
-                            <td class="py-2.5 px-6 text-right font-mono text-xs">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['total_expense']) }}</td>
-                            <td class="py-2.5 px-6 text-right font-mono text-xs font-bold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['net_income']) }}</td>
-                            <td class="py-2.5 px-6 font-mono text-xs font-semibold">{{ $item->closingJournal?->entry_no ?? '-' }}</td>
+                            <td class="py-2.5 px-6 text-right  text-xs">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['total_revenue']) }}</td>
+                            <td class="py-2.5 px-6 text-right  text-xs">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['total_expense']) }}</td>
+                            <td class="py-2.5 px-6 text-right  text-xs font-bold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['net_income']) }}</td>
+                            <td class="py-2.5 px-6  text-xs font-semibold">{{ $item->closingJournal?->entry_no ?? '-' }}</td>
                             <td class="py-2.5 px-6 text-xs text-gray-500">
                                 {{ \Illuminate\Support\Carbon::parse($item['closed_at'])->format('d/m/Y H:i') }}
                                 <div class="text-[10px] text-gray-400">Oleh: {{ $item->closedBy?->name ?? 'Admin' }}</div>
@@ -179,7 +179,7 @@
                 {{-- Modal Body Content --}}
                 <div class="p-6 text-sm text-gray-700 dark:text-gray-300 space-y-4">
                     <p class="font-medium text-gray-900 dark:text-white">
-                        Apakah Anda yakin ingin mengeksekusi Tutup Buku Bulanan untuk periode <span class="font-mono font-bold">{{ $info['period_key'] }}</span>?
+                        Apakah Anda yakin ingin mengeksekusi Tutup Buku Bulanan untuk periode <span class=" font-bold">{{ $info['period_key'] }}</span>?
                     </p>
                     <div class="p-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs space-y-1.5">
                         <div class="flex justify-between">
@@ -188,11 +188,11 @@
                         </div>
                         <div class="flex justify-between">
                             <span>Jurnal Penutup:</span>
-                            <strong class="font-mono text-gray-900 dark:text-white">#JV-CLOSE-{{ str_replace('-', '', $info['period_key']) }}</strong>
+                            <strong class=" text-gray-900 dark:text-white">#JV-CLOSE-{{ str_replace('-', '', $info['period_key']) }}</strong>
                         </div>
                         <div class="flex justify-between">
                             <span>Transfer Ke Laba Ditahan:</span>
-                            <strong class="font-mono text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($info['net_income']) }}</strong>
+                            <strong class=" text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($info['net_income']) }}</strong>
                         </div>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -253,10 +253,10 @@
                 {{-- Modal Body Content --}}
                 <div class="p-6 text-sm text-gray-700 dark:text-gray-300 space-y-4">
                     <p class="font-medium text-gray-900 dark:text-white">
-                        Apakah Anda yakin ingin MEMBUKA KEMBALI periode <span class="font-mono font-bold">{{ $reopenTarget->period_key }}</span>?
+                        Apakah Anda yakin ingin MEMBUKA KEMBALI periode <span class=" font-bold">{{ $reopenTarget->period_key }}</span>?
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Jurnal Penutup otomatis <strong class="font-mono">{{ $reopenTarget->closingJournal?->entry_no ?? '-' }}</strong> akan dibatalkan, dan penguncian periode akan dibuka kembali untuk pengeditan.
+                        Jurnal Penutup otomatis <strong class="">{{ $reopenTarget->closingJournal?->entry_no ?? '-' }}</strong> akan dibatalkan, dan penguncian periode akan dibuka kembali untuk pengeditan.
                     </p>
                 </div>
 

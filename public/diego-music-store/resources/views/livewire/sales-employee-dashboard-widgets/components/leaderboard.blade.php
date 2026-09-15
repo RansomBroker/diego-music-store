@@ -42,7 +42,7 @@
                     </div>
                 </div>
                 <div class="text-right flex-shrink-0 ml-3">
-                    <div class="text-xs font-mono font-black text-emerald-600 dark:text-emerald-400">
+                    <div class="text-xs  font-black text-emerald-600 dark:text-emerald-400">
                         Rp {{ number_format($rank['sales_val'], 0, ',', '.') }}
                     </div>
                     <div class="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">Total Omzet</div>

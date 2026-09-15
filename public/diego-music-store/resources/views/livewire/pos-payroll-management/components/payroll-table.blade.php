@@ -33,7 +33,7 @@
         @if ($currentPayroll)
             <div class="flex items-center gap-3">
                 <span class="text-xs font-bold text-slate-500 dark:text-slate-400">
-                    Kode: <span class="font-mono text-slate-900 dark:text-slate-100 font-bold">{{ $currentPayroll->payroll_code }}</span>
+                    Kode: <span class=" text-slate-900 dark:text-slate-100 font-bold">{{ $currentPayroll->payroll_code }}</span>
                 </span>
                 <x-pos.utility.pill
                     :variant="$currentPayroll->status === 'paid' ? 'success' : ($currentPayroll->status === 'draft' ? 'warning' : 'primary')"
@@ -69,28 +69,28 @@
                                 {{ $item->employee->name ?? '-' }}
                                 <span class="block text-[10px] text-slate-400 font-normal">{{ $item->employee->nik ?? '' }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-slate-700 dark:text-slate-300">
+                            <x-pos.table.td class="text-right font-semibold  text-slate-700 dark:text-slate-300">
                                 <span class="text-slate-700 dark:text-slate-300">Rp {{ number_format($item->basic_salary, 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-emerald-600 dark:text-emerald-400">
+                            <x-pos.table.td class="text-right font-semibold  text-emerald-600 dark:text-emerald-400">
                                 <span class="text-emerald-600 dark:text-emerald-400">Rp {{ number_format($item->allowance_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-sky-600 dark:text-sky-400">
+                            <x-pos.table.td class="text-right font-semibold  text-sky-600 dark:text-sky-400">
                                 <span class="text-sky-600 dark:text-sky-400">Rp {{ number_format($item->overtime_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-blue-600 dark:text-blue-400">
+                            <x-pos.table.td class="text-right font-semibold  text-blue-600 dark:text-blue-400">
                                 <span class="text-blue-600 dark:text-blue-400">Rp {{ number_format($item->commission_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-purple-600 dark:text-purple-400">
+                            <x-pos.table.td class="text-right font-semibold  text-purple-600 dark:text-purple-400">
                                 <span class="text-purple-600 dark:text-purple-400">Rp {{ number_format($item->kpi_bonus_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-rose-600 dark:text-rose-400">
+                            <x-pos.table.td class="text-right font-semibold  text-rose-600 dark:text-rose-400">
                                 <span class="text-rose-600 dark:text-rose-400">Rp {{ number_format($item->violation_deduction_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold font-mono text-amber-600 dark:text-amber-400">
+                            <x-pos.table.td class="text-right font-semibold  text-amber-600 dark:text-amber-400">
                                 <span class="text-amber-600 dark:text-amber-400">Rp {{ number_format($item->other_deduction_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-black font-mono text-emerald-700 dark:text-emerald-300">
+                            <x-pos.table.td class="text-right font-black  text-emerald-700 dark:text-emerald-300">
                                 <span class="text-emerald-700 dark:text-emerald-300 font-black">Rp {{ number_format($item->net_salary, 0, ',', '.') }}</span>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
@@ -140,28 +140,28 @@
                         <x-pos.table.td class="font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                             TOTAL ({{ $currentPayroll->items->count() }} STAF)
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black font-mono text-slate-800 dark:text-slate-200">
+                        <x-pos.table.td class="text-right font-black  text-slate-800 dark:text-slate-200">
                             <span class="text-slate-800 dark:text-slate-200">Rp {{ number_format($currentPayroll->items->sum('basic_salary'), 0, ',', '.') }}</span>
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black font-mono text-emerald-600 dark:text-emerald-400">
+                        <x-pos.table.td class="text-right font-black  text-emerald-600 dark:text-emerald-400">
                             <span class="text-emerald-600 dark:text-emerald-400">Rp {{ number_format($currentPayroll->items->sum('allowance_amount'), 0, ',', '.') }}</span>
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black font-mono text-sky-600 dark:text-sky-400">
+                        <x-pos.table.td class="text-right font-black  text-sky-600 dark:text-sky-400">
                             <span class="text-sky-600 dark:text-sky-400">Rp {{ number_format($currentPayroll->items->sum('overtime_amount'), 0, ',', '.') }}</span>
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black font-mono text-blue-600 dark:text-blue-400">
+                        <x-pos.table.td class="text-right font-black  text-blue-600 dark:text-blue-400">
                             <span class="text-blue-600 dark:text-blue-400">Rp {{ number_format($currentPayroll->items->sum('commission_amount'), 0, ',', '.') }}</span>
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black font-mono text-purple-600 dark:text-purple-400">
+                        <x-pos.table.td class="text-right font-black  text-purple-600 dark:text-purple-400">
                             <span class="text-purple-600 dark:text-purple-400">Rp {{ number_format($currentPayroll->items->sum('kpi_bonus_amount'), 0, ',', '.') }}</span>
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black font-mono text-rose-600 dark:text-rose-400">
+                        <x-pos.table.td class="text-right font-black  text-rose-600 dark:text-rose-400">
                             <span class="text-rose-600 dark:text-rose-400">Rp {{ number_format($currentPayroll->items->sum('violation_deduction_amount'), 0, ',', '.') }}</span>
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black font-mono text-amber-600 dark:text-amber-400">
+                        <x-pos.table.td class="text-right font-black  text-amber-600 dark:text-amber-400">
                             <span class="text-amber-600 dark:text-amber-400">Rp {{ number_format($currentPayroll->items->sum('other_deduction_amount'), 0, ',', '.') }}</span>
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black font-mono text-emerald-700 dark:text-emerald-300">
+                        <x-pos.table.td class="text-right font-black  text-emerald-700 dark:text-emerald-300">
                             <span class="text-emerald-700 dark:text-emerald-300 font-black text-sm">Rp {{ number_format($currentPayroll->total_net_salary, 0, ',', '.') }}</span>
                         </x-pos.table.td>
                         <x-pos.table.td class="text-center text-slate-400 font-normal">

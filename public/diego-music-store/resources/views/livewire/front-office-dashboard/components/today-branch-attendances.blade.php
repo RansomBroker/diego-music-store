@@ -64,7 +64,7 @@
                         <x-pos.table.tr>
                             <x-pos.table.td>
                                 <div class="font-extrabold text-slate-800 dark:text-slate-100">{{ $emp->name }}</div>
-                                <div class="text-[10px] text-slate-400 font-mono">{{ $emp->nik }} &bull; {{ $emp->user?->roles->first()?->name ?? 'Kasir' }}</div>
+                                <div class="text-[10px] text-slate-400 ">{{ $emp->nik }} &bull; {{ $emp->user?->roles->first()?->name ?? 'Kasir' }}</div>
                             </x-pos.table.td>
                             <x-pos.table.td>
                                 @if ($status === 'hadir')
@@ -81,7 +81,7 @@
                                     </x-pos.utility.pill>
                                 @endif
                             </x-pos.table.td>
-                            <x-pos.table.td class="font-mono text-slate-600 dark:text-slate-300">
+                            <x-pos.table.td class=" text-slate-600 dark:text-slate-300">
                                 @if ($att && $att->clock_in)
                                     <div class="font-bold text-slate-800 dark:text-slate-100">In: {{ $att->clock_in->format('H:i') }}</div>
                                     <div class="text-[10px] text-slate-400">Out: {{ $att->clock_out ? $att->clock_out->format('H:i') : '-' }}</div>
@@ -93,7 +93,7 @@
                                 @if ($att && $att->clock_in_photo_path)
                                     <div class="flex items-center gap-2">
                                         <img src="{{ Storage::url($att->clock_in_photo_path) }}" alt="Selfie" class="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-700">
-                                        <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                                        <span class="text-[10px]  text-emerald-600 dark:text-emerald-400 font-bold">
                                             {{ number_format($att->distance_meters ?? 0, 0) }}m Radius
                                         </span>
                                     </div>

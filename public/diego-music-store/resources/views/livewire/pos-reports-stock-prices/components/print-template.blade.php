@@ -30,7 +30,7 @@
             }
             .text-right { text-align: right; }
             .text-center { text-align: center; }
-            .font-mono { font-family: 'Courier New', Courier, monospace; }
+            . { font-family: 'Courier New', Courier, monospace; }
         }
     </style>
 
@@ -48,7 +48,7 @@
                     {{ $currentBranch?->address ?: 'Jl. Utama Music Store ERP' }} | Telp: {{ $currentBranch?->phone ?: '-' }}
                 </div>
             </div>
-            <div style="text-align: right; font-size: 8pt;" class="font-mono">
+            <div style="text-align: right; font-size: 8pt;" class="">
                 <div>TGL CETAK: {{ now()->format('d/m/Y H:i:s') }}</div>
                 <div>PETUGAS: {{ strtoupper(auth()->user()?->name ?: 'ADMIN') }}</div>
                 <div>STATUS: DOKUMEN RESMI ERP</div>
@@ -70,15 +70,15 @@
     <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px; font-size: 9pt;">
         <tr>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Total SKU / Varian</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class="font-mono text-right">{{ number_format($reportData['total_variants'] ?? 0, 0, ',', '.') }} SKU ({{ number_format($reportData['total_physical_qty'] ?? 0, 0, ',', '.') }} pcs)</td>
+            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">{{ number_format($reportData['total_variants'] ?? 0, 0, ',', '.') }} SKU ({{ number_format($reportData['total_physical_qty'] ?? 0, 0, ',', '.') }} pcs)</td>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Grand Total Nilai HPP</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class="font-mono text-right">Rp {{ number_format($reportData['grand_total_valuation'] ?? 0, 0, ',', '.') }}</td>
+            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['grand_total_valuation'] ?? 0, 0, ',', '.') }}</td>
         </tr>
         <tr>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">Status Stok Kritis</td>
-            <td style="border: 1px solid #000; padding: 5px;" class="font-mono text-right">{{ number_format($reportData['total_out_of_stock_count'] ?? 0, 0, ',', '.') }} Habis | {{ number_format($reportData['total_low_stock_count'] ?? 0, 0, ',', '.') }} Rendah</td>
+            <td style="border: 1px solid #000; padding: 5px;" class=" text-right">{{ number_format($reportData['total_out_of_stock_count'] ?? 0, 0, ',', '.') }} Habis | {{ number_format($reportData['total_low_stock_count'] ?? 0, 0, ',', '.') }} Rendah</td>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">Potensi Nilai Jual</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class="font-mono text-right">Rp {{ number_format($reportData['grand_total_retail_value'] ?? 0, 0, ',', '.') }}</td>
+            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['grand_total_retail_value'] ?? 0, 0, ',', '.') }}</td>
         </tr>
     </table>
 
@@ -105,18 +105,18 @@
             @forelse ($reportData['rows'] ?? [] as $idx => $row)
                 <tr>
                     <td class="text-center">{{ $idx + 1 }}</td>
-                    <td class="font-mono font-bold">{{ $row['sku'] }}<br><span style="font-size: 7.5pt; font-weight: normal; color: #444;">BC: {{ $row['barcode'] }}</span></td>
+                    <td class=" font-bold">{{ $row['sku'] }}<br><span style="font-size: 7.5pt; font-weight: normal; color: #444;">BC: {{ $row['barcode'] }}</span></td>
                     <td style="font-weight: bold;">{{ $row['full_name'] }}</td>
                     <td>{{ $row['category'] }}</td>
                     <td>{{ $row['brand'] }}</td>
-                    <td class="text-center font-mono font-bold">{{ number_format($row['stock'], 0, ',', '.') }}</td>
-                    <td class="text-center font-mono">{{ number_format($row['min_stock'], 0, ',', '.') }}</td>
+                    <td class="text-center  font-bold">{{ number_format($row['stock'], 0, ',', '.') }}</td>
+                    <td class="text-center ">{{ number_format($row['min_stock'], 0, ',', '.') }}</td>
                     <td class="text-center">{{ $row['unit'] }}</td>
                     <td class="text-center font-bold" style="font-size: 7.5pt;">{{ $row['status_label'] }}</td>
-                    <td class="text-right font-mono">Rp {{ number_format($row['cost_price'], 0, ',', '.') }}</td>
-                    <td class="text-right font-mono">Rp {{ number_format($row['retail_price'], 0, ',', '.') }}</td>
-                    <td class="text-right font-mono font-bold">Rp {{ number_format($row['valuation'], 0, ',', '.') }}</td>
-                    <td class="text-right font-mono font-bold">Rp {{ number_format($row['retail_value'], 0, ',', '.') }}</td>
+                    <td class="text-right ">Rp {{ number_format($row['cost_price'], 0, ',', '.') }}</td>
+                    <td class="text-right ">Rp {{ number_format($row['retail_price'], 0, ',', '.') }}</td>
+                    <td class="text-right  font-bold">Rp {{ number_format($row['valuation'], 0, ',', '.') }}</td>
+                    <td class="text-right  font-bold">Rp {{ number_format($row['retail_value'], 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>

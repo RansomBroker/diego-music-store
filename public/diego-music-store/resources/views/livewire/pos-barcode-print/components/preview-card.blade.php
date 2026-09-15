@@ -2,7 +2,7 @@
 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl p-5 space-y-3">
     <div class="flex items-center justify-between">
         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pratinjau Stiker (Dynamic)</h3>
-        <span class="text-[10px] text-slate-400 font-mono">{{ $labelWidth }}x{{ $labelHeight }}mm | {{ $columns }} Col</span>
+        <span class="text-[10px] text-slate-400 ">{{ $labelWidth }}x{{ $labelHeight }}mm | {{ $columns }} Col</span>
     </div>
     
     <div
@@ -21,7 +21,7 @@
         </div>
 
         @if ($showCode)
-            <div class="font-mono tracking-widest" style="font-size: {{ max($fontSize - 2, 7) }}px;">SKU-10023</div>
+            <div class=" tracking-widest" style="font-size: {{ max($fontSize - 2, 7) }}px;">SKU-10023</div>
         @endif
         @if ($showPrice)
             <div class="font-extrabold border-t border-slate-300 pt-0.5" style="font-size: {{ $fontSize }}px;">Rp 1.750.000</div>

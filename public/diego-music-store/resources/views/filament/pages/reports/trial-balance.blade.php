@@ -32,7 +32,7 @@
             </div>
             <div class="text-right">
                 <span class="text-xs font-medium uppercase opacity-75">Total Saldo Akhir Debit / Kredit</span>
-                <div class="text-base font-extrabold font-mono">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_ending_debit']) }}</div>
+                <div class="text-base font-extrabold ">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_ending_debit']) }}</div>
             </div>
         </div>
     </div>
@@ -68,7 +68,7 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @forelse($data['items'] as $item)
                         <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
-                            <td class="py-2.5 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 border-r border-gray-100 dark:border-gray-800">{{ $item['code'] }}</td>
+                            <td class="py-2.5 px-4  text-xs text-gray-500 dark:text-gray-400 border-r border-gray-100 dark:border-gray-800">{{ $item['code'] }}</td>
                             <td class="py-2.5 px-4 border-r border-gray-100 dark:border-gray-800">
                                 <div class="flex items-center gap-1.5" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
                                     @if($item['is_header'])
@@ -79,22 +79,22 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="py-2.5 px-3 text-right font-mono text-xs border-r border-gray-100 dark:border-gray-800">
+                            <td class="py-2.5 px-3 text-right  text-xs border-r border-gray-100 dark:border-gray-800">
                                 {{ $item['beginning_debit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['beginning_debit']) : '-' }}
                             </td>
-                            <td class="py-2.5 px-3 text-right font-mono text-xs border-r border-gray-100 dark:border-gray-800">
+                            <td class="py-2.5 px-3 text-right  text-xs border-r border-gray-100 dark:border-gray-800">
                                 {{ $item['beginning_credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['beginning_credit']) : '-' }}
                             </td>
-                            <td class="py-2.5 px-3 text-right font-mono text-xs border-r border-gray-100 dark:border-gray-800">
+                            <td class="py-2.5 px-3 text-right  text-xs border-r border-gray-100 dark:border-gray-800">
                                 {{ $item['period_debit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['period_debit']) : '-' }}
                             </td>
-                            <td class="py-2.5 px-3 text-right font-mono text-xs border-r border-gray-100 dark:border-gray-800">
+                            <td class="py-2.5 px-3 text-right  text-xs border-r border-gray-100 dark:border-gray-800">
                                 {{ $item['period_credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['period_credit']) : '-' }}
                             </td>
-                            <td class="py-2.5 px-3 text-right font-mono text-xs font-bold border-r border-gray-100 dark:border-gray-800 text-gray-900 dark:text-white">
+                            <td class="py-2.5 px-3 text-right  text-xs font-bold border-r border-gray-100 dark:border-gray-800 text-gray-900 dark:text-white">
                                 {{ $item['ending_debit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['ending_debit']) : '-' }}
                             </td>
-                            <td class="py-2.5 px-3 text-right font-mono text-xs font-bold text-gray-900 dark:text-white">
+                            <td class="py-2.5 px-3 text-right  text-xs font-bold text-gray-900 dark:text-white">
                                 {{ $item['ending_credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($item['ending_credit']) : '-' }}
                             </td>
                         </tr>
@@ -111,22 +111,22 @@
                         <td colspan="2" class="py-3.5 px-4 uppercase tracking-wider text-left border-r border-gray-300 dark:border-gray-700">
                             TOTAL NERACA SALDO
                         </td>
-                        <td class="py-3.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">
+                        <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_beginning_debit']) }}
                         </td>
-                        <td class="py-3.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">
+                        <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_beginning_credit']) }}
                         </td>
-                        <td class="py-3.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">
+                        <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_period_debit']) }}
                         </td>
-                        <td class="py-3.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">
+                        <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_period_credit']) }}
                         </td>
-                        <td class="py-3.5 px-3 text-right font-mono border-r border-gray-300 dark:border-gray-700">
+                        <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_ending_debit']) }}
                         </td>
-                        <td class="py-3.5 px-3 text-right font-mono">
+                        <td class="py-3.5 px-3 text-right ">
                             {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_ending_credit']) }}
                         </td>
                     </tr>

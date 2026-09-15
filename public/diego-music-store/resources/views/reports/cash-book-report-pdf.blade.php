@@ -56,7 +56,7 @@
         .text-center {
             text-align: center;
         }
-        .font-mono {
+        . {
             font-family: 'Courier New', Courier, monospace;
         }
         .font-bold {
@@ -118,9 +118,9 @@
                 @forelse($data['categories'] as $cat)
                     <tr>
                         <td class="font-bold">{{ $cat['category_name'] }}</td>
-                        <td class="text-right font-mono">{{ $cat['inflow'] > 0 ? number_format($cat['inflow'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ $cat['outflow'] > 0 ? number_format($cat['outflow'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($cat['net_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right ">{{ $cat['inflow'] > 0 ? number_format($cat['inflow'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $cat['outflow'] > 0 ? number_format($cat['outflow'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right  font-bold">{{ number_format($cat['net_amount'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -145,26 +145,26 @@
             </thead>
             <tbody>
                 <tr style="background-color: #f9fafb; font-weight: bold;">
-                    <td class="font-mono" style="color: #6b7280;">-</td>
-                    <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</td>
+                    <td class="" style="color: #6b7280;">-</td>
+                    <td class="">{{ \Illuminate\Support\Carbon::parse($data['from_date'])->format('d/m/Y') }}</td>
                     <td>{{ $data['account_name'] }}</td>
                     <td>SALDO AWAL PERIODE</td>
                     <td>Saldo awal kas/bank sebelum periode</td>
-                    <td class="text-right font-mono">-</td>
-                    <td class="text-right font-mono">-</td>
-                    <td class="text-right font-mono font-bold">{{ number_format($data['initial_balance'], 0, ',', '.') }}</td>
+                    <td class="text-right ">-</td>
+                    <td class="text-right ">-</td>
+                    <td class="text-right  font-bold">{{ number_format($data['initial_balance'], 0, ',', '.') }}</td>
                 </tr>
 
                 @forelse($data['rows'] as $row)
                     <tr>
-                        <td class="font-mono font-bold">{{ $row['entry_no'] }}</td>
-                        <td class="font-mono">{{ \Illuminate\Support\Carbon::parse($row['date'])->format('d/m/Y') }}</td>
-                        <td class="font-mono">{{ $row['account_name'] }}</td>
+                        <td class=" font-bold">{{ $row['entry_no'] }}</td>
+                        <td class="">{{ \Illuminate\Support\Carbon::parse($row['date'])->format('d/m/Y') }}</td>
+                        <td class="">{{ $row['account_name'] }}</td>
                         <td class="font-bold">{{ $row['opposing_account'] }}</td>
                         <td>{{ $row['description'] }}</td>
-                        <td class="text-right font-mono font-bold">{{ $row['inflow'] > 0 ? number_format($row['inflow'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono">{{ $row['outflow'] > 0 ? number_format($row['outflow'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right font-mono font-bold">{{ number_format($row['running_balance'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold">{{ $row['inflow'] > 0 ? number_format($row['inflow'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right ">{{ $row['outflow'] > 0 ? number_format($row['outflow'], 0, ',', '.') : '-' }}</td>
+                        <td class="text-right  font-bold">{{ number_format($row['running_balance'], 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -179,7 +179,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>SALDO AWAL: Rp {{ number_format($data['initial_balance'], 0, ',', '.') }} &bull; MASUK: Rp {{ number_format($data['total_inflow'], 0, ',', '.') }} &bull; KELUAR: Rp {{ number_format($data['total_outflow'], 0, ',', '.') }}</td>
-                <td class="text-right font-mono">SALDO AKHIR: Rp {{ number_format($data['ending_balance'], 0, ',', '.') }}</td>
+                <td class="text-right ">SALDO AKHIR: Rp {{ number_format($data['ending_balance'], 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

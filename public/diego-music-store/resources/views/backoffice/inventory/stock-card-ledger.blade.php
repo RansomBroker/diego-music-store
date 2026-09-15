@@ -43,7 +43,7 @@
                     </div>
                     <div>
                         <span class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-bold block">Stok Awal (Saldo Awal)</span>
-                        <span class="text-lg font-black text-gray-900 dark:text-white font-mono mt-0.5">
+                        <span class="text-lg font-black text-gray-900 dark:text-white  mt-0.5">
                             {{ number_format($cardData['opening_stock'], 0, ',', '.') }}
                             <span class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-0.5">{{ $cardData['variant']->product->unit->name ?? 'Unit' }}</span>
                         </span>
@@ -57,7 +57,7 @@
                     </div>
                     <div>
                         <span class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-bold block">Total Masuk (IN)</span>
-                        <span class="text-lg font-black text-green-600 dark:text-green-400 font-mono mt-0.5">
+                        <span class="text-lg font-black text-green-600 dark:text-green-400  mt-0.5">
                             +{{ number_format($cardData['total_in'], 0, ',', '.') }}
                             <span class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-0.5">{{ $cardData['variant']->product->unit->name ?? 'Unit' }}</span>
                         </span>
@@ -71,7 +71,7 @@
                     </div>
                     <div>
                         <span class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-bold block">Total Keluar (OUT)</span>
-                        <span class="text-lg font-black text-rose-600 dark:text-rose-400 font-mono mt-0.5">
+                        <span class="text-lg font-black text-rose-600 dark:text-rose-400  mt-0.5">
                             -{{ number_format($cardData['total_out'], 0, ',', '.') }}
                             <span class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-0.5">{{ $cardData['variant']->product->unit->name ?? 'Unit' }}</span>
                         </span>
@@ -85,7 +85,7 @@
                     </div>
                     <div>
                         <span class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-bold block">Stok Akhir (Saldo Akhir)</span>
-                        <span class="text-lg font-black text-blue-600 dark:text-blue-400 font-mono mt-0.5">
+                        <span class="text-lg font-black text-blue-600 dark:text-blue-400  mt-0.5">
                             {{ number_format($cardData['closing_stock'], 0, ',', '.') }}
                             <span class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-0.5">{{ $cardData['variant']->product->unit->name ?? 'Unit' }}</span>
                         </span>
@@ -104,7 +104,7 @@
                 </x-slot>
 
                 <x-slot name="headerEnd">
-                    <span class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/80 px-3 py-1 rounded border border-gray-200 dark:border-gray-700">
+                    <span class="text-xs  font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/80 px-3 py-1 rounded border border-gray-200 dark:border-gray-700">
                         {{ $cardData['branch']->name }}
                     </span>
                 </x-slot>
@@ -124,7 +124,7 @@
                             <!-- Show Movements -->
                             @forelse($cardData['movements'] as $mv)
                                 <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-850 transition-colors">
-                                    <td class="px-6 py-4 font-mono text-gray-600 dark:text-gray-400 text-xs">
+                                    <td class="px-6 py-4  text-gray-600 dark:text-gray-400 text-xs">
                                         {{ $mv['created_at']->format('d M Y H:i') }}
                                     </td>
                                     <td class="px-6 py-4 font-medium text-gray-800 dark:text-gray-200">
@@ -143,10 +143,10 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 text-right font-mono font-bold text-sm {{ $mv['type'] === 'in' ? 'text-green-600 dark:text-green-400' : 'text-rose-600 dark:text-rose-400' }}">
+                                    <td class="px-6 py-4 text-right  font-bold text-sm {{ $mv['type'] === 'in' ? 'text-green-600 dark:text-green-400' : 'text-rose-600 dark:text-rose-400' }}">
                                         {{ $mv['type'] === 'in' ? '+' : '-' }}{{ number_format($mv['quantity'], 0, ',', '.') }}
                                     </td>
-                                    <td class="px-6 py-4 text-right font-mono font-extrabold text-sm text-gray-900 dark:text-white bg-gray-50/30 dark:bg-gray-800/10">
+                                    <td class="px-6 py-4 text-right  font-extrabold text-sm text-gray-900 dark:text-white bg-gray-50/30 dark:bg-gray-800/10">
                                         {{ number_format($mv['running_balance'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -160,14 +160,14 @@
 
                             <!-- Opening Balance Row at the very bottom of table as the starting point -->
                             <tr class="bg-gray-50/30 dark:bg-gray-800/10 border-t border-gray-200 dark:border-gray-700 font-semibold text-gray-700 dark:text-gray-300">
-                                <td class="px-6 py-4 text-xs font-mono">
+                                <td class="px-6 py-4 text-xs ">
                                     {{ \Carbon\Carbon::parse($data['startDate'] ?? now()->startOfMonth()->format('Y-m-d'))->format('d M Y') }}
                                 </td>
                                 <td class="px-6 py-4" colspan="2">
                                     <em>SALDO AWAL (Opening Stock)</em>
                                 </td>
                                 <td class="px-6 py-4"></td>
-                                <td class="px-6 py-4 text-right font-mono font-extrabold text-sm text-gray-800 dark:text-gray-200">
+                                <td class="px-6 py-4 text-right  font-extrabold text-sm text-gray-800 dark:text-gray-200">
                                     {{ number_format($cardData['opening_stock'], 0, ',', '.') }}
                                 </td>
                             </tr>

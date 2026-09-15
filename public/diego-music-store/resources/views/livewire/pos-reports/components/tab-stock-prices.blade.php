@@ -52,7 +52,7 @@
                     @endphp
                     @forelse ($displayItems as $st)
                         <x-pos.table.tr>
-                            <x-pos.table.td class="font-mono text-xs text-slate-900 dark:text-white">
+                            <x-pos.table.td class=" text-xs text-slate-900 dark:text-white">
                                 <div class="font-bold text-primary dark:text-blue-400">{{ $st['sku'] }}</div>
                                 <div class="text-[10px] text-slate-400">BC: {{ $st['barcode'] }}</div>
                             </x-pos.table.td>

@@ -12,7 +12,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Faktur Belum Lunas</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ number_format($data['total_invoices'], 0, ',', '.') }} Faktur
             </div>
             <span class="text-xs text-gray-400">Total Supplier: {{ count($data['suppliers']) }} Supplier</span>
@@ -20,7 +20,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Belum Jatuh Tempo (Current)</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_current']) }}
             </div>
             <span class="text-xs text-gray-400">Hutang Aktif Berjalan</span>
@@ -28,7 +28,7 @@
 
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Sudah Jatuh Tempo (Overdue)</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_overdue']) }}
             </div>
             <span class="text-xs text-gray-400">Memerlukan Pelunasan Immediate</span>
@@ -36,7 +36,7 @@
 
         <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
             <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Grand Total Sisa Hutang</span>
-            <div class="text-xl font-extrabold font-mono text-gray-900 dark:text-white mt-1">
+            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_unpaid']) }}
             </div>
             <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Per Tanggal {{ \Illuminate\Support\Carbon::parse($data['as_of_date'])->format('d/m/Y') }}</span>
@@ -61,7 +61,7 @@
         </x-slot>
 
         <x-slot name="headerEnd">
-            <span class="text-xs font-mono text-gray-500 dark:text-gray-400">
+            <span class="text-xs  text-gray-500 dark:text-gray-400">
                 Per Tanggal: <strong>{{ \Illuminate\Support\Carbon::parse($data['as_of_date'])->format('d/m/Y') }}</strong> &bull; Cabang: <strong>{{ $data['branch_name'] }}</strong>
             </span>
         </x-slot>
@@ -84,11 +84,11 @@
                         @forelse($data['suppliers'] as $sup)
                             <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
                                 <td class="py-2.5 px-4 font-extrabold text-xs text-gray-900 dark:text-white whitespace-nowrap">{{ $sup['supplier_name'] }}</td>
-                                <td class="py-2.5 px-4 font-mono text-xs text-gray-500 whitespace-nowrap">{{ $sup['supplier_phone'] }}</td>
-                                <td class="py-2.5 px-4 text-center font-mono font-bold whitespace-nowrap">{{ number_format($sup['count_invoices'], 0, ',', '.') }} Faktur</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($sup['grand_total']) }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs text-gray-500 whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($sup['paid_amount']) }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($sup['unpaid_amount']) }}</td>
+                                <td class="py-2.5 px-4  text-xs text-gray-500 whitespace-nowrap">{{ $sup['supplier_phone'] }}</td>
+                                <td class="py-2.5 px-4 text-center  font-bold whitespace-nowrap">{{ number_format($sup['count_invoices'], 0, ',', '.') }} Faktur</td>
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($sup['grand_total']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs text-gray-500 whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($sup['paid_amount']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($sup['unpaid_amount']) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -115,12 +115,12 @@
                         @forelse($data['suppliers'] as $sup)
                             <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
                                 <td class="py-2.5 px-4 font-extrabold text-xs text-gray-900 dark:text-white whitespace-nowrap">{{ $sup['supplier_name'] }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ $sup['current'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['current']) : '-' }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ $sup['aging_1_30'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['aging_1_30']) : '-' }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ $sup['aging_31_60'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['aging_31_60']) : '-' }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ $sup['aging_61_90'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['aging_61_90']) : '-' }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ $sup['aging_90_plus'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['aging_90_plus']) : '-' }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($sup['unpaid_amount']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ $sup['current'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['current']) : '-' }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ $sup['aging_1_30'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['aging_1_30']) : '-' }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ $sup['aging_31_60'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['aging_31_60']) : '-' }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ $sup['aging_61_90'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['aging_61_90']) : '-' }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ $sup['aging_90_plus'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($sup['aging_90_plus']) : '-' }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($sup['unpaid_amount']) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -148,14 +148,14 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @forelse($data['invoices'] as $inv)
                             <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300">
-                                <td class="py-2.5 px-4 font-mono text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ $inv['transaction_no'] }}
                                     <div class="text-[10px] text-gray-400 font-normal">Inv: {{ $inv['invoice_number'] }}</div>
                                 </td>
-                                <td class="py-2.5 px-4 font-mono text-xs text-gray-500 whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs text-gray-500 whitespace-nowrap">
                                     {{ \Illuminate\Support\Carbon::parse($inv['date'])->format('d/m/Y') }}
                                 </td>
-                                <td class="py-2.5 px-4 font-mono text-xs text-gray-500 whitespace-nowrap">
+                                <td class="py-2.5 px-4  text-xs text-gray-500 whitespace-nowrap">
                                     {{ \Illuminate\Support\Carbon::parse($inv['due_date'])->format('d/m/Y') }}
                                 </td>
                                 <td class="py-2.5 px-4 text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
@@ -166,12 +166,12 @@
                                         {{ $inv['is_overdue'] ? 'JATUH TEMPO' : 'LANCAR' }}
                                     </x-filament::badge>
                                 </td>
-                                <td class="py-2.5 px-4 text-xs text-center font-mono font-bold whitespace-nowrap">
+                                <td class="py-2.5 px-4 text-xs text-center  font-bold whitespace-nowrap">
                                     {{ $inv['is_overdue'] ? ($inv['overdue_days'] . ' Hari') : '-' }}
                                 </td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($inv['grand_total']) }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs text-gray-500 whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($inv['paid_amount']) }}</td>
-                                <td class="py-2.5 px-4 text-right font-mono text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($inv['unpaid_amount']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($inv['grand_total']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs text-gray-500 whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($inv['paid_amount']) }}</td>
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($inv['unpaid_amount']) }}</td>
                             </tr>
                         @empty
                             <tr>

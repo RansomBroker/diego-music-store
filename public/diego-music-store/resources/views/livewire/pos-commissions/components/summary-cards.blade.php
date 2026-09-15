@@ -7,7 +7,7 @@
         </div>
         <div>
             <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Total Penjualan Staf</div>
-            <div class="text-lg font-black text-slate-900 dark:text-slate-100 font-mono mt-0.5">
+            <div class="text-lg font-black text-slate-900 dark:text-slate-100  mt-0.5">
                 Rp {{ number_format($totalSalesPeriod, 0, ',', '.') }}
             </div>
         </div>
@@ -20,7 +20,7 @@
         </div>
         <div>
             <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Total Komisi Periode Ini</div>
-            <div class="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+            <div class="text-lg font-black text-emerald-600 dark:text-emerald-400  mt-0.5">
                 Rp {{ number_format($totalCommissionPeriod, 0, ',', '.') }}
             </div>
         </div>
@@ -33,7 +33,7 @@
         </div>
         <div>
             <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Komisi Approved</div>
-            <div class="text-lg font-black text-purple-600 dark:text-purple-400 font-mono mt-0.5">
+            <div class="text-lg font-black text-purple-600 dark:text-purple-400  mt-0.5">
                 Rp {{ number_format($totalApprovedPeriod, 0, ',', '.') }}
             </div>
         </div>
@@ -46,7 +46,7 @@
         </div>
         <div>
             <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Menunggu Approval</div>
-            <div class="text-lg font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5">
+            <div class="text-lg font-black text-amber-600 dark:text-amber-400  mt-0.5">
                 Rp {{ number_format($totalPendingPeriod, 0, ',', '.') }}
             </div>
         </div>
