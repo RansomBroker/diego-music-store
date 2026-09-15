@@ -1,4 +1,4 @@
-<div class="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
+<div class="flex h-screen min-h-dvh max-h-dvh w-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
     <!-- POS Global Toast Notification Listener -->
     <x-pos.toast />
 
@@ -6,7 +6,7 @@
     <x-pos-page::sidebar :selectedLogoUrl="$selectedLogoUrl" />
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden">
+    <main class="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
         <!-- Header POS Global Navbar -->
         <x-pos.navbar
             pageTitle="Dashboard"
@@ -16,7 +16,7 @@
         />
 
         <!-- Main Scrollable Body -->
-        <div class="flex-1 overflow-y-auto p-6 md:p-8 no-scrollbar">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 no-scrollbar">
             <div class="w-full space-y-6">
 
                 @php

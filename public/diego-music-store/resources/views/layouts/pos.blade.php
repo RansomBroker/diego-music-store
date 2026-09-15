@@ -15,6 +15,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
+        [x-cloak] {
+            display: none !important;
+        }
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -28,7 +31,7 @@
     </style>
     @livewireStyles
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-100 h-screen w-full overflow-hidden flex transition-colors duration-200">
+<body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-100 h-screen min-h-dvh max-h-dvh w-full overflow-hidden flex transition-colors duration-200">
     
     <!-- Custom Top-Right Toast Container -->
     <x-pos.toast />

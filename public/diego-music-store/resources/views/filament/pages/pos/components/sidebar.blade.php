@@ -68,7 +68,7 @@
 
     <!-- MAIN SIDEBAR NAVIGATION -->
     <aside
-        class="h-screen max-h-screen bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shadow-2xl md:shadow-md transition-all duration-300 relative overflow-hidden fixed inset-y-0 left-0 z-50 md:static md:z-auto w-72 md:w-full"
+        class="h-screen max-h-screen bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shadow-2xl md:shadow-md transition-all duration-300 overflow-hidden fixed inset-y-0 left-0 z-50 md:static md:z-auto w-72 md:w-full -translate-x-full md:translate-x-0"
         :class="isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
     >
         <!-- BRAND / LOGO HEADER -->

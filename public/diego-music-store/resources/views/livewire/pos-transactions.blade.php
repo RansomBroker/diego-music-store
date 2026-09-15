@@ -3,7 +3,7 @@
     <x-pos-page::sidebar :selectedLogoUrl="$selectedLogoUrl" />
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden">
+    <main class="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
         <!-- Toast Notification Listener -->
         <x-pos.toast />
 

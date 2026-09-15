@@ -18,9 +18,9 @@
     </div>
 
     <!-- Interactive Filters -->
-    <div class="flex flex-wrap items-end gap-3">
+    <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-3 w-full sm:w-auto">
         <!-- Date From -->
-        <div class="w-36">
+        <div class="col-span-1 sm:w-36">
             <x-pos.form.input
                 type="date"
                 label="Dari Tanggal"
@@ -31,7 +31,7 @@
         </div>
 
         <!-- Date To -->
-        <div class="w-36">
+        <div class="col-span-1 sm:w-36">
             <x-pos.form.input
                 type="date"
                 label="Sampai Tanggal"
@@ -42,7 +42,7 @@
         </div>
 
         <!-- Branch Filter -->
-        <div class="w-48">
+        <div class="col-span-2 sm:w-48">
             <x-pos.form.dropdown
                 label="Cabang Toko"
                 model="branchId"
@@ -58,7 +58,7 @@
         </div>
 
         <!-- Product Category Filter -->
-        <div class="w-48">
+        <div class="col-span-2 sm:w-48">
             <x-pos.form.dropdown
                 label="Kategori Produk"
                 model="productCategory"
@@ -74,7 +74,7 @@
         </div>
 
         <!-- Reset Filter Button -->
-        <div class="flex flex-col justify-end">
+        <div class="col-span-2 sm:w-auto flex flex-col justify-end">
             <x-pos.utility.button
                 variant="danger"
                 size="sm"

@@ -3,7 +3,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- CONTAINER SALES & EMPLOYEE DASHBOARD WIDGETS -->
-    <div class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-3xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6 transition-colors duration-200">
+    <div class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6 transition-colors duration-200">
 
         <!-- HEADER SECTION -->
         @include('livewire.sales-employee-dashboard-widgets.components.header-indicators')

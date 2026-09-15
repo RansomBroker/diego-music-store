@@ -1,5 +1,5 @@
 <!-- Card Status User Login & Presensi -->
-<div class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-3xl p-6 shadow-sm shadow-slate-200/50 dark:shadow-none border border-slate-200/70 dark:border-slate-700/80 transition-colors">
+<div class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm shadow-slate-200/50 dark:shadow-none border border-slate-200/70 dark:border-slate-700/80 transition-colors">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         
         <!-- Left (Cols 7): User Identity & Greeting -->

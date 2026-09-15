@@ -8,7 +8,7 @@
         <x-pos-page::sidebar :selectedLogoUrl="$selectedLogoUrl" />
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col h-full overflow-hidden">
+        <main class="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
             <!-- Navbar -->
             <x-pos.navbar
                 pageTitle="Laporan Daftar Stok & Nilai Persediaan"

@@ -5,7 +5,7 @@
     <x-pos-page::sidebar :selectedLogoUrl="$selectedLogoUrl" />
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden">
+    <main class="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
         <!-- Toast Notification Listener -->
         <x-pos.toast />
 
@@ -21,9 +21,9 @@
         >
             {{-- Tombol Kembali ke POS Kasir (hanya tampil jika sesi aktif) --}}
             @if ($activeSession)
-                <a href="/pos" class="flex items-center gap-2 px-4 h-11 bg-primary hover:bg-primaryDark text-white font-semibold text-sm rounded-xl shadow-md shadow-primary/20 transition-all">
-                    <i class="ph-bold ph-squares-four text-lg"></i>
-                    <span>Ke POS Kasir</span>
+                <a href="/pos" class="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm bg-primary hover:bg-primaryDark text-white font-bold rounded-xl shadow-sm transition-all flex-shrink-0" title="Ke POS Kasir">
+                    <i class="ph-bold ph-squares-four text-base"></i>
+                    <span class="hidden sm:inline">Ke POS Kasir</span>
                 </a>
             @endif
         </x-pos.navbar>
