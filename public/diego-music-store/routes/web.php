@@ -88,6 +88,8 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/payroll', App\Livewire\PosPayrollManagement::class)->name('pos.payroll');
     Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
     Route::get('/pos/payroll/bulk-payslip-pdf/{id}', [App\Http\Controllers\POS\BulkPayrollPayslipController::class, 'show'])->name('pos.payroll.bulk-payslip-pdf');
+    Route::get('/pos/payroll/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'export'])->name('pos.payroll.export-excel');
+    Route::get('/pos/payroll/item/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'exportItem'])->name('pos.payroll.item.export-excel');
 });
 
 // Public Service Tracking Route (Without Login)

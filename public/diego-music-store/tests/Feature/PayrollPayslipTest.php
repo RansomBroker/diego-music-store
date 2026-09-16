@@ -154,4 +154,23 @@ class PayrollPayslipTest extends TestCase
 
         $this->assertEquals('cancelled', $payroll->fresh()->status);
     }
+
+    public function test_payroll_resource_edit_form_schema_matches_pos_payroll_modal(): void
+    {
+        $components = \App\Filament\Resources\Payrolls\Schemas\PayrollItemForm::getComponents();
+
+        $this->assertCount(4, $components);
+
+        $section1 = $components[0];
+        $this->assertEquals('Pendapatan & Tunjangan (Penambahan)', $section1->getHeading());
+
+        $section2 = $components[1];
+        $this->assertEquals('Potongan & Denda (Pengurangan)', $section2->getHeading());
+
+        $section3 = $components[2];
+        $this->assertEquals('Catatan Penyesuaian', $section3->getHeading());
+
+        $section4 = $components[3];
+        $this->assertEquals('Ringkasan Gaji Bersih (Take Home Pay)', $section4->getHeading());
+    }
 }

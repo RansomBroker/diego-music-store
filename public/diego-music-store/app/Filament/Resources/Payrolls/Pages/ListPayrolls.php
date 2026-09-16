@@ -16,6 +16,27 @@ class ListPayrolls extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('exportRekapExcel')
+                ->label('Export Rekap Excel (Semua)')
+                ->color('success')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->extraAttributes([
+                    'style' => 'color: #ffffff !important;',
+                    'class' => '!text-white [&_*]:!text-white [&_svg]:!text-white',
+                ])
+                ->form([
+                    Forms\Components\Select::make('payroll_id')
+                        ->label('Pilih Batch Payroll / Periode')
+                        ->options(fn () => \App\Models\Payroll::with('branch')->latest()->get()->mapWithKeys(fn ($p) => [
+                            $p->id => "{$p->payroll_code} - Periode {$p->period} (" . ($p->branch?->name ?? 'Semua Cabang') . ")",
+                        ]))
+                        ->default(fn () => \App\Models\Payroll::latest()->value('id'))
+                        ->required(),
+                ])
+                ->action(function (array $data) {
+                    return redirect()->route('pos.payroll.export-excel', $data['payroll_id']);
+                }),
+
             Actions\Action::make('generate')
                 ->label('Proses Payroll Bulanan')
                 ->color('primary')

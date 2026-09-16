@@ -110,6 +110,14 @@
                     Tutup
                 </x-pos.utility.button>
                 <x-pos.utility.button
+                    variant="success"
+                    href="{{ route('pos.payroll.item.export-excel', $previewItem->id) }}"
+                    target="_blank"
+                    icon="ph-file-xls"
+                >
+                    Slip Excel
+                </x-pos.utility.button>
+                <x-pos.utility.button
                     variant="primary"
                     href="{{ route('pos.payroll.payslip-pdf', $previewItem->id) }}"
                     target="_blank"

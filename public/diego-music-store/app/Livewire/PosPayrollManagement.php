@@ -238,55 +238,7 @@ class PosPayrollManagement extends Component
 
     public function exportExcel(int $payrollId)
     {
-        $payroll = Payroll::with(['items.employee', 'branch'])->findOrFail($payrollId);
-
-        $filename = "Payroll_Gaji_{$payroll->period}_{$payroll->payroll_code}.csv";
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
-
-        $callback = function () use ($payroll) {
-            $file = fopen('php://output', 'w');
-            // Write CSV Header
-            fputcsv($file, [
-                'NIK',
-                'Nama Karyawan',
-                'Bank',
-                'No Rekening',
-                'Atas Nama',
-                'Gaji Pokok',
-                'Tunjangan Tetap',
-                'Tunjangan Lembur',
-                'Komisi Sales',
-                'Bonus KPI',
-                'Potongan Presensi',
-                'Potongan Lain',
-                'Gaji Bersih (Take Home Pay)',
-            ]);
-
-            foreach ($payroll->items as $item) {
-                fputcsv($file, [
-                    $item->employee->nik ?? '-',
-                    $item->employee->name ?? '-',
-                    $item->bank_name ?? 'BCA',
-                    $item->bank_account_number ?? '-',
-                    $item->bank_account_holder ?? '-',
-                    $item->basic_salary,
-                    $item->allowance_amount,
-                    $item->overtime_amount,
-                    $item->commission_amount,
-                    $item->kpi_bonus_amount,
-                    $item->violation_deduction_amount,
-                    $item->other_deduction_amount,
-                    $item->net_salary,
-                ]);
-            }
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return app(\App\Actions\Payroll\ExportPayrollToExcel::class)->execute($payrollId);
     }
 
     public function render()

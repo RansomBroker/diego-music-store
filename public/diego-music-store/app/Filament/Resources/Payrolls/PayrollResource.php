@@ -4,11 +4,13 @@ namespace App\Filament\Resources\Payrolls;
 
 use App\Filament\Resources\Payrolls\Pages\ListPayrolls;
 use App\Models\PayrollItem;
+use App\Filament\Resources\Payrolls\Schemas\PayrollItemForm;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -42,6 +44,11 @@ class PayrollResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         return 'Manajemen Karyawan';
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return PayrollItemForm::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -146,33 +153,36 @@ class PayrollResource extends Resource
                     ->url(fn ($record) => route('pos.payroll.payslip-pdf', $record->id))
                     ->openUrlInNewTab(),
 
+                Action::make('exportExcel')
+                    ->label('Slip Excel')
+                    ->tooltip('Unduh Slip Gaji Excel Karyawan Ini')
+                    ->color('success')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn ($record) => route('pos.payroll.item.export-excel', $record->id))
+                    ->openUrlInNewTab(),
+
                 EditAction::make()
                     ->label('Edit Gaji')
-                    ->form([
-                        Forms\Components\TextInput::make('allowance_amount')
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->label('Tunjangan Tetap / Tambahan'),
-
-                        Forms\Components\TextInput::make('other_deduction_amount')
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->label('Potongan Lainnya / Kasbon'),
-
-                        Forms\Components\Textarea::make('notes')
-                            ->label('Catatan Keterangan'),
-                    ])
+                    ->modalHeading(fn ($record) => 'Override Komponen Gaji: ' . ($record->employee?->name ?? 'Karyawan') . ($record->employee?->nik ? " ({$record->employee->nik})" : ''))
+                    ->modalWidth('2xl')
+                    ->modalSubmitActionLabel('Simpan & Override Gaji')
+                    ->form(PayrollItemForm::getComponents())
                     ->after(function ($record) {
                         // Recalculate net salary per person
-                        $record->net_salary = max(0.0, ($record->basic_salary + $record->allowance_amount + $record->overtime_amount + $record->commission_amount + $record->kpi_bonus_amount) - ($record->violation_deduction_amount + $record->other_deduction_amount));
+                        $earnings = $record->basic_salary + $record->allowance_amount + $record->overtime_amount + $record->commission_amount + $record->kpi_bonus_amount;
+                        $deductions = $record->violation_deduction_amount + $record->other_deduction_amount;
+                        $record->net_salary = max(0.0, $earnings - $deductions);
                         $record->save();
 
                         // Recalculate parent Payroll header totals
                         if ($record->payroll) {
                             $record->payroll->update([
-                                'total_allowances' => $record->payroll->items()->sum(DB::raw('allowance_amount + overtime_amount')),
-                                'total_deductions' => $record->payroll->items()->sum(DB::raw('violation_deduction_amount + other_deduction_amount')),
-                                'total_net_salary' => $record->payroll->items()->sum('net_salary'),
+                                'total_basic_salary' => (float) $record->payroll->items()->sum('basic_salary'),
+                                'total_allowances'   => (float) $record->payroll->items()->sum(DB::raw('allowance_amount + overtime_amount')),
+                                'total_commissions'  => (float) $record->payroll->items()->sum('commission_amount'),
+                                'total_kpi_bonuses'  => (float) $record->payroll->items()->sum('kpi_bonus_amount'),
+                                'total_deductions'   => (float) $record->payroll->items()->sum(DB::raw('violation_deduction_amount + other_deduction_amount')),
+                                'total_net_salary'   => (float) $record->payroll->items()->sum('net_salary'),
                             ]);
                         }
                     }),
