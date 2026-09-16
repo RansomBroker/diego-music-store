@@ -1,6 +1,8 @@
 @php
-    $purchaseId = $get('purchase_transaction_id');
+    $purchaseId = $get('purchase_transaction_id') ?? ($record?->purchase_transaction_id ?? null);
     $pt = $purchaseId ? \App\Models\PurchaseTransaction::with(['details.productVariant.product', 'details.returnItems', 'supplier', 'branch'])->find($purchaseId) : null;
+    $statePath = isset($getStatePath) ? $getStatePath() : ($component?->getStatePath() ?? 'mountedActions.0.data.return_items');
+    $wireModel = isset($applyStateBindingModifiers) ? $applyStateBindingModifiers('wire:model') : 'wire:model';
 @endphp
 
 @if ($pt)
@@ -44,7 +46,8 @@
                                 <div class="flex items-center gap-2">
                                     <input 
                                         type="number" 
-                                        wire:model="mountedActionsData.0.return_items.{{ $detail->id }}"
+                                        {{ $wireModel }}="{{ $statePath }}.{{ $detail->id }}"
+                                        name="return_items[{{ $detail->id }}]"
                                         min="0"
                                         max="{{ $availableQty }}"
                                         placeholder="0"

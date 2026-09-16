@@ -39,6 +39,18 @@ class CreatePurchaseReturn
 
             $returnNo = PurchaseReturn::generateReturnNo();
             $status = $data['status'] ?? 'posted';
+            $returnType = $data['return_type'] ?? (strtolower($pt->purchase_type) === 'kredit' ? 'invoice_deduction' : 'refund');
+            $refundAccountId = $data['refund_account_id'] ?? null;
+            $replacementStatus = ($returnType === 'replacement') ? ($data['replacement_status'] ?? 'received') : 'none';
+
+            if ($returnType === 'refund' && empty($refundAccountId)) {
+                $refundAccountId = Account::where('code', '1-1000')->value('id') 
+                    ?: Account::where('is_header', false)->where('classification', 'asset')->value('id');
+            }
+
+            if ($returnType === 'invoice_deduction' && strtolower($pt->purchase_type) !== 'kredit') {
+                throw new \Exception('Metode Penyesuaian Faktur hanya berlaku untuk transaksi pembelian Kredit (Tempo). Untuk pembelian Tunai, pilih metode Refund Dana atau Tukar Guling.');
+            }
 
             $purchaseReturn = PurchaseReturn::create([
                 'purchase_transaction_id' => $pt->id,
@@ -48,6 +60,9 @@ class CreatePurchaseReturn
                 'return_date'             => now()->toDateString(),
                 'total_amount'            => 0, // updated below
                 'status'                  => 'draft',
+                'return_type'             => $returnType,
+                'refund_account_id'       => $refundAccountId,
+                'replacement_status'      => $replacementStatus,
                 'reason'                  => $data['reason'] ?? null,
                 'created_by'              => Auth::id(),
             ]);
@@ -80,6 +95,12 @@ class CreatePurchaseReturn
                     'unit_price'                   => $unitPrice,
                     'total_price'                  => $lineTotal,
                 ]);
+            }
+
+            if ($returnType === 'invoice_deduction' && $totalRefundAmount > $pt->getRemainingUnpaidAmount()) {
+                $remaining = number_format($pt->getRemainingUnpaidAmount(), 0, ',', '.');
+                $totalFormatted = number_format($totalRefundAmount, 0, ',', '.');
+                throw new \Exception("Nilai retur (Rp {$totalFormatted}) melebihi sisa tagihan hutang faktur ini (Rp {$remaining}). Silakan pilih metode Refund Kas/Bank atau Saldo Deposit Supplier.");
             }
 
             $purchaseReturn->update([

@@ -40,8 +40,10 @@ class ListSalesReturns extends ListRecords
                         ->searchable()
                         ->live(),
 
-                    ViewField::make('items_return_view')
+                    ViewField::make('return_items')
                         ->view('filament.components.sales-return-partial-form')
+                        ->default([])
+                        ->dehydrated(true)
                         ->visible(fn($get) => filled($get('sale_id'))),
 
                     Textarea::make('reason')
@@ -58,18 +60,34 @@ class ListSalesReturns extends ListRecords
                         ->default('posted')
                         ->required(),
                 ])
-                ->action(function (array $data) {
+                ->action(function (array $data, $livewire = null) {
                     $sale = \App\Models\Sale::findOrFail($data['sale_id']);
-                    $rawItems = $data['return_items'] ?? request()->input('return_items', []);
+                    $rawItems = $data['return_items'] 
+                        ?? data_get($livewire, 'mountedActions.0.data.return_items')
+                        ?? data_get($livewire, 'mountedActionData.return_items')
+                        ?? data_get($livewire, 'mountedActionsData.0.return_items')
+                        ?? request()->input('return_items', []);
 
                     $itemsToReturn = [];
-                    foreach ($rawItems as $saleItemId => $qty) {
-                        $q = (int) $qty;
-                        if ($q > 0) {
-                            $itemsToReturn[] = [
-                                'sale_item_id' => $saleItemId,
-                                'quantity'     => $q,
-                            ];
+                    if (is_array($rawItems)) {
+                        foreach ($rawItems as $key => $val) {
+                            if (is_array($val) && isset($val['sale_item_id'])) {
+                                $q = (int) ($val['quantity'] ?? 0);
+                                if ($q > 0) {
+                                    $itemsToReturn[] = [
+                                        'sale_item_id' => $val['sale_item_id'],
+                                        'quantity'     => $q,
+                                    ];
+                                }
+                            } else {
+                                $q = (int) $val;
+                                if ($q > 0) {
+                                    $itemsToReturn[] = [
+                                        'sale_item_id' => $key,
+                                        'quantity'     => $q,
+                                    ];
+                                }
+                            }
                         }
                     }
 

@@ -1,6 +1,8 @@
 @php
     $saleId = $get('sale_id');
     $sale = $saleId ? \App\Models\Sale::with(['items.variant.product', 'items.returnItems'])->find($saleId) : null;
+    $statePath = isset($getStatePath) ? $getStatePath() : ($component?->getStatePath() ?? 'mountedActions.0.data.return_items');
+    $wireModel = isset($applyStateBindingModifiers) ? $applyStateBindingModifiers('wire:model') : 'wire:model';
 @endphp
 
 @if ($sale)
@@ -44,7 +46,8 @@
                                 <div class="flex items-center gap-2">
                                     <input 
                                         type="number" 
-                                        wire:model="mountedActionsData.0.return_items.{{ $item->id }}"
+                                        {{ $wireModel }}="{{ $statePath }}.{{ $item->id }}"
+                                        name="return_items[{{ $item->id }}]"
                                         min="0"
                                         max="{{ $availableQty }}"
                                         placeholder="0"

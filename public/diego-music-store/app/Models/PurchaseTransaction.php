@@ -125,6 +125,11 @@ class PurchaseTransaction extends Model
         return $this->hasMany(SupplierPaymentItem::class);
     }
 
+    public function purchaseReturns(): HasMany
+    {
+        return $this->hasMany(PurchaseReturn::class);
+    }
+
     /**
      * Get the remaining unpaid balance for this credit purchase transaction.
      */
@@ -141,7 +146,13 @@ class PurchaseTransaction extends Model
             })
             ->sum('amount_paid');
 
-        return max(0, $this->grand_total - $paid);
+        // Deduct posted purchase returns with invoice_deduction type
+        $returnedDeductions = $this->purchaseReturns()
+            ->where('status', 'posted')
+            ->where('return_type', 'invoice_deduction')
+            ->sum('total_amount');
+
+        return max(0, $this->grand_total - $paid - $returnedDeductions);
     }
 
     public function shippingPaymentAccount(): BelongsTo

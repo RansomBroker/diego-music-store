@@ -52,11 +52,27 @@ class PostPurchaseReturn
                         'reference_type'     => 'PurchaseReturn',
                         'reference_id'       => $purchaseReturn->id,
                     ]);
+
+                    // If Tukar Guling (replacement) and replacement items received directly:
+                    if ($purchaseReturn->return_type === 'replacement' && $purchaseReturn->replacement_status === 'received') {
+                        $branchStock->increment('stock', $item->quantity);
+
+                        StockMovement::create([
+                            'product_variant_id' => $variant->id,
+                            'branch_id'          => $purchaseReturn->branch_id,
+                            'type'               => 'in',
+                            'quantity'           => $item->quantity,
+                            'unit_cost'          => $item->unit_price,
+                            'hpp'                => $branchStock->hpp ?: $item->unit_price,
+                            'reference_type'     => 'PurchaseReturnReplacement',
+                            'reference_id'       => $purchaseReturn->id,
+                        ]);
+                    }
                 }
             }
 
-            // 2. Post Journal Entries
-            if ($purchaseReturn->total_amount > 0) {
+            // 2. Post Journal Entries (only for types with financial impact: invoice_deduction, refund, supplier_credit)
+            if ($purchaseReturn->total_amount > 0 && $purchaseReturn->return_type !== 'replacement') {
                 $journalNo = 'JV-PR-' . now()->format('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
 
                 $journalEntry = JournalEntry::create([
@@ -83,12 +99,19 @@ class PostPurchaseReturn
                     )->id;
                 };
 
-                if ($pt && strtolower($pt->purchase_type) === 'kredit') {
-                    $debitAccId = $resolveAccount('2-1100', 'Hutang Usaha', 'Liability');
-                    $notes = "Pengurangan Hutang Supplier (Retur Pembelian Kredit)";
+                if ($purchaseReturn->return_type === 'invoice_deduction') {
+                    $debitAccId = $resolveAccount('2-1000', 'Hutang Dagang', 'liability');
+                    $notes = "Penyesuaian Faktur: Pengurangan Hutang Supplier (Retur {$purchaseReturn->return_no})";
+                } elseif ($purchaseReturn->return_type === 'refund') {
+                    $debitAccId = $purchaseReturn->refund_account_id ?: $resolveAccount('1-1000', 'Kas Utama', 'asset');
+                    $refundAccName = Account::find($debitAccId)?->name ?? 'Kas/Bank';
+                    $notes = "Penerimaan Refund Retur Pembelian ke {$refundAccName} (Retur {$purchaseReturn->return_no})";
+                } elseif ($purchaseReturn->return_type === 'supplier_credit') {
+                    $debitAccId = $resolveAccount('1-1400', 'Uang Muka Pembelian / Deposit Supplier', 'asset');
+                    $notes = "Pencatatan Saldo Deposit / Kredit Supplier dari Retur Pembelian (Retur {$purchaseReturn->return_no})";
                 } else {
-                    $debitAccId = $resolveAccount('1-1000', 'Kas Utama', 'Asset');
-                    $notes = "Penerimaan Refund Retur Pembelian Supplier (Tunai)";
+                    $debitAccId = $resolveAccount('1-1000', 'Kas Utama', 'asset');
+                    $notes = "Retur Pembelian Supplier (Retur {$purchaseReturn->return_no})";
                 }
 
                 JournalItem::create([
@@ -99,7 +122,7 @@ class PostPurchaseReturn
                     'notes'            => $notes,
                 ]);
 
-                $inventoryAccId = $resolveAccount('1-1300', 'Persediaan Barang Dagang', 'Asset');
+                $inventoryAccId = $resolveAccount('1-1300', 'Persediaan Barang Dagang', 'asset');
                 JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id'       => $inventoryAccId,

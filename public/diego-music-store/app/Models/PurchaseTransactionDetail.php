@@ -62,7 +62,9 @@ class PurchaseTransactionDetail extends Model
 
     public function getReturnedQtyAttribute(): int
     {
-        return (int) $this->returnItems()->sum('quantity');
+        return (int) $this->returnItems()
+            ->whereHas('purchaseReturn', fn($q) => $q->where('status', 'posted'))
+            ->sum('quantity');
     }
 
     public function getAvailableQtyForReturnAttribute(): int

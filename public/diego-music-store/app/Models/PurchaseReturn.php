@@ -21,6 +21,9 @@ class PurchaseReturn extends Model
         'return_date',
         'total_amount',
         'status',
+        'return_type',
+        'refund_account_id',
+        'replacement_status',
         'reason',
         'created_by',
     ];
@@ -48,6 +51,11 @@ class PurchaseReturn extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function refundAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'refund_account_id');
     }
 
     public function items(): HasMany
