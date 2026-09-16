@@ -69,7 +69,8 @@ class POSCashSession extends Component
         $this->selectedBranchId = $activeBranchId;
 
         // Find if user has active (open) session for the selected branch
-        $this->activeSession = CashSession::where('user_id', Auth::id())
+        $this->activeSession = CashSession::with('user')
+            ->where('user_id', Auth::id())
             ->where('branch_id', $activeBranchId)
             ->where('status', 'open')
             ->first();

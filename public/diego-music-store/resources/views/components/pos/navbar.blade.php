@@ -29,95 +29,7 @@
 ])
 
 @php
-    $resolvedBackUrl = $backUrl ?? route('pos.front-office');
-
-    // Load active cashier session automatically if not passed
-    if (empty($activeSessionInfo) && auth()->check()) {
-        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
-        $activeSession = \App\Models\CashSession::with('user')
-            ->where('branch_id', $activeBranchId)
-            ->where('status', 'open')
-            ->first();
-        if ($activeSession) {
-            $activeSessionInfo = [
-                'id'           => $activeSession->id,
-                'opened_at'    => $activeSession->opened_at->format('d M Y H:i'),
-                'opening_cash' => $activeSession->opening_cash,
-                'opened_by'    => $activeSession->user->name ?? auth()->user()->name,
-            ];
-        }
-    }
-
-    $currentActiveBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
-    $currentBranchModel = $currentActiveBranchId ? \App\Models\Branch::find($currentActiveBranchId) : \App\Models\Branch::first();
-    $userBranchList = auth()->check()
-        ? (auth()->user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin'])
-            ? \App\Models\Branch::where('is_active', true)->get()
-            : auth()->user()->branches()->where('is_active', true)->get())
-        : collect();
-
-    // Attendance Info Calculation
-    $currentEmployee = auth()->check() ? auth()->user()->employee : null;
-    $isOwner = auth()->check() && auth()->user()->hasRole(['owner', 'Owner']);
-    $todayDate = now()->format('Y-m-d');
-
-    $todayAttendance = null;
-    $usedOffDays = 0;
-    $quotaOffDays = 4;
-    $isOverQuota = false;
-    $overCount = 0;
-    $todayStatusText = 'Belum Presensi';
-
-    if ($currentEmployee) {
-        $usedOffDays = $currentEmployee->used_off_days_this_month;
-        $quotaOffDays = $currentEmployee->monthly_off_days_quota;
-        $isOverQuota = $currentEmployee->is_off_days_over_quota;
-        $overCount = $currentEmployee->off_days_over_count;
-
-        $todayAttendance = \App\Models\EmployeeAttendance::where('employee_id', $currentEmployee->id)
-            ->where('date', $todayDate)
-            ->first();
-
-        if ($todayAttendance) {
-            if ($todayAttendance->status === 'hadir') {
-                $clockInFormatted = $todayAttendance->clock_in ? $todayAttendance->clock_in->format('H:i') : '-';
-                $todayStatusText = "Hadir ({$clockInFormatted})";
-            } else {
-                $todayStatusText = ucfirst(str_replace('_', ' ', $todayAttendance->status));
-            }
-        }
-    }
-
-    // Smart Navbar Attendance State Detection
-    $clockState = 'not_clocked_in';
-    $clockInTimeText = null;
-    $clockOutTimeText = null;
-
-    if ($todayAttendance) {
-        if ($todayAttendance->clock_in && !$todayAttendance->clock_out) {
-            $clockState = 'clocked_in';
-            $clockInTimeText = $todayAttendance->clock_in->format('H:i');
-        } elseif ($todayAttendance->clock_in && $todayAttendance->clock_out) {
-            $clockState = 'clocked_out';
-            $clockInTimeText = $todayAttendance->clock_in->format('H:i');
-            $clockOutTimeText = $todayAttendance->clock_out->format('H:i');
-        } elseif (in_array($todayAttendance->status, ['off_day', 'izin', 'sakit', 'alpha'])) {
-            $clockState = 'clocked_out';
-        }
-    }
-
-    $allBranchEmployees = collect();
-    if ($isOwner && $currentBranchModel) {
-        $allBranchEmployees = \App\Models\Employee::with(['attendances' => function ($q) use ($todayDate) {
-            $q->where('date', $todayDate);
-        }, 'user'])
-        ->where('is_active', true)
-        ->where(function ($q) use ($currentBranchModel) {
-            $q->where('branch_id', $currentBranchModel->id)
-              ->orWhereNull('branch_id');
-        })
-        ->get();
-    }
+    extract(\App\Helpers\PosNavbarHelper::getContext($activeSessionInfo, $backUrl));
 @endphp
 
 <header 
@@ -570,13 +482,13 @@
                     </div>
                     @if (!empty($activeSessionInfo))
                         <span class="text-[11px] font-extrabold text-emerald-800 dark:text-emerald-200">
-                            Modal: Rp {{ number_format($activeSessionInfo['opening_cash'], 0, ',', '.') }}
+                            Modal: Rp {{ number_format($activeSessionInfo['opening_cash'] ?? 0, 0, ',', '.') }}
                         </span>
                     @endif
                 </div>
                 @if (!empty($activeSessionInfo))
                     <div class="text-[11px] text-slate-600 dark:text-slate-400 flex items-center justify-between pt-1 border-t border-emerald-200/50 dark:border-emerald-800/30">
-                        <span>Dibuka: {{ $activeSessionInfo['opened_by'] }} ({{ substr($activeSessionInfo['opened_at'], -5) }} WIB)</span>
+                        <span>Dibuka: {{ $activeSessionInfo['opened_by'] ?? (auth()->user()?->name ?? 'Kasir') }} ({{ !empty($activeSessionInfo['opened_at']) ? substr($activeSessionInfo['opened_at'], -5) : '--:--' }} WIB)</span>
                         @if ($showCloseSession)
                             <button
                                 type="button"

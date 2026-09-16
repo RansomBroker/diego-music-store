@@ -14,7 +14,8 @@ class FrontOfficeDashboard extends Component
 {
     public function render()
     {
-        $activeSession = CashSession::where('user_id', Auth::id())
+        $activeSession = CashSession::with('user')
+            ->where('user_id', Auth::id())
             ->where('status', 'open')
             ->first();
 
@@ -22,6 +23,7 @@ class FrontOfficeDashboard extends Component
             'id'           => $activeSession->id,
             'opened_at'    => $activeSession->opened_at->format('d M Y H:i'),
             'opening_cash' => $activeSession->opening_cash,
+            'opened_by'    => $activeSession->user?->name ?? (Auth::user()?->name ?? 'Kasir'),
         ] : null;
 
         // Ambil logo cabang aktif untuk sidebar

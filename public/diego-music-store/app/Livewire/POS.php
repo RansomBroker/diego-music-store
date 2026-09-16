@@ -91,7 +91,8 @@ class POS extends Component
     public function mount()
     {
         // Enforce active cashier session check
-        $activeSession = \App\Models\CashSession::where('user_id', Auth::id())
+        $activeSession = \App\Models\CashSession::with('user')
+            ->where('user_id', Auth::id())
             ->where('status', 'open')
             ->first();
 
@@ -105,9 +106,10 @@ class POS extends Component
         }
 
         $this->activeSessionInfo = [
-            'id' => $activeSession->id,
-            'opened_at' => $activeSession->opened_at->format('d M Y H:i'),
+            'id'           => $activeSession->id,
+            'opened_at'    => $activeSession->opened_at->format('d M Y H:i'),
             'opening_cash' => $activeSession->opening_cash,
+            'opened_by'    => $activeSession->user?->name ?? (Auth::user()?->name ?? 'Kasir'),
         ];
 
         $this->branches = Branch::where('is_active', true)->get();

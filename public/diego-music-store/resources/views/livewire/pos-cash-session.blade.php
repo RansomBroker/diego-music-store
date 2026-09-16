@@ -17,6 +17,7 @@
                 'id'           => $activeSession->id,
                 'opened_at'    => $activeSession->opened_at->format('d M Y H:i'),
                 'opening_cash' => $activeSession->opening_cash,
+                'opened_by'    => $activeSession->user?->name ?? (auth()->user()?->name ?? 'Kasir'),
             ] : null"
         >
             {{-- Tombol Kembali ke POS Kasir (hanya tampil jika sesi aktif) --}}

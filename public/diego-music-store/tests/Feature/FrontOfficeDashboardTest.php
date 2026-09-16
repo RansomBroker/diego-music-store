@@ -58,6 +58,7 @@ class FrontOfficeDashboardTest extends TestCase
         $response->assertDontSee('Sesi Tidak Aktif');
         $response->assertSee('Presensi Karyawan Cabang Hari Ini');
         $response->assertSee('Clock In (Masuk)');
+        $response->assertSee($user->name);
     }
 
     public function test_it_renders_presensi_karyawan_cabang_hari_ini_section_on_dashboard(): void
