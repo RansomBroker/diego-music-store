@@ -63,6 +63,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/privileges', App\Livewire\PosPrivileges::class)->name('pos.privileges');
     Route::get('/pos/store-profile', App\Livewire\PosStoreProfile::class)->name('pos.store-profile');
     Route::get('/pos/branches', App\Livewire\PosBranches::class)->name('pos.branches');
+    Route::get('/pos/whatsapp-settings', App\Livewire\PosWhatsAppSettings::class)->name('pos.whatsapp-settings');
     Route::get('/pos/branch-performance', App\Livewire\PosBranchPerformance::class)->name('pos.branch-performance');
     Route::get('/pos/receipt-settings', App\Livewire\PosReceiptSettings::class)->name('pos.receipt-settings');
     Route::get('/pos/barcode-print', App\Livewire\PosBarcodePrint::class)->name('pos.barcode-print');

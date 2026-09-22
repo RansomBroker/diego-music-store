@@ -22,6 +22,7 @@ class POS extends Component
     public $customerSearch = '';
     public $selectedCustomerId = null;
     public $selectedCustomerName = 'Umum / Walk-in';
+    public $customerPhone = '';
     public $isLoyaltyMember = false;
     public $usePoints = false;
     public $customerPoints = 0;
@@ -148,11 +149,13 @@ class POS extends Component
                     if ($sale->customer) {
                         $this->selectedCustomerId = $sale->customer_id;
                         $this->selectedCustomerName = $sale->customer->name;
+                        $this->customerPhone = $sale->customer->phone ?? '';
                         $this->isLoyaltyMember = (bool)$sale->customer->is_loyalty_member;
                         $this->customerPoints = (int)$sale->customer->loyalty_points;
                     } else {
                         $this->selectedCustomerId = null;
                         $this->selectedCustomerName = 'Umum / Walk-in';
+                        $this->customerPhone = '';
                         $this->isLoyaltyMember = false;
                         $this->customerPoints = 0;
                     }
@@ -423,6 +426,7 @@ class POS extends Component
         $customer = Customer::find($id);
         if ($customer) {
             $this->customerPoints = $customer->loyalty_points;
+            $this->customerPhone = $customer->phone ?? '';
             if ($customer->pricing_tier_id) {
                 $this->selectedPricingTierId = $customer->pricing_tier_id;
             } else {
@@ -447,6 +451,7 @@ class POS extends Component
     {
         $this->selectedCustomerId = null;
         $this->selectedCustomerName = 'Umum / Walk-in';
+        $this->customerPhone = '';
         $this->isLoyaltyMember = false;
         $this->discountValue = 0;
         $this->discountType = 'fixed';
@@ -923,7 +928,7 @@ class POS extends Component
             ->send();
     }
 
-    public function checkout()
+    public function checkout(bool $sendWhatsApp = false)
     {
         $totalPaid = 0;
         foreach ($this->selectedPaymentMethods as $method) {
@@ -1088,6 +1093,8 @@ class POS extends Component
                 $this->voucherIsValid = false;
             }
 
+            $targetPhone = trim($this->customerPhone);
+
             // Reset POS State
             $this->editingSaleId = null;
             $this->cart = [];
@@ -1116,6 +1123,24 @@ class POS extends Component
             // Dispatch print event for thermal receipt printing
             $this->lastSaleId = $sale->id;
             $this->dispatch('print-receipt', saleId: $sale->id);
+
+            // Send WhatsApp receipt if requested and phone number is available
+            if ($sendWhatsApp && !empty($targetPhone)) {
+                $waResult = app(\App\Actions\Notification\SendWhatsAppReceipt::class)->execute($sale, $targetPhone);
+                if ($waResult['success']) {
+                    Notification::make()
+                        ->title('Struk WhatsApp Terkirim')
+                        ->body("Bukti struk {$sale->invoice_number} berhasil dikirim ke WhatsApp {$targetPhone}.")
+                        ->success()
+                        ->send();
+                } else {
+                    Notification::make()
+                        ->title('Gagal Kirim WhatsApp')
+                        ->body("Transaksi selesai & struk dicetak, tapi WhatsApp gagal: {$waResult['message']}")
+                        ->warning()
+                        ->send();
+                }
+            }
 
             Notification::make()
                 ->title($isEditing ? 'Transaksi Diperbarui' : 'Transaksi Sukses')
@@ -1247,6 +1272,12 @@ class POS extends Component
         $this->cart = $held->cart_data;
         $this->selectedCustomerId = $held->customer_id;
         $this->selectedCustomerName = $held->customer_name ?? 'Umum / Walk-in';
+        if ($held->customer_id) {
+            $heldCust = Customer::find($held->customer_id);
+            $this->customerPhone = $heldCust?->phone ?? '';
+        } else {
+            $this->customerPhone = '';
+        }
         $this->isLoyaltyMember = $held->is_loyalty;
         $this->selectedPricingTierId = $held->pricing_tier_id;
         $this->usePoints = $held->use_points;

@@ -52,6 +52,15 @@
                         <i class="ph-bold ph-list-bullets text-base"></i>
                         <span>3. Log Transaksi Komisi</span>
                     </button>
+
+                    <button
+                        type="button"
+                        wire:click="$set('activeTab', 'groups')"
+                        class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer {{ $activeTab === 'groups' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60' }}"
+                    >
+                        <i class="ph-bold ph-users-four text-base"></i>
+                        <span>4. Komisi Grup</span>
+                    </button>
                 </div>
 
                 <!-- TAB 1: REKAP KOMISI SALES PER KARYAWAN -->
@@ -69,10 +78,17 @@
                     @include('livewire.pos-commissions.components.logs-table')
                 @endif
 
+                <!-- TAB 4: KOMISI GRUP & OVERRIDE -->
+                @if ($activeTab === 'groups')
+                    @include('livewire.pos-commissions.components.groups-table')
+                @endif
+
             </div>
         </div>
     </main>
 
-    <!-- Modal Form Skema Komisi -->
+    <!-- Modals -->
     @include('livewire.pos-commissions.components.scheme-modal')
+    @include('livewire.pos-commissions.components.group-modal')
+    @include('livewire.pos-commissions.components.group-detail-modal')
 </div>

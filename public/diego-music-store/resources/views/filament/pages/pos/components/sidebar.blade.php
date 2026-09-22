@@ -21,7 +21,7 @@
     $isPayroll         = request()->is('pos/payroll*');
     $isReports         = request()->is('pos/reports*');
     $isInputData       = request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*') || request()->is('pos/vouchers*');
-    $isUtility         = request()->is('pos/privileges*') || request()->is('pos/store-profile*') || request()->is('pos/receipt-settings*') || request()->is('pos/barcode-print*') || request()->is('pos/branches*') || request()->is('pos/branch-performance*');
+    $isUtility         = request()->is('pos/privileges*') || request()->is('pos/store-profile*') || request()->is('pos/receipt-settings*') || request()->is('pos/barcode-print*') || request()->is('pos/branches*') || request()->is('pos/branch-performance*') || request()->is('pos/whatsapp-settings*');
 @endphp
 
 <div
@@ -396,6 +396,11 @@
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.branches') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Manajemen Cabang
+                        </a>
+                        <a href="{{ route('pos.whatsapp-settings') }}"
+                           @click="if (window.innerWidth < 768) closeMobile()"
+                           class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.whatsapp-settings') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
+                            Setting WA Fonnte
                         </a>
                         <a href="{{ route('pos.branch-performance') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"

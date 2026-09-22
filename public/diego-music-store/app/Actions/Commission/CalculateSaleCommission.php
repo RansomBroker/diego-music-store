@@ -61,16 +61,62 @@ class CalculateSaleCommission
                 $commissionAmount = (float) $scheme->rate;
             }
 
-            $log = SalesCommissionLog::create([
-                'employee_id' => $employee->id,
-                'sale_id' => $sale->id,
-                'commission_scheme_id' => $scheme->id,
-                'date' => $sale->created_at ? $sale->created_at->format('Y-m-d') : now()->format('Y-m-d'),
-                'sale_amount' => $saleAmount,
-                'commission_amount' => $commissionAmount,
-                'status' => 'pending',
-                'notes' => "Komisi otomatis transaksi #{$sale->id} ({$scheme->name})",
-            ]);
+            $date = $sale->invoice_date ? \Illuminate\Support\Carbon::parse($sale->invoice_date)->format('Y-m-d') : ($sale->created_at ? $sale->created_at->format('Y-m-d') : now()->format('Y-m-d'));
+
+            // Check for product-specific focus schemes in sale items
+            $sale->loadMissing('items.variant');
+            $bonusProductCommission = 0.0;
+            $bonusDetails = [];
+
+            foreach ($sale->items as $item) {
+                $productId = $item->variant?->product_id;
+                if ($productId) {
+                    $prodScheme = CommissionScheme::where('is_active', true)
+                        ->where('applies_to', 'product')
+                        ->where('target_product_id', $productId)
+                        ->where(function ($q) use ($sale, $employee) {
+                            $q->where(function ($sub) use ($employee) {
+                                $sub->where('employee_id', $employee->id)
+                                    ->orWhereHas('employees', fn($e) => $e->where('employees.id', $employee->id));
+                            })->orWhere(function ($b) use ($sale) {
+                                $b->whereNull('employee_id')
+                                  ->whereDoesntHave('employees')
+                                  ->where(fn($sq) => $sq->whereNull('branch_id')->orWhere('branch_id', $sale->branch_id));
+                            });
+                        })
+                        ->first();
+
+                    if ($prodScheme) {
+                        $itemBonus = $prodScheme->calculation_type === 'percentage'
+                            ? ((float) $item->total_price) * ((float) $prodScheme->rate / 100)
+                            : ((float) $prodScheme->rate) * (int) $item->quantity;
+
+                        $bonusProductCommission += $itemBonus;
+                        $bonusDetails[] = "{$prodScheme->name} (+Rp " . number_format($itemBonus, 0, ',', '.') . ")";
+                    }
+                }
+            }
+
+            $commissionAmount += $bonusProductCommission;
+            $notes = "Komisi otomatis transaksi {$sale->invoice_number} ({$scheme->name})";
+            if (!empty($bonusDetails)) {
+                $notes .= " | Bonus Produk Fokus: " . implode(', ', $bonusDetails);
+            }
+
+            $log = SalesCommissionLog::updateOrCreate(
+                [
+                    'sale_id' => $sale->id,
+                    'employee_id' => $employee->id,
+                ],
+                [
+                    'commission_scheme_id' => $scheme->id,
+                    'date' => $date,
+                    'sale_amount' => $saleAmount,
+                    'commission_amount' => $commissionAmount,
+                    'status' => 'pending',
+                    'notes' => $notes,
+                ]
+            );
 
             return $log;
         });

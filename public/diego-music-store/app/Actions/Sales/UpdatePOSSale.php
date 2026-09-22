@@ -288,6 +288,19 @@ class UpdatePOSSale
                 ]);
             }
 
+            // Calculate and update Sales Commission (Fail-safe)
+            if ($sale->sales_rep_id) {
+                try {
+                    $salesRepUser = \App\Models\User::find($sale->sales_rep_id);
+                    $employee = $salesRepUser?->employee ?: ($salesRepUser ? \App\Models\Employee::where('user_id', $salesRepUser->id)->first() : null);
+                    if ($employee) {
+                        app(\App\Actions\Commission\CalculateSaleCommission::class)->execute($sale, $employee);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Gagal memperbarui komisi penjualan transaksi #{$sale->id}: " . $e->getMessage());
+                }
+            }
+
             return $sale;
         });
     }

@@ -3,8 +3,12 @@
 namespace App\Livewire;
 
 use App\Actions\Commission\ApproveCommissionRecap;
+use App\Actions\Commission\ApproveGroupCommission;
+use App\Actions\Commission\EvaluateGroupCommission;
 
 use App\Models\Branch;
+use App\Models\CommissionGroup;
+use App\Models\CommissionGroupMember;
 use App\Models\CommissionScheme;
 use App\Models\Employee;
 use App\Models\Product;
@@ -24,7 +28,7 @@ class PosCommissions extends Component
     public ?int $filterBranchId = null;
     public string $filterMonth = '';
     public ?int $selectedEmployeeId = null;
-    public string $activeTab = 'recap'; // 'recap', 'schemes', 'logs'
+    public string $activeTab = 'recap'; // 'recap', 'schemes', 'logs', 'groups'
     public string $search = '';
     public int $perPage = 15;
 
@@ -51,6 +55,16 @@ class PosCommissions extends Component
     public array $targetEmployeeIds = [];
     public float|string $minMonthlySalesTarget = 0;
     public bool $isActive = true;
+
+    // ── Modal & Form State (Commission Group) ────────────────────────────
+    public bool $showGroupModal = false;
+    public ?int $editingGroupId = null;
+    public string $groupName = '';
+    public ?int $groupLeaderEmployeeId = null;
+    public float|string $groupRate = 0.10;
+    public array $groupMembers = [];
+    public bool $showGroupDetailModal = false;
+    public ?array $selectedGroupEvaluation = null;
 
     public function mount(): void
     {
@@ -242,6 +256,180 @@ class PosCommissions extends Component
         }
     }
 
+    // ── Group Commission Handlers ────────────────────────────────────────
+    public function openGroupModal(?int $id = null): void
+    {
+        $this->resetGroupForm();
+        if ($id) {
+            $group = CommissionGroup::with('members')->findOrFail($id);
+            $this->editingGroupId = $group->id;
+            $this->groupName = $group->name;
+            $this->groupLeaderEmployeeId = $group->leader_employee_id;
+            $this->groupRate = (float) $group->rate;
+            $this->groupMembers = $group->members->map(function ($m) {
+                return [
+                    'employee_id' => $m->employee_id,
+                    'monthly_target_amount' => (float) $m->monthly_target_amount,
+                ];
+            })->toArray();
+        } else {
+            $this->groupMembers = [
+                ['employee_id' => null, 'monthly_target_amount' => 0],
+            ];
+        }
+        $this->showGroupModal = true;
+    }
+
+    public function resetGroupForm(): void
+    {
+        $this->editingGroupId = null;
+        $this->groupName = '';
+        $this->groupLeaderEmployeeId = null;
+        $this->groupRate = 0.10;
+        $this->groupMembers = [];
+    }
+
+    public function addGroupMemberRow(): void
+    {
+        $this->groupMembers[] = [
+            'employee_id' => null,
+            'monthly_target_amount' => 0,
+        ];
+    }
+
+    public function removeGroupMemberRow(int $index): void
+    {
+        unset($this->groupMembers[$index]);
+        $this->groupMembers = array_values($this->groupMembers);
+    }
+
+    public function saveGroup(): void
+    {
+        if (is_string($this->groupRate)) {
+            $cleaned = preg_replace('/[^\d.]/', '', str_replace(',', '.', $this->groupRate));
+            $this->groupRate = $cleaned !== '' ? (float) $cleaned : 0;
+        }
+
+        $this->validate([
+            'groupName' => 'required|string|max:255',
+            'groupLeaderEmployeeId' => 'required|exists:employees,id',
+            'groupRate' => 'required|numeric|min:0|max:100',
+            'groupMembers' => 'required|array|min:1',
+            'groupMembers.*.employee_id' => 'required|exists:employees,id',
+            'groupMembers.*.monthly_target_amount' => 'required|numeric|min:0',
+        ], [
+            'groupName.required' => 'Nama grup wajib diisi.',
+            'groupLeaderEmployeeId.required' => 'Leader grup wajib dipilih.',
+            'groupRate.required' => 'Rate komisi wajib diisi.',
+            'groupMembers.min' => 'Grup harus memiliki minimal 1 anggota tim.',
+            'groupMembers.*.employee_id.required' => 'Karyawan anggota wajib dipilih.',
+            'groupMembers.*.monthly_target_amount.required' => 'Target bulanan wajib diisi.',
+        ]);
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () {
+                $group = CommissionGroup::updateOrCreate(
+                    ['id' => $this->editingGroupId],
+                    [
+                        'branch_id' => $this->filterBranchId,
+                        'name' => $this->groupName,
+                        'leader_employee_id' => $this->groupLeaderEmployeeId,
+                        'rate' => $this->groupRate,
+                        'is_active' => true,
+                    ]
+                );
+
+                // Sync group members
+                $group->members()->delete();
+                foreach ($this->groupMembers as $item) {
+                    if (!empty($item['employee_id'])) {
+                        CommissionGroupMember::create([
+                            'commission_group_id' => $group->id,
+                            'employee_id' => $item['employee_id'],
+                            'monthly_target_amount' => (float) ($item['monthly_target_amount'] ?? 0),
+                        ]);
+                    }
+                }
+            });
+
+            Notification::make()->title('Grup Komisi Disimpan')->success()->send();
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'title' => 'Grup Komisi Disimpan',
+                'body' => 'Grup komisi berhasil disimpan.',
+            ]);
+
+            $this->showGroupModal = false;
+            $this->resetGroupForm();
+        } catch (\Throwable $e) {
+            Notification::make()->title('Gagal Menyimpan Grup')->danger()->body($e->getMessage())->send();
+            $this->dispatch('toast', [
+                'type' => 'danger',
+                'title' => 'Gagal Menyimpan Grup',
+                'body' => 'Gagal menyimpan grup komisi: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function deleteGroup(int $id): void
+    {
+        try {
+            CommissionGroup::findOrFail($id)->delete();
+            Notification::make()->title('Grup Komisi Dihapus')->success()->send();
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'title' => 'Grup Komisi Dihapus',
+                'body' => 'Grup komisi berhasil dihapus.',
+            ]);
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', [
+                'type' => 'danger',
+                'title' => 'Gagal Menghapus Grup',
+                'body' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function openGroupDetailModal(int $groupId): void
+    {
+        $group = CommissionGroup::with(['leader', 'members.employee'])->findOrFail($groupId);
+        $yearMonth = explode('-', $this->filterMonth ?: now()->format('Y-m'));
+        $year = (int) ($yearMonth[0] ?? now()->year);
+        $month = (int) ($yearMonth[1] ?? now()->month);
+
+        $evaluator = new EvaluateGroupCommission();
+        $this->selectedGroupEvaluation = $evaluator->execute($group, $year, $month);
+        $this->showGroupDetailModal = true;
+    }
+
+    public function claimGroupCommission(int $groupId): void
+    {
+        $group = CommissionGroup::with(['leader', 'members.employee'])->findOrFail($groupId);
+        $yearMonth = explode('-', $this->filterMonth ?: now()->format('Y-m'));
+        $year = (int) ($yearMonth[0] ?? now()->year);
+        $month = (int) ($yearMonth[1] ?? now()->month);
+
+        $action = new ApproveGroupCommission();
+        $result = $action->execute($group, $year, $month, auth()->user());
+
+        if ($result['success']) {
+            Notification::make()->title('Komisi Grup Berhasil Diklaim')->success()->body($result['message'])->send();
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'title' => 'Komisi Grup Diklaim',
+                'body' => $result['message'],
+            ]);
+            $this->showGroupDetailModal = false;
+        } else {
+            Notification::make()->title('Gagal Klaim Komisi Grup')->danger()->body($result['message'])->send();
+            $this->dispatch('toast', [
+                'type' => 'danger',
+                'title' => 'Gagal Klaim Komisi Grup',
+                'body' => $result['message'],
+            ]);
+        }
+    }
+
     public function exportCsv()
     {
         $yearMonth = explode('-', $this->filterMonth ?: now()->format('Y-m'));
@@ -398,6 +586,26 @@ class PosCommissions extends Component
 
         $unavailableEmployeeIds = array_unique(array_merge($assignedIds, $legacyAssignedIds));
 
+        // 4. Komisi Grup & Evaluasi Real-time
+        $evaluatedGroups = [];
+        if ($this->activeTab === 'groups') {
+            $evaluator = new EvaluateGroupCommission();
+            $groupsQuery = CommissionGroup::with(['leader', 'members.employee'])
+                ->where('is_active', true);
+
+            if ($this->filterBranchId) {
+                $groupsQuery->where(function ($q) {
+                    $q->where('branch_id', $this->filterBranchId)
+                        ->orWhereNull('branch_id');
+                });
+            }
+
+            $groups = $groupsQuery->orderBy('id', 'desc')->get();
+            foreach ($groups as $grp) {
+                $evaluatedGroups[] = $evaluator->execute($grp, $year, $month);
+            }
+        }
+
         return view('livewire.pos-commissions', [
             'selectedLogoUrl'        => $selectedLogoUrl,
             'branches'               => $branches,
@@ -408,6 +616,7 @@ class PosCommissions extends Component
             'recapData'              => $recapData,
             'schemes'                => $schemes,
             'logs'                   => $logs,
+            'evaluatedGroups'        => $evaluatedGroups,
             'totalSalesPeriod'       => $totalSalesPeriod,
             'totalCommissionPeriod'  => $totalCommissionPeriod,
             'totalApprovedPeriod'    => $totalApprovedPeriod,

@@ -43,6 +43,9 @@ class PosBranches extends Component
     public string $receipt_header = '';
     public string $receipt_footer = '';
     public ?int $manager_id = null;
+    public string $fonnte_token = '';
+    public string $fonnte_whatsapp_number = '';
+    public bool $is_whatsapp_enabled = true;
     public bool $is_active = true;
 
     public function updatingSearch()
@@ -78,9 +81,10 @@ class PosBranches extends Component
             'name', 'store_name', 'logo', 'existing_logo_path', 'address',
             'phone', 'email', 'city', 'province', 'postal_code',
             'npwp', 'bank_info', 'receipt_header', 'receipt_footer',
-            'manager_id', 'editingId', 'isEditing'
+            'manager_id', 'fonnte_token', 'fonnte_whatsapp_number', 'editingId', 'isEditing'
         ]);
         $this->store_name = 'Diego Music Store';
+        $this->is_whatsapp_enabled = true;
         $this->is_active = true;
         $this->showModal = true;
     }
@@ -88,23 +92,26 @@ class PosBranches extends Component
     public function openEdit(int $id)
     {
         $branch = Branch::findOrFail($id);
-        $this->editingId          = $branch->id;
-        $this->isEditing          = true;
-        $this->name               = $branch->name;
-        $this->store_name         = $branch->store_name ?: 'Diego Music Store';
-        $this->existing_logo_path = $branch->logo_path;
-        $this->address            = $branch->address ?: '';
-        $this->phone              = $branch->phone ?: '';
-        $this->email              = $branch->email ?: '';
-        $this->city               = $branch->city ?: '';
-        $this->province           = $branch->province ?: '';
-        $this->postal_code        = $branch->postal_code ?: '';
-        $this->npwp               = $branch->npwp ?: '';
-        $this->bank_info          = $branch->bank_info ?: '';
-        $this->receipt_header     = $branch->receipt_header ?: '';
-        $this->receipt_footer     = $branch->receipt_footer ?: '';
-        $this->manager_id         = $branch->manager_id;
-        $this->is_active          = (bool) $branch->is_active;
+        $this->editingId              = $branch->id;
+        $this->isEditing              = true;
+        $this->name                   = $branch->name;
+        $this->store_name             = $branch->store_name ?: 'Diego Music Store';
+        $this->existing_logo_path     = $branch->logo_path;
+        $this->address                = $branch->address ?: '';
+        $this->phone                  = $branch->phone ?: '';
+        $this->email                  = $branch->email ?: '';
+        $this->city                   = $branch->city ?: '';
+        $this->province               = $branch->province ?: '';
+        $this->postal_code            = $branch->postal_code ?: '';
+        $this->npwp                   = $branch->npwp ?: '';
+        $this->bank_info              = $branch->bank_info ?: '';
+        $this->receipt_header         = $branch->receipt_header ?: '';
+        $this->receipt_footer         = $branch->receipt_footer ?: '';
+        $this->manager_id             = $branch->manager_id;
+        $this->fonnte_token           = $branch->fonnte_token ?: '';
+        $this->fonnte_whatsapp_number = $branch->fonnte_whatsapp_number ?: '';
+        $this->is_whatsapp_enabled    = (bool) ($branch->is_whatsapp_enabled ?? true);
+        $this->is_active              = (bool) $branch->is_active;
 
         $this->showModal = true;
     }
@@ -127,21 +134,24 @@ class PosBranches extends Component
         }
 
         $data = [
-            'name'           => $this->name,
-            'store_name'     => $this->store_name,
-            'logo_path'      => $logoPath,
-            'address'        => $this->address,
-            'phone'          => $this->phone,
-            'email'          => $this->email,
-            'city'           => $this->city,
-            'province'       => $this->province,
-            'postal_code'    => $this->postal_code,
-            'npwp'           => $this->npwp,
-            'bank_info'      => $this->bank_info,
-            'receipt_header' => $this->receipt_header,
-            'receipt_footer' => $this->receipt_footer,
-            'manager_id'     => $this->manager_id,
-            'is_active'      => $this->is_active,
+            'name'                   => $this->name,
+            'store_name'             => $this->store_name,
+            'logo_path'              => $logoPath,
+            'address'                => $this->address,
+            'phone'                  => $this->phone,
+            'email'                  => $this->email,
+            'city'                   => $this->city,
+            'province'               => $this->province,
+            'postal_code'            => $this->postal_code,
+            'npwp'                   => $this->npwp,
+            'bank_info'              => $this->bank_info,
+            'receipt_header'         => $this->receipt_header,
+            'receipt_footer'         => $this->receipt_footer,
+            'manager_id'             => $this->manager_id,
+            'fonnte_token'           => trim($this->fonnte_token),
+            'fonnte_whatsapp_number' => \App\Helpers\FonnteHelper::formatPhoneNumber($this->fonnte_whatsapp_number),
+            'is_whatsapp_enabled'    => $this->is_whatsapp_enabled,
+            'is_active'              => $this->is_active,
         ];
 
         if ($this->isEditing) {

@@ -21,6 +21,7 @@
     'voucherCodeInput' => '',
     'voucherValidationMessage' => '',
     'voucherIsValid' => false,
+    'customerPhone' => '',
 ])
 
 @php
@@ -377,14 +378,83 @@
         </div>
     @endif
 
-    <!-- Action Button -->
-    <x-pos.utility.button 
-        wire:click="checkout" 
-        variant="primary" 
-        size="lg" 
-        icon="ph-printer-active" 
-        loading="checkout"
-    >
-        Konfirmasi & Cetak Struk
-    </x-pos.utility.button>
+    <!-- WhatsApp Receipt Phone Input -->
+    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 mb-6 space-y-2">
+        <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                <i class="ph-bold ph-whatsapp-logo text-emerald-500 text-base"></i>
+                <span>Kirim Bukti ke WhatsApp (Opsional)</span>
+            </label>
+            @if (!empty(trim($customerPhone ?? '')))
+                <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Nomor Terisi
+                </span>
+            @endif
+        </div>
+        <div class="relative">
+            <input 
+                type="text" 
+                wire:model.live="customerPhone" 
+                placeholder="08xxxxxxxxxx (Kosongkan jika tidak kirim WA)"
+                class="w-full pl-3.5 pr-8 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-sm focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+            />
+            @if (!empty(trim($customerPhone ?? '')))
+                <button 
+                    type="button" 
+                    wire:click="$set('customerPhone', '')" 
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 text-sm transition-colors cursor-pointer"
+                    title="Kosongkan nomor WA"
+                >
+                    <i class="ph-bold ph-x-circle"></i>
+                </button>
+            @endif
+        </div>
+        <p class="text-[11px] text-slate-400 font-medium">
+            @if (!empty(trim($customerPhone ?? '')))
+                Bukti struk akan dikirim langsung via WhatsApp ke <strong class="text-emerald-600 dark:text-emerald-400">{{ $customerPhone }}</strong>.
+            @else
+                Isi nomor WA atau pilih data pelanggan untuk mengaktifkan opsi kirim bukti transaksi via WhatsApp.
+            @endif
+        </p>
+    </div>
+
+    <!-- Action Buttons -->
+    @if (!empty(trim($customerPhone ?? '')))
+        <div class="space-y-2.5">
+            <!-- Cetak Struk & Kirim Bukti ke WA -->
+            <button 
+                type="button" 
+                wire:click="checkout(true)" 
+                wire:loading.attr="disabled"
+                class="w-full py-3.5 px-5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <i class="ph-bold ph-whatsapp-logo text-xl" wire:loading.remove wire:target="checkout"></i>
+                <i class="ph ph-spinner-gap animate-spin text-xl" wire:loading wire:target="checkout"></i>
+                <span>Cetak Struk & Kirim Bukti ke WA</span>
+            </button>
+
+            <!-- Cetak Struk Saja -->
+            <button 
+                type="button" 
+                wire:click="checkout(false)" 
+                wire:loading.attr="disabled"
+                class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+                <i class="ph-bold ph-printer text-sm"></i>
+                <span>Hanya Cetak Struk (Kertas)</span>
+            </button>
+        </div>
+    @else
+        <!-- Action Button (Hanya Cetak Struk jika tidak ada nomor WA / pelanggan ber-WA) -->
+        <x-pos.utility.button 
+            wire:click="checkout(false)" 
+            variant="success" 
+            size="lg" 
+            icon="ph-printer-active" 
+            loading="checkout"
+        >
+            Konfirmasi & Cetak Struk
+        </x-pos.utility.button>
+    @endif
 </x-pos-page::modal>

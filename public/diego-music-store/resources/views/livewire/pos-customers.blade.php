@@ -56,4 +56,7 @@
     <!-- Modals -->
     @include('livewire.pos-customers.components.customer-modal')
     @include('livewire.pos-customers.components.delete-modal')
+    @include('livewire.pos-customers.components.broadcast-modal')
+    @include('livewire.pos-customers.components.billing-modal')
+    @include('livewire.pos-customers.components.customer-message-modal')
 </div>

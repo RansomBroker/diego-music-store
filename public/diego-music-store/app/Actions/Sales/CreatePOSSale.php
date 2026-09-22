@@ -266,6 +266,19 @@ class CreatePOSSale
             // 6. Automatic Service Ticket Generation for Service Items
             \App\Actions\Service\CreateServiceOrderFromSale::execute($sale);
 
+            // 7. Calculate and log Sales Commission (Fail-safe for POS checkout)
+            if ($sale->sales_rep_id) {
+                try {
+                    $salesRepUser = \App\Models\User::find($sale->sales_rep_id);
+                    $employee = $salesRepUser?->employee ?: ($salesRepUser ? \App\Models\Employee::where('user_id', $salesRepUser->id)->first() : null);
+                    if ($employee) {
+                        app(\App\Actions\Commission\CalculateSaleCommission::class)->execute($sale, $employee);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Gagal menghitung komisi penjualan transaksi #{$sale->id}: " . $e->getMessage());
+                }
+            }
+
             return $sale;
         });
     }

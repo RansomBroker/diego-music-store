@@ -155,4 +155,20 @@ class Employee extends Model
     {
         return max(0, $this->used_off_days_this_month - $this->monthly_off_days_quota);
     }
+
+    /**
+     * Get all commission groups led by this employee.
+     */
+    public function ledCommissionGroups(): HasMany
+    {
+        return $this->hasMany(CommissionGroup::class, 'leader_employee_id');
+    }
+
+    /**
+     * Get all commission group memberships for this employee.
+     */
+    public function commissionGroupMemberships(): HasMany
+    {
+        return $this->hasMany(CommissionGroupMember::class);
+    }
 }

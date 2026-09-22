@@ -31,7 +31,7 @@ class SalesEmployeeDashboardHelper
     /**
      * Calculate commission tier progress and remaining amount to unlock the next tier.
      */
-    public static function calculateCommissionTierProgress(float $currentMonthlySales, ?array $tiers = null): array
+    public static function calculateCommissionTierProgress(float $currentMonthlySales, ?array $tiers = null, float $defaultBaseRate = 0.0): array
     {
         if (empty($tiers)) {
             $tiers = [
@@ -69,10 +69,14 @@ class SalesEmployeeDashboardHelper
             $tierProgress = 100;
         }
 
+        $currentRate = $currentTier ? (float) $currentTier['rate'] : $defaultBaseRate;
+        $currentTierName = $currentTier ? $currentTier['name'] : ($defaultBaseRate > 0 ? 'Tier Dasar' : 'Belum Capai Tier Min.');
+        $maxTierName = end($tiers)['name'] ?? 'Maksimum';
+
         return [
-            'current_tier'      => $currentTier ? $currentTier['name'] : 'Basic',
-            'current_rate'      => $currentTier ? $currentTier['rate'] : 0.5,
-            'next_tier'         => $nextTier ? $nextTier['name'] : 'Maksimum Tier (Gold)',
+            'current_tier'      => $currentTierName,
+            'current_rate'      => $currentRate,
+            'next_tier'         => $nextTier ? $nextTier['name'] : "Maksimum Tier ({$maxTierName})",
             'next_tier_target'  => $nextTier ? $nextTier['min_sales'] : ($currentTier ? $currentTier['min_sales'] : 0.0),
             'remaining_to_next' => $remainingToNext,
             'tier_progress'     => $tierProgress,

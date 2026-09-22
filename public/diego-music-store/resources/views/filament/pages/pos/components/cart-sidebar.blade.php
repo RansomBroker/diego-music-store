@@ -547,7 +547,7 @@
                     type="button"
                     wire:click="openPayment"
                     @if(empty($cart)) disabled @endif
-                    class="w-full h-full min-h-[135px] bg-primary hover:bg-primary-dark disabled:bg-slate-250 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 dark:disabled:text-slate-600 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center text-center transition-all duration-200 shadow-xl shadow-blue-500/30 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed group"
+                    class="w-full h-full min-h-[135px] bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-slate-250 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 dark:disabled:text-slate-600 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center text-center transition-all duration-200 shadow-xl shadow-emerald-600/25 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed group"
                 >
                     <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-xl bg-white/20 dark:bg-white/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                         <i class="ph-bold ph-credit-card text-2xl sm:text-3xl text-white"></i>

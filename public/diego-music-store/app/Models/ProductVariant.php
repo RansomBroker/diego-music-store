@@ -146,8 +146,12 @@ class ProductVariant extends Model
     /**
      * Get price for a specific tier, falling back to base price.
      */
-    public function priceForTier(int $pricingTierId): int
+    public function priceForTier(?int $pricingTierId): int
     {
+        if (!$pricingTierId) {
+            return $this->price;
+        }
+
         $tierPrice = $this->tierPrices()->where('pricing_tier_id', $pricingTierId)->first();
         return $tierPrice ? $tierPrice->price : $this->price;
     }

@@ -96,6 +96,7 @@
         :voucherCodeInput="$voucherCodeInput"
         :voucherValidationMessage="$voucherValidationMessage"
         :voucherIsValid="$voucherIsValid"
+        :customerPhone="$customerPhone"
     />
 
     <!-- Create Customer Modal -->

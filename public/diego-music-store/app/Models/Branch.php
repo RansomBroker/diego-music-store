@@ -31,6 +31,9 @@ class Branch extends Model
         'shift_start_time',
         'shift_end_time',
         'manager_id',
+        'fonnte_token',
+        'fonnte_whatsapp_number',
+        'is_whatsapp_enabled',
         'is_active',
     ];
 
@@ -38,6 +41,7 @@ class Branch extends Model
         'latitude' => 'float',
         'longitude' => 'float',
         'attendance_radius_meters' => 'integer',
+        'is_whatsapp_enabled' => 'boolean',
         'is_active' => 'boolean',
     ];
 

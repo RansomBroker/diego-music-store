@@ -27,6 +27,10 @@
                 <x-pos.table.th>
                     Member
                 </x-pos.table.th>
+                <!-- Piutang -->
+                <x-pos.table.th>
+                    Sisa Piutang
+                </x-pos.table.th>
                 <!-- Actions -->
                 <x-pos.table.th class="text-right">
                     Aksi
@@ -61,7 +65,7 @@
                     <!-- Label badge -->
                     <x-pos.table.td class="whitespace-nowrap">
                         @if ($customer->label)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-750 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-755 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
                                 {{ $customer->label->name }}
                             </span>
                         @else
@@ -84,9 +88,39 @@
                             </span>
                         @endif
                     </x-pos.table.td>
+                    <!-- Sisa Piutang -->
+                    <x-pos.table.td class="whitespace-nowrap">
+                        @if ($customer->total_piutang > 0)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40">
+                                Rp {{ number_format($customer->total_piutang, 0, ',', '.') }}
+                            </span>
+                        @else
+                            <span class="text-xs text-slate-400 dark:text-slate-500">Lunas</span>
+                        @endif
+                    </x-pos.table.td>
                     <!-- Aksi Buttons -->
                     <x-pos.table.td class="whitespace-nowrap text-right">
                         <div class="flex items-center justify-end gap-1.5">
+                            <button
+                                type="button"
+                                wire:click="openCustomerMessageModal({{ $customer->id }})"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition shadow-sm cursor-pointer"
+                                title="Kirim Pesan WhatsApp ke {{ $customer->name }}"
+                            >
+                                <i class="ph-bold ph-whatsapp-logo text-xs"></i>
+                                Pesan WA
+                            </button>
+                            @if ($customer->total_piutang > 0)
+                                <button
+                                    type="button"
+                                    wire:click="openBillingModal({{ $customer->id }})"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition shadow-sm cursor-pointer"
+                                    title="Kirim Tagihan via WhatsApp"
+                                >
+                                    <i class="ph-bold ph-receipt text-xs"></i>
+                                    Tagihan WA
+                                </button>
+                            @endif
                             <x-pos.utility.button
                                 type="button"
                                 variant="warning"
@@ -111,7 +145,7 @@
                     </x-pos.table.td>
                 </x-pos.table.tr>
             @empty
-                <x-pos.table.empty colspan="7" icon="ph-users" message="Tidak ada data pelanggan ditemukan" />
+                <x-pos.table.empty colspan="8" icon="ph-users" message="Tidak ada data pelanggan ditemukan" />
             @endforelse
         </tbody>
     </x-pos.table>
