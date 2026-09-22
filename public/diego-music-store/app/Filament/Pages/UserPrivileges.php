@@ -121,13 +121,11 @@ class UserPrivileges extends Page implements HasActions, HasForms, HasTable
                         $formData = [];
                         foreach (static::$defaultPermissionsGrouped as $group => $permissions) {
                             foreach ($permissions as $permKey => $label) {
-                                $formData[$permKey] = in_array($permKey, $assigned);
+                                data_set($formData, "permissions.{$permKey}", in_array($permKey, $assigned));
                             }
                         }
 
-                        return [
-                            'permissions' => $formData,
-                        ];
+                        return $formData;
                     })
                     ->form(function (): array {
                         $sections = [];

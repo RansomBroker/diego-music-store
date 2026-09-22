@@ -149,4 +149,22 @@ class RoleAndPermissionAccessTest extends TestCase
         $this->assertTrue($salesRole->hasPermissionTo('pos.access'));
         $this->assertFalse($salesRole->hasPermissionTo('utility.privileges'));
     }
+
+    public function test_user_privileges_page_form_populates_checked_permissions(): void
+    {
+        $admin = User::factory()->create(['is_active' => true]);
+        $admin->assignRole('admin');
+        $admin->branches()->attach($this->branch->id);
+
+        $karyawanRole = Role::findByName('karyawan');
+        $this->assertTrue($karyawanRole->hasPermissionTo('pos.access'));
+
+        \Livewire\Livewire::actingAs($admin)
+            ->test(\App\Filament\Pages\UserPrivileges::class)
+            ->mountTableAction('editPermissions', $karyawanRole)
+            ->assertTableActionDataSet(function (array $data): bool {
+                return data_get($data, 'permissions.pos.access') === true
+                    && data_get($data, 'permissions.utility.privileges') === false;
+            });
+    }
 }
