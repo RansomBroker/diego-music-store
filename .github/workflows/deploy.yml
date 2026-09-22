@@ -49,10 +49,28 @@ jobs:
 
             export PATH="$HOME/.config/composer/vendor/bin:$HOME/.local/bin:$HOME/bin:/usr/local/bin:/usr/bin:$PATH"
 
-            # Define composer function since it is an alias on the server
-            composer() {
-              php "$HOME/composer.phar" "$@"
-            }
+            # Cek dan siapkan perintah Composer secara dinamis
+            if [ -f "$HOME/composer.phar" ]; then
+              composer() {
+                php "$HOME/composer.phar" "$@"
+              }
+            elif command -v composer >/dev/null 2>&1; then
+              echo "✓ Menggunakan composer global di $(command -v composer)"
+            elif [ -f "/usr/local/bin/composer" ]; then
+              composer() {
+                /usr/local/bin/composer "$@"
+              }
+            elif [ -f "/opt/cpanel/composer/bin/composer" ]; then
+              composer() {
+                /opt/cpanel/composer/bin/composer "$@"
+              }
+            else
+              echo "Composer tidak ditemukan di sistem. Mengunduh composer.phar ke $HOME..."
+              curl -sS https://getcomposer.org/installer | php -- --install-dir="$HOME" --filename=composer.phar
+              composer() {
+                php "$HOME/composer.phar" "$@"
+              }
+            fi
 
             # Verify required secrets
             if [ -z "${{ secrets.DIR }}" ]; then
