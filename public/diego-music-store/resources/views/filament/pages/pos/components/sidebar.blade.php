@@ -22,6 +22,7 @@
     $isReports         = request()->is('pos/reports*');
     $isInputData       = request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*') || request()->is('pos/vouchers*');
     $isUtility         = request()->is('pos/privileges*') || request()->is('pos/store-profile*') || request()->is('pos/receipt-settings*') || request()->is('pos/barcode-print*') || request()->is('pos/branches*') || request()->is('pos/branch-performance*') || request()->is('pos/whatsapp-settings*');
+    $canManageAdmin    = auth()->check() && auth()->user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
 @endphp
 
 <div
@@ -219,6 +220,7 @@
                 </div>
 
                 <!-- Data Karyawan -->
+                @if($canManageAdmin)
                 <a href="/pos/employees"
                    @click="if (window.innerWidth < 768) closeMobile()"
                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isEmployees ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
@@ -227,6 +229,7 @@
                     <i class="ph-bold ph-user-gear text-xl flex-shrink-0 {{ $isEmployees ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Karyawan</span>
                 </a>
+                @endif
 
                 <!-- Presensi Karyawan -->
                 <a href="/pos/attendances"
@@ -259,6 +262,7 @@
                 </a>
 
                 <!-- Payroll Gaji -->
+                @if($canManageAdmin)
                 <a href="/pos/payroll"
                    @click="if (window.innerWidth < 768) closeMobile()"
                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isPayroll ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
@@ -267,6 +271,7 @@
                     <i class="ph-bold ph-bank text-xl flex-shrink-0 {{ $isPayroll ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Payroll Gaji</span>
                 </a>
+                @endif
             </div>
 
             <!-- SECTION 4: MASTER DATA & LAPORAN -->
@@ -337,6 +342,7 @@
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.customers') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Data Pelanggan
                         </a>
+                        @if($canManageAdmin)
                         <a href="{{ route('pos.users') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.users') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
@@ -362,10 +368,12 @@
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.vouchers') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Data Voucher Promo
                         </a>
+                        @endif
                     </div>
                 </div>
 
                 <!-- Dropdown 3: Pengaturan & Utility -->
+                @if($canManageAdmin)
                 <div class="space-y-1">
                     <button
                         @click="if (isCompact) { isCollapsed = false; openUtility = true; } else { openUtility = !openUtility; }"
@@ -419,11 +427,13 @@
                         </a>
                     </div>
                 </div>
+                @endif
             </div>
 
         </nav>
 
         <!-- SIDEBAR FOOTER (BACKOFFICE ACCESSIBLE LINK) -->
+        @if($canManageAdmin)
         <div class="p-3 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             <a href="/backoffice"
                class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all group"
@@ -441,5 +451,6 @@
                 <i x-show="!isCompact" class="ph-bold ph-arrow-right text-sm text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
             </a>
         </div>
+        @endif
     </aside>
 </div>

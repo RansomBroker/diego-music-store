@@ -27,6 +27,7 @@ Route::post('/pos/logout', function () {
 })->name('pos.logout');
 
 Route::middleware('auth.pos')->group(function () {
+    // General Operasional POS (Kasir, Sales, Admin, Owner)
     Route::get('/pos/front-office', App\Livewire\FrontOfficeDashboard::class)->name('pos.front-office');
     Route::get('/pos', App\Livewire\POS::class)->name('pos');
     Route::get('/pos/receipt/{sale}', [App\Http\Controllers\POS\POSReceiptController::class, 'show'])->name('pos.receipt');
@@ -37,6 +38,16 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/customer-deposits', App\Livewire\PosCustomerDeposits::class)->name('pos.customer-deposits');
     Route::get('/pos/daily-cash', App\Livewire\POSDailyCash::class)->name('pos.daily-cash');
     Route::get('/pos/customer-payments', App\Livewire\PosCustomerPayments::class)->name('pos.customer-payments');
+    Route::get('/pos/customers', App\Livewire\PosCustomers::class)->name('pos.customers');
+    Route::get('/pos/attendances', App\Livewire\PosAttendances::class)->name('pos.attendances');
+    Route::get('/pos/service-management', App\Livewire\PosServiceManagement::class)->name('pos.service-management');
+    Route::get('/pos/barcode-print', App\Livewire\PosBarcodePrint::class)->name('pos.barcode-print');
+    Route::get('/pos/barcode-print/sheet', [App\Http\Controllers\POS\POSBarcodePrintController::class, 'show'])->name('pos.barcode-print.sheet');
+
+    // Komisi & Performa Sales
+    Route::get('/pos/commissions', App\Livewire\PosCommissions::class)->name('pos.commissions');
+    Route::get('/pos/kpi-performance', App\Livewire\PosKpiPerformance::class)->name('pos.kpi-performance');
+
     // Laporan ERP Routes
     Route::get('/pos/reports', fn() => redirect()->route('pos.reports.sales'))->name('pos.reports');
     Route::get('/pos/reports/sales', App\Livewire\PosReportsSales::class)->name('pos.reports.sales');
@@ -45,29 +56,6 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/reports/daily-cash', App\Livewire\PosReportsDailyCash::class)->name('pos.reports.daily-cash');
     Route::get('/pos/reports/stock-prices', App\Livewire\PosReportsStockPrices::class)->name('pos.reports.stock-prices');
 
-    // Input Data / Manajemen Karyawan
-    Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
-    Route::get('/pos/attendances', App\Livewire\PosAttendances::class)->name('pos.attendances');
-    Route::get('/pos/attendance-radiuses', App\Livewire\PosAttendanceRadiuses::class)->name('pos.attendance-radiuses');
-    Route::get('/pos/commissions', App\Livewire\PosCommissions::class)->name('pos.commissions');
-    Route::get('/pos/attendance-violations', App\Livewire\PosAttendanceViolations::class)->name('pos.attendance-violations');
-    Route::get('/pos/customers', App\Livewire\PosCustomers::class)->name('pos.customers');
-    Route::get('/pos/users', App\Livewire\PosUsers::class)->name('pos.users');
-    Route::get('/pos/units', App\Livewire\PosUnits::class)->name('pos.units');
-    Route::get('/pos/customer-labels', App\Livewire\PosCustomerLabels::class)->name('pos.customer-labels');
-    Route::get('/pos/sale-categories', App\Livewire\PosSaleCategories::class)->name('pos.sale-categories');
-    Route::get('/pos/payment-methods', App\Livewire\PosPaymentMethods::class)->name('pos.payment-methods');
-    Route::get('/pos/vouchers', App\Livewire\PosVouchers::class)->name('pos.vouchers');
-
-    // Utility Routes
-    Route::get('/pos/privileges', App\Livewire\PosPrivileges::class)->name('pos.privileges');
-    Route::get('/pos/store-profile', App\Livewire\PosStoreProfile::class)->name('pos.store-profile');
-    Route::get('/pos/branches', App\Livewire\PosBranches::class)->name('pos.branches');
-    Route::get('/pos/whatsapp-settings', App\Livewire\PosWhatsAppSettings::class)->name('pos.whatsapp-settings');
-    Route::get('/pos/branch-performance', App\Livewire\PosBranchPerformance::class)->name('pos.branch-performance');
-    Route::get('/pos/receipt-settings', App\Livewire\PosReceiptSettings::class)->name('pos.receipt-settings');
-    Route::get('/pos/barcode-print', App\Livewire\PosBarcodePrint::class)->name('pos.barcode-print');
-    Route::get('/pos/barcode-print/sheet', [App\Http\Controllers\POS\POSBarcodePrintController::class, 'show'])->name('pos.barcode-print.sheet');
     // Branch Switcher Route
     Route::get('/pos/switch-branch/{branch}', function (\App\Models\Branch $branch) {
         if (auth()->check()) {
@@ -79,18 +67,36 @@ Route::middleware('auth.pos')->group(function () {
         return redirect()->back();
     })->name('pos.switch-branch');
 
-    // Service Management
-    Route::get('/pos/service-management', App\Livewire\PosServiceManagement::class)->name('pos.service-management');
+    // Rute Khusus Admin & Owner (Sensitif: Payroll, User, Hak Akses, Cabang, Pengaturan)
+    Route::middleware(['role:owner|admin|super_admin|Owner|Admin|Super Admin'])->group(function () {
+        // SDM & Manajemen Karyawan
+        Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
+        Route::get('/pos/attendance-radiuses', App\Livewire\PosAttendanceRadiuses::class)->name('pos.attendance-radiuses');
+        Route::get('/pos/attendance-violations', App\Livewire\PosAttendanceViolations::class)->name('pos.attendance-violations');
 
-    // KPI & Performance
-    Route::get('/pos/kpi-performance', App\Livewire\PosKpiPerformance::class)->name('pos.kpi-performance');
+        // Master Data Pengaturan
+        Route::get('/pos/users', App\Livewire\PosUsers::class)->name('pos.users');
+        Route::get('/pos/units', App\Livewire\PosUnits::class)->name('pos.units');
+        Route::get('/pos/customer-labels', App\Livewire\PosCustomerLabels::class)->name('pos.customer-labels');
+        Route::get('/pos/sale-categories', App\Livewire\PosSaleCategories::class)->name('pos.sale-categories');
+        Route::get('/pos/payment-methods', App\Livewire\PosPaymentMethods::class)->name('pos.payment-methods');
+        Route::get('/pos/vouchers', App\Livewire\PosVouchers::class)->name('pos.vouchers');
 
-    // Payroll & Gaji Karyawan
-    Route::get('/pos/payroll', App\Livewire\PosPayrollManagement::class)->name('pos.payroll');
-    Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
-    Route::get('/pos/payroll/bulk-payslip-pdf/{id}', [App\Http\Controllers\POS\BulkPayrollPayslipController::class, 'show'])->name('pos.payroll.bulk-payslip-pdf');
-    Route::get('/pos/payroll/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'export'])->name('pos.payroll.export-excel');
-    Route::get('/pos/payroll/item/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'exportItem'])->name('pos.payroll.item.export-excel');
+        // Utility & Pengaturan Toko
+        Route::get('/pos/privileges', App\Livewire\PosPrivileges::class)->name('pos.privileges');
+        Route::get('/pos/store-profile', App\Livewire\PosStoreProfile::class)->name('pos.store-profile');
+        Route::get('/pos/branches', App\Livewire\PosBranches::class)->name('pos.branches');
+        Route::get('/pos/whatsapp-settings', App\Livewire\PosWhatsAppSettings::class)->name('pos.whatsapp-settings');
+        Route::get('/pos/branch-performance', App\Livewire\PosBranchPerformance::class)->name('pos.branch-performance');
+        Route::get('/pos/receipt-settings', App\Livewire\PosReceiptSettings::class)->name('pos.receipt-settings');
+
+        // Payroll & Gaji Karyawan
+        Route::get('/pos/payroll', App\Livewire\PosPayrollManagement::class)->name('pos.payroll');
+        Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
+        Route::get('/pos/payroll/bulk-payslip-pdf/{id}', [App\Http\Controllers\POS\BulkPayrollPayslipController::class, 'show'])->name('pos.payroll.bulk-payslip-pdf');
+        Route::get('/pos/payroll/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'export'])->name('pos.payroll.export-excel');
+        Route::get('/pos/payroll/item/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'exportItem'])->name('pos.payroll.item.export-excel');
+    });
 });
 
 // Public Service Tracking Route (Without Login)
