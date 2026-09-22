@@ -30,7 +30,7 @@ class UserActionsTest extends TestCase
         $branch2 = Branch::create(['name' => 'Branch B', 'phone' => '456', 'address' => 'Addr B', 'is_active' => true]);
         
         $roleAdmin = Role::findByName('admin');
-        $roleCashier = Role::findByName('cashier');
+        $roleCashier = Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
 
         $data = [
             'name' => 'John Doe',
@@ -68,7 +68,7 @@ class UserActionsTest extends TestCase
         $branch2 = Branch::create(['name' => 'Branch B', 'phone' => '456', 'address' => 'Addr B', 'is_active' => true]);
 
         $roleAdmin = Role::findByName('admin');
-        $roleCashier = Role::findByName('cashier');
+        $roleCashier = Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
 
         // Create initial user
         $user = User::create([

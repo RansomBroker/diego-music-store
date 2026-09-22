@@ -58,8 +58,6 @@ class PurchaseTransactionResource extends Resource
     {
         return [
             'index' => ListPurchaseTransactions::route('/'),
-            'create' => CreatePurchaseTransaction::route('/create'),
-            'edit' => EditPurchaseTransaction::route('/{record}/edit'),
         ];
     }
 

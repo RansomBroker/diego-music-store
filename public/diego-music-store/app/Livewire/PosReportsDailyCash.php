@@ -93,6 +93,9 @@ class PosReportsDailyCash extends Component
 
         // Paginate cash transactions
         $rawTransactions = $reportData['transactions'] ?? [];
+        if ($rawTransactions instanceof \Illuminate\Support\Collection) {
+            $rawTransactions = $rawTransactions->all();
+        }
         $totalTransactions = count($rawTransactions);
 
         if ($this->perPage > 0) {

@@ -58,8 +58,6 @@ class SupplierPaymentResource extends Resource
     {
         return [
             'index' => ListSupplierPayments::route('/'),
-            'create' => CreateSupplierPayment::route('/create'),
-            'edit' => EditSupplierPayment::route('/{record}/edit'),
         ];
     }
 }

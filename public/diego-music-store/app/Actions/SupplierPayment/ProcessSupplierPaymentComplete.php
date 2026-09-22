@@ -34,19 +34,7 @@ class ProcessSupplierPaymentComplete
             }
 
             // 1. Generate Journal Number
-            $date = now()->format('Ymd');
-            $prefix = 'JV-' . $date . '-';
-            $lastJournal = JournalEntry::where('entry_no', 'like', $prefix . '%')
-                ->orderBy('entry_no', 'desc')
-                ->first();
-
-            if ($lastJournal) {
-                $lastNum = intval(substr($lastJournal->entry_no, strlen($prefix)));
-                $nextNum = str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
-            } else {
-                $nextNum = '0001';
-            }
-            $journalNo = $prefix . $nextNum;
+            $journalNo = JournalEntry::generateEntryNo();
 
             // 2. Decrement supplier outstanding debt
             $supplier = $payment->supplier;

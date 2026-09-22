@@ -61,12 +61,9 @@ class EvaluatePoFinancialHealth
             }
         }
 
-        // Fallback default if zero journal entries exist yet
-        if ($totalLiquidCash <= 0) {
-            $totalLiquidCash = (float) Account::query()
-                ->where('is_header', false)
-                ->where(fn ($q) => $q->where('classification', 'kas-bank')->orWhere('code', 'like', '1-1%'))
-                ->sum('balance');
+        // Ensure total liquid cash is non-negative
+        if ($totalLiquidCash < 0) {
+            $totalLiquidCash = 0.0;
         }
 
         // 2. Calculate Pending Obligations (Accounts Payable & Pending POs)

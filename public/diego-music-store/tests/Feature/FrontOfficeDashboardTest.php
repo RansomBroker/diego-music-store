@@ -27,7 +27,7 @@ class FrontOfficeDashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('pos.front-office'));
 
         $response->assertStatus(200);
-        $response->assertSee('Sesi Tidak Aktif');
+        $response->assertSee('Sesi Nonaktif');
     }
 
     public function test_it_renders_session_active_when_session_is_open(): void
@@ -55,7 +55,7 @@ class FrontOfficeDashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('pos.front-office'));
 
         $response->assertStatus(200);
-        $response->assertDontSee('Sesi Tidak Aktif');
+        $response->assertDontSee('Sesi Nonaktif');
         $response->assertSee('Presensi Karyawan Cabang Hari Ini');
         $response->assertSee('Clock In (Masuk)');
         $response->assertSee($user->name);

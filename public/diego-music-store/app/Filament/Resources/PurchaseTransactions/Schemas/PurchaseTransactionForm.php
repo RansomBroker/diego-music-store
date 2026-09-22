@@ -90,12 +90,17 @@ class PurchaseTransactionForm
 
                                                 $items = [];
                                                 foreach ($po->items as $item) {
+                                                    $unit = $item->unit ?? $item->productVariant?->product?->unit;
+                                                    $factor = $unit?->conversion_factor ?? 1;
                                                     $items[] = [
                                                         'product_variant_id' => $item->product_variant_id,
                                                         'qty_po' => $item->quantity,
                                                         'qty_received' => $item->quantity, // default to full PO qty
-                                                        'unit_id' => $item->unit_id ?? $item->productVariant->product->unit_id,
+                                                        'qty_bonus' => 0,
+                                                        'qty_base' => intval(round($item->quantity * $factor)),
+                                                        'unit_id' => $item->unit_id ?? $item->productVariant?->product?->unit_id,
                                                         'price' => $item->price,
+                                                        'update_cost_price' => false,
                                                         'discount_value' => $item->discount_value,
                                                         'tax_rate' => $item->tax_rate,
                                                     ];

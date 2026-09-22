@@ -23,20 +23,8 @@ class PostPurchaseTransaction
                 throw new InvalidArgumentException('Hanya transaksi draf yang dapat diposting.');
             }
 
-            // 1. Generate Journal Number for bookkeeping simulation
-            $date = now()->format('Ymd');
-            $prefix = 'JV-' . $date . '-';
-            $lastJournal = PurchaseTransaction::where('journal_no', 'like', $prefix . '%')
-                ->orderBy('journal_no', 'desc')
-                ->first();
-
-            if ($lastJournal) {
-                $lastNum = intval(substr($lastJournal->journal_no, strlen($prefix)));
-                $nextNum = str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
-            } else {
-                $nextNum = '0001';
-            }
-            $journalNo = $prefix . $nextNum;
+            // 1. Generate Journal Number from JournalEntry
+            $journalNo = \App\Models\JournalEntry::generateEntryNo();
 
             // Update Transaction Header status
             $pt->update([

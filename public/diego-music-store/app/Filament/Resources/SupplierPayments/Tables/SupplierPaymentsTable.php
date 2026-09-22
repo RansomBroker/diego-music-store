@@ -2,17 +2,20 @@
 
 namespace App\Filament\Resources\SupplierPayments\Tables;
 
+use App\Actions\SupplierPayment\CancelSupplierPayment;
+use App\Actions\SupplierPayment\UpdateSupplierPayment as UpdateSupplierPaymentAction;
 use App\Filament\Resources\JournalEntries\JournalEntryResource;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-
-use App\Actions\SupplierPayment\CancelSupplierPayment;
-use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Model;
 
 class SupplierPaymentsTable
 {
@@ -72,7 +75,83 @@ class SupplierPaymentsTable
             ])
             ->actions([
                 EditAction::make()
-                    ->disabled(fn ($record) => $record->status === 'cancelled'),
+                    ->modalWidth('7xl')
+                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->mutateRecordDataUsing(function (Model $record, array $data): array {
+                        $payment = $record;
+                        $data['items'] = [];
+                        $linkedTransactionIds = [];
+
+                        foreach ($payment->items as $item) {
+                            $pt = $item->purchaseTransaction;
+                            if (!$pt) continue;
+
+                            $data['items'][] = [
+                                'is_selected' => true,
+                                'purchase_transaction_id' => $item->purchase_transaction_id,
+                                'transaction_no' => $pt->transaction_no,
+                                'invoice_number' => $pt->invoice_number,
+                                'transaction_date' => $pt->transaction_date->format('Y-m-d'),
+                                'due_date' => $pt->due_date?->format('Y-m-d'),
+                                'grand_total' => $pt->grand_total,
+                                'amount_due' => $pt->getRemainingUnpaidAmount(),
+                                'amount_paid' => $item->amount_paid,
+                            ];
+                            $linkedTransactionIds[] = $item->purchase_transaction_id;
+                        }
+
+                        $otherUnpaidTransactions = \App\Models\PurchaseTransaction::query()
+                            ->where('supplier_id', $payment->supplier_id)
+                            ->where('purchase_type', 'Kredit')
+                            ->where('status', 'posted')
+                            ->whereNotIn('id', $linkedTransactionIds)
+                            ->get()
+                            ->filter(fn ($pt) => $pt->getRemainingUnpaidAmount() > 0);
+
+                        foreach ($otherUnpaidTransactions as $pt) {
+                            $data['items'][] = [
+                                'is_selected' => false,
+                                'purchase_transaction_id' => $pt->id,
+                                'transaction_no' => $pt->transaction_no,
+                                'invoice_number' => $pt->invoice_number,
+                                'transaction_date' => $pt->transaction_date->format('Y-m-d'),
+                                'due_date' => $pt->due_date?->format('Y-m-d'),
+                                'grand_total' => $pt->grand_total,
+                                'amount_due' => $pt->getRemainingUnpaidAmount(),
+                                'amount_paid' => 0,
+                            ];
+                        }
+
+                        return $data;
+                    })
+                    ->using(fn (Model $record, array $data): Model => app(UpdateSupplierPaymentAction::class)->execute($record, $data)),
+
+                ViewAction::make()
+                    ->modalWidth('7xl')
+                    ->visible(fn ($record) => $record->status !== 'draft')
+                    ->mutateRecordDataUsing(function (Model $record, array $data): array {
+                        $payment = $record;
+                        $data['items'] = [];
+
+                        foreach ($payment->items as $item) {
+                            $pt = $item->purchaseTransaction;
+                            if (!$pt) continue;
+
+                            $data['items'][] = [
+                                'is_selected' => true,
+                                'purchase_transaction_id' => $item->purchase_transaction_id,
+                                'transaction_no' => $pt->transaction_no,
+                                'invoice_number' => $pt->invoice_number,
+                                'transaction_date' => $pt->transaction_date->format('Y-m-d'),
+                                'due_date' => $pt->due_date?->format('Y-m-d'),
+                                'grand_total' => $pt->grand_total,
+                                'amount_due' => $pt->getRemainingUnpaidAmount(),
+                                'amount_paid' => $item->amount_paid,
+                            ];
+                        }
+
+                        return $data;
+                    }),
 
                 Action::make('cancel')
                     ->label('Batalkan')

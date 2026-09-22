@@ -16,12 +16,25 @@ class EvaluatePoFinancialHealthTest extends TestCase
     public function test_evaluate_po_financial_health_returns_safe_status_for_small_po(): void
     {
         // Seed liquid cash account
-        Account::create([
+        $account = Account::create([
             'code' => '1-1101',
             'name' => 'Kas Utama',
             'classification' => 'kas-bank',
             'is_active' => true,
             'is_header' => false,
+        ]);
+
+        $entry = \App\Models\JournalEntry::create([
+            'entry_no' => 'JE-INIT-01',
+            'date' => now(),
+            'status' => 'posted',
+        ]);
+
+        \App\Models\JournalItem::create([
+            'journal_entry_id' => $entry->id,
+            'account_id' => $account->id,
+            'debit' => 50000000,
+            'credit' => 0,
         ]);
 
         $action = new EvaluatePoFinancialHealth();
