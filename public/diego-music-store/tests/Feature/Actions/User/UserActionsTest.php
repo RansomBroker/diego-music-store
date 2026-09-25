@@ -133,4 +133,37 @@ class UserActionsTest extends TestCase
         // Assert password has not changed
         $this->assertEquals($originalHash, $updatedUser->password);
     }
+
+    public function test_it_can_create_and_update_user_with_avatar(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        /** @var CreateUser $createAction */
+        $createAction = app(CreateUser::class);
+        $user = $createAction->execute([
+            'name' => 'Avatar User',
+            'username' => 'avataruser',
+            'email' => 'avatar@example.com',
+            'password' => 'secret123',
+            'avatar_url' => 'avatars/avatar1.jpg',
+        ]);
+
+        $this->assertEquals('avatars/avatar1.jpg', $user->avatar_url);
+
+        \Illuminate\Support\Facades\Storage::disk('public')->put('avatars/avatar1.jpg', 'fake-image-content');
+        $this->assertTrue(\Illuminate\Support\Facades\Storage::disk('public')->exists('avatars/avatar1.jpg'));
+
+        /** @var UpdateUser $updateAction */
+        $updateAction = app(UpdateUser::class);
+        $updatedUser = $updateAction->execute($user, [
+            'name' => 'Avatar User Updated',
+            'username' => 'avataruser',
+            'email' => 'avatar@example.com',
+            'avatar_url' => 'avatars/avatar2.jpg',
+        ]);
+
+        $this->assertEquals('avatars/avatar2.jpg', $updatedUser->avatar_url);
+        // Assert old avatar cleaned up
+        $this->assertFalse(\Illuminate\Support\Facades\Storage::disk('public')->exists('avatars/avatar1.jpg'));
+    }
 }

@@ -37,6 +37,7 @@ class PosUsersTest extends TestCase
         $this->user->branches()->attach($this->branch);
 
         $this->adminRole = Role::create(['name' => 'admin', 'guard_name' => 'web']);
+        $this->user->assignRole($this->adminRole);
     }
 
     /** @test */
@@ -174,5 +175,36 @@ class PosUsersTest extends TestCase
         $this->assertDatabaseMissing('users', [
             'id' => $targetUser->id,
         ]);
+    }
+
+    /** @test */
+    public function it_can_upload_and_remove_avatar()
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $file = \Illuminate\Http\UploadedFile::fake()->create('profile.png', 100, 'image/png');
+
+        Livewire::test('App\Livewire\PosUsers')
+            ->call('openCreate')
+            ->set('name', 'User Avatar')
+            ->set('username', 'user_avatar')
+            ->set('email', 'avatar@test.com')
+            ->set('password', 'password123')
+            ->set('avatar', $file)
+            ->call('save')
+            ->assertSet('showModal', false);
+
+        $created = User::where('email', 'avatar@test.com')->first();
+        $this->assertNotNull($created->avatar_url);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($created->avatar_url);
+
+        // Test removing avatar
+        Livewire::test('App\Livewire\PosUsers')
+            ->call('openEdit', $created->id)
+            ->call('removeAvatar')
+            ->assertSet('avatar', null)
+            ->assertSet('existingAvatarUrl', null);
+
+        $created->refresh();
+        $this->assertNull($created->avatar_url);
     }
 }

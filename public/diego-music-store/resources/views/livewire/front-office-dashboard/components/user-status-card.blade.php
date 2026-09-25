@@ -5,7 +5,11 @@
         <!-- Left (Cols 7): User Identity & Greeting -->
         <div class="lg:col-span-7 flex items-center gap-4">
             <div class="w-14 h-14 rounded-2xl bg-primary/10 dark:bg-slate-700 border border-primary/20 dark:border-slate-600 overflow-hidden flex-shrink-0 shadow-sm flex items-center justify-center text-primary dark:text-blue-400 font-black text-xl">
-                {{ substr(auth()->user()->name ?? 'AD', 0, 2) }}
+                @if (auth()->user()?->avatar_full_url)
+                    <img src="{{ auth()->user()->avatar_full_url }}" alt="{{ auth()->user()->name }}" class="w-full h-full object-cover">
+                @else
+                    {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
+                @endif
             </div>
             <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">

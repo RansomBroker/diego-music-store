@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 use App\Models\User;
 use App\Models\Branch;
 use Spatie\Permission\Models\Role;
@@ -14,7 +15,7 @@ use Filament\Notifications\Notification;
 
 class PosUsers extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     // ── State Tabel & Pencarian ──────────────────────────────────────────
     public string $search = '';
@@ -32,6 +33,8 @@ class PosUsers extends Component
     public string $username = '';
     public string $email    = '';
     public string $password = '';
+    public $avatar          = null;
+    public ?string $existingAvatarUrl = null;
     public array  $selectedBranches = [];
     public array  $selectedRoles    = [];
     public bool   $is_active        = true;
@@ -71,7 +74,7 @@ class PosUsers extends Component
     // ── Modal: Buka Form Tambah ──────────────────────────────────────────
     public function openCreate(): void
     {
-        $this->reset(['name', 'username', 'email', 'password', 'selectedBranches', 'selectedRoles', 'editingId', 'isEditing']);
+        $this->reset(['name', 'username', 'email', 'password', 'avatar', 'existingAvatarUrl', 'selectedBranches', 'selectedRoles', 'editingId', 'isEditing']);
         $this->is_active = true;
         $this->showModal = true;
     }
@@ -87,11 +90,28 @@ class PosUsers extends Component
         $this->username         = $user->username ?? '';
         $this->email            = $user->email;
         $this->password         = ''; // Jangan load password hash
+        $this->avatar           = null;
+        $this->existingAvatarUrl = $user->avatar_full_url;
         $this->selectedBranches = $user->branches->pluck('id')->map(fn($id) => (string)$id)->toArray();
         $this->selectedRoles    = $user->roles->pluck('id')->map(fn($id) => (string)$id)->toArray();
         $this->is_active        = (bool) $user->is_active;
 
         $this->showModal = true;
+    }
+
+    // ── Hapus Avatar ─────────────────────────────────────────────────────
+    public function removeAvatar(): void
+    {
+        $this->avatar = null;
+        $this->existingAvatarUrl = null;
+
+        if ($this->isEditing && $this->editingId) {
+            $user = User::find($this->editingId);
+            if ($user && $user->avatar_url) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar_url);
+                $user->update(['avatar_url' => null]);
+            }
+        }
     }
 
     // ── Simpan (Create / Update) ─────────────────────────────────────────
@@ -102,6 +122,7 @@ class PosUsers extends Component
             'username' => 'required|string|max:255|unique:users,username,' . ($this->editingId ?? 'NULL'),
             'email'    => 'required|email|max:255|unique:users,email,' . ($this->editingId ?? 'NULL'),
             'password' => $this->isEditing ? 'nullable|string|min:6' : 'required|string|min:6',
+            'avatar'   => 'nullable|image|max:2048',
         ];
 
         $this->validate($rules, [
@@ -112,6 +133,8 @@ class PosUsers extends Component
             'email.unique'      => 'Email sudah terdaftar.',
             'password.required' => 'Password wajib diisi.',
             'password.min'      => 'Password minimal harus 6 karakter.',
+            'avatar.image'      => 'File harus berupa gambar (JPG, PNG, WEBP).',
+            'avatar.max'        => 'Ukuran foto maksimal 2MB.',
         ]);
 
         $data = [
@@ -122,6 +145,11 @@ class PosUsers extends Component
             'branches'  => array_map('intval', $this->selectedBranches),
             'roles'     => array_map('intval', $this->selectedRoles),
         ];
+
+        if ($this->avatar) {
+            $path = $this->avatar->store('avatars', 'public');
+            $data['avatar_url'] = $path;
+        }
 
         if (!empty($this->password)) {
             $data['password'] = bcrypt($this->password);

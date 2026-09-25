@@ -9,6 +9,22 @@ use Filament\Schemas\Components\Component;
 class CustomLogin extends BaseLogin
 {
     /**
+     * Judul heading halaman login backoffice.
+     */
+    public function getHeading(): string | \Illuminate\Contracts\Support\Htmlable | null
+    {
+        return 'Diego Music Backoffice';
+    }
+
+    /**
+     * Subheading informatif halaman login backoffice.
+     */
+    public function getSubheading(): string | \Illuminate\Contracts\Support\Htmlable | null
+    {
+        return 'Masuk untuk mengelola operasional, stok & laporan toko';
+    }
+
+    /**
      * Get the credentials from the form data to authenticate with.
      *
      * @param  array<string, mixed>  $data

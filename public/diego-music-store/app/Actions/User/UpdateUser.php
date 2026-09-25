@@ -5,6 +5,7 @@ namespace App\Actions\User;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class UpdateUser
 {
@@ -21,6 +22,11 @@ class UpdateUser
             // Extract relation arrays
             $branches = Arr::pull($data, 'branches', []);
             $roles = Arr::pull($data, 'roles', []);
+
+            // Cleanup old avatar if replaced
+            if (array_key_exists('avatar_url', $data) && $user->avatar_url && $user->avatar_url !== $data['avatar_url']) {
+                Storage::disk('public')->delete($user->avatar_url);
+            }
 
             // Update user details
             $user->update($data);

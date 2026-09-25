@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles;
@@ -27,6 +29,7 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'username',
         'email',
+        'avatar_url',
         'password',
         'is_active',
     ];
@@ -81,6 +84,23 @@ class User extends Authenticatable implements FilamentUser
         }
 
         return false;
+    }
+
+    /**
+     * Get the avatar URL for Filament and general application.
+     */
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return $this->avatar_url ? Storage::url($this->avatar_url) : null;
+    }
+
+    /**
+     * Get the full avatar URL attribute.
+     */
+    public function getAvatarFullUrlAttribute(): ?string
+    {
+        $raw = $this->attributes['avatar_url'] ?? null;
+        return $raw ? Storage::url($raw) : null;
     }
 
     /**

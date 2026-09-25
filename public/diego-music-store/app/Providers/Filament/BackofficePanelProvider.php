@@ -41,6 +41,9 @@ class BackofficePanelProvider extends PanelProvider
                 $branch = \App\Models\Branch::find($branchId);
                 return $branch ? ($branch->store_name ?: "Diego Music Store ({$branch->name})") : 'Diego Music Store';
             })
+            ->brandLogo(fn () => view('filament.components.brand-logo'))
+            ->brandLogoHeight('auto')
+            ->favicon(asset('favicon.ico'))
             ->navigationGroups([
                 NavigationGroup::make()
                      ->label('Shop')
@@ -113,6 +116,13 @@ class BackofficePanelProvider extends PanelProvider
     public function boot(): void
     {
         FilamentView::registerRenderHook(
+            PanelsRenderHook::HEAD_START,
+            fn (): HtmlString => new HtmlString(
+                view('filament.components.favicons')->render()
+            ),
+        );
+
+        FilamentView::registerRenderHook(
             PanelsRenderHook::USER_MENU_BEFORE,
             fn (): HtmlString => new HtmlString(
                 view('filament.components.branch-switcher-topbar')->render()
@@ -120,33 +130,23 @@ class BackofficePanelProvider extends PanelProvider
         );
 
         FilamentView::registerRenderHook(
+            PanelsRenderHook::SIMPLE_PAGE_START,
+            fn (): HtmlString => new HtmlString(
+                view('filament.components.login-header-extra')->render()
+            ),
+        );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::SIMPLE_LAYOUT_END,
+            fn (): HtmlString => new HtmlString(
+                view('filament.components.login-footer')->render()
+            ),
+        );
+
+        FilamentView::registerRenderHook(
             PanelsRenderHook::STYLES_AFTER,
             fn (): HtmlString => new HtmlString(
-                \Illuminate\Support\Facades\Blade::render("@vite('resources/css/app.css')") . '
-                <!-- Leaflet.js Map Library -->
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                <style>
-                    /* Custom Sidebar Styles */
-                    .fi-sidebar {
-                        border-right: 1px solid rgb(226, 232, 240) !important;
-                        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02) !important;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                    }
-                    .dark .fi-sidebar {
-                        border-right: 1px solid rgb(30, 41, 59) !important;
-                        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2) !important;
-                    }
-                    .fi-sidebar-header {
-                        border-bottom: 1px solid rgb(226, 232, 240) !important;
-                    }
-                    .dark .fi-sidebar-header {
-                        border-bottom: 1px solid rgb(30, 41, 59) !important;
-                    }
-
-
-                </style>
-            '
+                view('filament.components.custom-styles')->render()
             ),
         );
     }

@@ -39,9 +39,13 @@
                     <!-- Full Name + Avatar -->
                     <x-pos.table.td class="whitespace-nowrap">
                         <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-primary/10 dark:bg-blue-950/40 text-primary dark:text-blue-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                                {{ strtoupper(substr($row->name, 0, 2)) }}
-                            </div>
+                            @if ($row->avatar_full_url)
+                                <img src="{{ $row->avatar_full_url }}" alt="{{ $row->name }}" class="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0 shadow-xs">
+                            @else
+                                <div class="w-8 h-8 rounded-full bg-primary/10 dark:bg-blue-950/40 text-primary dark:text-blue-400 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-primary/20 dark:border-blue-800/30">
+                                    {{ strtoupper(substr($row->name, 0, 2)) }}
+                                </div>
+                            @endif
                             <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">
                                 {{ $row->name }}
                             </div>

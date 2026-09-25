@@ -311,11 +311,15 @@
 
         {{-- Profil User Avatar --}}
         <div class="flex items-center gap-2.5 flex-shrink-0">
-            <div class="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-600 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-xs flex-shrink-0"
+            <div class="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-600 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-xs flex-shrink-0 flex items-center justify-center font-bold text-xs text-primary dark:text-blue-400"
                  title="{{ auth()->user()->name ?? 'User' }} ({{ auth()->user()->roles()->first()?->name ?? 'Kasir' }})">
-                <img src="https://placehold.co/100x100/3b82f6/ffffff?text={{ substr(auth()->user()->name ?? 'AD', 0, 2) }}"
-                     alt="Profile"
-                     class="w-full h-full object-cover">
+                @if (auth()->user()?->avatar_full_url)
+                    <img src="{{ auth()->user()->avatar_full_url }}"
+                         alt="{{ auth()->user()->name }}"
+                         class="w-full h-full object-cover">
+                @else
+                    {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
+                @endif
             </div>
             <div class="hidden xl:block text-left leading-tight">
                 <div class="text-sm font-black text-slate-800 dark:text-slate-100 leading-tight">
@@ -399,10 +403,14 @@
             title="Menu & Akun Kasir"
             aria-label="Buka Menu Akun"
         >
-            <div class="relative w-7 h-7 rounded-lg overflow-hidden border border-white dark:border-slate-700 shadow-xs flex-shrink-0">
-                <img src="https://placehold.co/100x100/3b82f6/ffffff?text={{ substr(auth()->user()->name ?? 'AD', 0, 2) }}"
-                     alt="Profile"
-                     class="w-full h-full object-cover">
+            <div class="relative w-7 h-7 rounded-lg overflow-hidden border border-white dark:border-slate-700 shadow-xs flex-shrink-0 flex items-center justify-center bg-slate-200 dark:bg-slate-700 font-bold text-[10px] text-primary dark:text-blue-400">
+                @if (auth()->user()?->avatar_full_url)
+                    <img src="{{ auth()->user()->avatar_full_url }}"
+                         alt="Profile"
+                         class="w-full h-full object-cover">
+                @else
+                    {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
+                @endif
                 @if (!empty($activeSessionInfo))
                     <span class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-slate-800"></span>
                 @endif
@@ -452,7 +460,11 @@
             <div class="flex items-center justify-between border-b border-slate-150 dark:border-slate-800 pb-3">
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="w-11 h-11 rounded-2xl bg-primary/10 text-primary dark:text-blue-400 overflow-hidden border border-primary/20 flex items-center justify-center font-black text-sm shadow-xs flex-shrink-0">
-                        {{ substr(auth()->user()->name ?? 'AD', 0, 2) }}
+                        @if (auth()->user()?->avatar_full_url)
+                            <img src="{{ auth()->user()->avatar_full_url }}" alt="{{ auth()->user()->name }}" class="w-full h-full object-cover">
+                        @else
+                            {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
+                        @endif
                     </div>
                     <div class="min-w-0">
                         <div class="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">

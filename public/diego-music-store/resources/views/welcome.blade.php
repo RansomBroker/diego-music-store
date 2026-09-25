@@ -30,9 +30,7 @@
     <!-- Header/Theme Toggle -->
     <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                <i class="ph-bold ph-music-notes-simple text-xl"></i>
-            </div>
+            <img src="{{ asset('images/logo.png') }}" alt="Diego Music Logo" class="w-24     h-24    object-contain">
             <div>
                 <span class="font-extrabold text-slate-900 dark:text-white tracking-tight text-lg">DIEGO MUSIC</span>
                 <span class="text-xs block -mt-1 text-slate-400 dark:text-slate-500 font-medium">Store & Repair ERP</span>
