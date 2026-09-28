@@ -422,7 +422,7 @@
                         <a href="{{ route('pos.receipt-settings') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.receipt-settings') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
-                            Setting Struk & Invoice
+                            Setting Struk & Printer Hardware
                         </a>
                         <a href="{{ route('pos.barcode-print') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"

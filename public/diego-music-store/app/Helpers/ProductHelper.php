@@ -316,4 +316,17 @@ class ProductHelper
             'barcode-' . date('Y-m-d-H-i-s') . '.pdf'
         );
     }
+
+    /**
+     * Store barcode print payload in cache and return a temporary access token.
+     *
+     * @param array $payload
+     * @return string
+     */
+    public static function storeBarcodePrintPayload(array $payload): string
+    {
+        $token = 'bc_' . bin2hex(random_bytes(16));
+        cache()->put($token, $payload, now()->addMinutes(60));
+        return $token;
+    }
 }

@@ -23,6 +23,12 @@ class PosReceiptSettings extends Component
     public bool $show_cashier = true;
     public bool $show_tax_details = true;
     public string $invoice_footer_notes = '';
+    public string $activeTab = 'hardware';
+
+    public function setTab(string $tab): void
+    {
+        $this->activeTab = $tab;
+    }
 
     public function mount(): void
     {

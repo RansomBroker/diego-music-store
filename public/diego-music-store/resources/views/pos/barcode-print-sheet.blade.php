@@ -83,6 +83,14 @@
             padding-top: 2px;
             line-height: 1.2;
         }
+        @page {
+            @if ($columns == 1)
+            size: {{ $label_width }}mm {{ $label_height }}mm;
+            @else
+            size: auto;
+            @endif
+            margin: 2mm 0mm;
+        }
         @media print {
             .no-print {
                 display: none !important;
@@ -97,10 +105,11 @@
 <body>
 
     @if (!$__isPdf)
-    <div class="no-print" style="margin-bottom: 20px; text-align: center;">
-        <button onclick="window.print()" style="padding: 8px 20px; font-weight: bold; font-size: 14px; cursor: pointer;">CETAK BARCODE</button>
-        <button onclick="window.close()" style="padding: 8px 20px; font-size: 14px; cursor: pointer; margin-left: 8px;">TUTUP</button>
-        <hr style="margin-top: 15px;">
+    <div class="no-print" style="margin-bottom: 20px; text-align: center; background: #f8fafc; padding: 12px; border-bottom: 1px solid #e2e8f0;">
+        <button onclick="window.print()" style="padding: 8px 20px; font-weight: bold; font-size: 13px; cursor: pointer; background: #2563eb; color: #fff; border: none; border-radius: 6px;">CETAK PREVIEW BROWSER</button>
+        <button id="directPrintBtn" onclick="directPrintViaAgent()" style="padding: 8px 20px; font-weight: bold; font-size: 13px; cursor: pointer; background: #059669; color: #fff; border: none; border-radius: 6px; margin-left: 8px;">⚡ DIRECT PRINT VIA AGENT</button>
+        <button onclick="window.close()" style="padding: 8px 16px; font-size: 13px; cursor: pointer; margin-left: 8px; background: #64748b; color: #fff; border: none; border-radius: 6px;">TUTUP</button>
+        <div id="agentStatusNotice" style="font-size: 11px; color: #64748b; margin-top: 6px;"></div>
     </div>
     @endif
 
@@ -172,9 +181,109 @@
 
     @if (!$__isPdf)
     <script>
-        window.onload = function() {
+        window.printQueueData = @json($queue);
+        window.labelConfig = {
+            width: {{ $label_width }},
+            height: {{ $label_height }},
+            showStore: {{ $show_store ? 'true' : 'false' }},
+            showName: {{ $show_name ? 'true' : 'false' }},
+            showCode: {{ $show_code ? 'true' : 'false' }},
+            showPrice: {{ $show_price ? 'true' : 'false' }},
+            storeName: @json($storeTitle)
+        };
+
+        async function directPrintViaAgent() {
+            const btn = document.getElementById('directPrintBtn');
+            const notice = document.getElementById('agentStatusNotice');
+            const agentUrl = (localStorage.getItem('diego_pos_agent_url') || 'http://127.0.0.1:18920').replace(/\/+$/, '');
+            let printer = localStorage.getItem('diego_pos_barcode_printer');
+
+            // Auto-detect printer from agent if not explicitly saved yet
+            if (!printer) {
+                try {
+                    const pRes = await fetch(`${agentUrl}/api/printers`);
+                    const pData = await pRes.json();
+                    if (pData.status === 'success' && pData.printers.length > 0) {
+                        printer = pData.printers.find(p => /xprinter|zebra|barcode|tsc|label|panda/i.test(p)) || pData.printers[0];
+                        localStorage.setItem('diego_pos_barcode_printer', printer);
+                    }
+                } catch (_) {}
+            }
+
+            if (!printer) {
+                if (notice) notice.innerText = '⚠️ Printer barcode belum terdeteksi. Silakan pilih di Pengaturan POS.';
+                window.print();
+                return;
+            }
+
+            if (btn) btn.innerText = 'Mencetak via Agent...';
+            if (notice) notice.innerText = `Mengirim perintah cetak langsung ke [${printer}]...`;
+
+            // Build TSPL command format (Xprinter, TSC, Zebra)
+            let tspl = `SIZE ${window.labelConfig.width} mm, ${window.labelConfig.height} mm\nGAP 2 mm, 0 mm\nDIRECTION 1\n`;
+            for (const item of window.printQueueData) {
+                const qty = parseInt(item.qty || 1);
+                tspl += `CLS\n`;
+                let y = 15;
+                if (window.labelConfig.showStore) {
+                    const st = (window.labelConfig.storeName || '').substring(0, 24);
+                    tspl += `TEXT 20,${y},"2",0,1,1,"${st}"\n`;
+                    y += 24;
+                }
+                if (window.labelConfig.showName) {
+                    const nm = (item.name || '').substring(0, 26);
+                    tspl += `TEXT 20,${y},"2",0,1,1,"${nm}"\n`;
+                    y += 28;
+                }
+                const code = item.barcode || item.sku || '00000';
+                tspl += `BARCODE 20,${y},"128",45,1,0,2,2,"${code}"\n`;
+                y += 62;
+                if (window.labelConfig.showCode) {
+                    tspl += `TEXT 20,${y},"2",0,1,1,"${code}"\n`;
+                    y += 24;
+                }
+                if (window.labelConfig.showPrice && item.price) {
+                    tspl += `TEXT 20,${y},"3",0,1,1,"Rp ${parseInt(item.price).toLocaleString('id-ID')}"\n`;
+                }
+                tspl += `PRINT ${qty},1\n`;
+            }
+
+            try {
+                const res = await fetch(`${agentUrl}/api/print/barcode`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        printer: printer,
+                        raw_commands: tspl,
+                        title: 'Cetak Barcode POS'
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    if (notice) notice.innerText = `✅ Berhasil dicetak langsung ke [${printer}]! Menutup halaman...`;
+                    setTimeout(() => window.close(), 1000);
+                    return;
+                } else {
+                    if (notice) notice.innerText = `❌ Gagal: ${data.message || 'Error driver printer'}`;
+                }
+            } catch (e) {
+                console.warn('Agent direct print failed:', e);
+                if (notice) notice.innerText = '🔴 Print Agent tidak aktif, beralih ke preview dialog browser...';
+            }
+
+            if (btn) btn.innerText = '⚡ DIRECT PRINT VIA AGENT';
             window.print();
         }
+
+        window.onload = function() {
+            const savedDirect = localStorage.getItem('diego_pos_direct_print_enabled');
+            const isDirect = savedDirect !== null ? savedDirect === 'true' : true;
+            if (isDirect) {
+                directPrintViaAgent();
+            } else {
+                window.print();
+            }
+        };
     </script>
     @endif
 </body>

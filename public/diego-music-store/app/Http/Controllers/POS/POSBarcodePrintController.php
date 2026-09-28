@@ -9,9 +9,17 @@ class POSBarcodePrintController extends Controller
 {
     public function show(Request $request)
     {
-        $payload = json_decode(base64_decode($request->query('data')), true);
-        if (!$payload) {
-            abort(400, 'Data barcode tidak valid.');
+        $payload = null;
+
+        if ($request->filled('token')) {
+            $payload = cache()->get($request->query('token'));
+        } elseif ($request->filled('data')) {
+            $decoded = base64_decode($request->query('data'), true);
+            $payload = $decoded ? json_decode($decoded, true) : null;
+        }
+
+        if (!$payload || !is_array($payload)) {
+            abort(404, 'Data barcode tidak ditemukan atau sesi pencetakan telah kedaluwarsa. Silakan cetak ulang.');
         }
 
         $params = \App\Helpers\ProductHelper::resolveLayoutParams($payload);

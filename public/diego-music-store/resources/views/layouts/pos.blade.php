@@ -53,9 +53,73 @@
             document.documentElement.classList.remove('dark');
         }
 
-        window.addEventListener('print-receipt', event => {
+        window.addEventListener('print-receipt', async event => {
             const saleId = event.detail.saleId;
             const url = `{{ url('/pos/receipt') }}/${saleId}`;
+
+            const savedDirect = localStorage.getItem('diego_pos_direct_print_enabled');
+            const directPrint = savedDirect !== null ? savedDirect === 'true' : true;
+            let targetPrinter = localStorage.getItem('diego_pos_receipt_printer');
+            const agentUrl = (localStorage.getItem('diego_pos_agent_url') || 'http://127.0.0.1:18920').replace(/\/+$/, '');
+
+            if (directPrint) {
+                try {
+                    // Quick check if agent is alive
+                    const checkRes = await fetch(`${agentUrl}/api/status`, { signal: AbortSignal.timeout(1200) });
+                    if (checkRes.ok) {
+                        // Auto-select detected printer if none explicitly chosen yet
+                        if (!targetPrinter) {
+                            try {
+                                const pRes = await fetch(`${agentUrl}/api/printers`);
+                                const pData = await pRes.json();
+                                if (pData.status === 'success' && pData.printers.length > 0) {
+                                    targetPrinter = pData.printers.find(p => /pos|thermal|receipt|epson|58|80/i.test(p)) || pData.printers[0];
+                                    localStorage.setItem('diego_pos_receipt_printer', targetPrinter);
+                                }
+                            } catch (_) {}
+                        }
+
+                        if (targetPrinter) {
+                            // Fetch the receipt text representation
+                            const receiptRes = await fetch(url);
+                            const htmlContent = await receiptRes.text();
+
+                            // Extract text lines from DOM
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(htmlContent, 'text/html');
+                            const bodyText = doc.body.innerText || '';
+
+                            const printRes = await fetch(`${agentUrl}/api/print/receipt`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    printer: targetPrinter,
+                                    raw_text: bodyText.trim(),
+                                    title: 'Struk #' + saleId,
+                                    cut: true
+                                })
+                            });
+
+                            if (printRes.ok) {
+                                if (window.dispatchEvent) {
+                                    window.dispatchEvent(new CustomEvent('toast', {
+                                        detail: {
+                                            type: 'success',
+                                            title: 'Struk Tercetak Langsung',
+                                            message: `Struk transaksi berhasil dicetak ke [${targetPrinter}].`
+                                        }
+                                    }));
+                                }
+                                return; // Silent print completed successfully!
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Direct print agent unreachable, falling back to browser print:', e);
+                }
+            }
+
+            // Fallback to standard browser window.open
             window.open(url, '_blank');
         });
 

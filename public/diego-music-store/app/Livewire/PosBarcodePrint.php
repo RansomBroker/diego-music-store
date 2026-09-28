@@ -207,11 +207,11 @@ class PosBarcodePrint extends Component
         ];
         $params = \App\Helpers\ProductHelper::resolveLayoutParams($raw);
 
-        $payload = base64_encode(json_encode(array_merge($params, [
+        $token = \App\Helpers\ProductHelper::storeBarcodePrintPayload(array_merge($params, [
             'queue' => array_values($this->printQueue),
-        ])));
+        ]));
 
-        $this->js("window.open('/pos/barcode-print/sheet?data={$payload}', '_blank')");
+        $this->js("window.open('/pos/barcode-print/sheet?token={$token}', '_blank')");
     }
 
     private function getCategoryOfVariant($variant): string
