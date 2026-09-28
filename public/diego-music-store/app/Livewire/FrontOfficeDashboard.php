@@ -34,12 +34,17 @@ class FrontOfficeDashboard extends Component
             ? Storage::url($branch->logo_path)
             : null;
 
-        // Load presensi cabang hari ini
+        $isOwner = Auth::check() && Auth::user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
+
+        // Load presensi cabang hari ini (khusus karyawan operasional, kecualikan Owner)
         $todayDate = now()->format('Y-m-d');
         $branchEmployees = Employee::with(['user', 'attendances' => function ($q) use ($todayDate) {
             $q->where('date', $todayDate);
         }])
         ->where('is_active', true)
+        ->whereDoesntHave('user.roles', function ($q) {
+            $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
+        })
         ->when($branch, function ($q) use ($branch) {
             $q->where(function ($sub) use ($branch) {
                 $sub->where('branch_id', $branch->id)
@@ -108,6 +113,7 @@ class FrontOfficeDashboard extends Component
         }
 
         return view('livewire.front-office-dashboard', [
+            'isOwner'                       => $isOwner,
             'activeSessionInfo'             => $activeSessionInfo,
             'selectedLogoUrl'               => $selectedLogoUrl,
             'currentBranch'                 => $branch,

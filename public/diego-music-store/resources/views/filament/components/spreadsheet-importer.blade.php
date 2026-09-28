@@ -1,8 +1,25 @@
 @php
-    $isCustomer = $type === 'customer';
-    $title = $isCustomer ? 'Pelanggan' : 'Supplier';
-    $csvUrl = asset($isCustomer ? 'templates/template_import_pelanggan.csv' : 'templates/template_import_supplier.csv');
-    $xlsxUrl = asset($isCustomer ? 'templates/template_import_pelanggan.xlsx' : 'templates/template_import_supplier.xlsx');
+    $title = match($type) {
+        'customer'      => 'Pelanggan',
+        'supplier'      => 'Supplier',
+        'supplier_debt' => 'Saldo Awal Faktur Hutang Supplier',
+        'product'       => 'Produk & Stok Awal',
+        default         => ucfirst($type),
+    };
+    $csvUrl = asset(match($type) {
+        'customer'      => 'templates/template_import_pelanggan.csv',
+        'supplier'      => 'templates/template_import_supplier.csv',
+        'supplier_debt' => 'templates/template_import_hutang_supplier.csv',
+        'product'       => 'templates/template_import_produk.csv',
+        default         => '',
+    });
+    $xlsxUrl = asset(match($type) {
+        'customer'      => 'templates/template_import_pelanggan.xlsx',
+        'supplier'      => 'templates/template_import_supplier.xlsx',
+        'supplier_debt' => 'templates/template_import_hutang_supplier.xlsx',
+        'product'       => 'templates/template_import_produk.xlsx',
+        default         => '',
+    });
 @endphp
 
 <div class="space-y-5 text-gray-900 dark:text-gray-100">
@@ -36,6 +53,185 @@
             </div>
         </div>
     </div>
+
+    @if($type === 'product' && !$isImporting && !$importFinished)
+        <!-- Product Import Configuration (Branch & Double-Entry Accounting Setup) -->
+        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-white/5 space-y-3.5 shadow-xs">
+            <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-2.5">
+                <div>
+                    <h5 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        Konfigurasi Alokasi Stok & Jurnal Saldo Awal
+                    </h5>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                        Saldo awal stok (Qty × HPP) akan dialokasikan ke cabang dan dibukukan ke jurnal akuntansi berpasangan.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <!-- 1. Branch Selector -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                        Cabang Alokasi Stok
+                    </label>
+                    <select wire:model.live="branchId" class="w-full text-xs font-medium rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 shadow-xs">
+                        @foreach(\App\Models\Branch::where('is_active', true)->get() as $b)
+                            <option value="{{ $b->id }}">{{ $b->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- 2. Inventory Account [DEBIT] -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                        <span>Akun Persediaan [DEBIT]</span>
+                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Aset (+)</span>
+                    </label>
+                    <input type="text" 
+                           value="111401001 - PERSEDIAAN BARANG DAGANG" 
+                           readonly 
+                           class="w-full text-xs font-semibold rounded-lg border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 cursor-not-allowed shadow-xs" />
+                </div>
+
+                <!-- 3. Contra Account [KREDIT] -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                        <span>Akun Penyeimbang [KREDIT]</span>
+                        <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">Ekuitas / Modal</span>
+                    </label>
+                    <select wire:model.live="contraAccountId" class="w-full text-xs font-medium rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 shadow-xs">
+                        @php
+                            $modalAcc = \App\Helpers\AccountHelper::findByCode('311101001');
+                            $retainedAcc = \App\Helpers\AccountHelper::findByCode('311201001');
+                            $invAcc = \App\Helpers\AccountHelper::findByCode('111401001');
+                        @endphp
+                        @if($modalAcc)
+                            <option value="{{ $modalAcc->id }}">311101001 - MODAL DISETOR (Default Ekuitas)</option>
+                        @endif
+                        @if($retainedAcc)
+                            <option value="{{ $retainedAcc->id }}">311201001 - LABA DITAHAN</option>
+                        @endif
+                        @if($invAcc)
+                            <option value="{{ $invAcc->id }}">111401001 - PERSEDIAAN BARANG DAGANG</option>
+                        @endif
+                    </select>
+                </div>
+            </div>
+
+            <!-- Double-entry Journal Preview Box -->
+            @php
+                $selectedContra = \App\Models\Account::find($contraAccountId);
+                $isSameAccount = $selectedContra && $selectedContra->code === '111401001';
+            @endphp
+            <div class="p-3 rounded-lg border {{ $isSameAccount ? 'border-amber-300 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/30' : 'border-blue-100 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/20' }} text-[11px] space-y-1">
+                <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 {{ $isSameAccount ? 'text-amber-600' : 'text-blue-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Simulasi Jurnal Otomatis yang Terbentuk:
+                    </span>
+                    <span class="font-mono text-[10px] text-gray-500">Status: POSTED</span>
+                </div>
+                <div class="font-mono space-y-0.5 text-gray-700 dark:text-gray-300 pl-5">
+                    <div>[D] <strong>111401001 - PERSEDIAAN BARANG DAGANG</strong> <span class="text-emerald-600 dark:text-emerald-400">(Aset Persediaan Bertambah)</span></div>
+                    <div>[K] <strong>{{ $selectedContra ? ($selectedContra->code . ' - ' . $selectedContra->name) : '311101001 - MODAL DISETOR' }}</strong> <span class="{{ $isSameAccount ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-blue-600 dark:text-blue-400' }}">{{ $isSameAccount ? '(Perhatian: Debit dan Kredit di akun yang sama, saldo akhir di neraca menjadi Rp 0)' : '(Penyeimbang Modal/Ekuitas)' }}</span></div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($type === 'supplier_debt' && !$isImporting && !$importFinished)
+        <!-- Supplier Debt Import Configuration (Branch & Double-Entry AP Accounting Setup) -->
+        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-white/5 space-y-3.5 shadow-xs">
+            <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-2.5">
+                <div>
+                    <h5 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Konfigurasi Cabang & Jurnal Saldo Awal Hutang Supplier
+                    </h5>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                        Setiap nota/faktur akan dicatat sebagai faktur pembelian kredit (posted) dan dibukukan ke jurnal akuntansi berpasangan (Opsi 1).
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <!-- 1. Branch Selector -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                        Cabang Alokasi Hutang
+                    </label>
+                    <select wire:model.live="branchId" class="w-full text-xs font-medium rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 shadow-xs">
+                        @foreach(\App\Models\Branch::where('is_active', true)->get() as $b)
+                            <option value="{{ $b->id }}">{{ $b->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- 2. Accounts Payable Account [KREDIT] -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                        <span>Akun Hutang Dagang [KREDIT]</span>
+                        <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">Kewajiban (+)</span>
+                    </label>
+                    <input type="text" 
+                           value="211101001 - HUTANG DAGANG" 
+                           readonly 
+                           class="w-full text-xs font-semibold rounded-lg border-rose-300 dark:border-rose-800 bg-rose-50/70 dark:bg-rose-950/30 text-rose-900 dark:text-rose-300 cursor-not-allowed shadow-xs" />
+                </div>
+
+                <!-- 3. Contra Account [DEBIT] -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                        <span>Akun Penyeimbang [DEBIT]</span>
+                        <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">Ekuitas (-)</span>
+                    </label>
+                    <select wire:model.live="contraAccountId" class="w-full text-xs font-medium rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 shadow-xs">
+                        @php
+                            $modalAcc = \App\Helpers\AccountHelper::findByCode('311101001');
+                            $retainedAcc = \App\Helpers\AccountHelper::findByCode('311201001');
+                        @endphp
+                        @if($modalAcc)
+                            <option value="{{ $modalAcc->id }}">311101001 - MODAL DISETOR (Default Ekuitas)</option>
+                        @endif
+                        @if($retainedAcc)
+                            <option value="{{ $retainedAcc->id }}">311201001 - LABA DITAHAN</option>
+                        @endif
+                    </select>
+                </div>
+            </div>
+
+            <!-- Double-entry Journal Preview Box -->
+            @php
+                $selectedContra = \App\Models\Account::find($contraAccountId);
+            @endphp
+            <div class="p-3 rounded-lg border border-blue-100 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/20 text-[11px] space-y-1">
+                <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Simulasi Jurnal Otomatis yang Terbentuk (Opsi 1):
+                    </span>
+                    <span class="font-mono text-[10px] text-gray-500">Status: POSTED</span>
+                </div>
+                <div class="font-mono space-y-0.5 text-gray-700 dark:text-gray-300 pl-5">
+                    <div>[D] <strong>{{ $selectedContra ? ($selectedContra->code . ' - ' . $selectedContra->name) : '311101001 - MODAL DISETOR' }}</strong> <span class="text-blue-600 dark:text-blue-400">(Penyeimbang Ekuitas Saldo Awal)</span></div>
+                    <div>[K] <strong>211101001 - HUTANG DAGANG</strong> <span class="text-rose-600 dark:text-rose-400">(Kewajiban Hutang Supplier Bertambah)</span></div>
+                </div>
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 pt-1">
+                    * Sistem secara otomatis meneruskan nama supplier untuk baris beruntun (merged cells) dan mengabaikan baris subtotal "Total :".
+                </p>
+            </div>
+        </div>
+    @endif
+
 
     @if(!$filePath && !$importFinished)
         <!-- File Upload Area -->
@@ -350,6 +546,44 @@
                     <p class="text-2xl font-black text-amber-600 dark:text-amber-400">{{ $skippedCount }}</p>
                 </div>
             </div>
+
+            @if($type === 'product' && $generatedJournalNumber)
+                <!-- Initial Stock Journal Information -->
+                <div class="p-4 bg-white/90 dark:bg-gray-800/90 border border-blue-200 dark:border-blue-900/50 rounded-2xl text-left space-y-2.5 max-w-md mx-auto shadow-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Jurnal Saldo Awal Persediaan
+                        </span>
+                        <span class="px-2 py-0.5 text-[10px] font-black rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+                            POSTED
+                        </span>
+                    </div>
+
+                    <div class="text-xs space-y-1.5 text-gray-700 dark:text-gray-300">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-500 dark:text-gray-400">No. Bukti Jurnal:</span>
+                            <span class="font-mono font-bold text-blue-700 dark:text-blue-300">{{ $generatedJournalNumber }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-500 dark:text-gray-400">Total Nilai Persediaan:</span>
+                            <span class="font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($totalStockValue, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="text-[11px] text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700/60 space-y-1">
+                            <div class="flex items-center justify-between">
+                                <span>[D] 111401001 - PERSEDIAAN BARANG DAGANG</span>
+                                <span class="font-semibold text-gray-800 dark:text-gray-200">Rp {{ number_format($totalStockValue, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>[K] {{ \App\Models\Account::find($contraAccountId)?->name ?? 'MODAL DISETOR' }}</span>
+                                <span class="font-semibold text-gray-800 dark:text-gray-200">Rp {{ number_format($totalStockValue, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <!-- Errors Log if any -->
             @if(!empty($importErrors))

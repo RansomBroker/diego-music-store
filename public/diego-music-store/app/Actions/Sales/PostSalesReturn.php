@@ -77,17 +77,10 @@ class PostSalesReturn
                 ]);
 
                 $resolveAccount = function($code, $defaultName, $classification) {
-                    return Account::firstOrCreate(
-                        ['code' => $code],
-                        [
-                            'name'           => $defaultName,
-                            'classification' => $classification,
-                            'is_active'      => true,
-                        ]
-                    )->id;
+                    return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);
                 };
 
-                $returAccId = $resolveAccount('4-1100', 'Retur & Potongan Penjualan', 'Revenue');
+                $returAccId = $resolveAccount('411201001', 'RETUR PENJUALAN', 'Revenue');
                 JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id'       => $returAccId,
@@ -98,10 +91,10 @@ class PostSalesReturn
 
                 $payMethod = strtolower($sale?->payment_method ?: 'tunai');
                 if (str_contains($payMethod, 'debit')) {
-                    $creditAccId = $resolveAccount('1-1110', 'Bank BCA', 'Asset');
+                    $creditAccId = $resolveAccount('111201001', 'BANK BCA', 'Asset');
                     $methodName = 'Bank BCA';
                 } else {
-                    $creditAccId = $resolveAccount('1-1000', 'Kas Utama', 'Asset');
+                    $creditAccId = $resolveAccount('111101001', 'KAS', 'Asset');
                     $methodName = 'Kas Utama';
                 }
 
@@ -114,8 +107,8 @@ class PostSalesReturn
                 ]);
 
                 if ($totalReturnedCOGS > 0) {
-                    $cogsAccId = $resolveAccount('5-1000', 'Harga Pokok Penjualan', 'Expense');
-                    $inventoryAccId = $resolveAccount('1-1300', 'Persediaan Barang', 'Asset');
+                    $cogsAccId = $resolveAccount('511501001', 'HARGA POKOK PENJUALAN', 'Expense');
+                    $inventoryAccId = $resolveAccount('111401001', 'PERSEDIAAN BARANG DAGANG', 'Asset');
 
                     JournalItem::create([
                         'journal_entry_id' => $journalEntry->id,

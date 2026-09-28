@@ -85,15 +85,8 @@ class ProcessStockOpnameComplete
                     'posted_by' => \Illuminate\Support\Facades\Auth::id(),
                 ]);
 
-                $resolveAccount = function($code, $defaultName = 'Default Account') {
-                    return \App\Models\Account::firstOrCreate(
-                        ['code' => $code],
-                        [
-                            'name' => $defaultName,
-                            'classification' => str_starts_with($code, '1') ? 'Asset' : (str_starts_with($code, '2') ? 'Liability' : 'Expense'),
-                            'is_active' => true,
-                        ]
-                    )->id;
+                $resolveAccount = function($code, $defaultName = 'Default Account', $classification = 'Asset') {
+                    return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);
                 };
 
                 foreach ($opname->items as $item) {
@@ -116,9 +109,9 @@ class ProcessStockOpnameComplete
                     }
 
                     $inventoryAccId = $item->productVariant->product->inventory_account_id 
-                        ?? $resolveAccount('1-1300', 'Persediaan Barang Dagang');
+                        ?? $resolveAccount('111401001', 'PERSEDIAAN BARANG DAGANG', 'Asset');
                     $hppAccId = $item->productVariant->product->cogs_account_id 
-                        ?? $resolveAccount('5-1000', 'Harga Pokok Penjualan');
+                        ?? $resolveAccount('511501001', 'HARGA POKOK PENJUALAN', 'cost');
 
                     if ($diff > 0) {
                         // Surplus: Debit Persediaan, Kredit HPP

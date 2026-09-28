@@ -45,8 +45,11 @@ class GenerateMonthlyPayroll
                 $payroll->update(['status' => 'draft']);
             }
 
-            // Fetch target employees
-            $employeeQuery = Employee::where('is_active', true);
+            // Fetch target employees (khusus karyawan operasional, kecualikan Owner)
+            $employeeQuery = Employee::where('is_active', true)
+                ->whereDoesntHave('user.roles', function ($q) {
+                    $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
+                });
             if ($branchId) {
                 $employeeQuery->where('branch_id', $branchId);
             }

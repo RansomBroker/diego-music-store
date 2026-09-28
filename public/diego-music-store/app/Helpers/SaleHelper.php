@@ -32,7 +32,7 @@ class SaleHelper
             return 0;
         }
         
-        $cashAccount = Account::where('code', '1-1000')->first();
+        $cashAccount = \App\Helpers\AccountHelper::findByCode('111101001');
         if (!$cashAccount) {
             $payMethod = strtolower($sale->payment_method);
             if ($payMethod === 'cash' || $payMethod === 'tunai' || str_contains($payMethod, 'tunai') || str_contains($payMethod, 'cash')) {
@@ -73,7 +73,7 @@ class SaleHelper
         }
         
         $saleIds = $sales->pluck('id');
-        $cashAccount = Account::where('code', '1-1000')->first();
+        $cashAccount = \App\Helpers\AccountHelper::findByCode('111101001');
         
         $journalSum = 0;
         if ($cashAccount) {

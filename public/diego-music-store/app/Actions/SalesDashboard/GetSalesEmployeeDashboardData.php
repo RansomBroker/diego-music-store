@@ -17,13 +17,19 @@ class GetSalesEmployeeDashboardData
     /**
      * Execute aggregating sales employee dashboard metrics and charts.
      */
-    public function execute(?User $user = null): array
+    public function execute(?User $user = null, ?int $targetEmployeeId = null): array
     {
-        if (!$user) {
-            $user = auth()->user();
+        if ($targetEmployeeId) {
+            $employee = Employee::with('user')->find($targetEmployeeId);
+            $user = $employee?->user ?: $user;
+        } else {
+            if (!$user) {
+                $user = auth()->user();
+            }
+
+            $employee = $user?->employee ?: ($user ? Employee::where('user_id', $user->id)->first() : null);
         }
 
-        $employee = $user?->employee ?: ($user ? Employee::where('user_id', $user->id)->first() : null);
         $employeeId = $employee?->id;
         $userId = $user?->id;
 
@@ -323,12 +329,16 @@ class GetSalesEmployeeDashboardData
         $startYearMonth = now()->subMonths(11)->startOfMonth()->format('Y-m-d');
         $endYearMonth = now()->endOfMonth()->format('Y-m-d');
 
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        $dateExpr = $driver === 'sqlite' ? "strftime('%Y-%m', invoice_date)" : "DATE_FORMAT(invoice_date, '%Y-%m')";
+        $logDateExpr = $driver === 'sqlite' ? "strftime('%Y-%m', date)" : "DATE_FORMAT(date, '%Y-%m')";
+
         $salesByMonth = collect();
         if ($userId) {
             $salesByMonth = Sale::where('status', 'completed')
                 ->where('sales_rep_id', $userId)
                 ->whereBetween('invoice_date', [$startYearMonth, $endYearMonth])
-                ->selectRaw("DATE_FORMAT(invoice_date, '%Y-%m') as ym, SUM(grand_total) as total")
+                ->selectRaw("{$dateExpr} as ym, SUM(grand_total) as total")
                 ->groupBy('ym')
                 ->pluck('total', 'ym');
         }
@@ -337,7 +347,7 @@ class GetSalesEmployeeDashboardData
         if ($employeeId && $salesByMonth->isEmpty()) {
             $logsByMonth = SalesCommissionLog::where('employee_id', $employeeId)
                 ->whereBetween('date', [$startYearMonth, $endYearMonth])
-                ->selectRaw("DATE_FORMAT(date, '%Y-%m') as ym, SUM(sale_amount) as total")
+                ->selectRaw("{$logDateExpr} as ym, SUM(sale_amount) as total")
                 ->groupBy('ym')
                 ->pluck('total', 'ym');
         }

@@ -21,6 +21,9 @@ class EmployeeCashAdvance extends Model
         'approved_by',
         'approved_at',
         'disbursed_at',
+        'disbursement_account_id',
+        'journal_entry_id',
+        'journal_no',
         'reason',
         'notes',
     ];
@@ -33,6 +36,8 @@ class EmployeeCashAdvance extends Model
         'remaining_amount' => 'decimal:2',
         'approved_at' => 'datetime',
         'disbursed_at' => 'datetime',
+        'disbursement_account_id' => 'integer',
+        'journal_entry_id' => 'integer',
     ];
 
     public function employee(): BelongsTo
@@ -48,6 +53,16 @@ class EmployeeCashAdvance extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function disbursementAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'disbursement_account_id');
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
     }
 
     public static function generateAdvanceNumber(): string

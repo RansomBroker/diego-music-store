@@ -118,6 +118,8 @@ class ProductForm
 
                                         FileUpload::make('image_path')
                                             ->image()
+                                            ->disk('public')
+                                            ->visibility('public')
                                             ->directory('products')
                                             ->label('Foto Produk'),
 
@@ -560,22 +562,22 @@ class ProductForm
                                     ->schema([
                                         Select::make('inventory_account_id')
                                             ->label('Akun Persediaan')
-                                            ->options(fn () => \App\Models\Account::where('is_active', true)->where('is_header', false)->pluck('name', 'id'))
-                                            ->placeholder('Pilih Akun Persediaan (Default: 1-1300)')
+                                            ->options(fn () => \App\Models\Account::where('is_active', true)->where('is_header', false)->get()->mapWithKeys(fn($a) => [$a->id => "{$a->code} - {$a->name}"]))
+                                            ->placeholder('Pilih Akun Persediaan (Default: 111401001)')
                                             ->searchable()
                                             ->preload(),
 
                                         Select::make('sales_account_id')
                                             ->label('Akun Penjualan')
-                                            ->options(fn () => \App\Models\Account::where('is_active', true)->where('is_header', false)->pluck('name', 'id'))
-                                            ->placeholder('Pilih Akun Penjualan (Default: 4-1000)')
+                                            ->options(fn () => \App\Models\Account::where('is_active', true)->where('is_header', false)->get()->mapWithKeys(fn($a) => [$a->id => "{$a->code} - {$a->name}"]))
+                                            ->placeholder('Pilih Akun Penjualan (Default: 411101001)')
                                             ->searchable()
                                             ->preload(),
 
                                         Select::make('cogs_account_id')
                                             ->label('Akun HPP')
-                                            ->options(fn () => \App\Models\Account::where('is_active', true)->where('is_header', false)->pluck('name', 'id'))
-                                            ->placeholder('Pilih Akun HPP (Default: 5-1000)')
+                                            ->options(fn () => \App\Models\Account::where('is_active', true)->where('is_header', false)->get()->mapWithKeys(fn($a) => [$a->id => "{$a->code} - {$a->name}"]))
+                                            ->placeholder('Pilih Akun HPP (Default: 511501001)')
                                             ->searchable()
                                             ->preload(),
                                     ]),

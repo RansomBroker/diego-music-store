@@ -217,22 +217,21 @@ class GenerateIncomeStatementReport
             $class = strtolower($acc->classification);
             $code = strtolower($acc->code);
 
+            $isOtherRevenue = str_starts_with($code, '7') || (str_starts_with($code, '6') && $class === 'revenue');
+            $isOtherExpense = str_starts_with($code, '8') || (str_starts_with($code, '6') && $class !== 'revenue' && !str_starts_with($code, '61') && (str_starts_with($code, '62') || str_starts_with($code, '63') || str_starts_with($code, '64')));
+
             if (str_starts_with($code, '4')) {
                 $revenueItems[] = $itemData;
             } elseif (str_starts_with($code, '5')) {
                 $cogsItems[] = $itemData;
-            } elseif (str_starts_with($code, '6')) {
-                $operatingExpenseItems[] = $itemData;
-            } elseif (str_starts_with($code, '7')) {
+            } elseif ($isOtherRevenue) {
                 $otherRevenueItems[] = $itemData;
-            } elseif (str_starts_with($code, '8')) {
+            } elseif ($isOtherExpense) {
                 $otherExpenseItems[] = $itemData;
+            } elseif (str_starts_with($code, '6') || $class !== 'revenue') {
+                $operatingExpenseItems[] = $itemData;
             } else {
-                if ($class === 'revenue') {
-                    $revenueItems[] = $itemData;
-                } else {
-                    $operatingExpenseItems[] = $itemData;
-                }
+                $revenueItems[] = $itemData;
             }
         }
 
@@ -247,11 +246,14 @@ class GenerateIncomeStatementReport
                     $class = strtolower($acc->classification);
                     $match = false;
 
-                    if ($prefix === '4' && (str_starts_with($code, '4') || $class === 'revenue')) $match = true;
+                    $isOtherRev = str_starts_with($code, '7') || (str_starts_with($code, '6') && $class === 'revenue');
+                    $isOtherExp = str_starts_with($code, '8') || (str_starts_with($code, '6') && $class !== 'revenue' && !str_starts_with($code, '61') && (str_starts_with($code, '62') || str_starts_with($code, '63') || str_starts_with($code, '64')));
+
+                    if ($prefix === '4' && (str_starts_with($code, '4') || ($class === 'revenue' && !str_starts_with($code, '6') && !str_starts_with($code, '7')))) $match = true;
                     elseif ($prefix === '5' && str_starts_with($code, '5')) $match = true;
-                    elseif ($prefix === '6' && (str_starts_with($code, '6') || ($class !== 'revenue' && !str_starts_with($code, '4') && !str_starts_with($code, '5') && !str_starts_with($code, '7') && !str_starts_with($code, '8')))) $match = true;
-                    elseif ($prefix === '7' && str_starts_with($code, '7')) $match = true;
-                    elseif ($prefix === '8' && str_starts_with($code, '8')) $match = true;
+                    elseif ($prefix === '6' && ((str_starts_with($code, '61')) || (str_starts_with($code, '6') && !$isOtherRev && !$isOtherExp) || ($class !== 'revenue' && !str_starts_with($code, '4') && !str_starts_with($code, '5') && !str_starts_with($code, '7') && !str_starts_with($code, '8') && !$isOtherExp))) $match = true;
+                    elseif ($prefix === '7' && $isOtherRev) $match = true;
+                    elseif ($prefix === '8' && $isOtherExp) $match = true;
 
                     if ($match) {
                         $cToko += $rawCurrent[$acc->id]['toko'];

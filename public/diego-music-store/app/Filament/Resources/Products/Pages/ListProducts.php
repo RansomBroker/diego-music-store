@@ -96,7 +96,18 @@ class ListProducts extends ListRecords
             CreateAction::make()
                 ->modalWidth('8xl')
                 ->using(fn (array $data): Model => app(CreateProductAction::class)->execute($data)->variants()->first()),
+            \Filament\Actions\Action::make('importProducts')
+                ->label('Import Excel / CSV')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('success')
+                ->modalHeading('Import Data Produk & Saldo Awal Stok')
+                ->modalWidth('4xl')
+                ->modalSubmitAction(false)
+                ->modalCancelAction(false)
+                ->modalFooterActions([])
+                ->modalContent(fn () => view('filament.components.product-import-modal')),
         ];
     }
 }
+
 

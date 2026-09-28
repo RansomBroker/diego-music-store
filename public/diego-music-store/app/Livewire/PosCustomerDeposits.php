@@ -97,7 +97,7 @@ class PosCustomerDeposits extends Component
         $defaultAccount = Account::where('classification', 'asset')
             ->where('is_header', false)
             ->where(function ($q) {
-                $q->where('code', '1-1000')->orWhere('name', 'like', '%kas%');
+                $q->where('code', '111101001')->orWhere('code', '1-1000')->orWhere('name', 'like', '%kas%');
             })
             ->first();
 
@@ -356,8 +356,8 @@ class PosCustomerDeposits extends Component
         }
 
         try {
-            // Automatically assign Penitipan Dana account (2-1200)
-            $penitipanDanaAcc = Account::where('code', '2-1200')->first();
+            // Automatically assign Penitipan Dana account (211601004)
+            $penitipanDanaAcc = \App\Helpers\AccountHelper::findByCode('211601004') ?? Account::where('code', '2-1200')->first();
             $accountId = $penitipanDanaAcc?->id ?? $this->account_id;
 
             $data = [
@@ -425,7 +425,7 @@ class PosCustomerDeposits extends Component
             $defaultKas = Account::where('classification', 'asset')
                 ->where('is_header', false)
                 ->where(function ($q) {
-                    $q->where('code', '1-1000')->orWhere('name', 'like', '%kas%');
+                    $q->where('code', '111101001')->orWhere('code', '1-1000')->orWhere('name', 'like', '%kas%');
                 })
                 ->first();
             $settlementAccountId = $this->settlement_account_id ?? $defaultKas?->id;

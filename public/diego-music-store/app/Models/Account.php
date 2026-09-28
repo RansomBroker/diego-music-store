@@ -13,6 +13,8 @@ class Account extends Model
         'code',
         'name',
         'classification',
+        'account_subtype',
+        'normal_balance',
         'is_active',
         'parent_id',
         'is_header',
@@ -22,6 +24,14 @@ class Account extends Model
         'is_active' => 'boolean',
         'is_header' => 'boolean',
     ];
+
+    /**
+     * Find account by code or legacy code mapping.
+     */
+    public static function findByCode(string $code): ?self
+    {
+        return \App\Helpers\AccountHelper::findByCode($code);
+    }
 
     /**
      * Get the parent account.
@@ -60,14 +70,23 @@ class Account extends Model
      */
     public function getNormalBalance(): string
     {
+        if (!empty($this->normal_balance)) {
+            return strtolower($this->normal_balance);
+        }
+
         $code = strtolower($this->code);
         $classification = strtolower($this->classification);
+
+        // Revenue & Equity are always Credit
+        if (str_contains($classification, 'revenue') || str_contains($classification, 'pendapatan') || str_contains($classification, 'equity')) {
+            return 'credit';
+        }
 
         // Assets (1), Expense (5, 6) are normally Debit
         if (str_starts_with($code, '1') || str_starts_with($code, '5') || str_starts_with($code, '6')) {
             return 'debit';
         }
-        if (str_contains($classification, 'asset') || str_contains($classification, 'expense') || str_contains($classification, 'beban')) {
+        if (str_contains($classification, 'asset') || str_contains($classification, 'expense') || str_contains($classification, 'beban') || str_contains($classification, 'cost')) {
             return 'debit';
         }
 

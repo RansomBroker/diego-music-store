@@ -106,9 +106,22 @@ class PurchaseTransactionForm
                                                     ];
                                                 }
                                                 $set('items', $items);
+                                                $set('down_payment_amount', $po->dp_amount ?? 0);
                                             }
+                                        } else {
+                                            $set('down_payment_amount', 0);
                                         }
                                     }),
+
+                                TextInput::make('down_payment_amount')
+                                    ->label('Uang Muka (DP) Terbayar')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->helperText(fn (Get $get) => intval($get('down_payment_amount') ?? 0) > 0 ? 'DP yang telah dibayar otomatis memotong sisa hutang faktur.' : null)
+                                    ->visible(fn (Get $get) => intval($get('down_payment_amount') ?? 0) > 0 || !empty($get('po_id'))),
 
                                 Select::make('supplier_id')
                                     ->label('Supplier')
@@ -668,6 +681,8 @@ class PurchaseTransactionForm
                                 
                                 $shippingCostInGrandTotal = ($shippingBorneBy === 'self_direct') ? $shippingCost : 0;
                                 $grandTotal = $subtotal - $discount + $taxAmount + $shippingCostInGrandTotal + $otherCost - $pphAmount;
+                                $downPaymentAmount = intval($get('down_payment_amount') ?? 0);
+                                $netPayable = max(0, $grandTotal - $downPaymentAmount);
                                 
                                 return view('backoffice.purchase-transactions.summary-placeholder', [
                                     'subtotal' => $subtotal,
@@ -678,6 +693,8 @@ class PurchaseTransactionForm
                                     'pphAmount' => $pphAmount,
                                     'shippingBorneBy' => $shippingBorneBy,
                                     'grandTotal' => $grandTotal,
+                                    'downPaymentAmount' => $downPaymentAmount,
+                                    'netPayable' => $netPayable,
                                     'physicalQtyString' => $physicalQtyString,
                                     'smallestQtyString' => $smallestQtyString,
                                 ]);

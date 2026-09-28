@@ -57,7 +57,8 @@ class FrontOfficeDashboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertDontSee('Sesi Nonaktif');
         $response->assertSee('Presensi Karyawan Cabang Hari Ini');
-        $response->assertSee('Clock In (Masuk)');
+        $response->assertSee('Status Otoritas Pemilik');
+        $response->assertDontSee('Clock In (Masuk)');
         $response->assertSee($user->name);
     }
 
@@ -71,6 +72,18 @@ class FrontOfficeDashboardTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Presensi Karyawan Cabang Hari Ini');
+        $response->assertSee('Status Otoritas Pemilik');
+    }
+
+    public function test_it_renders_clock_in_button_for_regular_employee(): void
+    {
+        Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
+        $user = User::factory()->create();
+        $user->assignRole('karyawan');
+
+        $response = $this->actingAs($user)->get(route('pos.front-office'));
+
+        $response->assertStatus(200);
         $response->assertSee('Clock In (Masuk)');
         $response->assertSee('Komisi:');
     }

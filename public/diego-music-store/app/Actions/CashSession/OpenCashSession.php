@@ -49,9 +49,9 @@ class OpenCashSession
             'notes' => $notes,
         ]);
 
-        // Auto clock-in employee if linked to this user
+        // Auto clock-in employee if linked to this user (kecualikan Owner / Admin)
         $user = \App\Models\User::find($userId);
-        if ($user && $user->employee) {
+        if ($user && $user->employee && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
             app(\App\Actions\Attendance\ClockIn::class)->execute(
                 $user->employee,
                 $branchId,

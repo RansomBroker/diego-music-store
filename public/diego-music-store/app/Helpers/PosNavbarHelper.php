@@ -101,7 +101,8 @@ class PosNavbarHelper
      */
     public static function resolveAttendanceContext(?Branch $currentBranchModel, bool $isOwner): array
     {
-        $currentEmployee = Auth::check() ? Auth::user()->employee : null;
+        // Jika user adalah Owner, kecualikan dari kewajiban presensi karyawan
+        $currentEmployee = (Auth::check() && !$isOwner) ? Auth::user()->employee : null;
         $todayDate = now()->format('Y-m-d');
 
         $todayAttendance = null;
@@ -109,7 +110,7 @@ class PosNavbarHelper
         $quotaOffDays = 4;
         $isOverQuota = false;
         $overCount = 0;
-        $todayStatusText = 'Belum Presensi';
+        $todayStatusText = $isOwner ? 'Owner (Bebas Presensi)' : 'Belum Presensi';
 
         if ($currentEmployee) {
             $usedOffDays = $currentEmployee->used_off_days_this_month;
@@ -132,7 +133,7 @@ class PosNavbarHelper
         }
 
         // Smart Navbar Attendance State Detection
-        $clockState = 'not_clocked_in';
+        $clockState = $isOwner ? 'owner_exempt' : 'not_clocked_in';
         $clockInTimeText = null;
         $clockOutTimeText = null;
 
@@ -155,6 +156,9 @@ class PosNavbarHelper
                 $q->where('date', $todayDate);
             }, 'user'])
             ->where('is_active', true)
+            ->whereDoesntHave('user.roles', function ($q) {
+                $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
+            })
             ->where(function ($q) use ($currentBranchModel) {
                 $q->where('branch_id', $currentBranchModel->id)
                   ->orWhereNull('branch_id');

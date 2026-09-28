@@ -275,11 +275,11 @@ class ProcurementActionsTest extends TestCase
         $this->assertNotNull($journal);
 
         // Credit to Hutang Dagang should be grand_total (10,000,000)
-        $payableItem = $journal->items()->where('account_id', \App\Models\Account::where('code', '2-1000')->first()->id)->first();
+        $payableItem = $journal->items()->where('account_id', \App\Helpers\AccountHelper::findByCode('211101001')?->id)->first();
         $this->assertEquals(10000000, $payableItem->credit);
 
-        // Credit to Hutang Biaya Kirim Belum Ditagih (2-1500) should be 100,000
-        $accruedShippingItem = $journal->items()->where('account_id', \App\Models\Account::where('code', '2-1500')->first()->id)->first();
+        // Credit to Hutang Biaya Kirim Belum Ditagih (2-1500 / 211601002) should be 100,000
+        $accruedShippingItem = $journal->items()->where('account_id', \App\Helpers\AccountHelper::findByCode('211601002')?->id)->first();
         $this->assertNotNull($accruedShippingItem);
         $this->assertEquals(100000, $accruedShippingItem->credit);
     }

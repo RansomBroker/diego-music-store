@@ -371,8 +371,8 @@ class POSTransactions extends Component
                     ]);
                 }
 
-                // Credit Piutang Dagang (1-1200)
-                $piutangAccount = \App\Models\Account::where('code', '1-1200')->first();
+                // Credit Piutang Dagang (111301001)
+                $piutangAccount = \App\Helpers\AccountHelper::findByCode('111301001') ?? \App\Models\Account::where('code', '1-1200')->first();
                 if ($piutangAccount) {
                     \App\Models\JournalItem::create([
                         'journal_entry_id' => $journalEntry->id,

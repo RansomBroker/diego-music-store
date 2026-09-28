@@ -20,6 +20,7 @@ class UserForm
                     ->avatar()
                     ->imageEditor()
                     ->circleCropper()
+                    ->disk('public')
                     ->directory('avatars')
                     ->visibility('public')
                     ->maxSize(2048)

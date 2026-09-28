@@ -19,6 +19,7 @@ class POSTransactionsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutVite();
 
         $this->user = User::factory()->create();
         $this->actingAs($this->user);
@@ -111,8 +112,8 @@ class POSTransactionsTest extends TestCase
     public function it_can_process_sales_return()
     {
         // 1. Seed accounts
-        \App\Models\Account::firstOrCreate(['code' => '1-1000'], ['name' => 'Kas Utama', 'classification' => 'Asset', 'is_active' => true]);
-        \App\Models\Account::firstOrCreate(['code' => '4-1100'], ['name' => 'Retur & Potongan Penjualan', 'classification' => 'Revenue', 'is_active' => true]);
+        \App\Models\Account::firstOrCreate(['code' => '111101001'], ['name' => 'KAS', 'classification' => 'Asset', 'is_active' => true]);
+        \App\Models\Account::firstOrCreate(['code' => '411201001'], ['name' => 'RETUR PENJUALAN', 'classification' => 'Revenue', 'is_active' => true]);
 
         // 2. Create active cash session
         \App\Models\CashSession::create([

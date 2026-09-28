@@ -51,6 +51,7 @@ class CreatePurchaseTransaction
                 'shipping_carrier_name' => $data['shipping_carrier_name'] ?? null,
                 'shipping_payment_account_id' => $data['shipping_payment_account_id'] ?? null,
                 'shipping_cost' => intval($data['shipping_cost'] ?? 0),
+                'down_payment_amount' => intval($data['down_payment_amount'] ?? 0),
             ]);
 
             $subtotal = 0;

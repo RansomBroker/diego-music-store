@@ -57,6 +57,8 @@ class BranchForm
 
                     FileUpload::make('logo_path')
                         ->image()
+                        ->disk('public')
+                        ->visibility('public')
                         ->directory('branch-logos')
                         ->label('Logo Toko / Struk')
                         ->columnSpanFull(),

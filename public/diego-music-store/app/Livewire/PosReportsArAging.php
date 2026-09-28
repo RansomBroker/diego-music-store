@@ -83,7 +83,7 @@ class PosReportsArAging extends Component
             ->orderBy('id', 'desc')
             ->get();
 
-        $piutangAccount = \App\Models\Account::where('code', '1-1200')->first();
+        $piutangAccount = \App\Helpers\AccountHelper::findByCode('111301001') ?? \App\Models\Account::where('code', '1-1200')->first();
 
         $history = [];
         foreach ($journalEntries as $je) {

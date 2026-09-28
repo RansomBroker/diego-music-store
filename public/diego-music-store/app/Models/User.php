@@ -127,6 +127,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         });
 
         static::created(function ($user) {
+            // Role Owner tidak dibuatkan record Employee
+            if ($user->hasRole(['owner', 'Owner', 'super_admin', 'Super Admin'])) {
+                return;
+            }
+
             if (!$user->employee()->exists()) {
                 $lastId = Employee::withTrashed()->max('id') ?? 0;
                 $nik = 'EMP-' . str_pad((string) ($lastId + 1), 4, '0', STR_PAD_LEFT);

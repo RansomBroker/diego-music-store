@@ -128,41 +128,43 @@
         {{-- Slot Aksi Tambahan (custom per halaman) --}}
         {{ $slot }}
 
-        {{-- Tombol Pintar Presensi (Smart Detection) --}}
-        @if ($clockState === 'not_clocked_in')
-            <a
-                href="{{ route('pos.attendances') }}?action=clock_in"
-                class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm hover:shadow-md transition-all cursor-pointer group flex-shrink-0"
-                title="Klik untuk Clock In (Absen Masuk)"
-            >
-                <i class="ph-bold ph-sign-in text-base group-hover:scale-110 transition-transform"></i>
-                <span>Clock In</span>
-            </a>
-        @elseif ($clockState === 'clocked_in')
-            <a
-                href="{{ route('pos.attendances') }}?action=clock_out"
-                class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black shadow-sm hover:shadow-md transition-all cursor-pointer group flex-shrink-0"
-                title="Masuk jam {{ $clockInTimeText }}. Klik untuk Clock Out (Absen Pulang)"
-            >
-                <i class="ph-bold ph-sign-out text-base group-hover:scale-110 transition-transform"></i>
-                <div class="flex flex-col text-left leading-none">
-                    <span class="font-extrabold">Clock Out</span>
-                    <span class="text-[9px] opacity-90 mt-0.5">In: {{ $clockInTimeText }}</span>
+        {{-- Tombol Pintar Presensi (Smart Detection) - Khusus Karyawan --}}
+        @if (!$isOwner)
+            @if ($clockState === 'not_clocked_in')
+                <a
+                    href="{{ route('pos.attendances') }}?action=clock_in"
+                    class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm hover:shadow-md transition-all cursor-pointer group flex-shrink-0"
+                    title="Klik untuk Clock In (Absen Masuk)"
+                >
+                    <i class="ph-bold ph-sign-in text-base group-hover:scale-110 transition-transform"></i>
+                    <span>Clock In</span>
+                </a>
+            @elseif ($clockState === 'clocked_in')
+                <a
+                    href="{{ route('pos.attendances') }}?action=clock_out"
+                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black shadow-sm hover:shadow-md transition-all cursor-pointer group flex-shrink-0"
+                    title="Masuk jam {{ $clockInTimeText }}. Klik untuk Clock Out (Absen Pulang)"
+                >
+                    <i class="ph-bold ph-sign-out text-base group-hover:scale-110 transition-transform"></i>
+                    <div class="flex flex-col text-left leading-none">
+                        <span class="font-extrabold">Clock Out</span>
+                        <span class="text-[9px] opacity-90 mt-0.5">In: {{ $clockInTimeText }}</span>
+                    </div>
+                </a>
+            @elseif ($clockState === 'clocked_out')
+                <div
+                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold flex-shrink-0"
+                    title="Presensi hari ini telah selesai"
+                >
+                    <i class="ph-bold ph-check-circle text-base text-emerald-500"></i>
+                    <div class="flex flex-col text-left leading-none">
+                        <span class="font-extrabold text-[11px]">Selesai</span>
+                        @if ($clockInTimeText && $clockOutTimeText)
+                            <span class="text-[9px] opacity-75">{{ $clockInTimeText }} - {{ $clockOutTimeText }}</span>
+                        @endif
+                    </div>
                 </div>
-            </a>
-        @else
-            <div
-                class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold flex-shrink-0"
-                title="Presensi hari ini telah selesai"
-            >
-                <i class="ph-bold ph-check-circle text-base text-emerald-500"></i>
-                <div class="flex flex-col text-left leading-none">
-                    <span class="font-extrabold text-[11px]">Selesai</span>
-                    @if ($clockInTimeText && $clockOutTimeText)
-                        <span class="text-[9px] opacity-75">{{ $clockInTimeText }} - {{ $clockOutTimeText }}</span>
-                    @endif
-                </div>
-            </div>
+            @endif
         @endif
 
         {{-- Widget Presensi Karyawan & Kuota Off-Day --}}
@@ -369,30 +371,32 @@
         {{-- Slot Aksi Tambahan jika ada --}}
         {{ $slot }}
 
-        {{-- Tombol Ringkas Presensi Clock In / Out --}}
-        @if ($clockState === 'not_clocked_in')
-            <a
-                href="{{ route('pos.attendances') }}?action=clock_in"
-                class="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-xs active:scale-95 transition-all flex-shrink-0"
-                title="Clock In (Absen Masuk)"
-            >
-                <i class="ph-bold ph-sign-in text-base"></i>
-            </a>
-        @elseif ($clockState === 'clocked_in')
-            <a
-                href="{{ route('pos.attendances') }}?action=clock_out"
-                class="w-9 h-9 rounded-xl bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center shadow-xs active:scale-95 transition-all flex-shrink-0"
-                title="Clock Out (In: {{ $clockInTimeText }})"
-            >
-                <i class="ph-bold ph-sign-out text-base"></i>
-            </a>
-        @else
-            <div
-                class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-emerald-500 flex items-center justify-center border border-slate-200 dark:border-slate-600 flex-shrink-0"
-                title="Presensi Selesai"
-            >
-                <i class="ph-bold ph-check-circle text-base"></i>
-            </div>
+        {{-- Tombol Ringkas Presensi Clock In / Out - Khusus Karyawan --}}
+        @if (!$isOwner)
+            @if ($clockState === 'not_clocked_in')
+                <a
+                    href="{{ route('pos.attendances') }}?action=clock_in"
+                    class="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-xs active:scale-95 transition-all flex-shrink-0"
+                    title="Clock In (Absen Masuk)"
+                >
+                    <i class="ph-bold ph-sign-in text-base"></i>
+                </a>
+            @elseif ($clockState === 'clocked_in')
+                <a
+                    href="{{ route('pos.attendances') }}?action=clock_out"
+                    class="w-9 h-9 rounded-xl bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center shadow-xs active:scale-95 transition-all flex-shrink-0"
+                    title="Clock Out (In: {{ $clockInTimeText }})"
+                >
+                    <i class="ph-bold ph-sign-out text-base"></i>
+                </a>
+            @elseif ($clockState === 'clocked_out')
+                <div
+                    class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-emerald-500 flex items-center justify-center border border-slate-200 dark:border-slate-600 flex-shrink-0"
+                    title="Presensi Selesai"
+                >
+                    <i class="ph-bold ph-check-circle text-base"></i>
+                </div>
+            @endif
         @endif
 
         {{-- Tombol Pemicu Mobile Action Drawer --}}

@@ -63,18 +63,11 @@ class ProcessSupplierPaymentComplete
             ]);
 
             // Resolve Account Helper
-            $resolveAccount = function($code, $defaultName = 'Default Account') {
-                return Account::firstOrCreate(
-                    ['code' => $code],
-                    [
-                        'name' => $defaultName,
-                        'classification' => str_starts_with($code, '1') ? 'asset' : (str_starts_with($code, '2') ? 'liability' : 'expense'),
-                        'is_active' => true,
-                    ]
-                )->id;
+            $resolveAccount = function($code, $defaultName = 'Default Account', $classification = 'liability') {
+                return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);
             };
 
-            $apAccountId = $resolveAccount('2-1000', 'Hutang Dagang'); // Accounts Payable
+            $apAccountId = $resolveAccount('211101001', 'HUTANG DAGANG', 'liability'); // Accounts Payable
             $cashBankAccountId = $payment->account_id; // Cash/Bank account chosen in the payment form
 
             // Debit: Hutang Dagang (reducing liability)

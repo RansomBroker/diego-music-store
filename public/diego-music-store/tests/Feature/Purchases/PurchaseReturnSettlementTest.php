@@ -137,11 +137,11 @@ class PurchaseReturnSettlementTest extends TestCase
 
         $hutangItem = JournalItem::where('journal_entry_id', $journal->id)->where('debit', 10000000)->first();
         $this->assertNotNull($hutangItem);
-        $this->assertEquals('2-1000', $hutangItem->account->code);
+        $this->assertEquals('211101001', $hutangItem->account->code);
 
         $persediaanItem = JournalItem::where('journal_entry_id', $journal->id)->where('credit', 10000000)->first();
         $this->assertNotNull($persediaanItem);
-        $this->assertEquals('1-1300', $persediaanItem->account->code);
+        $this->assertEquals('111401001', $persediaanItem->account->code);
     }
 
     /** @test */
@@ -200,7 +200,7 @@ class PurchaseReturnSettlementTest extends TestCase
 
         $persediaanItem = JournalItem::where('journal_entry_id', $journal->id)->where('credit', 5000000)->first();
         $this->assertNotNull($persediaanItem);
-        $this->assertEquals('1-1300', $persediaanItem->account->code);
+        $this->assertEquals('111401001', $persediaanItem->account->code);
     }
 
     /** @test */
@@ -283,11 +283,11 @@ class PurchaseReturnSettlementTest extends TestCase
 
         $depositItem = JournalItem::where('journal_entry_id', $journal->id)->where('debit', 3000000)->first();
         $this->assertNotNull($depositItem);
-        $this->assertEquals('1-1400', $depositItem->account->code);
+        $this->assertEquals('111201006', $depositItem->account->code);
 
         $persediaanItem = JournalItem::where('journal_entry_id', $journal->id)->where('credit', 3000000)->first();
         $this->assertNotNull($persediaanItem);
-        $this->assertEquals('1-1300', $persediaanItem->account->code);
+        $this->assertEquals('111401001', $persediaanItem->account->code);
     }
 
     /** @test */

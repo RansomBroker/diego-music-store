@@ -80,6 +80,65 @@
         </div>
     </x-filament::section>
 
+    {{-- Year-End Closing (Tutup Buku Tahunan 31 Desember) Section --}}
+    @php
+        $yearEnd = $this->year_end_closing_info;
+    @endphp
+    <x-filament::section>
+        <x-slot name="heading">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full {{ $yearEnd['is_closed'] ? 'bg-emerald-600' : 'bg-amber-500' }}"></span>
+                <span class="font-extrabold tracking-wide text-gray-900 dark:text-white">TUTUP BUKU AKHIR TAHUN {{ $yearEnd['year'] }} (31 DESEMBER)</span>
+            </div>
+        </x-slot>
+
+        <x-slot name="headerEnd">
+            <span class="px-3 py-1 text-xs font-bold uppercase rounded-full border {{ $yearEnd['is_closed'] ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' }}">
+                {{ $yearEnd['is_closed'] ? 'TAHUN SUDAH DITUTUP KE LABA DITAHAN' : 'OTOMATIS DIJADWALKAN: 31 DES 23:59' }}
+            </span>
+        </x-slot>
+
+        <div class="space-y-4 -mx-6 -mb-6 p-6 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-white/10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl">
+                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Saldo Akun 311301001 (Laba Tahun Berjalan) Saat Ini</span>
+                    <div class="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
+                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($yearEnd['current_balance']) }}
+                    </div>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
+                        Saldo ini akan dipindahkan ke akun <strong>311201001 (Laba Ditahan)</strong> saat tutup buku tahunan.
+                    </span>
+                </div>
+
+                <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Mekanisme Penutupan Tahunan</span>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                            Sistem secara terjadwal otomatis mengeksekusi perintah <code>app:year-end-closing</code> setiap tanggal <strong>31 Desember pukul 23:59</strong>. Anda juga dapat memicu penutupan secara manual sewaktu-waktu.
+                        </p>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between gap-3">
+                        @if($yearEnd['is_closed'])
+                            <div class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                                ✓ Jurnal Penutup Tahunan: <strong>#{{ $yearEnd['journal']?->entry_no }}</strong> ({{ \Illuminate\Support\Carbon::parse($yearEnd['journal']?->date)->translatedFormat('d M Y') }})
+                            </div>
+                        @else
+                            <button
+                                type="button"
+                                wire:click="executeYearEndClosingAction"
+                                wire:confirm="Apakah Anda yakin ingin memindahkan seluruh saldo Laba Tahun Berjalan tahun {{ $yearEnd['year'] }} ke Laba Ditahan sekarang?"
+                                class="px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-lg shadow transition-all whitespace-nowrap"
+                            >
+                                Tutup Buku Tahunan {{ $yearEnd['year'] }} Sekarang
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </x-filament::section>
+
     {{-- History Table Section --}}
     <x-filament::section>
         <x-slot name="heading">

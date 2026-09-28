@@ -168,12 +168,43 @@ class EmployeeCashAdvanceResource extends Resource
             ])
             ->actions([
                 Action::make('approve')
-                    ->label('Setujui')
+                    ->label('Setujui & Cairkan')
                     ->color('success')
                     ->icon('heroicon-o-check-circle')
                     ->visible(fn ($record) => $record->status === 'pending')
-                    ->action(function ($record) {
-                        app(ApproveCashAdvance::class)->execute($record->id, auth()->user());
+                    ->modalHeading('Setujui & Cairkan Dana Kasbon')
+                    ->modalDescription(fn ($record) => "Setujui pengajuan kasbon {$record->advance_number} untuk {$record->employee?->name} sebesar Rp " . number_format($record->amount, 0, ',', '.') . " dan bukukan ke jurnal akuntansi.")
+                    ->form([
+                        Forms\Components\Select::make('disbursement_account_id')
+                            ->label('Rekening Kas/Bank Sumber Dana')
+                            ->options(function () {
+                                return \App\Models\Account::where('classification', 'asset')
+                                    ->where(function ($q) {
+                                        $q->where('code', 'like', '1111%')
+                                          ->orWhere('code', 'like', '1112%');
+                                    })
+                                    ->where('is_active', true)
+                                    ->pluck('name', 'id');
+                            })
+                            ->default(fn () => \App\Helpers\AccountHelper::resolveAccountId('111101001', 'KAS', 'asset'))
+                            ->required(),
+
+                        Forms\Components\DatePicker::make('disbursed_at')
+                            ->label('Tanggal Pencairan')
+                            ->default(now()->format('Y-m-d'))
+                            ->required(),
+
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Catatan Pencairan (Opsional)'),
+                    ])
+                    ->action(function ($record, array $data) {
+                        app(ApproveCashAdvance::class)->execute(
+                            $record->id,
+                            auth()->user(),
+                            $data['notes'] ?? null,
+                            !empty($data['disbursement_account_id']) ? (int) $data['disbursement_account_id'] : null,
+                            $data['disbursed_at'] ?? null
+                        );
                     }),
 
                 Action::make('reject')
@@ -203,6 +234,20 @@ class EmployeeCashAdvanceResource extends Resource
                             ->required()
                             ->label('Nominal Pelunasan'),
 
+                        Forms\Components\Select::make('receipt_account_id')
+                            ->label('Rekening Kas/Bank Penerima Dana')
+                            ->options(function () {
+                                return \App\Models\Account::where('classification', 'asset')
+                                    ->where(function ($q) {
+                                        $q->where('code', 'like', '1111%')
+                                          ->orWhere('code', 'like', '1112%');
+                                    })
+                                    ->where('is_active', true)
+                                    ->pluck('name', 'id');
+                            })
+                            ->default(fn () => \App\Helpers\AccountHelper::resolveAccountId('111101001', 'KAS', 'asset'))
+                            ->required(),
+
                         Forms\Components\Select::make('payment_method')
                             ->options([
                                 'cash' => 'Tunai Kas Toko',
@@ -221,9 +266,21 @@ class EmployeeCashAdvanceResource extends Resource
                             (float) $data['repayment_amount'],
                             $data['payment_method'] ?? 'cash',
                             $data['notes'] ?? null,
-                            auth()->user()
+                            auth()->user(),
+                            !empty($data['receipt_account_id']) ? (int) $data['receipt_account_id'] : null
                         );
                     }),
+
+                Action::make('viewJournal')
+                    ->label('Jurnal GL')
+                    ->color('gray')
+                    ->icon('heroicon-o-document-text')
+                    ->visible(fn ($record) => !empty($record->journal_no) || !empty($record->journal_entry_id))
+                    ->modalHeading(fn ($record) => "Jurnal Akuntansi: {$record->advance_number}")
+                    ->modalWidth('lg')
+                    ->modalContent(fn ($record) => view('backoffice.cash-advances.journal-modal', ['record' => $record]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup'),
 
                 Action::make('cancel')
                     ->label('Batal')

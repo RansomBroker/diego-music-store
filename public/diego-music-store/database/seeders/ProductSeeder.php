@@ -57,9 +57,9 @@ class ProductSeeder extends Seeder
         $unitPcs = Unit::where('code', 'pcs')->first()?->id;
         $unitSet = Unit::where('code', 'set')->first()?->id;
 
-        $inventoryAcc = \App\Models\Account::where('code', '1-1300')->first()?->id;
-        $salesAcc = \App\Models\Account::where('code', '4-1000')->first()?->id;
-        $cogsAcc = \App\Models\Account::where('code', '5-1000')->first()?->id;
+        $inventoryAcc = \App\Helpers\AccountHelper::findByCode('111401001')?->id;
+        $salesAcc = \App\Helpers\AccountHelper::findByCode('411101001')?->id;
+        $cogsAcc = \App\Helpers\AccountHelper::findByCode('511501001')?->id;
 
         // 3. Create 1 Physical Product with 2 Variants
         $physicalVariants = [];

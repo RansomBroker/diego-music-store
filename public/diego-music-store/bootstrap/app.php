@@ -10,6 +10,13 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([
+        __DIR__.'/../app/Console/Commands',
+    ])
+    ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule): void {
+        $schedule->command('app:process-scheduled-journals')->daily();
+        $schedule->command('app:year-end-closing')->yearlyOn(12, 31, '23:59');
+    })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'auth.pos' => \App\Http\Middleware\AuthenticatePOS::class,

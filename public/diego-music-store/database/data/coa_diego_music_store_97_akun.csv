@@ -1,0 +1,98 @@
+﻿no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
+1,111101001,KAS,asset,cash,debit
+2,111101002,KAS Kecil,asset,cash,debit
+3,111201001,BANK BCA,asset,bank,debit
+4,111201002,BANK Mandiri,asset,bank,debit
+5,111201003,BANK BRI,asset,bank,debit
+6,111201004,BANK BNI,asset,bank,debit
+7,111201005,BANK Danamon,asset,bank,debit
+8,111201006,Uang Muka Pembelian,asset,purchase_advance,debit
+9,111202005,Kredit Plus,asset,current_other,debit
+10,111202006,Tokopedia,asset,settlement,debit
+11,111202007,Shopee,asset,settlement,debit
+12,111202008,Panel,asset,current_other,debit
+13,111301001,PIUTANG DAGANG,asset,receivable,debit
+14,111301002,PIUTANG KARYAWAN,asset,receivable_employee,debit
+15,111401001,PERSEDIAAN BARANG DAGANG,asset,inventory,debit
+16,111501001,PERSEKOT KARYAWAN,asset,employee_advance,debit
+17,111501002,PINJAMAN PIHAK LAIN,asset,other_receivable,debit
+18,111601001,PIUTANG LAIN LAIN,asset,other_receivable,debit
+19,111601002,PIUTANG SETTLEMENT,asset,settlement,debit
+20,111701001,SEWA DIBAYAR DIMUKA,asset,prepaid_expense,debit
+21,111801001,ASURANSI DIBAYAR DIMUKA,asset,prepaid_expense,debit
+22,111901001,PPN DIBAYAR DIMUKA,asset,tax_receivable,debit
+23,112001001,PPH 25 DIBAYAR DIMUKA (PPN MASUKAN),asset,tax_receivable,debit
+24,121101001,KENDARAAN,asset,fixed_asset,debit
+25,121201001,AKUMULASI PENYUSUTAN KENDARAAN,asset,accumulated_depreciation,credit
+26,121501001,INVENTARIS KANTOR,asset,fixed_asset,debit
+27,121601001,AKUMULASI PENYUSUTAN INVENTARIS KANTOR,asset,accumulated_depreciation,credit
+28,128801001,SOFTWARE,asset,intangible_asset,debit
+29,128801002,AKUMULASI PENYUSUTAN ASET TIDAK BERWUJUD,asset,accumulated_amortization,credit
+30,211101001,HUTANG DAGANG,liability,trade_payable,credit
+31,211201001,HUTANG PPN (PPN KELUARAN),liability,tax_payable,credit
+32,211301001,HUTANG PPH PASAL 21,liability,tax_payable,credit
+33,211401001,HUTANG PPH PASAL 25/29,liability,tax_payable,credit
+34,211501001,HUTANG PPH PASAL 4(2),liability,tax_payable,credit
+35,211601001,HUTANG LAIN LAIN,liability,other_payable,credit
+36,211601002,HUTANG ONGKIR,liability,other_payable,credit
+37,211601003,HUTANG PINJAMAN INTERNAL,liability,other_payable,credit
+38,211601004,HUTANG PENITIPAN DANA,liability,other_payable,credit
+39,211601005,HUTANG KONSUMEN,liability,other_payable,credit
+40,211701001,HUTANG PPH PASAL 23,liability,tax_payable,credit
+41,221101001,HUTANG JANGKA PANJANG,liability,long_term_liability,credit
+42,311101001,MODAL DISETOR,equity,paid_in_capital,credit
+43,311101002,PRIVE,equity,owner_withdrawal,debit
+44,311201001,LABA DITAHAN,equity,retained_earnings,credit
+45,311301001,LABA TAHUN BERJALAN,equity,current_year_earnings,credit
+46,411101001,PENJUALAN,revenue,sales,credit
+47,411201001,RETUR PENJUALAN,revenue,sales_return,debit
+48,411301001,POTONGAN PENJUALAN,revenue,sales_discount,debit
+49,511101001,PEMBELIAN,cost,purchase,debit
+50,511201001,BIAYA ANGKUT PEMBELIAN,cost,purchase_freight,debit
+51,511301001,RETUR PEMBELIAN,cost,purchase_return,credit
+52,511401001,POTONGAN PEMBELIAN,cost,purchase_discount,credit
+53,511501001,HARGA POKOK PENJUALAN,cost,cost_of_goods_sold,debit
+54,611101001,BEBAN GAJI KARYAWAN,expense,operating_expense,debit
+55,611101002,BEBAN PEMAKAIAN DAN PENGIRIMAN BBM,expense,operating_expense,debit
+56,611101003,BEBAN PEMAKAIAN PERLENGKAPAN KANTOR,expense,operating_expense,debit
+57,611101004,BEBAN PEMELIHARAAN ASET TETAP,expense,operating_expense,debit
+58,611101005,BEBAN PERJALANAN DINAS,expense,operating_expense,debit
+59,611101006,BEBAN TELEPON,expense,operating_expense,debit
+60,611101007,BEBAN LISTRIK,expense,operating_expense,debit
+61,611101008,"BEBAN KIRIM UANG, SURAT/DOKUMEN",expense,operating_expense,debit
+62,611101009,BEBAN PENGURUSAN IJIN DAN PAJAK DAERAH,expense,operating_expense,debit
+63,611101010,BEBAN KONSUMSI DAN JAMU KARYAWAN,expense,operating_expense,debit
+64,611101011,BEBAN ADMINISTRASI BANK,expense,operating_expense,debit
+65,611101012,BEBAN ASURANSI,expense,operating_expense,debit
+66,611101013,BEBAN KEAMANAN DAN KEBERSIHAN,expense,operating_expense,debit
+67,611101014,BEBAN UMUM LAIN-LAIN,expense,operating_expense,debit
+68,611101015,BEBAN BARANG RUSAK ATAU EXPIRED,expense,operating_expense,debit
+69,611101016,BEBAN PDAM,expense,operating_expense,debit
+70,611101017,SELISIH KAS KURANG,expense,cash_shortage,debit
+71,611101018,FEE SERVICE,expense,operating_expense,debit
+72,611101019,BEBAN ONGKIR,expense,operating_expense,debit
+73,611101020,BEBAN WIFI,expense,operating_expense,debit
+74,611101021,PERLENGKAPAN PIKET,expense,operating_expense,debit
+75,611101022,BIAYA PARKIR,expense,operating_expense,debit
+76,611101023,BEBAN BERLANGGANAN APLIKASI,expense,operating_expense,debit
+77,611101024,BEBAN PENYUSUTAN INVENTARIS KANTOR,expense,depreciation,debit
+78,611101025,BEBAN PENYUSUTAN KENDARAAN,expense,depreciation,debit
+79,611101026,BEBAN ENTERTAIN,expense,operating_expense,debit
+80,611101027,BEBAN VOUCHER KONSUMEN,expense,operating_expense,debit
+81,611101028,BEBAN SEWA,expense,operating_expense,debit
+82,611101029,PAJAK PPH FINAL,expense,tax_expense,debit
+83,611101030,PAJAK PPN REKLAME,expense,tax_expense,debit
+84,611101031,BEBAN PENYUSUTAN ASET TIDAK BERWUJUD,expense,amortization,debit
+85,611101032,BPJS KESEHATAN,expense,operating_expense,debit
+86,611101033,BEBAN IKLAN,expense,operating_expense,debit
+87,611101034,BEBAN PERBAIKAN DAN PEMELIHARAAN,expense,operating_expense,debit
+88,611101035,BEBAN KOMISI PENJUALAN,expense,selling_expense,debit
+89,621101001,BIAYA ADMINISTRASI BANK,expense,bank_expense,debit
+90,621101002,PENDAPATAN BUNGA BANK,revenue,interest_income,credit
+91,621101003,PAJAK ATAS PENDAPATAN BUNGA BANK,expense,tax_expense,debit
+92,631101001,BIAYA LAIN LAIN,expense,other_expense,debit
+93,631101002,PENDAPATAN LAIN LAIN,revenue,other_income,credit
+94,631101003,SELISIH PENYESUAIAN STOK,expense,inventory_adjustment,debit
+95,631101004,SELISIH KAS LEBIH,revenue,cash_overage,credit
+96,631101005,Selisih Pembayaran,expense,payment_difference,debit
+97,641101001,PAJAK PENGHASILAN BADAN,expense,corporate_tax,debit

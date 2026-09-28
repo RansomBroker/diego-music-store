@@ -91,23 +91,26 @@ class CreateCustomerDeposit
             // Create Journal Entry if deposit amount > 0
             if ($depositAmount > 0) {
                 // Ensure Penitipan Dana account exists
-                $penitipanDanaAcc = Account::firstOrCreate(
-                    ['code' => '2-1200'],
-                    [
-                        'name' => 'Penitipan Dana',
-                        'classification' => 'liability',
-                        'is_header' => false,
-                        'is_active' => true,
-                    ]
-                );
+                $penitipanDanaAcc = \App\Helpers\AccountHelper::findByCode('211601004')
+                    ?: Account::firstOrCreate(
+                        ['code' => '211601004'],
+                        [
+                            'name' => 'HUTANG PENITIPAN DANA',
+                            'classification' => 'liability',
+                            'account_subtype' => 'other_payable',
+                            'normal_balance' => 'credit',
+                            'is_header' => false,
+                            'is_active' => true,
+                        ]
+                    );
 
-                // Default debit account (Kas Utama) if not provided or if pointing to liability
+                // Default debit account (KAS) if not provided or if pointing to liability
                 $debitAccountId = $deposit->account_id;
                 if (!$debitAccountId || $debitAccountId == $penitipanDanaAcc->id) {
                     $defaultKas = Account::where('classification', 'asset')
                         ->where('is_header', false)
                         ->where(function ($q) {
-                            $q->where('code', '1-1000')->orWhere('name', 'like', '%kas%');
+                            $q->where('code', '111101001')->orWhere('code', '1-1000')->orWhere('name', 'like', '%kas%');
                         })
                         ->first();
                     $debitAccountId = $defaultKas?->id;

@@ -26,18 +26,31 @@ class AccountForm
                             ->unique(ignoreRecord: true)
                             ->maxLength(50)
                             ->label('Kode Akun')
-                            ->placeholder('e.g., 1-1000'),
+                            ->placeholder('e.g., 111101001'),
 
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255)
                             ->label('Nama Akun')
-                            ->placeholder('e.g., Kas Utama, Piutang Dagang'),
+                            ->placeholder('e.g., KAS, PIUTANG DAGANG'),
 
                         CreatableSelect::make('classification')
                             ->required()
                             ->options(fn () => AccountClassification::pluck('name', 'key')->toArray())
                             ->label('Klasifikasi Akun'),
+
+                        TextInput::make('account_subtype')
+                            ->maxLength(100)
+                            ->label('Subtipe Akun')
+                            ->placeholder('e.g., cash, bank, inventory, receivable'),
+
+                        Select::make('normal_balance')
+                            ->label('Saldo Normal')
+                            ->options([
+                                'debit' => 'Debit',
+                                'credit' => 'Credit (Kredit)',
+                            ])
+                            ->default('debit'),
 
                         Toggle::make('is_header')
                             ->label('Akun Header / Induk')

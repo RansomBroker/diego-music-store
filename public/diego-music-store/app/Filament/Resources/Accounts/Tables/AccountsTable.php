@@ -46,6 +46,24 @@ class AccountsTable
                     ->sortable()
                     ->label('Klasifikasi'),
 
+                TextColumn::make('account_subtype')
+                    ->label('Subtipe')
+                    ->badge()
+                    ->color('gray')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('normal_balance')
+                    ->label('Saldo Normal')
+                    ->badge()
+                    ->color(fn (?string $state): string => match (strtolower($state ?? '')) {
+                        'debit' => 'success',
+                        'credit' => 'warning',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (?string $state): string => strtoupper($state ?? '-'))
+                    ->sortable(),
+
                 TextColumn::make('balance')
                     ->label('Saldo Saat Ini')
                     ->money('idr')

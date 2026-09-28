@@ -45,12 +45,14 @@ class DatabaseSeeder extends Seeder
         $this->call(AccountSeeder::class);
 
         // Seed default payment methods (9 Parent Categories + Sub-methods)
-        $cashAcc     = \App\Models\Account::where('code', '1-1000')->first();
-        $bankBcaAcc  = \App\Models\Account::where('code', '1-1110')->first();
-        $bankUtamaAcc= \App\Models\Account::where('code', '1-1100')->first();
-        $piutangAcc  = \App\Models\Account::where('code', '1-1200')->first();
-        $voucherAcc  = \App\Models\Account::where('code', '4-2000')->first();
-        $entertainAcc= \App\Models\Account::where('code', '6-2000')->first();
+        $cashAcc     = \App\Helpers\AccountHelper::findByCode('111101001');
+        $bankBcaAcc  = \App\Helpers\AccountHelper::findByCode('111201001');
+        $bankMandiri = \App\Helpers\AccountHelper::findByCode('111201002');
+        $bankBri     = \App\Helpers\AccountHelper::findByCode('111201003');
+        $bankBni     = \App\Helpers\AccountHelper::findByCode('111201004');
+        $piutangAcc  = \App\Helpers\AccountHelper::findByCode('111301001');
+        $voucherAcc  = \App\Helpers\AccountHelper::findByCode('411301001') ?? \App\Helpers\AccountHelper::findByCode('611101027');
+        $entertainAcc= \App\Helpers\AccountHelper::findByCode('611101026');
 
         $methodsData = [
             [
@@ -67,9 +69,9 @@ class DatabaseSeeder extends Seeder
                 'parent_id' => null,
                 'children' => [
                     ['name' => 'BCA', 'code' => 'debit-bca', 'account_id' => $bankBcaAcc?->id],
-                    ['name' => 'BNI', 'code' => 'debit-bni', 'account_id' => null],
-                    ['name' => 'Mandiri', 'code' => 'debit-mandiri', 'account_id' => null],
-                    ['name' => 'BRI', 'code' => 'debit-bri', 'account_id' => null],
+                    ['name' => 'BNI', 'code' => 'debit-bni', 'account_id' => $bankBni?->id],
+                    ['name' => 'Mandiri', 'code' => 'debit-mandiri', 'account_id' => $bankMandiri?->id],
+                    ['name' => 'BRI', 'code' => 'debit-bri', 'account_id' => $bankBri?->id],
                 ],
             ],
             [
@@ -79,8 +81,8 @@ class DatabaseSeeder extends Seeder
                 'parent_id' => null,
                 'children' => [
                     ['name' => 'BCA', 'code' => 'credit-bca', 'account_id' => $bankBcaAcc?->id],
-                    ['name' => 'Mandiri', 'code' => 'credit-mandiri', 'account_id' => null],
-                    ['name' => 'Visa / Mastercard', 'code' => 'credit-visa-master', 'account_id' => null],
+                    ['name' => 'Mandiri', 'code' => 'credit-mandiri', 'account_id' => $bankMandiri?->id],
+                    ['name' => 'Visa / Mastercard', 'code' => 'credit-visa-master', 'account_id' => $bankBcaAcc?->id],
                 ],
             ],
             [
@@ -107,18 +109,18 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'QRIS',
                 'code' => 'qris',
-                'account_id' => $bankUtamaAcc?->id,
+                'account_id' => $bankBcaAcc?->id,
                 'parent_id' => null,
                 'children' => [],
             ],
             [
                 'name' => 'Transfer',
                 'code' => 'transfer',
-                'account_id' => $bankUtamaAcc?->id,
+                'account_id' => $bankBcaAcc?->id,
                 'parent_id' => null,
                 'children' => [
                     ['name' => 'Transfer BCA', 'code' => 'transfer-bca', 'account_id' => $bankBcaAcc?->id],
-                    ['name' => 'Transfer Mandiri', 'code' => 'transfer-mandiri', 'account_id' => null],
+                    ['name' => 'Transfer Mandiri', 'code' => 'transfer-mandiri', 'account_id' => $bankMandiri?->id],
                 ],
             ],
             [

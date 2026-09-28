@@ -89,28 +89,21 @@ class PostPurchaseReturn
                 ]);
 
                 $resolveAccount = function($code, $defaultName, $classification) {
-                    return Account::firstOrCreate(
-                        ['code' => $code],
-                        [
-                            'name'           => $defaultName,
-                            'classification' => $classification,
-                            'is_active'      => true,
-                        ]
-                    )->id;
+                    return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);
                 };
 
                 if ($purchaseReturn->return_type === 'invoice_deduction') {
-                    $debitAccId = $resolveAccount('2-1000', 'Hutang Dagang', 'liability');
+                    $debitAccId = $resolveAccount('211101001', 'HUTANG DAGANG', 'liability');
                     $notes = "Penyesuaian Faktur: Pengurangan Hutang Supplier (Retur {$purchaseReturn->return_no})";
                 } elseif ($purchaseReturn->return_type === 'refund') {
-                    $debitAccId = $purchaseReturn->refund_account_id ?: $resolveAccount('1-1000', 'Kas Utama', 'asset');
+                    $debitAccId = $purchaseReturn->refund_account_id ?: $resolveAccount('111101001', 'KAS', 'asset');
                     $refundAccName = Account::find($debitAccId)?->name ?? 'Kas/Bank';
                     $notes = "Penerimaan Refund Retur Pembelian ke {$refundAccName} (Retur {$purchaseReturn->return_no})";
                 } elseif ($purchaseReturn->return_type === 'supplier_credit') {
-                    $debitAccId = $resolveAccount('1-1400', 'Uang Muka Pembelian / Deposit Supplier', 'asset');
+                    $debitAccId = $resolveAccount('111201006', 'Uang Muka Pembelian', 'asset');
                     $notes = "Pencatatan Saldo Deposit / Kredit Supplier dari Retur Pembelian (Retur {$purchaseReturn->return_no})";
                 } else {
-                    $debitAccId = $resolveAccount('1-1000', 'Kas Utama', 'asset');
+                    $debitAccId = $resolveAccount('111101001', 'KAS', 'asset');
                     $notes = "Retur Pembelian Supplier (Retur {$purchaseReturn->return_no})";
                 }
 
@@ -122,7 +115,7 @@ class PostPurchaseReturn
                     'notes'            => $notes,
                 ]);
 
-                $inventoryAccId = $resolveAccount('1-1300', 'Persediaan Barang Dagang', 'asset');
+                $inventoryAccId = $resolveAccount('111401001', 'PERSEDIAAN BARANG DAGANG', 'asset');
                 JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id'       => $inventoryAccId,

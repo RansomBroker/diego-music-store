@@ -27,6 +27,9 @@ class Payroll extends Model
         'approved_by',
         'approved_at',
         'paid_at',
+        'payment_account_id',
+        'journal_entry_id',
+        'journal_no',
         'notes',
     ];
 
@@ -39,11 +42,23 @@ class Payroll extends Model
         'total_net_salary' => 'float',
         'approved_at' => 'datetime',
         'paid_at' => 'datetime',
+        'payment_account_id' => 'integer',
+        'journal_entry_id' => 'integer',
     ];
 
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function paymentAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'payment_account_id');
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
     }
 
     public function creator(): BelongsTo

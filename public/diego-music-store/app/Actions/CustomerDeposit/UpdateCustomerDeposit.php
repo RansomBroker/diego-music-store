@@ -83,15 +83,18 @@ class UpdateCustomerDeposit
             ]);
 
             // Synchronize Journal Entry
-            $penitipanDanaAcc = Account::firstOrCreate(
-                ['code' => '2-1200'],
-                [
-                    'name' => 'Penitipan Dana',
-                    'classification' => 'liability',
-                    'is_header' => false,
-                    'is_active' => true,
-                ]
-            );
+            $penitipanDanaAcc = \App\Helpers\AccountHelper::findByCode('211601004')
+                ?: Account::firstOrCreate(
+                    ['code' => '211601004'],
+                    [
+                        'name' => 'HUTANG PENITIPAN DANA',
+                        'classification' => 'liability',
+                        'account_subtype' => 'other_payable',
+                        'normal_balance' => 'credit',
+                        'is_header' => false,
+                        'is_active' => true,
+                    ]
+                );
 
             if ($deposit->deposit_journal_entry_id) {
                 $journalEntry = JournalEntry::find($deposit->deposit_journal_entry_id);
@@ -108,7 +111,7 @@ class UpdateCustomerDeposit
                             $defaultKas = Account::where('classification', 'asset')
                                 ->where('is_header', false)
                                 ->where(function ($q) {
-                                    $q->where('code', '1-1000')->orWhere('name', 'like', '%kas%');
+                                    $q->where('code', '111101001')->orWhere('code', '1-1000')->orWhere('name', 'like', '%kas%');
                                 })
                                 ->first();
                             $debitAccountId = $defaultKas?->id;
@@ -159,7 +162,7 @@ class UpdateCustomerDeposit
                     $defaultKas = Account::where('classification', 'asset')
                         ->where('is_header', false)
                         ->where(function ($q) {
-                            $q->where('code', '1-1000')->orWhere('name', 'like', '%kas%');
+                            $q->where('code', '111101001')->orWhere('code', '1-1000')->orWhere('name', 'like', '%kas%');
                         })
                         ->first();
                     $debitAccountId = $defaultKas?->id;

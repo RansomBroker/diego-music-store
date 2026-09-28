@@ -16,6 +16,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \App\Console\Commands\ProcessScheduledJournals::class,
+                \App\Console\Commands\ExecuteYearEndClosingCommand::class,
+            ]);
+        }
+
         try {
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         } catch (\Throwable $e) {

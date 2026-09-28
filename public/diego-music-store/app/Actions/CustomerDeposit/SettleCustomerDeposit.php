@@ -41,15 +41,18 @@ class SettleCustomerDeposit
 
             // 1. Resolve Accounts
             // Penitipan Dana (Liability)
-            $penitipanDanaAcc = Account::firstOrCreate(
-                ['code' => '2-1200'],
-                [
-                    'name' => 'Penitipan Dana',
-                    'classification' => 'liability',
-                    'is_header' => false,
-                    'is_active' => true,
-                ]
-            );
+            $penitipanDanaAcc = \App\Helpers\AccountHelper::findByCode('211601004')
+                ?: Account::firstOrCreate(
+                    ['code' => '211601004'],
+                    [
+                        'name' => 'HUTANG PENITIPAN DANA',
+                        'classification' => 'liability',
+                        'account_subtype' => 'other_payable',
+                        'normal_balance' => 'credit',
+                        'is_header' => false,
+                        'is_active' => true,
+                    ]
+                );
 
             // Pendapatan Penjualan (Revenue / Pemasukan)
             $salesAcc = null;
@@ -57,15 +60,18 @@ class SettleCustomerDeposit
                 $salesAcc = Account::find($deposit->product->sales_account_id);
             }
             if (!$salesAcc) {
-                $salesAcc = Account::firstOrCreate(
-                    ['code' => '4-1000'],
-                    [
-                        'name' => 'Pendapatan Penjualan',
-                        'classification' => 'revenue',
-                        'is_header' => false,
-                        'is_active' => true,
-                    ]
-                );
+                $salesAcc = \App\Helpers\AccountHelper::findByCode('411101001')
+                    ?: Account::firstOrCreate(
+                        ['code' => '411101001'],
+                        [
+                            'name' => 'PENJUALAN',
+                            'classification' => 'revenue',
+                            'account_subtype' => 'sales',
+                            'normal_balance' => 'credit',
+                            'is_header' => false,
+                            'is_active' => true,
+                        ]
+                    );
             }
 
             // Kas / Bank for remaining payment
@@ -78,7 +84,7 @@ class SettleCustomerDeposit
                     $cashAcc = Account::where('classification', 'asset')
                         ->where('is_header', false)
                         ->where(function ($q) {
-                            $q->where('code', '1-1000')->orWhere('name', 'like', '%kas%');
+                            $q->where('code', '111101001')->orWhere('code', '1-1000')->orWhere('name', 'like', '%kas%');
                         })
                         ->first();
                 }

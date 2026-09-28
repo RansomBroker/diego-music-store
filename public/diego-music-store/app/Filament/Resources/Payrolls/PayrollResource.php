@@ -161,6 +161,18 @@ class PayrollResource extends Resource
                     ->url(fn ($record) => route('pos.payroll.item.export-excel', $record->id))
                     ->openUrlInNewTab(),
 
+                Action::make('payrollJournal')
+                    ->label('Jurnal GL')
+                    ->tooltip('Lihat Jurnal Akuntansi Payroll Periode Ini')
+                    ->color('gray')
+                    ->icon('heroicon-o-document-text')
+                    ->visible(fn ($record) => $record->payroll?->status === 'paid' && (!empty($record->payroll?->journal_no) || !empty($record->payroll?->journal_entry_id)))
+                    ->modalHeading(fn ($record) => "Jurnal Akuntansi: {$record->payroll?->payroll_code}")
+                    ->modalWidth('lg')
+                    ->modalContent(fn ($record) => view('backoffice.payrolls.journal-modal', ['record' => $record->payroll]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup'),
+
                 EditAction::make()
                     ->label('Edit Gaji')
                     ->modalHeading(fn ($record) => 'Override Komponen Gaji: ' . ($record->employee?->name ?? 'Karyawan') . ($record->employee?->nik ? " ({$record->employee->nik})" : ''))

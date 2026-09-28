@@ -99,7 +99,7 @@ class Sale extends Model
         $totalDebit = 0;
         $totalCredit = 0;
 
-        $piutangAccount = Account::where('code', '1-1200')->first();
+        $piutangAccount = \App\Helpers\AccountHelper::findByCode('111301001') ?? Account::where('code', '1-1200')->first();
         if ($piutangAccount) {
             foreach ($journalEntries as $je) {
                 $items = JournalItem::where('journal_entry_id', $je->id)

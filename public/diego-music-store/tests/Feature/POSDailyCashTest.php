@@ -24,11 +24,12 @@ class POSDailyCashTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutVite();
 
         // Seed basic accounts
-        $this->cashAccount = Account::firstOrCreate(['code' => '1-1000'], ['name' => 'Kas Utama', 'classification' => 'Asset', 'is_active' => true]);
-        $this->capitalAccount = Account::firstOrCreate(['code' => '3-1000'], ['name' => 'Modal Pemilik', 'classification' => 'Equity', 'is_active' => true]);
-        $this->expenseAccount = Account::firstOrCreate(['code' => '6-1000'], ['name' => 'Beban Operasional & Gaji', 'classification' => 'Expense', 'is_active' => true]);
+        $this->cashAccount = Account::firstOrCreate(['code' => '111101001'], ['name' => 'KAS', 'classification' => 'Asset', 'is_active' => true]);
+        $this->capitalAccount = Account::firstOrCreate(['code' => '311101001'], ['name' => 'MODAL DISETOR', 'classification' => 'Equity', 'is_active' => true]);
+        $this->expenseAccount = Account::firstOrCreate(['code' => '611101014'], ['name' => 'BEBAN UMUM LAIN-LAIN', 'classification' => 'Expense', 'is_active' => true]);
 
         $this->user = User::factory()->create();
         $this->actingAs($this->user);

@@ -37,11 +37,19 @@ class PurchaseOrder extends Model
         'enable_tax',
         'enable_item_discount',
         'item_discount_type',
+        'dp_amount',
+        'dp_account_id',
+        'dp_paid_at',
+        'dp_journal_no',
+        'dp_reference_no',
+        'dp_notes',
     ];
 
     protected $casts = [
         'order_date' => 'date',
         'eta_date' => 'date',
+        'dp_paid_at' => 'date',
+        'dp_amount' => 'integer',
         'total_amount' => 'integer',
         'discount_amount' => 'integer',
         'discount_value' => 'integer',
@@ -109,5 +117,10 @@ class PurchaseOrder extends Model
     public function shippingPaymentAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'shipping_payment_account_id');
+    }
+
+    public function dpAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'dp_account_id');
     }
 }

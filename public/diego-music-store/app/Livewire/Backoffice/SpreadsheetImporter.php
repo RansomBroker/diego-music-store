@@ -57,13 +57,29 @@ class SpreadsheetImporter extends Component
 
     public int $batchSize = 50;
     public int $currentOffset = 0;
+    public ?int $branchId = null;
+    public ?int $contraAccountId = null;
+    public int $totalStockValue = 0;
+    public int $totalDebtValue = 0;
+    public ?string $lastSupplierName = null;
+    public ?string $generatedJournalNumber = null;
 
     public function mount(string $type = 'customer'): void
     {
         $this->type = $type;
-        $this->requiredHeaders = $type === 'customer'
-            ? ImportCustomers::REQUIRED_HEADERS
-            : ImportSuppliers::REQUIRED_HEADERS;
+        $this->requiredHeaders = match ($type) {
+            'customer'      => ImportCustomers::REQUIRED_HEADERS,
+            'supplier'      => ImportSuppliers::REQUIRED_HEADERS,
+            'supplier_debt' => \App\Actions\Supplier\ImportSupplierDebts::REQUIRED_HEADERS,
+            'product'       => \App\Actions\Product\ImportProducts::REQUIRED_HEADERS,
+            default         => [],
+        };
+
+        if ($this->type === 'product' || $this->type === 'supplier_debt') {
+            $this->branchId = \App\Models\Branch::where('is_active', true)->first()?->id;
+            $modalAcc = \App\Helpers\AccountHelper::findByCode('311101001');
+            $this->contraAccountId = $modalAcc?->id ?? \App\Helpers\AccountHelper::findByCode('311201001')?->id;
+        }
     }
 
     public function updatedFile(): void
@@ -175,8 +191,24 @@ class SpreadsheetImporter extends Component
         // Execute feature action
         if ($this->type === 'customer') {
             $result = app(ImportCustomers::class)->execute($rows);
-        } else {
+        } elseif ($this->type === 'supplier') {
             $result = app(ImportSuppliers::class)->execute($rows);
+        } elseif ($this->type === 'supplier_debt') {
+            $branchId = $this->branchId ?: (\App\Models\Branch::where('is_active', true)->first()?->id ?? 1);
+            $result = app(\App\Actions\Supplier\ImportSupplierDebts::class)->execute(
+                $rows,
+                $branchId,
+                auth()->id(),
+                $this->lastSupplierName
+            );
+            $this->totalDebtValue += ($result['total_debt_value'] ?? 0);
+            $this->lastSupplierName = $result['last_supplier'] ?? $this->lastSupplierName;
+        } elseif ($this->type === 'product') {
+            $branchId = $this->branchId ?: (\App\Models\Branch::where('is_active', true)->first()?->id ?? 1);
+            $result = app(\App\Actions\Product\ImportProducts::class)->executeRows($rows, $branchId, auth()->id());
+            $this->totalStockValue += ($result['total_value'] ?? 0);
+        } else {
+            $result = ['imported' => 0, 'skipped' => 0, 'errors' => []];
         }
 
         $this->importedCount += $result['imported'];
@@ -206,9 +238,54 @@ class SpreadsheetImporter extends Component
             $this->filePath = null;
         }
 
+        // Automatic Accounting Journal for Initial Stock
+        if ($this->type === 'product' && $this->totalStockValue > 0) {
+            $branchId = $this->branchId ?: (\App\Models\Branch::where('is_active', true)->first()?->id ?? 1);
+            $journal = app(\App\Actions\Product\ImportProducts::class)->recordInitialStockJournal(
+                totalValue: $this->totalStockValue,
+                branchId: $branchId,
+                contraAccountId: $this->contraAccountId,
+                userId: auth()->id(),
+                itemCount: $this->importedCount
+            );
+
+            if ($journal) {
+                $this->generatedJournalNumber = $journal->entry_no;
+            }
+        }
+
+        // Automatic Accounting Journal for Initial Supplier Debt (Option 1)
+        if ($this->type === 'supplier_debt' && $this->totalDebtValue > 0) {
+            $branchId = $this->branchId ?: (\App\Models\Branch::where('is_active', true)->first()?->id ?? 1);
+            $journal = app(\App\Actions\Supplier\ImportSupplierDebts::class)->recordInitialDebtJournal(
+                totalValue: $this->totalDebtValue,
+                branchId: $branchId,
+                contraAccountId: $this->contraAccountId,
+                userId: auth()->id(),
+                invoiceCount: $this->importedCount
+            );
+
+            if ($journal) {
+                $this->generatedJournalNumber = $journal->entry_no;
+            }
+        }
+
+        $noun = match($this->type) {
+            'product'       => 'produk',
+            'supplier_debt' => 'faktur hutang',
+            default         => 'data',
+        };
+        $notificationBody = "{$this->importedCount} {$noun} berhasil diimpor" . ($this->skippedCount > 0 ? ", {$this->skippedCount} dilewati." : ".");
+        if ($this->generatedJournalNumber) {
+            $val = $this->type === 'supplier_debt' ? $this->totalDebtValue : $this->totalStockValue;
+            $formattedValue = 'Rp ' . number_format($val, 0, ',', '.');
+            $journalLabel = $this->type === 'supplier_debt' ? 'saldo awal hutang dagang' : 'saldo awal persediaan';
+            $notificationBody .= " Jurnal {$journalLabel} {$this->generatedJournalNumber} ({$formattedValue}) otomatis dibukukan.";
+        }
+
         Notification::make()
             ->title('Proses Import Selesai')
-            ->body("{$this->importedCount} data berhasil diimpor" . ($this->skippedCount > 0 ? ", {$this->skippedCount} dilewati." : "."))
+            ->body($notificationBody)
             ->success()
             ->send();
     }
@@ -228,6 +305,10 @@ class SpreadsheetImporter extends Component
         $this->rawHeaders = [];
         $this->totalRows = 0;
         $this->previewRows = [];
+        $this->totalStockValue = 0;
+        $this->totalDebtValue = 0;
+        $this->lastSupplierName = null;
+        $this->generatedJournalNumber = null;
         $this->resetImportState();
     }
 
@@ -241,6 +322,10 @@ class SpreadsheetImporter extends Component
         $this->skippedCount = 0;
         $this->importErrors = [];
         $this->currentOffset = 0;
+        $this->totalStockValue = 0;
+        $this->totalDebtValue = 0;
+        $this->lastSupplierName = null;
+        $this->generatedJournalNumber = null;
     }
 
     public function render()

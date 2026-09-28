@@ -43,6 +43,7 @@ class PurchaseTransaction extends Model
         'enable_item_discount',
         'item_discount_type',
         'tax_invoice_no',
+        'down_payment_amount',
     ];
 
     protected $casts = [
@@ -58,6 +59,7 @@ class PurchaseTransaction extends Model
         'tax_amount' => 'integer',
         'pph_amount' => 'integer',
         'grand_total' => 'integer',
+        'down_payment_amount' => 'integer',
         'enable_tax' => 'boolean',
         'enable_item_discount' => 'boolean',
     ];
@@ -152,7 +154,7 @@ class PurchaseTransaction extends Model
             ->where('return_type', 'invoice_deduction')
             ->sum('total_amount');
 
-        return max(0, $this->grand_total - $paid - $returnedDeductions);
+        return max(0, $this->grand_total - ($this->down_payment_amount ?? 0) - $paid - $returnedDeductions);
     }
 
     public function shippingPaymentAccount(): BelongsTo

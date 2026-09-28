@@ -55,5 +55,19 @@
         <div class="text-lg font-extrabold text-right text-primary-600 dark:text-primary-400">
             Rp {{ number_format($grandTotal, 0, ',', '.') }}
         </div>
+
+        @if(!empty($downPaymentAmount) && $downPaymentAmount > 0)
+            <div class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Uang Muka (DP) PO:</div>
+            <div class="text-sm font-bold text-right text-emerald-600 dark:text-emerald-400">
+                - Rp {{ number_format($downPaymentAmount, 0, ',', '.') }}
+            </div>
+
+            <div class="col-span-2 border-t-2 border-dashed border-gray-300 dark:border-gray-600 my-1"></div>
+
+            <div class="text-base font-black text-rose-600 dark:text-rose-400">Sisa Tagihan / Hutang:</div>
+            <div class="text-lg font-black text-right text-rose-600 dark:text-rose-400">
+                Rp {{ number_format($netPayable ?? max(0, $grandTotal - $downPaymentAmount), 0, ',', '.') }}
+            </div>
+        @endif
     </div>
 </div>

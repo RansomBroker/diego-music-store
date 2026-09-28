@@ -50,6 +50,7 @@ class UpdatePurchaseTransaction
                 'shipping_carrier_name' => $data['shipping_carrier_name'] ?? $pt->shipping_carrier_name,
                 'shipping_payment_account_id' => $data['shipping_payment_account_id'] ?? $pt->shipping_payment_account_id,
                 'shipping_cost' => isset($data['shipping_cost']) ? intval($data['shipping_cost']) : $pt->shipping_cost,
+                'down_payment_amount' => isset($data['down_payment_amount']) ? intval($data['down_payment_amount']) : $pt->down_payment_amount,
             ]);
 
             // 2. Sync details

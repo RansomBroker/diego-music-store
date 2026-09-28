@@ -179,14 +179,7 @@ class CreatePOSSale
 
             // Resolve Account Helper
             $resolveAccount = function($code, $defaultName, $classification) {
-                return Account::firstOrCreate(
-                    ['code' => $code],
-                    [
-                        'name' => $defaultName,
-                        'classification' => $classification,
-                        'is_active' => true,
-                    ]
-                )->id;
+                return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);
             };
 
             // 5a. Debit: Receivables or Bank or Cash (supporting Split Payment)
@@ -205,17 +198,17 @@ class CreatePOSSale
 
                 $dbMethod = \App\Models\PaymentMethod::where('code', $payMethod)->first();
                 if ($dbMethod) {
-                    $debitAccId = $dbMethod->account_id ?: $resolveAccount('1-1000', 'Kas Utama', 'Asset');
+                    $debitAccId = $dbMethod->account_id ?: $resolveAccount('111101001', 'KAS', 'Asset');
                     $methodName = $dbMethod->name . ($payRef ? " (Ref: {$payRef})" : '');
                 } else {
                     if ($payMethod === 'credit') {
-                        $debitAccId = $resolveAccount('1-1200', 'Piutang Dagang', 'Asset');
+                        $debitAccId = $resolveAccount('111301001', 'PIUTANG DAGANG', 'Asset');
                         $methodName = 'Piutang';
                     } elseif ($payMethod === 'debit') {
-                        $debitAccId = $resolveAccount('1-1110', 'Bank BCA', 'Asset');
+                        $debitAccId = $resolveAccount('111201001', 'BANK BCA', 'Asset');
                         $methodName = 'Debit BCA' . ($payRef ? " (Ref: {$payRef})" : '');
                     } else {
-                        $debitAccId = $resolveAccount('1-1000', 'Kas Utama', 'Asset');
+                        $debitAccId = $resolveAccount('111101001', 'KAS', 'Asset');
                         $methodName = 'Tunai';
                     }
                 }
@@ -230,7 +223,7 @@ class CreatePOSSale
             }
 
             // 5b. Credit: Sales Revenue
-            $salesAccId = $resolveAccount('4-1000', 'Pendapatan Penjualan', 'Revenue');
+            $salesAccId = $resolveAccount('411101001', 'PENJUALAN', 'Revenue');
             JournalItem::create([
                 'journal_entry_id' => $journalEntry->id,
                 'account_id' => $salesAccId,
@@ -241,8 +234,8 @@ class CreatePOSSale
 
             // 5c. COGS Journal (if physical goods sold)
             if ($totalCOGS > 0) {
-                $cogsAccId = $resolveAccount('5-1000', 'Harga Pokok Penjualan', 'Expense');
-                $inventoryAccId = $resolveAccount('1-1300', 'Persediaan Barang', 'Asset');
+                $cogsAccId = $resolveAccount('511501001', 'HARGA POKOK PENJUALAN', 'Expense');
+                $inventoryAccId = $resolveAccount('111401001', 'PERSEDIAAN BARANG DAGANG', 'Asset');
 
                 // Debit COGS
                 JournalItem::create([

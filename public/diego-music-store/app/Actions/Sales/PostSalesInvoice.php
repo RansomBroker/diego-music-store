@@ -78,14 +78,7 @@ class PostSalesInvoice
 
             // 3. Helper resolve account
             $resolveAccount = function($code, $defaultName = 'Default Account', $classification = 'Asset') {
-                return Account::firstOrCreate(
-                    ['code' => $code],
-                    [
-                        'name' => $defaultName,
-                        'classification' => $classification,
-                        'is_active' => true,
-                    ]
-                )->id;
+                return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);
             };
 
             // 4. Create automatic Journal Entry
@@ -104,8 +97,8 @@ class PostSalesInvoice
 
             // Debit: Kas/Bank or Piutang Usaha
             $receivableAccId = ($invoice->payment_type === 'Kredit')
-                ? $resolveAccount('1-1200', 'Piutang Usaha', 'Asset')
-                : $resolveAccount('1-1000', 'Kas Utama', 'Asset');
+                ? $resolveAccount('111301001', 'PIUTANG DAGANG', 'Asset')
+                : $resolveAccount('111101001', 'KAS', 'Asset');
 
             JournalItem::create([
                 'journal_entry_id' => $journalEntry->id,
@@ -116,7 +109,7 @@ class PostSalesInvoice
             ]);
 
             // Credit: Pendapatan Penjualan
-            $revenueAccId = $resolveAccount('4-1000', 'Pendapatan Penjualan', 'Revenue');
+            $revenueAccId = $resolveAccount('411101001', 'PENJUALAN', 'Revenue');
             $netSales = max(0, $invoice->subtotal - $invoice->discount_amount);
             JournalItem::create([
                 'journal_entry_id' => $journalEntry->id,
@@ -128,7 +121,7 @@ class PostSalesInvoice
 
             // Credit: PPN Keluaran
             if ($invoice->tax_amount > 0) {
-                $taxAccId = $resolveAccount('2-1200', 'PPN Keluaran', 'Liability');
+                $taxAccId = $resolveAccount('211201001', 'HUTANG PPN (PPN KELUARAN)', 'Liability');
                 JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id' => $taxAccId,
@@ -140,7 +133,7 @@ class PostSalesInvoice
 
             // Credit: Biaya Kirim (if any)
             if ($invoice->shipping_cost > 0) {
-                $shippingAccId = $resolveAccount('4-2000', 'Pendapatan Ongkir / Pengiriman', 'Revenue');
+                $shippingAccId = $resolveAccount('411101001', 'PENJUALAN', 'Revenue');
                 JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id' => $shippingAccId,
@@ -152,8 +145,8 @@ class PostSalesInvoice
 
             // Debit: HPP & Credit: Persediaan (COGS)
             if ($totalCogs > 0) {
-                $cogsAccId = $resolveAccount('5-1000', 'Beban Pokok Penjualan (HPP)', 'Expense');
-                $invAccId = $resolveAccount('1-1300', 'Persediaan Barang Dagang', 'Asset');
+                $cogsAccId = $resolveAccount('511501001', 'HARGA POKOK PENJUALAN', 'cost');
+                $invAccId = $resolveAccount('111401001', 'PERSEDIAAN BARANG DAGANG', 'Asset');
 
                 JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,

@@ -144,7 +144,10 @@ class PostPurchaseTransaction
 
             // 3. Handle debt creation (jika Kredit)
             if ($pt->purchase_type === 'Kredit') {
-                $pt->supplier->increment('outstanding_debt', $pt->grand_total);
+                $netDebt = max(0, $pt->grand_total - ($pt->down_payment_amount ?? 0));
+                if ($netDebt > 0) {
+                    $pt->supplier->increment('outstanding_debt', $netDebt);
+                }
             }
 
             // 4. Update parent Purchase Order status if linked
@@ -195,14 +198,7 @@ class PostPurchaseTransaction
 
             // Resolve Account IDs helper
             $resolveAccount = function($code, $defaultName = 'Default Account') {
-                return \App\Models\Account::firstOrCreate(
-                    ['code' => $code],
-                    [
-                        'name' => $defaultName,
-                        'classification' => str_starts_with($code, '1') ? 'Asset' : (str_starts_with($code, '2') ? 'Liability' : 'Expense'),
-                        'is_active' => true,
-                    ]
-                )->id;
+                return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName);
             };
 
             // 1. Debits: Persediaan
@@ -210,7 +206,7 @@ class PostPurchaseTransaction
                 if ($detail->qty_received <= 0) continue;
                 
                 $inventoryAccId = $detail->productVariant->product->inventory_account_id 
-                    ?? $resolveAccount('1-1300', 'Persediaan Barang Dagang');
+                    ?? $resolveAccount('111401001', 'PERSEDIAAN BARANG DAGANG');
 
                 $detailBaseCost = ($detail->qty_received * $detail->price) - $detail->discount;
                 $detailValue = ($detail->qty_received * $detail->price) - $detail->discount;
@@ -229,9 +225,9 @@ class PostPurchaseTransaction
 
             // 2. Debit: Tax (if tax_amount > 0)
             if ($pt->tax_amount > 0) {
-                $taxAccId = \App\Models\Account::where('code', '1-1500')
-                    ->orWhere('name', 'like', '%PPN%')
-                    ->first()?->id ?? $resolveAccount('1-1500', 'PPN Masukan');
+                $taxAccId = \App\Helpers\AccountHelper::findByCode('111901001')?->id
+                    ?? \App\Models\Account::where('name', 'like', '%PPN%')->first()?->id
+                    ?? $resolveAccount('111901001', 'PPN DIBAYAR DIMUKA');
 
                 \App\Models\JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
@@ -244,7 +240,7 @@ class PostPurchaseTransaction
 
             // 3. Credit: Kas/Bank atau Hutang Biaya Kirim untuk Ongkir Pihak Ke-3
             if (($pt->shipping_borne_by ?? 'self_direct') === 'third_party' && $pt->shipping_cost > 0) {
-                $shippingAccId = $pt->shipping_payment_account_id ?? $resolveAccount('2-1500', 'Hutang Biaya Kirim Belum Ditagih');
+                $shippingAccId = $pt->shipping_payment_account_id ?? $resolveAccount('211601002', 'HUTANG ONGKIR');
                 \App\Models\JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id' => $shippingAccId,
@@ -256,9 +252,9 @@ class PostPurchaseTransaction
 
             // 4. Credit: PPh amount (if pph_amount > 0)
             if ($pt->pph_amount > 0) {
-                $pphAccId = \App\Models\Account::where('code', '2-1100')
-                    ->orWhere('name', 'like', '%PPh%')
-                    ->first()?->id ?? $resolveAccount('2-1100', 'Hutang PPh');
+                $pphAccId = \App\Helpers\AccountHelper::findByCode('211301001')?->id
+                    ?? \App\Models\Account::where('name', 'like', '%PPh%')->first()?->id
+                    ?? $resolveAccount('211301001', 'HUTANG PPH PASAL 21');
 
                 \App\Models\JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
@@ -269,20 +265,38 @@ class PostPurchaseTransaction
                 ]);
             }
 
-            // 5. Credit: Kas/Bank or Hutang Dagang (Net Grand Total)
-            if ($pt->purchase_type === 'Kredit') {
-                $payAccId = $resolveAccount('2-1000', 'Hutang Dagang');
-            } else {
-                $payAccId = $resolveAccount('1-1000', 'Kas Utama');
+            // 5. Credit: Kas/Bank or Hutang Dagang (Net Grand Total) & Deduct Down Payment (Uang Muka)
+            $dpAmount = intval($pt->down_payment_amount ?? 0);
+            $remainingCredit = max(0, $pt->grand_total - $dpAmount);
+
+            // If down payment exists, credit Uang Muka Pembelian to offset the advance asset
+            if ($dpAmount > 0) {
+                $advanceAccId = $resolveAccount('111201006', 'Uang Muka Pembelian');
+                \App\Models\JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id'       => $advanceAccId,
+                    'debit'            => 0,
+                    'credit'           => $dpAmount,
+                    'notes'            => "Alokasi Uang Muka Pembelian (DP) PO #{$pt->purchaseOrder?->po_number}",
+                ]);
             }
 
-            \App\Models\JournalItem::create([
-                'journal_entry_id' => $journalEntry->id,
-                'account_id' => $payAccId,
-                'debit' => 0,
-                'credit' => $pt->grand_total,
-                'notes' => $pt->purchase_type === 'Kredit' ? "Hutang Supplier" : "Kas/Bank Tunai",
-            ]);
+            // The remaining amount goes to Hutang Dagang or Kas/Bank
+            if ($remainingCredit > 0 || $dpAmount === 0) {
+                if ($pt->purchase_type === 'Kredit') {
+                    $payAccId = $resolveAccount('211101001', 'HUTANG DAGANG');
+                } else {
+                    $payAccId = $resolveAccount('111101001', 'KAS');
+                }
+
+                \App\Models\JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id'       => $payAccId,
+                    'debit'            => 0,
+                    'credit'           => $remainingCredit,
+                    'notes'            => $pt->purchase_type === 'Kredit' ? "Sisa Hutang Supplier (Setelah Potong DP)" : "Kas/Bank Tunai",
+                ]);
+            }
 
             return $pt;
         });

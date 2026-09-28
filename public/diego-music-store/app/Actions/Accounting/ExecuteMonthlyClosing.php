@@ -63,25 +63,38 @@ class ExecuteMonthlyClosing
 
             $allAccounts = Account::where('is_active', true)->where('is_header', false)->get();
 
-            // Find Retained Earnings Account (Laba Ditahan: 3-2000 or equity)
-            $retainedAccount = Account::where('is_active', true)
-                ->where('is_header', false)
-                ->where(function ($q) {
-                    $q->where('code', '3-2000')
-                      ->orWhere('name', 'LIKE', '%laba ditahan%')
-                      ->orWhere('name', 'LIKE', '%retained%');
-                })
-                ->first();
+            // Find Target Closing Account: Laba Tahun Berjalan (311301001), or fallback to Laba Ditahan (311201001 / 3-2000)
+            $closingAccount = \App\Helpers\AccountHelper::findByCode('311301001')
+                ?: Account::where('is_active', true)
+                    ->where('is_header', false)
+                    ->where(function ($q) {
+                        $q->where('code', '311301001')
+                          ->orWhere('name', 'LIKE', '%laba tahun berjalan%')
+                          ->orWhere('name', 'LIKE', '%current year%');
+                    })
+                    ->first();
 
-            if (!$retainedAccount) {
-                $retainedAccount = Account::where('is_active', true)
+            if (!$closingAccount) {
+                $closingAccount = \App\Helpers\AccountHelper::findByCode('311201001')
+                    ?: Account::where('is_active', true)
+                        ->where('is_header', false)
+                        ->where(function ($q) {
+                            $q->where('code', '3-2000')
+                              ->orWhere('name', 'LIKE', '%laba ditahan%')
+                              ->orWhere('name', 'LIKE', '%retained%');
+                        })
+                        ->first();
+            }
+
+            if (!$closingAccount) {
+                $closingAccount = Account::where('is_active', true)
                     ->where('is_header', false)
                     ->where('classification', 'equity')
                     ->first();
             }
 
-            if (!$retainedAccount) {
-                throw new Exception("Akun Retained Earnings / Laba Ditahan (3-2000) tidak ditemukan pada Bagan Akun.");
+            if (!$closingAccount) {
+                throw new Exception("Akun Ekuitas Penutupan (Laba Tahun Berjalan 311301001 / Laba Ditahan 311201001) tidak ditemukan pada Bagan Akun.");
             }
 
             $revenueBalances = [];
@@ -176,24 +189,25 @@ class ExecuteMonthlyClosing
                 }
             }
 
-            // Transfer Net Income / Net Loss to Retained Earnings
+            // Transfer Net Income / Net Loss to Target Closing Account (Laba Tahun Berjalan / Laba Ditahan)
+            $accName = $closingAccount->name;
             if ($netIncome > 0) {
-                // Net Profit => Credit Retained Earnings
+                // Net Profit => Credit Target Account
                 JournalItem::create([
                     'journal_entry_id' => $closingJournal->id,
-                    'account_id'       => $retainedAccount->id,
+                    'account_id'       => $closingAccount->id,
                     'debit'            => 0,
                     'credit'           => $netIncome,
-                    'notes'            => 'Alokasi Laba Bersih Periode ke Laba Ditahan',
+                    'notes'            => "Alokasi Laba Bersih Periode ke {$accName}",
                 ]);
             } elseif ($netIncome < 0) {
-                // Net Loss => Debit Retained Earnings
+                // Net Loss => Debit Target Account
                 JournalItem::create([
                     'journal_entry_id' => $closingJournal->id,
-                    'account_id'       => $retainedAccount->id,
+                    'account_id'       => $closingAccount->id,
                     'debit'            => abs($netIncome),
                     'credit'           => 0,
-                    'notes'            => 'Alokasi Rugi Bersih Periode ke Laba Ditahan',
+                    'notes'            => "Alokasi Rugi Bersih Periode ke {$accName}",
                 ]);
             }
 

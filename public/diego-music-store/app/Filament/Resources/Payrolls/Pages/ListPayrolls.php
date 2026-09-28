@@ -37,6 +37,58 @@ class ListPayrolls extends ListRecords
                     return redirect()->route('pos.payroll.export-excel', $data['payroll_id']);
                 }),
 
+            Actions\Action::make('payPayroll')
+                ->label('Bayar Payroll & Buat Jurnal GL')
+                ->color('success')
+                ->icon('heroicon-o-banknotes')
+                ->form([
+                    Forms\Components\Select::make('payroll_id')
+                        ->label('Pilih Batch Payroll')
+                        ->options(fn () => \App\Models\Payroll::where('status', '!=', 'paid')->where('status', '!=', 'cancelled')->latest()->get()->mapWithKeys(fn ($p) => [
+                            $p->id => "{$p->payroll_code} - Periode {$p->period} (THP: Rp " . number_format($p->total_net_salary, 0, ',', '.') . ")",
+                        ]))
+                        ->required(),
+                    Forms\Components\Select::make('payment_account_id')
+                        ->label('Rekening Kas/Bank Pembayaran')
+                        ->options(function () {
+                            return \App\Models\Account::where('classification', 'asset')
+                                ->where(function ($q) {
+                                    $q->where('code', 'like', '1111%')
+                                      ->orWhere('code', 'like', '1112%');
+                                })
+                                ->where('is_active', true)
+                                ->pluck('name', 'id');
+                        })
+                        ->default(fn () => \App\Helpers\AccountHelper::resolveAccountId('111201001', 'BANK BCA', 'asset'))
+                        ->required(),
+                    Forms\Components\DatePicker::make('paid_at')
+                        ->label('Tanggal Pembayaran')
+                        ->default(now()->format('Y-m-d'))
+                        ->required(),
+                ])
+                ->action(function (array $data) {
+                    try {
+                        $payroll = app(\App\Actions\Payroll\ProcessPayrollPayment::class)->execute(
+                            (int) $data['payroll_id'],
+                            auth()->user(),
+                            !empty($data['payment_account_id']) ? (int) $data['payment_account_id'] : null,
+                            $data['paid_at'] ?? null
+                        );
+
+                        Notification::make()
+                            ->title('Payroll Berhasil Dibayarkan')
+                            ->body("Payroll {$payroll->payroll_code} berhasil dibayar dan dibukukan ke jurnal {$payroll->journal_no}.")
+                            ->success()
+                            ->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Gagal Membayar')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+
             Actions\Action::make('generate')
                 ->label('Proses Payroll Bulanan')
                 ->color('primary')

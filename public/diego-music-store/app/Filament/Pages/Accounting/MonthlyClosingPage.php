@@ -241,4 +241,87 @@ class MonthlyClosingPage extends Page implements HasForms
                 ->send();
         }
     }
+
+    public function getYearEndClosingInfoProperty(): array
+    {
+        $info = $this->period_info;
+        $year = $info['year'];
+        $branchId = $info['branch_id'];
+
+        $entryNo = sprintf('JV-YEAREND-%04d%s', $year, $branchId ? "-B{$branchId}" : '');
+
+        $journal = \App\Models\JournalEntry::with(['items.account', 'postedBy'])
+            ->where('reference_type', 'YearEndClosing')
+            ->where('entry_no', $entryNo)
+            ->where('status', 'posted')
+            ->first();
+
+        $currentYearAcc = \App\Helpers\AccountHelper::findByCode('311301001');
+        $retainedAcc = \App\Helpers\AccountHelper::findByCode('311201001');
+
+        $currentBalance = 0.0;
+        if ($currentYearAcc) {
+            $q = \Illuminate\Support\Facades\DB::table('journal_items')
+                ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
+                ->where('journal_entries.status', 'posted')
+                ->where('journal_items.account_id', $currentYearAcc->id)
+                ->whereDate('journal_entries.date', '<=', "{$year}-12-31");
+
+            if ($branchId) {
+                $q->where('journal_entries.branch_id', $branchId);
+            }
+
+            $sums = $q->select(
+                \Illuminate\Support\Facades\DB::raw('SUM(journal_items.debit) as total_debit'),
+                \Illuminate\Support\Facades\DB::raw('SUM(journal_items.credit) as total_credit')
+            )->first();
+
+            $currentBalance = (float) (($sums->total_credit ?? 0) - ($sums->total_debit ?? 0));
+        }
+
+        return [
+            'year'            => $year,
+            'is_closed'       => $journal !== null,
+            'journal'         => $journal,
+            'current_balance' => $currentBalance,
+            'account_current' => $currentYearAcc,
+            'account_retained'=> $retainedAcc,
+        ];
+    }
+
+    public function executeYearEndClosingAction(): void
+    {
+        $info = $this->period_info;
+        $year = $info['year'];
+        $branchId = $info['branch_id'];
+
+        try {
+            $journal = (new \App\Actions\Accounting\ExecuteYearEndClosing())->execute(
+                year: $year,
+                branchId: $branchId,
+                userId: Auth::id(),
+                notes: "Tutup Buku Akhir Tahun {$year} oleh " . (Auth::user()?->name ?? 'Admin')
+            );
+
+            if ($journal) {
+                Notification::make()
+                    ->title('Tutup Buku Tahunan Berhasil')
+                    ->body("Laba Tahun Berjalan tahun {$year} berhasil dipindahkan ke Laba Ditahan (Jurnal Penutup #{$journal->entry_no}).")
+                    ->success()
+                    ->send();
+            } else {
+                Notification::make()
+                    ->title('Informasi Tutup Buku Tahunan')
+                    ->body("Tidak ada saldo Laba Tahun Berjalan pada tahun {$year} yang perlu dipindahkan.")
+                    ->info()
+                    ->send();
+            }
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Gagal Tutup Buku Tahunan')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
 }

@@ -34,7 +34,7 @@ class UpdatePurchaseReturn
             $replacementStatus = ($returnType === 'replacement') ? ($data['replacement_status'] ?? 'received') : 'none';
 
             if ($returnType === 'refund' && empty($refundAccountId)) {
-                $refundAccountId = Account::where('code', '1-1000')->value('id') 
+                $refundAccountId = \App\Helpers\AccountHelper::findByCode('111101001')?->id 
                     ?: Account::where('is_header', false)->where('classification', 'asset')->value('id');
             }
 

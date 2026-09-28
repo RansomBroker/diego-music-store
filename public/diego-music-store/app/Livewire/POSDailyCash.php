@@ -94,8 +94,8 @@ class POSDailyCash extends Component
     protected function loadAccounts()
     {
         // Load standard accounts
-        $this->inflowSources = Account::whereIn('code', ['3-1000', '4-1000'])->get(); // Modal Pemilik or Revenue
-        $this->outflowDestinations = Account::where('code', '6-1000')->get(); // Beban Operasional & Gaji
+        $this->inflowSources = Account::whereIn('code', ['311101001', '411101001', '3-1000', '4-1000'])->get(); // Modal Disetor or Penjualan
+        $this->outflowDestinations = Account::whereIn('code', ['611101014', '611101001', '6-1000'])->get(); // Beban Operasional / Gaji
         
         // Auto-select first options
         if ($this->inflowSources->isNotEmpty()) {
@@ -142,9 +142,9 @@ class POSDailyCash extends Component
         ]);
 
         try {
-            $cashAccount = Account::where('code', '1-1000')->first();
+            $cashAccount = \App\Helpers\AccountHelper::findByCode('111101001');
             if (!$cashAccount) {
-                throw new \Exception('Akun Kas Utama (1-1000) tidak ditemukan.');
+                throw new \Exception('Akun Kas (111101001) tidak ditemukan.');
             }
 
             app(CreateCashTransaction::class)->execute([
@@ -200,9 +200,9 @@ class POSDailyCash extends Component
         ]);
 
         try {
-            $cashAccount = Account::where('code', '1-1000')->first();
+            $cashAccount = \App\Helpers\AccountHelper::findByCode('111101001');
             if (!$cashAccount) {
-                throw new \Exception('Akun Kas Utama (1-1000) tidak ditemukan.');
+                throw new \Exception('Akun Kas (111101001) tidak ditemukan.');
             }
 
             // Check if drawer has enough cash

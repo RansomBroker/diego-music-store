@@ -16,6 +16,16 @@ class ListPurchaseTransactions extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('import')
+                ->label('Import Saldo Awal Hutang')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('success')
+                ->modalHeading('Import Saldo Awal Faktur Hutang Supplier')
+                ->modalWidth('4xl')
+                ->modalSubmitAction(false)
+                ->modalCancelAction(false)
+                ->modalFooterActions([])
+                ->modalContent(fn () => view('filament.components.supplier-debt-import-modal')),
             CreateAction::make()
                 ->modalWidth('7xl')
                 ->using(fn (array $data): Model => app(CreatePurchaseTransactionAction::class)->execute($data)),

@@ -73,15 +73,17 @@
         :class="isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
     >
         <!-- BRAND / LOGO HEADER -->
-        <div class="px-4 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-shrink-0 h-16">
+        <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-shrink-0 h-[72px]">
             <div class="flex items-center gap-3 min-w-0" x-show="!isCompact" x-cloak>
-                <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-md flex-shrink-0 {{ $hasLogo ? '' : 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-blue-500/20' }}">
-                    @if ($hasLogo)
-                        <img src="{{ $selectedLogoUrl }}" alt="Store Logo" class="w-full h-full object-cover">
-                    @else
-                        <i class="ph-bold ph-storefront text-xl"></i>
-                    @endif
-                </div>
+                @if ($hasLogo)
+                    <div class="w-20 h-20 flex items-center justify-center flex-shrink-0">
+                        <img src="{{ $selectedLogoUrl }}" alt="Store Logo" class="w-full h-full object-contain">
+                    </div>
+                @else
+                    <div class="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-blue-500/20 flex-shrink-0">
+                        <i class="ph-bold ph-storefront text-2xl"></i>
+                    </div>
+                @endif
                 <div class="min-w-0">
                     <h2 class="text-sm md:text-base font-black text-slate-900 dark:text-white tracking-tight truncate leading-tight">
                         Diego Music Store
@@ -106,13 +108,15 @@
 
             <!-- Collapsed Icon Only Mode Logo (Desktop) -->
             <div class="w-full flex justify-center" x-show="isCompact" x-cloak>
-                <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-md {{ $hasLogo ? '' : 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-blue-500/20' }}">
-                    @if ($hasLogo)
-                        <img src="{{ $selectedLogoUrl }}" alt="Store Logo" class="w-full h-full object-cover">
-                    @else
-                        <i class="ph-bold ph-storefront text-xl"></i>
-                    @endif
-                </div>
+                @if ($hasLogo)
+                    <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                        <img src="{{ $selectedLogoUrl }}" alt="Store Logo" class="w-full h-full object-contain">
+                    </div>
+                @else
+                    <div class="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-blue-500/20 flex-shrink-0">
+                        <i class="ph-bold ph-storefront text-2xl"></i>
+                    </div>
+                @endif
             </div>
         </div>
 
