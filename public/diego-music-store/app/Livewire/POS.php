@@ -44,6 +44,8 @@ class POS extends Component
 
     // Product search modal
     public $showProductSearchModal = false;
+    public int $productPage = 1;
+    const PRODUCTS_PER_PAGE = 40;
 
     // Payment state
     public $paymentMethod = 'cash';
@@ -260,16 +262,46 @@ class POS extends Component
         }
     }
 
+    /**
+     * Ambil semua kategori unik dari DB yang memiliki produk aktif.
+     * Digunakan untuk render tab kategori di UI POS.
+     * Format: [['name' => 'GITAR ELECTRIC', 'count' => 368], ...]
+     */
+    public function getAvailableCategoriesProperty()
+    {
+        return \App\Models\Product::where('is_active', true)
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->selectRaw('category, COUNT(*) as total')
+            ->groupBy('category')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn($p) => ['name' => $p->category, 'count' => $p->total]);
+    }
+
     // Load products filtered by category and search
+    // OPTIMASI: hanya query ketika modal terbuka, filter kategori langsung di SQL
     public function getProductsProperty()
     {
+        // Guard: jangan query apapun kalau modal belum terbuka
+        if (!$this->showProductSearchModal) {
+            return collect();
+        }
+
+        $take = self::PRODUCTS_PER_PAGE * $this->productPage;
+
         $query = ProductVariant::with(['product', 'branchStocks'])
             ->where('is_active', true)
             ->whereHas('product', function ($q) {
                 $q->where('is_active', true);
+
+                // Filter langsung pakai nilai category dari DB
+                if ($this->activeCategory !== 'Semua') {
+                    $q->where('category', $this->activeCategory);
+                }
             });
 
-        // Search filter (SKU, name, barcode)
+        // Search filter (SKU, name, barcode, nama produk)
         if (!empty($this->search)) {
             $search = '%' . $this->search . '%';
             $query->where(function ($q) use ($search) {
@@ -282,40 +314,41 @@ class POS extends Component
             });
         }
 
-        $allVariants = $query->get();
-
-        // Categorize logically
-        return $allVariants->filter(function ($variant) {
-            $cat = $this->getCategoryOfVariant($variant);
-            if ($this->activeCategory === 'Semua') {
-                return true;
-            }
-            return $cat === $this->activeCategory;
-        });
+        // Ambil $take + 1 untuk deteksi apakah masih ada data, lalu potong ke $take
+        return $query->limit($take + 1)->get()->take($take);
     }
 
-    private function getCategoryOfVariant($variant): string
+    /**
+     * Computed property: apakah masih ada produk berikutnya.
+     * Dibandingkan jumlah produk yang sudah dimuat vs kapasitas halaman saat ini.
+     * Kalau produk yang tampil == $take (kapasitas penuh), artinya masih ada lebih.
+     */
+    public function getHasMoreProductsProperty(): bool
     {
-        if ($variant->product->isService()) {
-            return 'Jasa Reparasi';
+        if (!$this->showProductSearchModal) {
+            return false;
         }
-        
-        $name = strtolower($variant->product->name . ' ' . $variant->name);
-        
-        if (str_contains($name, 'gitar') || str_contains($name, 'guitar') || str_contains($name, 'bass')) {
-            return 'Gitar & Bass';
-        }
-        if (str_contains($name, 'keyboard') || str_contains($name, 'piano') || str_contains($name, 'organ')) {
-            return 'Keyboard & Piano';
-        }
-        if (str_contains($name, 'drum') || str_contains($name, 'stick') || str_contains($name, 'perkusi')) {
-            return 'Drum & Perkusi';
-        }
-        if (str_contains($name, 'senar') || str_contains($name, 'kabel') || str_contains($name, 'jack') || str_contains($name, 'aksesoris')) {
-            return 'Aksesoris';
-        }
-        
-        return 'Aksesoris'; // Fallback
+        $take = self::PRODUCTS_PER_PAGE * $this->productPage;
+        return $this->products->count() >= $take;
+    }
+
+    // Muat halaman produk berikutnya (dipanggil oleh infinite scroll di frontend)
+    public function loadMoreProducts(): void
+    {
+        $this->productPage++;
+    }
+
+
+    // Reset paginasi produk saat search berubah
+    public function updatedSearch(): void
+    {
+        $this->productPage = 1;
+    }
+
+    // Reset paginasi produk saat kategori berubah
+    public function updatedActiveCategory(): void
+    {
+        $this->productPage = 1;
     }
 
     // Get matching customers for live search dropdown
@@ -367,34 +400,30 @@ class POS extends Component
             ->sum('grand_total');
     }
 
-    // Get count of cart items per category
+    // Hitung jumlah item di cart per kategori DB (untuk badge di tab)
     public function getCategoryCountsProperty()
     {
-        $counts = [
-            'Semua' => 0,
-            'Gitar & Bass' => 0,
-            'Keyboard & Piano' => 0,
-            'Drum & Perkusi' => 0,
-            'Aksesoris' => 0,
-            'Jasa Reparasi' => 0,
-        ];
-        
+        $counts = ['Semua' => 0];
+
         if (empty($this->cart)) {
             return $counts;
         }
-        
+
         $variantIds = array_keys($this->cart);
-        $variants = \App\Models\ProductVariant::with('product')->whereIn('id', $variantIds)->get();
-        
+        $variants = \App\Models\ProductVariant::with(['product:id,category'])
+            ->select(['id', 'product_id'])
+            ->whereIn('id', $variantIds)
+            ->get();
+
         foreach ($variants as $variant) {
-            $qty = $this->cart[$variant->id]['qty'] ?? 0;
-            $cat = $this->getCategoryOfVariant($variant);
-            if (isset($counts[$cat])) {
-                $counts[$cat] += $qty;
-            }
+            $qty   = $this->cart[$variant->id]['qty'] ?? 0;
+            $cat   = $variant->product->category ?? null;
             $counts['Semua'] += $qty;
+            if ($cat) {
+                $counts[$cat] = ($counts[$cat] ?? 0) + $qty;
+            }
         }
-        
+
         return $counts;
     }
 
@@ -1203,12 +1232,15 @@ class POS extends Component
 
     public function openProductSearch()
     {
+        $this->productPage = 1;  // Reset ke halaman pertama setiap modal dibuka
         $this->showProductSearchModal = true;
     }
 
     public function closeProductSearch()
     {
         $this->showProductSearchModal = false;
+        $this->search = '';      // Reset search saat modal ditutup
+        $this->productPage = 1;
     }
 
     public function openHeldTransactionsModal()

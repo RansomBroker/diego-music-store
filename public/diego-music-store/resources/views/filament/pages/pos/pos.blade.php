@@ -60,6 +60,7 @@
         :editingSaleId="$editingSaleId"
     />
 
+
     <!-- Product Search Modal -->
     <x-pos-page::product-search-modal 
         :show="$showProductSearchModal"
@@ -70,7 +71,11 @@
         :selectedPricingTierId="$selectedPricingTierId"
         :cart="$cart"
         :categoryCounts="$this->categoryCounts"
+        :hasMoreProducts="$this->hasMoreProducts"
+        :availableCategories="$this->availableCategories"
     />
+
+
 
     <!-- Payment Detail Modal -->
     <x-pos-page::payment-modal 
