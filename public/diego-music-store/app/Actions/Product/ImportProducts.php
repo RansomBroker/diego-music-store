@@ -249,7 +249,7 @@ class ImportProducts
      * Record a balanced double-entry journal for initial stock.
      *
      * Debit: 111401001 - Persediaan Barang Dagang
-     * Credit: 311101001 - Modal Disetor (or 311201001 - Laba Ditahan)
+     * Credit: 311101003 - Modal Pemilik (or 311201001 - Laba Ditahan)
      *
      * @param int $totalValue Total valuation of initial stock (Qty * HPP).
      * @param int $branchId Target branch for accounting attribution.
@@ -275,8 +275,8 @@ class ImportProducts
 
         $contraAcc = $contraAccountId ? Account::find($contraAccountId) : null;
         if (!$contraAcc) {
-            $contraAcc = AccountHelper::findByCode('311101001')
-                ?: Account::find(AccountHelper::resolveAccountId('311101001', 'MODAL DISETOR', 'equity'));
+            $contraAcc = AccountHelper::findByCode('311101003')
+                ?: Account::find(AccountHelper::resolveAccountId('311101003', 'MODAL PEMILIK', 'equity'));
         }
 
         if (!$inventoryAcc || !$contraAcc) {

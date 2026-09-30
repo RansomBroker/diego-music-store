@@ -95,6 +95,7 @@ class CreatePOSSale
                 'status' => $saleStatus,
                 'created_by' => Auth::id(),
                 'sale_category' => $data['sale_category'] ?? 'Store',
+                'notes' => $data['notes'] ?? null,
             ]);
 
             if ($creditAmount > 0 && $customerId) {

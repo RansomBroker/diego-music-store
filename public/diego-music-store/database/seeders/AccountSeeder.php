@@ -60,11 +60,11 @@ class AccountSeeder extends Seeder
             '1-1300' => '111401001', // Persediaan Barang Dagang -> PERSEDIAAN BARANG DAGANG
             '2-1000' => '211101001', // Hutang Dagang -> HUTANG DAGANG
             '2-1200' => '211601004', // Penitipan Dana -> HUTANG PENITIPAN DANA
-            '3-1000' => '311101001', // Modal Pemilik -> MODAL DISETOR
+            '3-1000' => '311101003', // Modal Pemilik -> MODAL PEMILIK
             '4-1000' => '411101001', // Pendapatan Penjualan -> PENJUALAN
             '5-1000' => '511501001', // Harga Pokok Penjualan (HPP) -> HARGA POKOK PENJUALAN
             '4-2000' => '411301001', // Potongan Voucher -> POTONGAN PENJUALAN
-            '6-2000' => '611101026', // Beban Entertain & Promosi -> BEBAN ENTERTAIN
+            '6-2000' => '611101026', // Beban Complimentary -> BIAYA COMPLIMENTARY
         ];
 
         foreach ($legacyDetailMap as $oldCode => $newCode) {

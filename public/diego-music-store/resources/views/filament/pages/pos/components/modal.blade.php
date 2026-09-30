@@ -1,7 +1,7 @@
 @props([
     'show',
     'title',
-    'closeAction',
+    'closeAction' => null,
     'maxWidth' => 'md'
 ])
 
@@ -22,9 +22,11 @@
             <!-- Modal Header -->
             <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
                 <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">{{ $title }}</h3>
-                <button wire:click="{{ $closeAction }}" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 flex items-center justify-center transition-colors">
-                    <i class="ph-bold ph-x text-lg"></i>
-                </button>
+                @if ($closeAction)
+                    <button wire:click="{{ $closeAction }}" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 flex items-center justify-center transition-colors">
+                        <i class="ph-bold ph-x text-lg"></i>
+                    </button>
+                @endif
             </div>
 
             <!-- Modal Content -->

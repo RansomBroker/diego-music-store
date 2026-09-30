@@ -45,9 +45,7 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         <span>Full Control &bull; Bebas Jam Kerja / Presensi</span>
                     </div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium pt-0.5">
-                        Presensi Staf Cabang: <strong class="text-slate-800 dark:text-slate-200">{{ $hadirCount }}</strong> dari {{ $totalStaff }} Hadir
-                    </div>
+
                 </div>
 
                 <div class="flex items-center gap-2 flex-shrink-0">

@@ -120,6 +120,7 @@ class UpdatePOSSale
                 'payment_method' => $paymentMethod,
                 'status' => $saleStatus,
                 'sale_category' => $data['sale_category'] ?? 'Store',
+                'notes' => $data['notes'] ?? null,
             ]);
 
             if ($creditAmount > 0 && $customerId) {

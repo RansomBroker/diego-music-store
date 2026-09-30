@@ -13,7 +13,7 @@
 
 @if ($show)
     <div 
-        x-data="{}"
+        x-data="{ viewMode: localStorage.getItem('posViewMode') || 'grid' }"
         x-init="$nextTick(() => { $refs.searchInput.focus(); $refs.searchInput.select() })"
         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm" 
         wire:click.self="closeProductSearch"
@@ -25,9 +25,27 @@
                     <h3 class="text-lg font-bold text-slate-955 dark:text-white">Tambah Produk</h3>
                     <p class="text-xs text-slate-700 dark:text-slate-300 font-semibold mt-0.5">Cari dan pilih produk untuk ditambahkan ke keranjang</p>
                 </div>
-                <button wire:click="closeProductSearch" class="w-8 h-8 rounded-full bg-slate-150 hover:bg-slate-200 dark:bg-slate-700 text-slate-650 hover:text-slate-955 dark:text-slate-300 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer">
-                    <i class="ph-bold ph-x text-lg"></i>
-                </button>
+                <div class="flex items-center gap-3">
+                    <div class="flex bg-slate-100 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                        <button 
+                            @click="viewMode = 'grid'; localStorage.setItem('posViewMode', 'grid')"
+                            :class="viewMode === 'grid' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'"
+                            class="px-2 py-1 rounded-md text-sm transition-all"
+                        >
+                            <i class="ph-fill ph-squares-four text-lg"></i>
+                        </button>
+                        <button 
+                            @click="viewMode = 'list'; localStorage.setItem('posViewMode', 'list')"
+                            :class="viewMode === 'list' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'"
+                            class="px-2 py-1 rounded-md text-sm transition-all"
+                        >
+                            <i class="ph-fill ph-list text-lg"></i>
+                        </button>
+                    </div>
+                    <button wire:click="closeProductSearch" class="w-8 h-8 rounded-full bg-slate-150 hover:bg-slate-200 dark:bg-slate-700 text-slate-650 hover:text-slate-955 dark:text-slate-300 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer">
+                        <i class="ph-bold ph-x text-lg"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Search & Categories -->
@@ -82,17 +100,33 @@
                         <span class="text-sm font-medium">Tidak ada produk ditemukan</span>
                     </div>
                 @else
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                        @foreach ($products as $variant)
-                            <x-pos.product-card 
-                                :variant="$variant" 
-                                :selectedBranchId="$selectedBranchId" 
-                                :selectedPricingTierId="$selectedPricingTierId" 
-                                :qtyInCart="$cart[$variant->id]['qty'] ?? 0"
-                                clickAction="addToCart"
-                            />
-                        @endforeach
-                    </div>
+                    <template x-if="viewMode === 'grid'">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                            @foreach ($products as $variant)
+                                <x-pos.product-card 
+                                    :variant="$variant" 
+                                    :selectedBranchId="$selectedBranchId" 
+                                    :selectedPricingTierId="$selectedPricingTierId" 
+                                    :qtyInCart="$cart[$variant->id]['qty'] ?? 0"
+                                    clickAction="addToCart"
+                                />
+                            @endforeach
+                        </div>
+                    </template>
+                    
+                    <template x-if="viewMode === 'list'">
+                        <div class="flex flex-col gap-2">
+                            @foreach ($products as $variant)
+                                <x-pos.product-list-item 
+                                    :variant="$variant" 
+                                    :selectedBranchId="$selectedBranchId" 
+                                    :selectedPricingTierId="$selectedPricingTierId" 
+                                    :qtyInCart="$cart[$variant->id]['qty'] ?? 0"
+                                    clickAction="addToCart"
+                                />
+                            @endforeach
+                        </div>
+                    </template>
 
                     @if ($hasMoreProducts)
                         <!-- Tombol fallback + indicator scroll -->

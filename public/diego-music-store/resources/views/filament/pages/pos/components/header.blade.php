@@ -22,4 +22,5 @@
     :selectedBranchId="$selectedBranchId"
     :showBranchSelector="true"
     :showCloseSession="!empty($activeSessionInfo)"
+    :showSidebarToggle="false"
 />

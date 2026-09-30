@@ -26,6 +26,7 @@ class Sale extends Model
         'status',
         'created_by',
         'sale_category',
+        'notes',
     ];
 
     protected $casts = [
@@ -71,8 +72,23 @@ class Sale extends Model
         return $this->hasMany(SalesReturn::class);
     }
 
-    public static function generateInvoiceNumber(): string
+    public static function generateInvoiceNumber(string $categoryName = null): string
     {
+        if ($categoryName) {
+            $category = \App\Models\SaleCategory::where('name', $categoryName)->first();
+            if ($category && !empty($category->prefix)) {
+                $prefix = $category->prefix;
+                $startAlphabet = strtoupper($category->start_alphabet ?? 'A');
+                $endAlphabet = strtoupper($category->end_alphabet ?? 'Z');
+                $digitLength = $category->digit_length ?? 4;
+                
+                $count = self::where('sale_category', $categoryName)->count();
+                $nextSequence = $count + 1;
+                
+                return \App\Helpers\InvoiceHelper::getInvoiceNumber($prefix, $startAlphabet, $endAlphabet, $digitLength, $nextSequence);
+            }
+        }
+
         $dateStr = now()->format('Ymd');
         $prefix = 'INV-' . $dateStr . '-';
 
@@ -82,7 +98,7 @@ class Sale extends Model
 
         if ($lastSale) {
             $lastNum = intval(substr($lastSale->invoice_number, -4));
-            $nextNum = str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
+            $nextNum = str_pad((string)($lastNum + 1), 4, '0', STR_PAD_LEFT);
         } else {
             $nextNum = '0001';
         }

@@ -77,7 +77,7 @@ class SpreadsheetImporter extends Component
 
         if ($this->type === 'product' || $this->type === 'supplier_debt') {
             $this->branchId = \App\Models\Branch::where('is_active', true)->first()?->id;
-            $modalAcc = \App\Helpers\AccountHelper::findByCode('311101001');
+            $modalAcc = \App\Helpers\AccountHelper::findByCode('311101003');
             $this->contraAccountId = $modalAcc?->id ?? \App\Helpers\AccountHelper::findByCode('311201001')?->id;
         }
     }

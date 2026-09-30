@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
         $bankBni     = \App\Helpers\AccountHelper::findByCode('111201004');
         $piutangAcc  = \App\Helpers\AccountHelper::findByCode('111301001');
         $voucherAcc  = \App\Helpers\AccountHelper::findByCode('411301001') ?? \App\Helpers\AccountHelper::findByCode('611101027');
-        $entertainAcc= \App\Helpers\AccountHelper::findByCode('611101026');
+        $complimentaryAcc= \App\Helpers\AccountHelper::findByCode('611101026');
 
         $methodsData = [
             [
@@ -86,9 +86,9 @@ class DatabaseSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Entertain',
-                'code' => 'entertain',
-                'account_id' => $entertainAcc?->id,
+                'name' => 'Complimentary',
+                'code' => 'complimentary',
+                'account_id' => $complimentaryAcc?->id,
                 'parent_id' => null,
                 'children' => [],
             ],
@@ -131,6 +131,9 @@ class DatabaseSeeder extends Seeder
                 'children' => [],
             ],
         ];
+
+        // Hapus metode pembayaran lama 'entertain' jika masih ada
+        \App\Models\PaymentMethod::where('code', 'entertain')->delete();
 
         foreach ($methodsData as $group) {
             $parent = \App\Models\PaymentMethod::updateOrCreate(

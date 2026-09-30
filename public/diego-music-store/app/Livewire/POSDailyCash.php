@@ -94,7 +94,7 @@ class POSDailyCash extends Component
     protected function loadAccounts()
     {
         // Load standard accounts
-        $this->inflowSources = Account::whereIn('code', ['311101001', '411101001', '3-1000', '4-1000'])->get(); // Modal Disetor or Penjualan
+        $this->inflowSources = Account::whereIn('code', ['311101003', '411101001', '3-1000', '4-1000'])->get(); // Modal Pemilik or Penjualan
         $this->outflowDestinations = Account::whereIn('code', ['611101014', '611101001', '6-1000'])->get(); // Beban Operasional / Gaji
         
         // Auto-select first options

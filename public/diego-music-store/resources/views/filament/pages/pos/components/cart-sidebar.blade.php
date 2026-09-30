@@ -26,32 +26,33 @@
     'saleCategory' => 'Store',
     'salesReps' => [],
     'saleCategories' => [],
-    'editingSaleId' => null
+    'editingSaleId' => null,
+    'cartVariants' => []
 ])
 
 <div class="flex-1 w-full bg-white dark:bg-slate-800 flex flex-col h-full transition-colors overflow-hidden">
     <!-- Cart Header -->
-    <div class="p-6 border-b border-slate-100 dark:border-slate-700">
+    <div class="p-3 sm:p-4 border-b border-slate-100 dark:border-slate-700">
         @if ($editingSaleId)
-            <div class="mb-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl flex items-center justify-between gap-3 transition-colors duration-200">
+            <div class="mb-3 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl flex items-center justify-between gap-2 transition-colors duration-200">
                 <div class="flex items-center gap-2 text-amber-700 dark:text-amber-450">
-                    <i class="ph-fill ph-warning-circle text-lg animate-pulse"></i>
-                    <div class="text-xs">
+                    <i class="ph-fill ph-warning-circle text-base animate-pulse"></i>
+                    <div class="text-[10px] leading-tight">
                         <span class="font-extrabold block">Mode Edit Transaksi</span>
-                        <span class="font-medium text-slate-500 dark:text-slate-400 block mt-0.5">Semua perubahan stok & jurnal akan diperbarui setelah checkout.</span>
+                        <span class="font-medium text-slate-500 dark:text-slate-400 block">Perubahan akan diperbarui saat checkout.</span>
                     </div>
                 </div>
                 <button 
                     type="button"
                     wire:click="cancelEdit"
-                    class="px-2.5 py-1.5 text-[10px] font-black text-amber-700 hover:text-white bg-amber-100 hover:bg-amber-600 dark:bg-amber-900/40 dark:hover:bg-amber-600 rounded-lg transition-all"
+                    class="px-2 py-1 text-[9px] font-black text-amber-700 hover:text-white bg-amber-100 hover:bg-amber-600 dark:bg-amber-900/40 dark:hover:bg-amber-600 rounded-lg transition-all"
                 >
                     Batal Edit
                 </button>
             </div>
         @endif
 
-        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-3">
+        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2 mb-2">
             <div class="flex flex-col">
                 <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Transaksi Saat Ini</h2>
                 <div class="flex items-center gap-2 mt-1">
@@ -71,147 +72,183 @@
             </div>
             
             <!-- Toolbar Utility Buttons with Labels -->
-            <div class="flex items-center flex-wrap gap-2">
-                <!-- Tambah Produk -->
-                <x-pos.utility.button 
-                    wire:click="openProductSearch" 
-                    variant="primary" 
-                    size="sm" 
-                    icon="ph-bold ph-plus" 
+            <div class="flex items-stretch gap-2">
+                <!-- Tombol Utama Tambah Produk (Expand 2 Baris) -->
+                <button 
+                    wire:click="openProductSearch"
+                    type="button" 
                     title="Tambah Produk"
+                    class="flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl px-3 transition-all active:scale-[0.98] w-24 sm:w-28 flex-shrink-0 border border-emerald-400/20 group"
                 >
-                    Tambah Produk
-                </x-pos.utility.button>
+                    <i class="ph-bold ph-plus text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-[10px] sm:text-xs leading-tight text-center">Tambah<br>Produk</span>
+                </button>
 
-                <!-- Daftar Transaksi (Hold / List) -->
-                <x-pos.utility.button 
-                    wire:click="openHeldTransactionsModal" 
-                    variant="warning" 
-                    size="sm" 
-                    icon="ph-bold ph-folder-open" 
-                    title="Daftar Transaksi"
-                    class="!bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent"
-                >
-                    Daftar Transaksi
-                    @if (count($heldTransactions) > 0)
-                        <span class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-600 text-white text-[8px] font-bold rounded-full flex items-center justify-center pointer-events-none">
-                            {{ count($heldTransactions) }}
-                        </span>
-                    @endif
-                </x-pos.utility.button>
+                <!-- Kumpulan Tombol Utility -->
+                <div class="flex flex-col gap-2 justify-center flex-1">
+                    <!-- Baris 1: Aksi Utama & Navigasi -->
+                    <div class="flex items-center flex-wrap gap-2">
+                        <!-- Daftar Transaksi (Hari Ini) -->
+                        <x-pos.utility.button 
+                            href="/pos/transactions?fromDate={{ now()->format('Y-m-d') }}&toDate={{ now()->format('Y-m-d') }}" 
+                            variant="info" 
+                            size="sm" 
+                            icon="ph-bold ph-list-dashes" 
+                            title="Daftar Transaksi"
+                            class="!bg-indigo-500 hover:!bg-indigo-600 dark:!bg-indigo-600 dark:hover:!bg-indigo-700 !text-white !border-transparent"
+                        >
+                            Daftar Transaksi
+                        </x-pos.utility.button>
 
-                <!-- Simpan Transaksi Saat Ini -->
-                <x-pos.utility.button 
-                    wire:click="holdTransaction" 
-                    variant="warning" 
-                    size="sm" 
-                    icon="ph-bold ph-folder-simple-plus" 
-                    title="Simpan Transaksi Sekarang" 
-                    :disabled="empty($cart)"
-                    class="!bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent"
-                >
-                    Simpan Transaksi
-                </x-pos.utility.button>
+                    <!-- Daftar Transaksi Tunda (Hold / List) -->
+                    <x-pos.utility.button 
+                        wire:click="openHeldTransactionsModal" 
+                        variant="warning" 
+                        size="sm" 
+                        icon="ph-bold ph-folder-open" 
+                        title="Daftar Transaksi Tunda"
+                        class="!bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent"
+                    >
+                        Daftar Transaksi Tunda
+                        @if (count($heldTransactions) > 0)
+                            <span class="absolute -top-2 -right-2 flex h-5 w-5 pointer-events-none">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-5 w-5 bg-rose-600 items-center justify-center text-[10px] font-bold text-white shadow-sm border border-rose-700">
+                                    {{ count($heldTransactions) }}
+                                </span>
+                            </span>
+                        @endif
+                    </x-pos.utility.button>
 
-                <!-- Print Bill -->
-                <x-pos.utility.button 
-                    wire:click="printDraft('bill')" 
-                    variant="info" 
-                    size="sm" 
-                    icon="ph-bold ph-receipt" 
-                    title="Cetak Bill Sementara" 
-                    :disabled="empty($cart)"
-                >
-                    Bill
-                </x-pos.utility.button>
+                    <!-- Simpan Transaksi Saat Ini -->
+                    <x-pos.utility.button 
+                        wire:click="holdTransaction" 
+                        variant="warning" 
+                        size="sm" 
+                        icon="ph-bold ph-folder-simple-plus" 
+                        title="Simpan Transaksi Sekarang" 
+                        :disabled="empty($cart)"
+                        class="!bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent"
+                    >
+                        Simpan Transaksi
+                    </x-pos.utility.button>
+                </div>
 
-                <!-- Print Large Bill -->
-                <x-pos.utility.button 
-                    wire:click="printDraft('large')" 
-                    variant="info" 
-                    size="sm" 
-                    icon="ph-bold ph-file-text" 
-                    title="Cetak Large Bill" 
-                    :disabled="empty($cart)"
-                >
-                    Large Bill
-                </x-pos.utility.button>
+                <!-- Baris 2: Cetak Dokumen & Reset -->
+                <div class="flex items-center flex-wrap gap-2">
+                    <!-- Print Bill -->
+                    <x-pos.utility.button 
+                        wire:click="printDraft('bill')" 
+                        variant="info" 
+                        size="sm" 
+                        icon="ph-bold ph-receipt" 
+                        title="Cetak Bill Sementara" 
+                        :disabled="empty($cart)"
+                    >
+                        Bill
+                    </x-pos.utility.button>
 
-                <!-- Print Penawaran -->
-                <x-pos.utility.button 
-                    wire:click="printDraft('penawaran')" 
-                    variant="info" 
-                    size="sm" 
-                    icon="ph-bold ph-handshake" 
-                    title="Cetak Penawaran Harga" 
-                    :disabled="empty($cart)"
-                >
-                    Penawaran
-                </x-pos.utility.button>
+                    <!-- Print Large Bill -->
+                    <x-pos.utility.button 
+                        wire:click="printDraft('large')" 
+                        variant="info" 
+                        size="sm" 
+                        icon="ph-bold ph-file-text" 
+                        title="Cetak Large Bill" 
+                        :disabled="empty($cart)"
+                    >
+                        Large Bill
+                    </x-pos.utility.button>
 
-                <!-- Print Tagihan -->
-                <x-pos.utility.button 
-                    wire:click="printDraft('tagihan')" 
-                    variant="info" 
-                    size="sm" 
-                    icon="ph-bold ph-file-arrow-up" 
-                    title="Cetak Tagihan / Draft Invoice" 
-                    :disabled="empty($cart)"
-                >
-                    Tagihan
-                </x-pos.utility.button>
+                    <!-- Print Penawaran -->
+                    <x-pos.utility.button 
+                        wire:click="printDraft('penawaran')" 
+                        variant="info" 
+                        size="sm" 
+                        icon="ph-bold ph-handshake" 
+                        title="Cetak Penawaran Harga" 
+                        :disabled="empty($cart)"
+                    >
+                        Penawaran
+                    </x-pos.utility.button>
 
-                <!-- Print Struk Terakhir -->
-                <x-pos.utility.button 
-                    wire:click="reprintLastReceipt" 
-                    variant="success" 
-                    size="sm" 
-                    icon="ph-bold ph-printer" 
-                    title="Cetak Struk Terakhir" 
-                    :disabled="!$lastSaleId"
-                >
-                    Struk
-                </x-pos.utility.button>
+                    <!-- Print Tagihan -->
+                    <x-pos.utility.button 
+                        wire:click="printDraft('tagihan')" 
+                        variant="info" 
+                        size="sm" 
+                        icon="ph-bold ph-file-arrow-up" 
+                        title="Cetak Tagihan / Draft Invoice" 
+                        :disabled="empty($cart)"
+                    >
+                        Tagihan
+                    </x-pos.utility.button>
 
-                <!-- Reset Transaksi -->
-                <x-pos.utility.button 
-                    @click="$dispatch('confirm-open', { 
-                        title: 'Reset Transaksi?', 
-                        message: 'Ini akan mengosongkan seluruh keranjang belanja dan mengatur ulang data pelanggan.', 
-                        onConfirm: 'livewire:clearCart', 
-                        confirmLabel: 'Ya, Reset', 
-                        isDanger: true 
-                    })"
-                    variant="danger" 
-                    size="sm" 
-                    icon="ph-bold ph-trash" 
-                    title="Reset Transaksi"
-                    class="ms-auto !bg-red-600 hover:!bg-red-700 dark:!bg-red-700 dark:hover:!bg-red-800 !text-white !border-transparent"
-                >
-                    Reset
-                </x-pos.utility.button>
+                    <!-- Print Struk Terakhir -->
+                    <x-pos.utility.button 
+                        wire:click="reprintLastReceipt" 
+                        variant="success" 
+                        size="sm" 
+                        icon="ph-bold ph-printer" 
+                        title="Cetak Struk Terakhir" 
+                        :disabled="!$lastSaleId"
+                    >
+                        Struk
+                    </x-pos.utility.button>
+
+                    <!-- Reset Transaksi -->
+                    <x-pos.utility.button 
+                        @click="$dispatch('confirm-open', { 
+                            title: 'Reset Transaksi?', 
+                            message: 'Ini akan mengosongkan seluruh keranjang belanja dan mengatur ulang data pelanggan.', 
+                            onConfirm: 'livewire:clearCart', 
+                            confirmLabel: 'Ya, Reset', 
+                            isDanger: true 
+                        })"
+                        variant="danger" 
+                        size="sm" 
+                        icon="ph-bold ph-trash" 
+                        title="Reset Transaksi"
+                        class="!bg-red-600 hover:!bg-red-700 dark:!bg-red-700 dark:hover:!bg-red-800 !text-white !border-transparent"
+                    >
+                        Reset
+                    </x-pos.utility.button>
+                </div>
             </div>
+        </div>
         </div>
 
         <!-- Informasi Pembelian Section -->
-        <div class="mt-5 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-400 dark:border-slate-700">
-            <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-1.5">
-                <i class="ph-bold ph-receipt text-sm"></i>
+        <div class="mt-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-400 dark:border-slate-700">
+            <h3 class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-1.5">
+                <i class="ph-bold ph-receipt text-xs sm:text-sm"></i>
                 Informasi Pembelian
             </h3>
 
             <!-- 4 Column Grid for Inputs -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 <!-- Customer Selector -->
                 <div class="relative" x-data="{ isOpen: false }" @click.away="isOpen = false">
-                    <label class="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-1.5">Pelanggan</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Pelanggan</label>
+                        <div class="flex items-center gap-1.5 cursor-pointer" 
+                             @click="if ('{{ $selectedCustomerId }}') { $wire.clearCustomer(); } else { $refs.searchInput.focus(); isOpen = true; }">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Walk-in</span>
+                            <button 
+                                type="button"
+                                class="relative inline-flex h-4 w-7 items-center rounded-full transition-colors {{ !$selectedCustomerId ? 'bg-primary dark:bg-blue-500' : 'bg-slate-300 dark:bg-slate-600' }}"
+                            >
+                                <span class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform {{ !$selectedCustomerId ? 'translate-x-3.5' : 'translate-x-0.5' }}"></span>
+                            </button>
+                        </div>
+                    </div>
                     @if ($selectedCustomerId)
                         <div class="relative">
-                            <i class="ph ph-user-plus text-slate-600 dark:text-slate-355 absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold"></i>
-                            <div class="w-full pl-9 pr-8 py-2 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
+                            <i class="ph ph-user-plus text-slate-600 dark:text-slate-355 absolute left-2.5 top-1/2 -translate-y-1/2 text-sm font-bold"></i>
+                            <div class="w-full pl-8 pr-7 py-1.5 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
                                 <span class="truncate">{{ $selectedCustomerName }}</span>
-                                <button wire:click="clearCustomer" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2">
-                                    <i class="ph-bold ph-x text-base"></i>
+                                <button wire:click="clearCustomer" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-1">
+                                    <i class="ph-bold ph-x text-sm sm:text-base"></i>
                                 </button>
                             </div>
                         </div>
@@ -225,6 +262,7 @@
                             size="sm"
                             @focus="isOpen = true"
                             @click="isOpen = true"
+                            x-ref="searchInput"
                             class="!bg-white dark:!bg-slate-800"
                         />
                         
@@ -270,32 +308,38 @@
                 @endif
 
                 <!-- Kategori Penjualan Dropdown Selector -->
-                <x-pos.form.select 
-                    label="Kategori Penjualan"
-                    model="saleCategory"
-                    icon="ph-storefront"
-                    live
-                    size="sm"
-                    class="!bg-white dark:!bg-slate-800"
-                >
-                    @forelse ($saleCategories as $cat)
-                        <option value="{{ $cat->name }}" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ $cat->name }}</option>
-                    @empty
-                        <option value="Store" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Store</option>
-                        <option value="Online" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Online</option>
-                    @endforelse
-                </x-pos.form.select>
+                <div>
+                    <x-pos.form.select 
+                        label="Kategori Penjualan"
+                        model="saleCategory"
+                        icon="ph-storefront"
+                        live
+                        size="sm"
+                        class="!bg-white dark:!bg-slate-800"
+                    >
+                        @forelse ($saleCategories as $cat)
+                            <option value="{{ $cat->name }}" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ $cat->name }}</option>
+                        @empty
+                            <option value="Store" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Store</option>
+                            <option value="Online" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Online</option>
+                        @endforelse
+                    </x-pos.form.select>
+                    <div class="mt-1 flex items-center justify-between px-1">
+                        <span class="text-[10px] text-slate-500 dark:text-slate-400">Preview Invoice:</span>
+                        <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">{{ $this->previewInvoiceNumber }}</span>
+                    </div>
+                </div>
 
                 <!-- Sales Dropdown Selector (Searchable) -->
                 <div class="relative" x-data="{ isOpen: false }" @click.away="isOpen = false">
                     <label class="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-1.5">Sales</label>
                     @if ($selectedSalesRepId)
                         <div class="relative">
-                            <i class="ph ph-identification-card text-slate-600 dark:text-slate-355 absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold"></i>
-                            <div class="w-full pl-9 pr-8 py-2 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
+                            <i class="ph ph-identification-card text-slate-600 dark:text-slate-355 absolute left-2.5 top-1/2 -translate-y-1/2 text-sm font-bold"></i>
+                            <div class="w-full pl-8 pr-7 py-1.5 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
                                 <span class="truncate">{{ $selectedSalesRepName }}</span>
-                                <button wire:click="clearSalesRep" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2">
-                                    <i class="ph-bold ph-x text-base"></i>
+                                <button wire:click="clearSalesRep" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-1">
+                                    <i class="ph-bold ph-x text-sm sm:text-base"></i>
                                 </button>
                             </div>
                         </div>
@@ -347,41 +391,41 @@
             <table class="w-full text-sm">
                 <thead class="sticky top-0 bg-slate-900 dark:bg-slate-950/95 backdrop-blur-sm z-[1]">
                     <tr class="border-b border-slate-800 dark:border-slate-800">
-                        <th class="text-left py-3 px-3 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-8">No</th>
-                        <th class="text-left py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider">Item</th>
-                        <th class="text-left py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-48">Tingkat Harga</th>
-                        <th class="text-left py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-44">Catatan</th>
-                        <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider !bg-slate-800 dark:!bg-slate-900/60">Harga</th>
-                        <th class="text-center py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-28">Qty</th>
-                        <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-36">Diskon</th>
-                        <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-36">PPN</th>
-                        <th class="text-right py-3 px-2 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider !bg-emerald-900/40 dark:!bg-emerald-950/60">Subtotal</th>
-                        <th class="text-center py-3 px-3 text-xs font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-10"></th>
+                        <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-8">No</th>
+                        <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider">Item</th>
+                        <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-40">Tingkat Harga</th>
+                        <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-36">Catatan</th>
+                        <th class="text-right py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider !bg-slate-800 dark:!bg-slate-900/60 w-24">Harga</th>
+                        <th class="text-center py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-24">Qty</th>
+                        <th class="text-right py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-28">Diskon</th>
+                        <th class="text-right py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-28">PPN</th>
+                        <th class="text-right py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider !bg-emerald-900/40 dark:!bg-emerald-950/60 w-28">Subtotal</th>
+                        <th class="text-center py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-8"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($cart as $id => $item)
                         @php 
                             $rowSubtotal = ($item['price'] * $item['qty']) - intval($item['discount_amount'] ?? 0); 
-                            $itemVariant = \App\Models\ProductVariant::find($id);
+                            $itemVariant = $cartVariants[$id] ?? null;
                         @endphp
                         <tr class="border-b border-slate-250 dark:border-slate-700 hover:bg-slate-100/40 dark:hover:bg-slate-700/30 transition-colors">
-                            <td class="py-3.5 px-2 text-sm font-extrabold text-slate-700 dark:text-slate-300 align-middle">{{ $loop->iteration }}</td>
-                            <td class="py-3.5 px-2 align-middle min-w-[180px]">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-lg">{{ $item['emoji'] ?? '🎵' }}</span>
+                            <td class="py-2 px-2 text-xs font-extrabold text-slate-700 dark:text-slate-300 align-middle">{{ $loop->iteration }}</td>
+                            <td class="py-2 px-2 align-middle min-w-[150px]">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-base">{{ $item['emoji'] ?? '🎵' }}</span>
                                     <div class="flex-1">
-                                        <div class="font-extrabold text-slate-900 dark:text-white text-sm whitespace-normal leading-snug">{{ $item['name'] }}</div>
+                                        <div class="font-extrabold text-slate-900 dark:text-white text-[11px] sm:text-xs whitespace-normal leading-snug">{{ $item['name'] }}</div>
                                     </div>
                                 </div>
                             </td>
                             <!-- Dedicated Tingkat Harga Column -->
-                            <td class="py-3.5 px-2 align-middle">
-                                <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-8 w-full max-w-[220px]">
-                                    <i class="ph ph-tag-chevron text-slate-500 dark:text-slate-400 text-xs absolute left-2 pointer-events-none"></i>
+                            <td class="py-2 px-2 align-middle">
+                                <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-full max-w-[200px]">
+                                    <i class="ph ph-tag-chevron text-slate-500 dark:text-slate-400 text-[10px] absolute left-1.5 pointer-events-none"></i>
                                     <select 
                                         onchange="@this.call('updateItemPricingTier', {{ $id }}, this.value)"
-                                        class="w-full pl-7 pr-6 py-0 h-full bg-transparent border-none text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:ring-0 cursor-pointer appearance-none"
+                                        class="w-full pl-6 pr-5 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:ring-0 cursor-pointer appearance-none"
                                     >
                                         @foreach ($pricingTiers as $tier)
                                             <option value="{{ $tier->id }}" {{ ($item['pricing_tier_id'] ?? '') == $tier->id ? 'selected' : '' }} class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
@@ -389,54 +433,54 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    <i class="ph ph-caret-down text-slate-500 dark:text-slate-400 absolute right-2 pointer-events-none text-[10px]"></i>
+                                    <i class="ph ph-caret-down text-slate-500 dark:text-slate-400 absolute right-1.5 pointer-events-none text-[8px]"></i>
                                 </div>
                             </td>
                             <!-- Dedicated Catatan Column -->
-                            <td class="py-3.5 px-2 align-middle">
-                                <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-8 w-full max-w-[200px]">
-                                    <i class="ph ph-note-pencil text-slate-500 dark:text-slate-400 text-xs absolute left-2 pointer-events-none"></i>
+                            <td class="py-2 px-2 align-middle">
+                                <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-full max-w-[160px]">
+                                    <i class="ph ph-note-pencil text-slate-500 dark:text-slate-400 text-[10px] absolute left-1.5 pointer-events-none"></i>
                                     <input 
                                         type="text" 
                                         placeholder="Catatan..." 
                                         value="{{ $item['notes'] ?? '' }}"
                                         onchange="@this.call('updateItemNote', {{ $id }}, this.value)"
-                                        class="w-full pl-7 pr-2 py-0 h-full bg-transparent border-none text-xs font-semibold text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-0"
+                                        class="w-full pl-6 pr-2 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-0"
                                     >
                                 </div>
                             </td>
-                            <td class="py-3.5 px-2 text-sm font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/20">{{ \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>
-                            <td class="py-3.5 px-2 align-middle">
-                                <div class="flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-lg p-0.5 mx-auto w-fit">
-                                    <button wire:click="updateQty({{ $id }}, -1)" class="w-6 h-6 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
-                                        <i class="ph-bold ph-minus text-xs"></i>
+                            <td class="py-2 px-2 text-[11px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/20">{{ \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>
+                            <td class="py-2 px-2 align-middle">
+                                <div class="flex items-center justify-center gap-1 bg-slate-100 dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-md p-0.5 mx-auto w-fit">
+                                    <button wire:click="updateQty({{ $id }}, -1)" class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
+                                        <i class="ph-bold ph-minus text-[10px]"></i>
                                     </button>
-                                    <span class="w-6 text-center text-sm font-extrabold text-slate-900 dark:text-white">{{ $item['qty'] }}</span>
-                                    <button wire:click="updateQty({{ $id }}, 1)" class="w-6 h-6 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
-                                        <i class="ph-bold ph-plus text-xs"></i>
+                                    <span class="w-5 text-center text-xs font-extrabold text-slate-900 dark:text-white">{{ $item['qty'] }}</span>
+                                    <button wire:click="updateQty({{ $id }}, 1)" class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
+                                        <i class="ph-bold ph-plus text-[10px]"></i>
                                     </button>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-2 align-middle">
+                            <td class="py-2 px-2 align-middle">
                                 <div class="flex items-center justify-end gap-1">
-                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-8 w-24">
-                                        <input type="number" placeholder="0" value="{{ ($item['discount_value'] ?? 0) > 0 ? $item['discount_value'] : '' }}" onchange="@this.call('updateItemDiscountValue', {{ $id }}, this.value)" class="w-full pl-2 pr-7 py-0 h-full bg-transparent border-none text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" min="0">
-                                        <button type="button" wire:click="toggleItemDiscountType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-2 bg-slate-150 dark:bg-slate-800 text-[10px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['discount_type'] ?? 'fixed') === 'percent' ? '%' : 'Rp' }}</button>
+                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20">
+                                        <input type="number" placeholder="0" value="{{ ($item['discount_value'] ?? 0) > 0 ? $item['discount_value'] : '' }}" onchange="@this.call('updateItemDiscountValue', {{ $id }}, this.value)" class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" min="0">
+                                        <button type="button" wire:click="toggleItemDiscountType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-1.5 bg-slate-150 dark:bg-slate-800 text-[9px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['discount_type'] ?? 'fixed') === 'percent' ? '%' : 'Rp' }}</button>
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-2 align-middle">
+                            <td class="py-2 px-2 align-middle">
                                 <div class="flex items-center justify-end gap-1">
-                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-8 w-24">
-                                        <input type="number" placeholder="0" value="{{ ($item['tax_value'] ?? 0) > 0 ? $item['tax_value'] : '' }}" onchange="@this.call('updateItemTaxValue', {{ $id }}, this.value)" class="w-full pl-2 pr-7 py-0 h-full bg-transparent border-none text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" min="0">
-                                        <button type="button" wire:click="toggleItemTaxType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-2 bg-slate-150 dark:bg-slate-800 text-[10px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['tax_type'] ?? 'percent') === 'percent' ? '%' : 'Rp' }}</button>
+                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20">
+                                        <input type="number" placeholder="0" value="{{ ($item['tax_value'] ?? 0) > 0 ? $item['tax_value'] : '' }}" onchange="@this.call('updateItemTaxValue', {{ $id }}, this.value)" class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" min="0">
+                                        <button type="button" wire:click="toggleItemTaxType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-1.5 bg-slate-150 dark:bg-slate-800 text-[9px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['tax_type'] ?? 'percent') === 'percent' ? '%' : 'Rp' }}</button>
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-2 text-base font-black text-emerald-500 dark:text-emerald-300 text-right align-middle whitespace-nowrap bg-emerald-50/30 dark:bg-emerald-950/15">{{ \App\Helpers\FormatHelper::rupiah($rowSubtotal) }}</td>
-                            <td class="py-3.5 px-2 text-center align-middle">
-                                <button wire:click="updateQty({{ $id }}, -{{ $item['qty'] }})" class="w-7 h-7 rounded-lg bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center justify-center transition-colors cursor-pointer" title="Hapus item">
-                                    <i class="ph-bold ph-trash text-xs"></i>
+                            <td class="py-2 px-2 text-xs sm:text-sm font-black text-emerald-500 dark:text-emerald-300 text-right align-middle whitespace-nowrap bg-emerald-50/30 dark:bg-emerald-950/15">{{ \App\Helpers\FormatHelper::rupiah($rowSubtotal) }}</td>
+                            <td class="py-2 px-2 text-center align-middle">
+                                <button wire:click="updateQty({{ $id }}, -{{ $item['qty'] }})" class="w-6 h-6 rounded-md bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center justify-center transition-colors cursor-pointer" title="Hapus item">
+                                    <i class="ph-bold ph-trash text-[10px]"></i>
                                 </button>
                             </td>
                         </tr>
@@ -447,49 +491,49 @@
     </div>
 
     <!-- Cart Footer / Summary (Flex: Details Fill Remaining Space, Slim Fixed-Width Button) -->
-    <div class="bg-slate-100 dark:bg-slate-900 p-4 sm:p-5 border-t border-slate-200 dark:border-slate-700 mt-auto">
-        <div class="flex gap-3 sm:gap-4 items-stretch">
-            <!-- Left Column: Extra Large Summary Details & Total Tagihan (Flex-1) -->
-            <div class="flex-1 flex flex-col justify-between space-y-3 min-w-0">
-                <div class="space-y-2.5">
-                    <div class="flex items-center justify-between text-base sm:text-lg">
+    <div class="bg-slate-100 dark:bg-slate-900 p-3 border-t border-slate-200 dark:border-slate-700 mt-auto">
+        <div class="flex gap-3 items-stretch">
+            <!-- Left Column: Summary Details & Total Tagihan (Flex-1) -->
+            <div class="flex-1 flex flex-col justify-between space-y-2 min-w-0">
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between text-sm sm:text-base">
                         <span class="text-slate-700 dark:text-slate-200 font-extrabold truncate">Subtotal ({{ collect($cart)->sum('qty') }} item)</span>
-                        <span class="font-black text-slate-950 dark:text-white text-base sm:text-lg whitespace-nowrap ml-1">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                        <span class="font-black text-slate-950 dark:text-white text-sm sm:text-base whitespace-nowrap ml-1">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
                     </div>
 
-                    <div class="flex items-center justify-between text-base sm:text-lg gap-1">
+                    <div class="flex items-center justify-between text-sm sm:text-base gap-1">
                         <div class="flex items-center gap-2">
                             <label for="enableTax" class="inline-flex items-center cursor-pointer select-none">
                                 <div class="relative">
                                     <input type="checkbox" id="enableTax" wire:model.live="enableTax" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-primary transition-colors"></div>
+                                    <div class="w-8 h-4.5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-3.5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-slate-600 peer-checked:bg-primary transition-colors"></div>
                                 </div>
-                                <span class="ms-2 text-base sm:text-lg font-black text-slate-700 dark:text-slate-200">PPN</span>
+                                <span class="ms-2 text-sm sm:text-base font-black text-slate-700 dark:text-slate-200">PPN</span>
                             </label>
                             @if ($enableTax)
-                                <div class="flex items-center bg-white dark:bg-slate-700 rounded-lg px-2 py-0.5 border border-slate-400 dark:border-slate-600">
-                                    <input type="number" wire:model.live.debounce.250ms="taxPercent" class="w-9 bg-transparent text-center border-none p-0 text-xs sm:text-sm font-black text-slate-900 dark:text-white focus:ring-0 appearance-none h-5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" min="0" max="100">%
+                                <div class="flex items-center bg-white dark:bg-slate-700 rounded-lg px-2 py-0 border border-slate-400 dark:border-slate-600 h-6">
+                                    <input type="number" wire:model.live.debounce.500ms="taxPercent" class="w-8 bg-transparent text-center border-none p-0 text-[10px] sm:text-xs font-black text-slate-900 dark:text-white focus:ring-0 appearance-none h-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" min="0" max="100">%
                                 </div>
                             @endif
                         </div>
-                        <span class="font-black text-slate-950 dark:text-white text-base sm:text-lg whitespace-nowrap">Rp {{ number_format($taxAmount, 0, ',', '.') }}</span>
+                        <span class="font-black text-slate-950 dark:text-white text-sm sm:text-base whitespace-nowrap">Rp {{ number_format($taxAmount, 0, ',', '.') }}</span>
                     </div>
 
                     @if ($selectedCustomerId && $customerPoints > 0)
-                        <div class="flex items-center justify-between text-base sm:text-lg gap-2">
+                        <div class="flex items-center justify-between text-sm sm:text-base gap-2">
                             <div class="flex items-center gap-2">
                                 <label for="usePoints" class="inline-flex items-center cursor-pointer select-none">
                                     <div class="relative">
                                         <input type="checkbox" id="usePoints" wire:model.live="usePoints" class="sr-only peer">
-                                        <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-primary transition-colors"></div>
+                                        <div class="w-8 h-4.5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-3.5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-slate-600 peer-checked:bg-primary transition-colors"></div>
                                     </div>
-                                    <span class="ms-2 text-base sm:text-lg font-black text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                                        <i class="ph-fill ph-coins text-amber-500 text-lg"></i>
+                                    <span class="ms-2 text-sm sm:text-base font-black text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                                        <i class="ph-fill ph-coins text-amber-500 text-base"></i>
                                         Poin ({{ $customerPoints }})
                                     </span>
                                 </label>
                             </div>
-                            <span class="font-black text-green-600 dark:text-green-400 text-base sm:text-lg whitespace-nowrap">
+                            <span class="font-black text-green-600 dark:text-green-400 text-sm sm:text-base whitespace-nowrap">
                                 @if ($usePoints)
                                     - Rp {{ number_format($pointDiscountAmount, 0, ',', '.') }}
                                 @else
@@ -499,32 +543,32 @@
                         </div>
                     @endif
 
-                    <div class="flex items-center justify-between text-base sm:text-lg gap-2 pt-0.5">
-                        <span class="text-base sm:text-lg font-black text-slate-700 dark:text-slate-200">
+                    <div class="flex items-center justify-between text-sm sm:text-base gap-2 pt-0.5">
+                        <span class="text-sm sm:text-base font-black text-slate-700 dark:text-slate-200">
                             Diskon Transaksi
                         </span>
-                        <div class="w-40 flex-shrink-0">
-                            <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-9.5">
-                                <i class="ph ph-tag text-slate-500 dark:text-slate-400 text-sm absolute left-2 pointer-events-none z-10"></i>
+                        <div class="w-36 flex-shrink-0">
+                            <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7">
+                                <i class="ph ph-tag text-slate-500 dark:text-slate-400 text-[10px] absolute left-2 pointer-events-none z-10"></i>
                                 @if ($discountType === 'fixed')
                                     <x-money-input 
-                                        wire:model.live="discountValue"
-                                        class="w-full pl-7 pr-9 py-0 h-full bg-transparent border-none text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
+                                        wire:model.live.debounce.500ms="discountValue"
+                                        class="w-full pl-6 pr-8 py-0 h-full bg-transparent border-none text-xs font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
                                         placeholder="0"
                                     />
                                 @else
                                     <input 
                                         type="number" 
                                         placeholder="0 %" 
-                                        wire:model.live="discountValue"
-                                        class="w-full pl-7 pr-9 py-0 h-full bg-transparent border-none text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
+                                        wire:model.live.debounce.500ms="discountValue"
+                                        class="w-full pl-6 pr-8 py-0 h-full bg-transparent border-none text-xs font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
                                         min="0"
                                     >
                                 @endif
                                 <button 
                                     type="button"
                                     wire:click="toggleGlobalDiscountType"
-                                    class="absolute right-0 top-0 bottom-0 px-2.5 bg-slate-150 dark:bg-slate-800 text-xs sm:text-sm font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center select-none z-10"
+                                    class="absolute right-0 top-0 bottom-0 px-2 bg-slate-150 dark:bg-slate-800 text-[10px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center select-none z-10"
                                     title="Klik untuk mengubah jenis diskon (Nominal / Persentase)"
                                 >
                                     {{ $discountType === 'percent' ? '%' : 'Rp' }}
@@ -534,26 +578,26 @@
                     </div>
                 </div>
 
-                <!-- Total Tagihan (Extra Prominent & Clear) -->
-                <div class="pt-3 border-t-2 border-slate-300 dark:border-slate-700 flex flex-col justify-end mt-1">
-                    <span class="text-sm sm:text-base font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none">Total Tagihan</span>
-                    <span class="text-3xl sm:text-4xl font-black text-primary dark:text-blue-400 leading-tight mt-1">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
+                <!-- Total Tagihan -->
+                <div class="pt-2 border-t border-slate-300 dark:border-slate-700 flex flex-col justify-end mt-1">
+                    <span class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none">Total Tagihan</span>
+                    <span class="text-2xl sm:text-3xl font-black text-primary dark:text-blue-400 leading-tight mt-0.5">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
                 </div>
             </div>
 
-            <!-- Right Column: Extra Large Payment Box Button (w-44 sm:w-48) -->
-            <div class="w-44 sm:w-48 flex-shrink-0 flex">
+            <!-- Right Column: Payment Box Button -->
+            <div class="w-32 sm:w-36 flex-shrink-0 flex">
                 <button 
                     type="button"
                     wire:click="openPayment"
                     @if(empty($cart)) disabled @endif
-                    class="w-full h-full min-h-[135px] bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-slate-250 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 dark:disabled:text-slate-600 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center text-center transition-all duration-200 shadow-xl shadow-emerald-600/25 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed group"
+                    class="w-full h-full min-h-[90px] bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-slate-250 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 dark:disabled:text-slate-600 rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center text-center transition-all duration-200 shadow-lg shadow-emerald-600/25 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed group"
                 >
-                    <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-xl bg-white/20 dark:bg-white/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                        <i class="ph-bold ph-credit-card text-2xl sm:text-3xl text-white"></i>
+                    <div class="w-10 h-10 rounded-lg bg-white/20 dark:bg-white/10 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                        <i class="ph-bold ph-credit-card text-xl text-white"></i>
                     </div>
-                    <span class="font-black text-base sm:text-lg leading-tight">Bayar</span>
-                    <span class="text-xs sm:text-sm text-white/95 mt-1.5 font-black bg-white/20 px-3 py-0.5 rounded-md">F9</span>
+                    <span class="font-black text-sm leading-tight">Bayar</span>
+                    <span class="text-[10px] text-white/95 mt-1 font-black bg-white/20 px-2 py-0.5 rounded-md">F9</span>
                 </button>
             </div>
         </div>

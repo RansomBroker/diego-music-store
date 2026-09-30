@@ -11,5 +11,9 @@ class SaleCategory extends Model
 
     protected $fillable = [
         'name',
+        'prefix',
+        'start_alphabet',
+        'end_alphabet',
+        'digit_length',
     ];
 }

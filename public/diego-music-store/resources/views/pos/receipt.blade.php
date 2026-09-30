@@ -147,7 +147,7 @@
             <span>-Rp {{ number_format($sale->discount_amount, 0, ',', '.') }}</span>
         </div>
     @endif
-    @if ($setting->show_tax_details ?? true)
+    @if (($setting->show_tax_details ?? true) && $sale->tax_amount > 0)
         <div class="grid">
             <span>PPN (11%):</span>
             <span>Rp {{ number_format($sale->tax_amount, 0, ',', '.') }}</span>
@@ -231,10 +231,6 @@
         Diego Music Store ERP
     </div>
 
-    <script>
-        window.onload = function() {
-            window.print();
-        }
-    </script>
+
 </body>
 </html>

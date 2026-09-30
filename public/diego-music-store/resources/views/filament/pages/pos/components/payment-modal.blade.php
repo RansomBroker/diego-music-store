@@ -151,6 +151,7 @@
 
                     <button 
                         type="button" 
+                        wire:key="dropdown-pm-{{ $pm->code }}"
                         wire:click="togglePaymentMethod('{{ $pm->code }}')" 
                         class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
                     >
@@ -190,7 +191,7 @@
                 }
             @endphp
             
-            <div class="p-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div class="p-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800" wire:key="payment-method-{{ $method }}">
                 <div class="flex items-center justify-between mb-2">
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                         <i class="ph-bold {{ $iconClass }} text-base text-primary dark:text-blue-400"></i>
@@ -249,7 +250,7 @@
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
                             <x-money-input 
-                                wire:model.live="amountDebit" 
+                                wire:model.live.debounce.500ms="amountDebit" 
                                 wire:keyup="distributePaymentAmounts" 
                                 class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
                                 placeholder="0" />
@@ -265,7 +266,7 @@
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
                         <x-money-input 
-                            wire:model.live="amountCash" 
+                            wire:model.live.debounce.500ms="amountCash" 
                             wire:keyup="distributePaymentAmounts" 
                             class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-800 dark:text-slate-100" 
                             placeholder="0" />
@@ -274,7 +275,7 @@
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
                         <x-money-input 
-                            wire:model.live="amountCredit" 
+                            wire:model.live.debounce.500ms="amountCredit" 
                             wire:keyup="distributePaymentAmounts" 
                             class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
                             placeholder="0" />
@@ -296,7 +297,7 @@
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
                                 <x-money-input 
-                                    wire:model.live="paymentAmounts.{{ $method }}" 
+                                    wire:model.live.debounce.500ms="paymentAmounts.{{ $method }}" 
                                     wire:keyup="distributePaymentAmounts" 
                                     class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary text-slate-850 dark:text-slate-100" 
                                     placeholder="0" />
@@ -311,15 +312,15 @@
                 @else
                     @php
                         $refPlaceholder = 'No. Bukti / Ref (Opsional)';
-                        if (str_contains(strtolower($method), 'entertain')) {
-                            $refPlaceholder = 'Alasan / Catatan Entertain';
+                        if (str_contains(strtolower($method), 'complimentary')) {
+                            $refPlaceholder = 'Alasan / Catatan Complimentary';
                         }
                     @endphp
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
                             <x-money-input 
-                                wire:model.live="paymentAmounts.{{ $method }}" 
+                                wire:model.live.debounce.500ms="paymentAmounts.{{ $method }}" 
                                 wire:keyup="distributePaymentAmounts" 
                                 class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
                                 placeholder="0" />
@@ -334,6 +335,17 @@
                 @endif
             </div>
         @endforeach
+    </div>
+
+    <!-- Catatan Transaksi -->
+    <div class="mb-6">
+        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">Catatan Transaksi (Opsional)</label>
+        <textarea 
+            wire:model="notes" 
+            rows="2" 
+            class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 transition-all outline-none resize-none placeholder:text-slate-400"
+            placeholder="Tuliskan catatan tambahan jika ada..."
+        ></textarea>
     </div>
 
     @php
@@ -395,7 +407,7 @@
         <div class="relative">
             <input 
                 type="text" 
-                wire:model.live="customerPhone" 
+                wire:model.live.debounce.500ms="customerPhone" 
                 placeholder="08xxxxxxxxxx (Kosongkan jika tidak kirim WA)"
                 class="w-full pl-3.5 pr-8 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-sm focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
             />

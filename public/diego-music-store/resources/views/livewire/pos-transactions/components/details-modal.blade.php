@@ -51,6 +51,10 @@
                             <span class="block font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Kategori Penjualan</span>
                             <span class="font-black text-slate-850 dark:text-slate-200 text-sm">{{ $selectedSale->sale_category }}</span>
                         </div>
+                        <div class="mt-2 col-span-2">
+                            <span class="block font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Catatan Transaksi</span>
+                            <span class="font-black text-slate-850 dark:text-slate-200 text-sm italic">{{ $selectedSale->notes ?: '-' }}</span>
+                        </div>
                     </div>
 
                     <!-- Product Items Table -->

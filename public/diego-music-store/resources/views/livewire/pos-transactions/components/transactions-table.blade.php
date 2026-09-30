@@ -7,6 +7,7 @@
                 <x-pos.table.th>No. Invoice</x-pos.table.th>
                 <x-pos.table.th>Cabang</x-pos.table.th>
                 <x-pos.table.th>Pelanggan</x-pos.table.th>
+                <x-pos.table.th>Catatan</x-pos.table.th>
                 <x-pos.table.th>Kasir</x-pos.table.th>
                 <x-pos.table.th>Metode Bayar</x-pos.table.th>
                 <x-pos.table.th class="text-right">Total</x-pos.table.th>
@@ -29,6 +30,9 @@
                     </x-pos.table.td>
                     <x-pos.table.td class="whitespace-nowrap">
                         {{ $sale->customer->name ?? 'Umum' }}
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap text-xs text-slate-500 italic max-w-[150px] truncate" title="{{ $sale->notes }}">
+                        {{ $sale->notes ?: '-' }}
                     </x-pos.table.td>
                     <x-pos.table.td class="whitespace-nowrap text-xs">
                         {{ $sale->salesRep->name ?? '-' }}

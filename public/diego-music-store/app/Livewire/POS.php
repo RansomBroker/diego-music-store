@@ -11,8 +11,20 @@ use App\Actions\Customer\CreateCustomer;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 
+use App\Livewire\Traits\POS\WithCartManagement;
+use App\Livewire\Traits\POS\WithCustomerManagement;
+use App\Livewire\Traits\POS\WithDraftTransactions;
+use App\Livewire\Traits\POS\WithPaymentHandling;
+use App\Livewire\Traits\POS\WithVouchers;
+
 class POS extends Component
 {
+    use WithCartManagement;
+    use WithCustomerManagement;
+    use WithDraftTransactions;
+    use WithPaymentHandling;
+    use WithVouchers;
+
     // Livewire states
     public $search = '';
     public $activeCategory = 'Semua';
@@ -39,8 +51,11 @@ class POS extends Component
 
     // Held transactions and reprint
     public $showHeldModal = false;
+    public $isHeldModalMandatory = false;
     public $lastSaleId = null;
     public $editingSaleId = null;
+    public $currentDraftId = null;
+    public $lastSavedDraftHash = null;
 
     // Product search modal
     public $showProductSearchModal = false;
@@ -48,6 +63,7 @@ class POS extends Component
     const PRODUCTS_PER_PAGE = 40;
 
     // Payment state
+    public $notes = '';
     public $paymentMethod = 'cash';
     public $discountValue = 0;
     public $discountType = 'fixed';
@@ -168,6 +184,7 @@ class POS extends Component
                     $this->discountValue = $sale->discount_amount;
                     $this->discountType = 'fixed';
                     $this->enableTax = $sale->tax_amount > 0;
+                    $this->notes = $sale->notes ?? '';
                     $this->invoiceDate = $sale->invoice_date->format('Y-m-d');
                     
                     // Parse payment method
@@ -209,6 +226,15 @@ class POS extends Component
                         ->info()
                         ->send();
                 }
+            }
+        } else {
+            // Automatically open held transactions modal if any exist and we're not editing an existing sale
+            $heldCount = \App\Models\PosHeldTransaction::where('user_id', Auth::id())
+                ->where('branch_id', $this->selectedBranchId)
+                ->count();
+            if ($heldCount > 0) {
+                $this->showHeldModal = true;
+                $this->isHeldModalMandatory = true;
             }
         }
     }
@@ -427,6 +453,25 @@ class POS extends Component
         return $counts;
     }
 
+    public function openProductSearch()
+    {
+        $this->showProductSearchModal = true;
+    }
+
+    public function closeProductSearch()
+    {
+        $this->showProductSearchModal = false;
+        $this->search = '';
+    }
+
+    public function getCartVariantsProperty()
+    {
+        if (empty($this->cart)) {
+            return collect();
+        }
+        return \App\Models\ProductVariant::whereIn('id', array_keys($this->cart))->get()->keyBy('id');
+    }
+
     public function selectSalesRep($id, $name)
     {
         $this->selectedSalesRepId = $id;
@@ -441,317 +486,6 @@ class POS extends Component
         $this->salesSearch = '';
     }
 
-    public function selectCustomer($id, $name, $isLoyalty)
-    {
-        $this->selectedCustomerId = $id;
-        $this->selectedCustomerName = $name;
-        $this->isLoyaltyMember = $isLoyalty;
-        $this->customerSearch = ''; // Clear search
-        $this->discountValue = 0;
-        $this->discountType = 'fixed';
-        $this->usePoints = false;
-
-        // Automatically set pricing tier if registered for this customer
-        $customer = Customer::find($id);
-        if ($customer) {
-            $this->customerPoints = $customer->loyalty_points;
-            $this->customerPhone = $customer->phone ?? '';
-            if ($customer->pricing_tier_id) {
-                $this->selectedPricingTierId = $customer->pricing_tier_id;
-            } else {
-                // Fallback to default retail tier
-                $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
-                    ->orWhere('name', 'like', '%umum%')
-                    ->first() ?? \App\Models\PricingTier::first();
-                $this->selectedPricingTierId = $defaultTier ? $defaultTier->id : null;
-            }
-        } else {
-            $this->customerPoints = 0;
-            // Fallback to default retail tier
-            $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
-                ->orWhere('name', 'like', '%umum%')
-                ->first() ?? \App\Models\PricingTier::first();
-            $this->selectedPricingTierId = $defaultTier ? $defaultTier->id : null;
-        }
-        $this->updatedSelectedPricingTierId($this->selectedPricingTierId);
-    }
-
-    public function clearCustomer()
-    {
-        $this->selectedCustomerId = null;
-        $this->selectedCustomerName = 'Umum / Walk-in';
-        $this->customerPhone = '';
-        $this->isLoyaltyMember = false;
-        $this->discountValue = 0;
-        $this->discountType = 'fixed';
-        $this->customerPoints = 0;
-        $this->usePoints = false;
-
-        // Fallback to default retail tier
-        $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
-            ->orWhere('name', 'like', '%umum%')
-            ->first() ?? \App\Models\PricingTier::first();
-        $this->selectedPricingTierId = $defaultTier ? $defaultTier->id : null;
-        $this->updatedSelectedPricingTierId($this->selectedPricingTierId);
-    }
-
-    public function openCreateCustomerModal()
-    {
-        $this->newCustomerName = $this->customerSearch;
-        $this->newCustomerPhone = '';
-        $this->newCustomerEmail = '';
-        $this->newCustomerAddress = '';
-        
-        $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
-            ->orWhere('name', 'like', '%umum%')
-            ->first() ?? \App\Models\PricingTier::first();
-        $this->newCustomerPricingTierId = $defaultTier ? $defaultTier->id : null;
-        $this->newCustomerIsLoyaltyMember = true;
-        
-        $this->showCreateCustomerModal = true;
-    }
-
-    public function createCustomer(CreateCustomer $createCustomerAction)
-    {
-        $this->validate([
-            'newCustomerName' => 'required|string|max:255',
-            'newCustomerPhone' => 'nullable|string|max:255',
-            'newCustomerEmail' => 'nullable|email|max:255',
-            'newCustomerAddress' => 'nullable|string|max:1000',
-            'newCustomerPricingTierId' => 'nullable|exists:pricing_tiers,id',
-        ], [
-            'newCustomerName.required' => 'Nama pelanggan wajib diisi.',
-            'newCustomerEmail.email' => 'Format email tidak valid.',
-        ]);
-
-        $customer = $createCustomerAction->execute([
-            'name' => $this->newCustomerName,
-            'phone' => $this->newCustomerPhone,
-            'email' => $this->newCustomerEmail,
-            'address' => $this->newCustomerAddress,
-            'pricing_tier_id' => $this->newCustomerPricingTierId,
-            'is_loyalty_member' => true,
-            'loyalty_points' => 0,
-        ]);
-
-        Notification::make()
-            ->title('Pelanggan Berhasil Didaftarkan')
-            ->body("Pelanggan {$customer->name} telah berhasil disimpan dan terpilih.")
-            ->success()
-            ->send();
-
-        $this->selectCustomer($customer->id, $customer->name, $customer->is_loyalty_member);
-        $this->showCreateCustomerModal = false;
-    }
-
-    public function setCategory($category)
-    {
-        $this->activeCategory = $category;
-    }
-
-    // Cart actions
-    public function addToCart($variantId)
-    {
-        $variant = ProductVariant::with('product')->findOrFail($variantId);
-        
-        // Check stock for physical products and bundles
-        if ($variant->product->isPhysical() || $variant->product->isBundle()) {
-            $stock = $variant->stockForBranch($this->selectedBranchId);
-            $currentInCart = $this->cart[$variantId]['qty'] ?? 0;
-            if ($stock <= $currentInCart) {
-                Notification::make()
-                    ->title('Stok Tidak Cukup')
-                    ->body("Stok untuk {$variant->product->name} ({$variant->name}) tersisa {$stock} pcs.")
-                    ->warning()
-                    ->send();
-                return;
-            }
-        }
-
-        if (isset($this->cart[$variantId])) {
-            $this->cart[$variantId]['qty']++;
-            $this->recalculateItemDiscountAmount($variantId);
-            $this->recalculateItemTaxAmount($variantId);
-        } else {
-            $name = $variant->product->name;
-            if ($variant->name) {
-                $name .= ' (' . $variant->name . ')';
-            }
-            $tierId = $this->selectedPricingTierId;
-            if ($tierId === 'custom') {
-                $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')->first() ?? \App\Models\PricingTier::first();
-                $tierId = $defaultTier ? $defaultTier->id : null;
-            }
-
-            $this->cart[$variantId] = [
-                'variant_id' => $variant->id,
-                'name' => $name,
-                'price' => $variant->priceForTier($tierId),
-                'qty' => 1,
-                'type' => $variant->product->type,
-                'emoji' => $variant->product->isService() ? '🛠️' : ($variant->product->isBundle() ? '📦' : '🎸'),
-                'notes' => '',
-                'discount_value' => $variant->discount_value ?? 0,
-                'discount_type' => $variant->discount_type ?? 'fixed',
-                'discount_amount' => 0,
-                'tax_value' => $variant->tax_value ?? 0,
-                'tax_type' => $variant->tax_type ?? 'percent',
-                'tax_amount' => 0,
-                'pricing_tier_id' => $tierId,
-            ];
-            $this->recalculateItemDiscountAmount($variantId);
-            $this->recalculateItemTaxAmount($variantId);
-        }
-    }
-
-    public function updateQty($variantId, $change)
-    {
-        if (!isset($this->cart[$variantId])) {
-            return;
-        }
-
-        $newQty = $this->cart[$variantId]['qty'] + $change;
-
-        if ($newQty <= 0) {
-            unset($this->cart[$variantId]);
-            return;
-        }
-
-        // Check stock
-        $variant = ProductVariant::findOrFail($variantId);
-        if (($variant->product->isPhysical() || $variant->product->isBundle()) && $change > 0) {
-            $stock = $variant->stockForBranch($this->selectedBranchId);
-            if ($stock < $newQty) {
-                Notification::make()
-                    ->title('Stok Tidak Cukup')
-                    ->body("Stok untuk {$variant->product->name} ({$variant->name}) tersisa {$stock} pcs.")
-                    ->warning()
-                    ->send();
-                return;
-            }
-        }
-
-        $this->cart[$variantId]['qty'] = $newQty;
-        $this->recalculateItemDiscountAmount($variantId);
-        $this->recalculateItemTaxAmount($variantId);
-    }
-
-    public function updateItemNote($variantId, $note)
-    {
-        if (isset($this->cart[$variantId])) {
-            $this->cart[$variantId]['notes'] = $note;
-        }
-    }
-
-    public function updateItemPricingTier($variantId, $tierId)
-    {
-        if (isset($this->cart[$variantId])) {
-            $variant = ProductVariant::find($variantId);
-            if ($variant) {
-                $this->cart[$variantId]['pricing_tier_id'] = $tierId;
-                $this->cart[$variantId]['price'] = $variant->priceForTier($tierId);
-                $this->recalculateItemDiscountAmount($variantId);
-                $this->recalculateItemTaxAmount($variantId);
-                $this->selectedPricingTierId = 'custom';
-            }
-        }
-    }
-
-    public function updateItemDiscountValue($variantId, $value)
-    {
-        if (isset($this->cart[$variantId])) {
-            $this->cart[$variantId]['discount_value'] = max(0, intval($value));
-            $this->recalculateItemDiscountAmount($variantId);
-            $this->recalculateItemTaxAmount($variantId);
-        }
-    }
-
-    public function toggleItemDiscountType($variantId)
-    {
-        if (isset($this->cart[$variantId])) {
-            $currentType = $this->cart[$variantId]['discount_type'] ?? 'fixed';
-            $this->cart[$variantId]['discount_type'] = $currentType === 'fixed' ? 'percent' : 'fixed';
-            $this->recalculateItemDiscountAmount($variantId);
-            $this->recalculateItemTaxAmount($variantId);
-        }
-    }
-
-    public function updateItemTaxValue($variantId, $value)
-    {
-        if (isset($this->cart[$variantId])) {
-            $this->cart[$variantId]['tax_value'] = max(0, floatval($value));
-            $this->recalculateItemTaxAmount($variantId);
-        }
-    }
-
-    public function toggleItemTaxType($variantId)
-    {
-        if (isset($this->cart[$variantId])) {
-            $currentType = $this->cart[$variantId]['tax_type'] ?? 'percent';
-            $this->cart[$variantId]['tax_type'] = $currentType === 'fixed' ? 'percent' : 'fixed';
-            $this->recalculateItemTaxAmount($variantId);
-        }
-    }
-
-    protected function recalculateItemDiscountAmount($variantId)
-    {
-        if (isset($this->cart[$variantId])) {
-            $item = &$this->cart[$variantId];
-            $value = intval($item['discount_value'] ?? 0);
-            $type = $item['discount_type'] ?? 'fixed';
-            $price = intval($item['price'] ?? 0);
-            $qty = intval($item['qty'] ?? 1);
-
-            if ($type === 'percent') {
-                $item['discount_amount'] = intval(($price * $qty) * ($value / 100));
-            } else {
-                $item['discount_amount'] = $value;
-            }
-        }
-    }
-
-    protected function recalculateItemTaxAmount($variantId)
-    {
-        if (isset($this->cart[$variantId])) {
-            $item = &$this->cart[$variantId];
-            $value = floatval($item['tax_value'] ?? 0);
-            $type = $item['tax_type'] ?? 'percent';
-            $price = intval($item['price'] ?? 0);
-            $qty = intval($item['qty'] ?? 1);
-            $discount = intval($item['discount_amount'] ?? 0);
-
-            if ($type === 'percent') {
-                $item['tax_amount'] = intval((($price * $qty) - $discount) * ($value / 100));
-            } else {
-                $item['tax_amount'] = intval($value * $qty);
-            }
-        }
-    }
-
-    // Calculations helper
-    public function getSubtotalProperty()
-    {
-        $sum = 0;
-        foreach ($this->cart as $item) {
-            $itemDiscount = intval($item['discount_amount'] ?? 0);
-            $sum += ($item['price'] * $item['qty']) - $itemDiscount;
-        }
-        return $sum;
-    }
-
-    public function getDiscountAmountProperty()
-    {
-        if ($this->discountType === 'percent') {
-            return min($this->subtotal, intval($this->subtotal * ($this->discountValue / 100)));
-        }
-        return min($this->subtotal, intval($this->discountValue));
-    }
-
-    public function toggleGlobalDiscountType()
-    {
-        $this->discountType = $this->discountType === 'fixed' ? 'percent' : 'fixed';
-    }
-
     public function getPreviewInvoiceNumberProperty()
     {
         if ($this->editingSaleId) {
@@ -760,653 +494,12 @@ class POS extends Component
                 return $sale->invoice_number;
             }
         }
-        return \App\Models\Sale::generateInvoiceNumber();
-    }
-
-    public function getHeldTransactionsProperty()
-    {
-        return \App\Models\PosHeldTransaction::where('user_id', Auth::id())
-            ->where('branch_id', $this->selectedBranchId)
-            ->latest()
-            ->get();
-    }
-
-    public function getPaymentMethodsProperty()
-    {
-        return \App\Models\PaymentMethod::where('is_active', true)->get();
-    }
-
-    public function getTaxAmountProperty()
-    {
-        $itemTaxSum = 0;
-        foreach ($this->cart as $item) {
-            $itemTaxSum += intval($item['tax_amount'] ?? 0);
-        }
-
-        if ($itemTaxSum > 0) {
-            return $itemTaxSum;
-        }
-
-        if (!$this->enableTax) {
-            return 0;
-        }
-        return intval(($this->subtotal - $this->discountAmount) * ($this->taxPercent / 100));
-    }
-
-    public function getGrandTotalProperty()
-    {
-        $baseTotal = $this->subtotal - $this->discountAmount + $this->taxAmount;
-        return max(0, $baseTotal - $this->pointDiscountAmount);
-    }
-
-    public function getPointDiscountAmountProperty()
-    {
-        if (!$this->usePoints || !$this->selectedCustomerId || $this->customerPoints <= 0) {
-            return 0;
-        }
-        $maxDiscount = $this->subtotal - $this->discountAmount + $this->taxAmount;
-        $pointsValue = $this->customerPoints * self::POINT_VALUATION;
-        return min($pointsValue, $maxDiscount);
-    }
-
-    // Checkout / Payment operations
-    public function openPayment()
-    {
-        if (empty($this->cart)) {
-            Notification::make()
-                ->title('Keranjang Kosong')
-                ->danger()
-                ->send();
-            return;
-        }
-        
-        $this->selectedPaymentMethods = ['cash'];
-        $this->amountCash = $this->grandTotal;
-        $this->amountDebit = 0;
-        $this->amountCredit = 0;
-        $this->debitRef = '';
-        $this->amountPaid = $this->grandTotal;
-        
-        $this->paymentAmounts = [
-            'cash' => $this->grandTotal
-        ];
-        $this->paymentRefs = [];
-        
-        $this->showPaymentModal = true;
-    }
-
-    public function closePayment()
-    {
-        $this->showPaymentModal = false;
-    }
-
-    public function togglePaymentMethod($method)
-    {
-        if (in_array($method, $this->selectedPaymentMethods)) {
-            if (count($this->selectedPaymentMethods) > 1) {
-                $this->selectedPaymentMethods = array_values(array_diff($this->selectedPaymentMethods, [$method]));
-                if ($method === 'cash') $this->amountCash = 0;
-                if ($method === 'debit') {
-                    $this->amountDebit = 0;
-                    $this->debitRef = '';
-                }
-                if ($method === 'credit') $this->amountCredit = 0;
-                
-                unset($this->paymentAmounts[$method]);
-                unset($this->paymentRefs[$method]);
-            }
-        } else {
-            $this->selectedPaymentMethods[] = $method;
-            $existingSum = 0;
-            foreach ($this->selectedPaymentMethods as $m) {
-                if ($m !== $method) {
-                    $existingSum += intval($this->paymentAmounts[$m] ?? ($m === 'cash' ? $this->amountCash : ($m === 'debit' ? $this->amountDebit : ($m === 'credit' ? $this->amountCredit : 0))));
-                }
-            }
-            $remaining = max(0, $this->grandTotal - $existingSum);
-            $this->paymentAmounts[$method] = $remaining;
-            if ($method === 'cash') $this->amountCash = $remaining;
-            if ($method === 'debit') $this->amountDebit = $remaining;
-            if ($method === 'credit') $this->amountCredit = $remaining;
-        }
-
-        $this->distributePaymentAmounts();
-    }
-
-    public function distributePaymentAmounts()
-    {
-        $this->amountCash = intval(\App\Helpers\FormatHelper::parseRupiah($this->paymentAmounts['cash'] ?? $this->amountCash));
-        $this->amountDebit = intval(\App\Helpers\FormatHelper::parseRupiah($this->paymentAmounts['debit'] ?? $this->amountDebit));
-        $this->amountCredit = intval(\App\Helpers\FormatHelper::parseRupiah($this->paymentAmounts['credit'] ?? $this->amountCredit));
-    }
-
-    public function updated($property, $value)
-    {
-        if (str_starts_with($property, 'paymentAmounts.')) {
-            $code = str_replace('paymentAmounts.', '', $property);
-            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
-            if ($code === 'cash') $this->amountCash = $parsed;
-            if ($code === 'debit') $this->amountDebit = $parsed;
-            if ($code === 'credit') $this->amountCredit = $parsed;
-
-            $this->distributePaymentAmounts();
-        }
-
-        if ($property === 'amountCash') {
-            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
-            $this->paymentAmounts['cash'] = $parsed;
-            $this->distributePaymentAmounts();
-        }
-        if ($property === 'amountDebit') {
-            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
-            $this->paymentAmounts['debit'] = $parsed;
-            $this->distributePaymentAmounts();
-        }
-        if ($property === 'amountCredit') {
-            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
-            $this->paymentAmounts['credit'] = $parsed;
-            $this->distributePaymentAmounts();
-        }
-    }
-
-    public function validateAndApplyVoucher(): void
-    {
-        $code = strtoupper(trim($this->voucherCodeInput));
-        if (empty($code)) {
-            $this->voucherValidationMessage = 'Masukkan kode voucher.';
-            $this->voucherIsValid = false;
-            $this->appliedVoucher = null;
-            return;
-        }
-
-        $voucher = \App\Models\Voucher::where('code', $code)->first();
-        if (!$voucher) {
-            $this->voucherValidationMessage = 'Kode voucher tidak ditemukan.';
-            $this->voucherIsValid = false;
-            $this->appliedVoucher = null;
-            return;
-        }
-
-        $subtotal = floatval($this->subtotal);
-        $errorMessage = null;
-
-        if (!$voucher->isValidForSubtotal($subtotal, $errorMessage)) {
-            $this->voucherValidationMessage = $errorMessage;
-            $this->voucherIsValid = false;
-            $this->appliedVoucher = null;
-            return;
-        }
-
-        $discountAmount = $voucher->calculateDiscountAmount($subtotal);
-        $this->appliedVoucher = $voucher;
-        $this->voucherIsValid = true;
-        $this->voucherValidationMessage = "Voucher {$voucher->code} Valid! Diskon Rp " . number_format($discountAmount, 0, ',', '.');
-        
-        if (!in_array('voucher', $this->selectedPaymentMethods)) {
-            $this->selectedPaymentMethods[] = 'voucher';
-        }
-        $this->paymentAmounts['voucher'] = $discountAmount;
-        $this->paymentRefs['voucher'] = $voucher->code;
-
-        $this->distributePaymentAmounts();
-
-        Notification::make()
-            ->title('Voucher Berhasil Diterapkan')
-            ->body("Potongan voucher Rp " . number_format($discountAmount, 0, ',', '.') . " telah diterapkan.")
-            ->success()
-            ->send();
-    }
-
-    public function checkout(bool $sendWhatsApp = false)
-    {
-        $totalPaid = 0;
-        foreach ($this->selectedPaymentMethods as $method) {
-            $totalPaid += intval($this->paymentAmounts[$method] ?? ($method === 'cash' ? $this->amountCash : ($method === 'debit' ? $this->amountDebit : ($method === 'credit' ? $this->amountCredit : 0))));
-        }
-
-        $hasCredit = in_array('credit', $this->selectedPaymentMethods);
-
-        if (!$hasCredit) {
-            if (in_array('cash', $this->selectedPaymentMethods)) {
-                if ($totalPaid < $this->grandTotal) {
-                    Notification::make()
-                        ->title('Jumlah Bayar Kurang')
-                        ->body('Total pembayaran kurang dari total tagihan.')
-                        ->danger()
-                        ->send();
-                    return;
-                }
-            } else {
-                if ($totalPaid != $this->grandTotal) {
-                    Notification::make()
-                        ->title('Jumlah Bayar Tidak Pas')
-                        ->body('Pembayaran non-tunai harus pas dengan total tagihan: ' . number_format($this->grandTotal, 0, ',', '.'))
-                        ->danger()
-                        ->send();
-                    return;
-                }
-            }
-        } else {
-            // Auto-fill or adjust credit amount with remaining balance if less than grand total
-            $currentCredit = intval($this->paymentAmounts['credit'] ?? $this->amountCredit);
-            if ($totalPaid < $this->grandTotal) {
-                $deficit = $this->grandTotal - $totalPaid;
-                $newCredit = $currentCredit + $deficit;
-                $this->paymentAmounts['credit'] = $newCredit;
-                $this->amountCredit = $newCredit;
-            }
-        }
-
-        try {
-            $activeSession = \App\Models\CashSession::where('user_id', Auth::id())
-                ->where('status', 'open')
-                ->first();
-
-            if (!$activeSession) {
-                throw new \Exception('Sesi kasir aktif tidak ditemukan. Silakan buka sesi terlebih dahulu.');
-            }
-
-            $itemsData = [];
-            foreach ($this->cart as $c) {
-                $itemsData[] = [
-                    'variant_id' => $c['variant_id'],
-                    'qty' => $c['qty'],
-                    'price' => $c['price'],
-                    'discount_amount' => $c['discount_amount'] ?? 0,
-                    'notes' => $c['notes'] ?? null,
-                ];
-            }
-
-            // Calculate points to deduct and points discount to apply
-            $pointsUsed = 0;
-            $pointDiscount = 0;
-            if ($this->usePoints && $this->selectedCustomerId && $this->customerPoints > 0) {
-                $pointDiscount = $this->pointDiscountAmount;
-                $pointsUsed = ceil($pointDiscount / self::POINT_VALUATION);
-            }
-
-            // Compile payments data for split payment support
-            $paymentsData = [];
-            $change = 0;
-            $cashPaid = in_array('cash', $this->selectedPaymentMethods) ? intval($this->paymentAmounts['cash'] ?? $this->amountCash) : 0;
-            if ($cashPaid > 0) {
-                $change = max(0, $totalPaid - $this->grandTotal);
-                $netCash = $cashPaid - $change;
-                if ($netCash > 0) {
-                    $paymentsData[] = [
-                        'method' => 'cash',
-                        'amount' => $netCash,
-                        'ref' => null
-                    ];
-                }
-            }
-
-            foreach ($this->selectedPaymentMethods as $method) {
-                if ($method === 'cash') continue;
-                
-                $amount = intval($this->paymentAmounts[$method] ?? ($method === 'debit' ? $this->amountDebit : ($method === 'credit' ? $this->amountCredit : 0)));
-                if ($amount > 0) {
-                    $refValue = $this->paymentRefs[$method] ?? ($method === 'debit' ? $this->debitRef : null);
-                    $subValue = $this->paymentSubMethods[$method] ?? null;
-                    $combinedRef = trim(($subValue ? "Bank: {$subValue}" : '') . ($refValue ? ($subValue ? ' | ' : '') . "Ref: {$refValue}" : ''));
-
-                    $paymentsData[] = [
-                        'method' => $method,
-                        'amount' => $amount,
-                        'ref' => $combinedRef ?: null
-                    ];
-                }
-            }
-
-            // Compile human-readable payment method name
-            $methodNames = [];
-            foreach ($this->selectedPaymentMethods as $m) {
-                $amount = intval($this->paymentAmounts[$m] ?? ($m === 'cash' ? $this->amountCash : ($m === 'debit' ? $this->amountDebit : ($m === 'credit' ? $this->amountCredit : 0))));
-                if ($amount > 0) {
-                    $dbMethod = \App\Models\PaymentMethod::where('code', $m)->first();
-                    $baseName = $dbMethod ? $dbMethod->name : ($m === 'cash' ? 'Tunai' : ($m === 'debit' ? 'Debit Card' : ($m === 'credit' ? 'Piutang' : ucfirst($m))));
-                    $subValue = $this->paymentSubMethods[$m] ?? null;
-                    if (!empty($subValue)) {
-                        $baseName .= " ({$subValue})";
-                    }
-                    $methodNames[] = $baseName;
-                }
-            }
-            $paymentMethodString = empty($methodNames) ? 'Tunai' : implode(' & ', $methodNames);
-
-            $isEditing = !empty($this->editingSaleId);
-
-            if ($isEditing) {
-                $editingSale = \App\Models\Sale::findOrFail($this->editingSaleId);
-                $sale = app(\App\Actions\Sales\UpdatePOSSale::class)->execute($editingSale, [
-                    'customer_id' => $this->selectedCustomerId,
-                    'sales_rep_id' => $this->selectedSalesRepId,
-                    'invoice_date' => $this->invoiceDate,
-                    'payment_method' => $paymentMethodString,
-                    'payments' => $paymentsData,
-                    'discount_amount' => $this->discountAmount + $pointDiscount,
-                    'tax_amount' => $this->taxAmount,
-                    'items' => $itemsData,
-                    'sale_category' => $this->saleCategory,
-                ]);
-            } else {
-                $sale = app(CreatePOSSale::class)->execute([
-                    'branch_id' => $this->selectedBranchId,
-                    'cash_session_id' => $activeSession->id,
-                    'customer_id' => $this->selectedCustomerId,
-                    'sales_rep_id' => $this->selectedSalesRepId,
-                    'invoice_date' => $this->invoiceDate,
-                    'payment_method' => $paymentMethodString,
-                    'payments' => $paymentsData,
-                    'discount_amount' => $this->discountAmount + $pointDiscount,
-                    'tax_amount' => $this->taxAmount,
-                    'items' => $itemsData,
-                    'sale_category' => $this->saleCategory,
-                ]);
-            }
-
-            // Deduct points from database
-            if ($pointsUsed > 0) {
-                $customer = Customer::find($this->selectedCustomerId);
-                if ($customer) {
-                    $customer->decrement('loyalty_points', $pointsUsed);
-                }
-            }
-
-            // Increment used count for applied voucher
-            if ($this->appliedVoucher) {
-                $this->appliedVoucher->increment('used_count');
-                $this->appliedVoucher = null;
-                $this->voucherCodeInput = '';
-                $this->voucherValidationMessage = '';
-                $this->voucherIsValid = false;
-            }
-
-            $targetPhone = trim($this->customerPhone);
-
-            // Reset POS State
-            $this->editingSaleId = null;
-            $this->cart = [];
-            $this->clearCustomer();
-            $this->enableTax = false;
-            $this->taxPercent = 11;
-            $this->selectedSalesRepId = Auth::id();
-            $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
-            $this->salesSearch = '';
-            $defaultCategory = \App\Models\SaleCategory::first();
-            $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
-            $this->invoiceDate = now()->format('Y-m-d');
-            $this->showPaymentModal = false;
-            $this->amountPaid = 0;
-            $this->usePoints = false;
-            
-            // Reset Split Payment state
-            $this->selectedPaymentMethods = ['cash'];
-            $this->amountCash = 0;
-            $this->amountDebit = 0;
-            $this->amountCredit = 0;
-            $this->debitRef = '';
-            $this->paymentAmounts = [];
-            $this->paymentRefs = [];
-
-            // Dispatch print event for thermal receipt printing
-            $this->lastSaleId = $sale->id;
-            $this->dispatch('print-receipt', saleId: $sale->id);
-
-            // Send WhatsApp receipt if requested and phone number is available
-            if ($sendWhatsApp && !empty($targetPhone)) {
-                $waResult = app(\App\Actions\Notification\SendWhatsAppReceipt::class)->execute($sale, $targetPhone);
-                if ($waResult['success']) {
-                    Notification::make()
-                        ->title('Struk WhatsApp Terkirim')
-                        ->body("Bukti struk {$sale->invoice_number} berhasil dikirim ke WhatsApp {$targetPhone}.")
-                        ->success()
-                        ->send();
-                } else {
-                    Notification::make()
-                        ->title('Gagal Kirim WhatsApp')
-                        ->body("Transaksi selesai & struk dicetak, tapi WhatsApp gagal: {$waResult['message']}")
-                        ->warning()
-                        ->send();
-                }
-            }
-
-            Notification::make()
-                ->title($isEditing ? 'Transaksi Diperbarui' : 'Transaksi Sukses')
-                ->body($isEditing ? "Faktur {$sale->invoice_number} berhasil diperbarui." : "Faktur {$sale->invoice_number} berhasil dicatat.")
-                ->success()
-                ->send();
-
-            if ($isEditing) {
-                return redirect()->to('/pos/transactions');
-            }
-
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('POS Checkout Error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-            Notification::make()
-                ->title('Gagal Checkout')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        }
-    }
-
-    public function cancelEdit()
-    {
-        $this->editingSaleId = null;
-        $this->cart = [];
-        $this->clearCustomer();
-        $this->discountValue = 0;
-        $this->enableTax = false;
-        
-        Notification::make()
-            ->title('Edit Transaksi Dibatalkan')
-            ->body('Keranjang belanja telah dikosongkan.')
-            ->info()
-            ->send();
-            
-        return redirect()->to('/pos');
-    }
-
-    public function clearCart()
-    {
-        $this->cart = [];
-        $this->clearCustomer();
-        $this->discountValue = 0;
-        $this->discountType = 'fixed';
-        $this->usePoints = false;
-        $this->selectedSalesRepId = Auth::id();
-        $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
-        $this->salesSearch = '';
-        $defaultCategory = \App\Models\SaleCategory::first();
-        $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
-
-        Notification::make()
-            ->title('Keranjang Direset')
-            ->body('Seluruh item belanja dan data pelanggan telah dikosongkan.')
-            ->info()
-            ->send();
-    }
-
-    public function openProductSearch()
-    {
-        $this->productPage = 1;  // Reset ke halaman pertama setiap modal dibuka
-        $this->showProductSearchModal = true;
-    }
-
-    public function closeProductSearch()
-    {
-        $this->showProductSearchModal = false;
-        $this->search = '';      // Reset search saat modal ditutup
-        $this->productPage = 1;
-    }
-
-    public function openHeldTransactionsModal()
-    {
-        $this->showHeldModal = true;
-    }
-
-    public function holdTransaction()
-    {
-        if (empty($this->cart)) {
-            Notification::make()
-                ->title('Keranjang Kosong')
-                ->body('Tidak ada transaksi untuk ditunda.')
-                ->warning()
-                ->send();
-            return;
-        }
-
-        \App\Models\PosHeldTransaction::create([
-            'id' => \Illuminate\Support\Str::uuid()->toString(),
-            'branch_id' => $this->selectedBranchId,
-            'user_id' => Auth::id(),
-            'customer_id' => $this->selectedCustomerId,
-            'customer_name' => $this->selectedCustomerName,
-            'cart_data' => $this->cart,
-            'discount_amount' => $this->discountAmount,
-            'discount_type' => $this->discountType,
-            'discount_value' => $this->discountValue,
-            'use_points' => $this->usePoints,
-            'is_loyalty' => $this->isLoyaltyMember,
-            'pricing_tier_id' => $this->selectedPricingTierId,
-        ]);
-
-        // Clear current cart/state
-        $this->cart = [];
-        $this->clearCustomer();
-        $this->discountValue = 0;
-        $this->discountType = 'fixed';
-        $this->usePoints = false;
-        $this->showHeldModal = false;
-
-        Notification::make()
-            ->title('Transaksi Ditunda')
-            ->body('Transaksi berhasil disimpan ke daftar tunda.')
-            ->success()
-            ->send();
-    }
-
-    public function restoreHeldTransaction($holdId)
-    {
-        $held = \App\Models\PosHeldTransaction::find($holdId);
-        if (!$held) {
-            Notification::make()
-                ->title('Transaksi Tidak Ditemukan')
-                ->body('Transaksi tunda tidak dapat ditemukan atau sudah dihapus.')
-                ->danger()
-                ->send();
-            return;
-        }
-
-        $this->cart = $held->cart_data;
-        $this->selectedCustomerId = $held->customer_id;
-        $this->selectedCustomerName = $held->customer_name ?? 'Umum / Walk-in';
-        if ($held->customer_id) {
-            $heldCust = Customer::find($held->customer_id);
-            $this->customerPhone = $heldCust?->phone ?? '';
-        } else {
-            $this->customerPhone = '';
-        }
-        $this->isLoyaltyMember = $held->is_loyalty;
-        $this->selectedPricingTierId = $held->pricing_tier_id;
-        $this->usePoints = $held->use_points;
-        $this->discountValue = $held->discount_value;
-        $this->discountType = $held->discount_type;
-
-        $held->delete();
-        $this->showHeldModal = false;
-
-        Notification::make()
-            ->title('Transaksi Dimuat')
-            ->body('Transaksi tunda berhasil dimuat kembali ke keranjang.')
-            ->success()
-            ->send();
-    }
-
-    public function deleteHeldTransaction($holdId)
-    {
-        $held = \App\Models\PosHeldTransaction::find($holdId);
-        if ($held) {
-            $held->delete();
-        }
-
-        Notification::make()
-            ->title('Transaksi Dihapus')
-            ->body('Transaksi tunda berhasil dihapus.')
-            ->info()
-            ->send();
-    }
-
-    public function reprintLastReceipt()
-    {
-        if (!$this->lastSaleId) {
-            Notification::make()
-                ->title('Tidak Ada Transaksi')
-                ->body('Belum ada transaksi yang diselesaikan dalam sesi ini.')
-                ->warning()
-                ->send();
-            return;
-        }
-
-        $this->dispatch('print-receipt', saleId: $this->lastSaleId);
-
-        Notification::make()
-            ->title('Mencetak Ulang Struk')
-            ->body('Permintaan cetak ulang struk berhasil dikirim.')
-            ->success()
-            ->send();
-    }
-
-    public function printBill()
-    {
-        $this->printDraft('bill');
-    }
-
-    public function printDraft($format = 'bill')
-    {
-        if (empty($this->cart)) {
-            Notification::make()
-                ->title('Keranjang Kosong')
-                ->body('Tidak ada item untuk dicetak.')
-                ->warning()
-                ->send();
-            return;
-        }
-
-        $data = base64_encode(json_encode([
-            'branch_id' => $this->selectedBranchId,
-            'customer_id' => $this->selectedCustomerId,
-            'customer_name' => $this->selectedCustomerName,
-            'cart' => $this->cart,
-            'discount_amount' => $this->discountAmount,
-            'tax_amount' => $this->taxAmount,
-            'grand_total' => $this->grandTotal,
-            'use_points' => $this->usePoints,
-            'point_discount_amount' => $this->pointDiscountAmount,
-        ]));
-
-        $url = url('/pos/receipt-draft') . '?format=' . $format . '&data=' . urlencode($data);
-        $this->dispatch('open-draft-bill', url: $url);
-
-        $titles = [
-            'bill' => 'Mencetak Bill Sementara',
-            'large' => 'Mencetak Large Bill',
-            'penawaran' => 'Mencetak Penawaran',
-            'tagihan' => 'Mencetak Tagihan',
-        ];
-
-        Notification::make()
-            ->title($titles[$format] ?? 'Mencetak Bill')
-            ->body('Draft sedang dipersiapkan untuk dicetak.')
-            ->info()
-            ->send();
+        return \App\Models\Sale::generateInvoiceNumber($this->saleCategory);
     }
 
     public function render()
     {
+        $this->autoSaveDraft();
         return view('filament.pages.pos.pos')
             ->layout('layouts.pos');
     }

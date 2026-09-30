@@ -28,6 +28,10 @@ class PosSaleCategories extends Component
 
     // ── State Form ───────────────────────────────────────────────────────
     public string $name = '';
+    public string $prefix = '';
+    public string $start_alphabet = 'A';
+    public string $end_alphabet = 'Z';
+    public int $digit_length = 4;
 
     // ── State Konfirmasi Hapus ───────────────────────────────────────────
     public bool $showDeleteModal = false;
@@ -64,7 +68,7 @@ class PosSaleCategories extends Component
     // ── Modal: Buka Form Tambah ──────────────────────────────────────────
     public function openCreate(): void
     {
-        $this->reset(['name', 'editingId', 'isEditing']);
+        $this->reset(['name', 'prefix', 'start_alphabet', 'end_alphabet', 'digit_length', 'editingId', 'isEditing']);
         $this->showModal = true;
     }
 
@@ -76,6 +80,10 @@ class PosSaleCategories extends Component
         $this->editingId = $id;
         $this->isEditing = true;
         $this->name      = $category->name;
+        $this->prefix    = $category->prefix ?? '';
+        $this->start_alphabet = $category->start_alphabet ?? 'A';
+        $this->end_alphabet = $category->end_alphabet ?? 'Z';
+        $this->digit_length = $category->digit_length ?? 4;
 
         $this->showModal = true;
     }
@@ -85,6 +93,10 @@ class PosSaleCategories extends Component
     {
         $rules = [
             'name' => 'required|string|max:255|unique:sale_categories,name,' . ($this->editingId ?? 'NULL'),
+            'prefix' => 'nullable|string|max:10',
+            'start_alphabet' => 'required|string|alpha|max:5',
+            'end_alphabet' => 'required|string|alpha|max:5',
+            'digit_length' => 'required|integer|min:3|max:10',
         ];
 
         $this->validate($rules, [
@@ -94,6 +106,10 @@ class PosSaleCategories extends Component
 
         $data = [
             'name' => $this->name,
+            'prefix' => $this->prefix ?: null,
+            'start_alphabet' => strtoupper($this->start_alphabet),
+            'end_alphabet' => strtoupper($this->end_alphabet),
+            'digit_length' => $this->digit_length,
         ];
 
         if ($this->isEditing) {

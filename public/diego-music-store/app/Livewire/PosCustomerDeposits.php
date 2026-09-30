@@ -52,7 +52,7 @@ class PosCustomerDeposits extends Component
     public float|int|string $deposit_amount = 0;
     public float|int|string $remaining_amount = 0;
     public ?int $account_id = null;
-    public string $payment_method = 'Tunai';
+    public string $payment_method = 'cash';
     public ?string $payment_reference = null;
     public string $deposit_date = '';
     public ?string $notes = null;
@@ -62,7 +62,7 @@ class PosCustomerDeposits extends Component
     public ?int $settlingDepositId = null;
     public ?CustomerDeposit $settlingDeposit = null;
     public ?int $settlement_account_id = null;
-    public string $settlement_payment_method = 'Tunai';
+    public string $settlement_payment_method = 'cash';
     public ?string $settlement_reference = null;
     public ?string $settlement_notes = null;
 
@@ -356,10 +356,6 @@ class PosCustomerDeposits extends Component
         }
 
         try {
-            // Automatically assign Penitipan Dana account (211601004)
-            $penitipanDanaAcc = \App\Helpers\AccountHelper::findByCode('211601004') ?? Account::where('code', '2-1200')->first();
-            $accountId = $penitipanDanaAcc?->id ?? $this->account_id;
-
             $data = [
                 'customer_id' => $this->customer_id,
                 'deposit_date' => $this->deposit_date,
@@ -369,8 +365,8 @@ class PosCustomerDeposits extends Component
                 'price' => $this->price,
                 'qty' => $this->qty,
                 'deposit_amount' => $this->deposit_amount,
-                'account_id' => $accountId,
-                'payment_method' => $this->payment_method ?: 'Tunai',
+                'account_id' => $this->account_id,
+                'payment_method' => $this->payment_method ?: 'cash',
                 'payment_reference' => $this->payment_reference,
                 'notes' => $this->notes,
             ];
@@ -406,7 +402,7 @@ class PosCustomerDeposits extends Component
 
         $this->settlingDepositId = $deposit->id;
         $this->settlingDeposit = $deposit;
-        $this->settlement_payment_method = 'Tunai';
+        $this->settlement_payment_method = 'cash';
         $this->settlement_reference = null;
         $this->settlement_notes = null;
         $this->loadDefaultAccount();
@@ -432,7 +428,7 @@ class PosCustomerDeposits extends Component
 
             $settleAction->execute($deposit, [
                 'settlement_account_id' => $settlementAccountId,
-                'settlement_payment_method' => $this->settlement_payment_method ?: 'Tunai',
+                'settlement_payment_method' => $this->settlement_payment_method ?: 'cash',
                 'settlement_reference' => $this->settlement_reference,
                 'settlement_notes' => $this->settlement_notes,
             ], Auth::user());

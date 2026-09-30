@@ -37,6 +37,24 @@
             .item-row { margin-bottom: 6px; }
             .footer { margin-top: 25px; text-align: center; font-size: 10px; }
             .draft-banner { background-color: #000; color: #fff; text-align: center; font-weight: bold; padding: 4px; margin-bottom: 10px; font-size: 13px; }
+        @elseif ($format === 'large')
+            /* Simple Landscape styling for dot-matrix */
+            body {
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 14px;
+                color: #000;
+                background: #fff;
+                margin: 0;
+                padding: 20px;
+            }
+            .large-container { width: 100%; }
+            .large-header { text-align: center; margin-bottom: 20px; }
+            .large-info { display: flex; justify-content: space-between; margin-bottom: 10px; }
+            table.large-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            table.large-table th, table.large-table td { border: 1px solid #000; padding: 6px; }
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .bold { font-weight: bold; }
         @else
             /* Modern A4 styling */
             body {
@@ -199,6 +217,9 @@
             }
         @endif
         @media print {
+            @if ($format === 'large')
+                @page { size: landscape; margin: 10mm; }
+            @endif
             body {
                 background: #ffffff;
                 padding: 0;
@@ -284,10 +305,12 @@
                 <span>-Rp {{ number_format($draft->discount_amount, 0, ',', '.') }}</span>
             </div>
         @endif
+        @if ($draft->tax_amount > 0)
         <div class="grid">
             <span>PPN (11%):</span>
             <span>Rp {{ number_format($draft->tax_amount, 0, ',', '.') }}</span>
         </div>
+        @endif
         <div class="double-divider"></div>
         <div class="grid bold" style="font-size: 13px;">
             <span>Total Akhir:</span>
@@ -303,8 +326,92 @@
             Harap simpan lembar tagihan ini untuk kasir.<br><br>
             Diego Music Store ERP
         </div>
+    @elseif ($format === 'large')
+        <div class="large-container">
+            <div class="large-header">
+                <div class="bold" style="font-size:20px;">{{ $draft->branch->store_name ?: 'Diego Music Store' }}</div>
+                <div>{{ $draft->branch->name }} | Telp: {{ $draft->branch->phone }}</div>
+                <h2 style="margin: 10px 0 0 0; text-transform: uppercase;">Large Bill</h2>
+            </div>
+            
+            <div class="large-info">
+                <div>
+                    <div><span class="bold">No. Ref:</span> {{ $draft->invoice_number }}</div>
+                    <div><span class="bold">Tanggal:</span> {{ $draft->created_at->format('d/m/Y H:i') }}</div>
+                </div>
+                <div class="text-right">
+                    <div><span class="bold">Kasir:</span> {{ $draft->salesRep->name }}</div>
+                    <div><span class="bold">Pelanggan:</span> {{ $draft->customer_name }}</div>
+                </div>
+            </div>
+
+            <table class="large-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;" class="text-center">No.</th>
+                        <th>Deskripsi Produk</th>
+                        <th style="width: 60px;" class="text-center">Qty</th>
+                        <th style="width: 120px;" class="text-right">Harga Satuan</th>
+                        <th style="width: 100px;" class="text-right">Diskon</th>
+                        <th style="width: 150px;" class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($draft->items as $idx => $item)
+                        <tr>
+                            <td class="text-center">{{ $idx + 1 }}</td>
+                            <td>
+                                {{ $item->variant->product->name }}
+                                @if ($item->variant->name)
+                                    ({{ $item->variant->name }})
+                                @endif
+                            </td>
+                            <td class="text-center">{{ $item->quantity }}</td>
+                            <td class="text-right">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                            <td class="text-right">
+                                @if ($item->discount_amount > 0)
+                                    -Rp {{ number_format($item->discount_amount, 0, ',', '.') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td class="text-right bold">Rp {{ number_format($item->total_price, 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <table style="width: 350px; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 4px;">Subtotal</td>
+                        <td class="text-right bold" style="padding: 4px;">Rp {{ number_format($draft->subtotal, 0, ',', '.') }}</td>
+                    </tr>
+                    @if ($draft->discount_amount > 0)
+                        <tr>
+                            <td style="padding: 4px;">Diskon Global</td>
+                            <td class="text-right bold" style="padding: 4px; color: #000;">-Rp {{ number_format($draft->discount_amount, 0, ',', '.') }}</td>
+                        </tr>
+                    @endif
+                    @if ($draft->tax_amount > 0)
+                        <tr>
+                            <td style="padding: 4px;">PPN (11%)</td>
+                            <td class="text-right bold" style="padding: 4px;">Rp {{ number_format($draft->tax_amount, 0, ',', '.') }}</td>
+                        </tr>
+                    @endif
+                    <tr>
+                        <td style="padding: 4px; font-size: 16px;" class="bold">Total Akhir</td>
+                        <td class="text-right bold" style="padding: 4px; font-size: 16px;">Rp {{ number_format($draft->grand_total, 0, ',', '.') }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="text-center" style="margin-top: 30px; font-size: 12px; border-top: 1px dashed #000; padding-top: 10px;">
+                BUKAN BUKTI TRANSAKSI RESMI
+            </div>
+        </div>
     @else
-        <!-- Modern A4 layout for Large Bill, Penawaran, and Tagihan -->
+        <!-- Modern A4 layout for Penawaran and Tagihan -->
         <div class="page-container">
             
             <div class="watermark-banner">
@@ -399,10 +506,12 @@
                                 <td style="text-align: right; font-weight: 600; color: #dc2626;">-Rp {{ number_format($draft->discount_amount, 0, ',', '.') }}</td>
                             </tr>
                         @endif
+                        @if ($draft->tax_amount > 0)
                         <tr>
                             <td style="color: #64748b;">PPN (11%)</td>
                             <td style="text-align: right; font-weight: 600;">Rp {{ number_format($draft->tax_amount, 0, ',', '.') }}</td>
                         </tr>
+                        @endif
                         <tr>
                             <td>Total Akhir</td>
                             <td style="text-align: right;">Rp {{ number_format($draft->grand_total, 0, ',', '.') }}</td>
@@ -411,28 +520,11 @@
                 </table>
             </div>
 
-            <div class="signature-section">
-                <div>
-                    <p style="margin-bottom: 60px; color: #64748b;">Disiapkan Oleh,</p>
-                    <div class="signature-box">
-                        {{ $draft->salesRep->name }}
-                    </div>
-                </div>
-                <div>
-                    <p style="margin-bottom: 60px; color: #64748b;">Diterima Oleh,</p>
-                    <div class="signature-box">
-                        {{ $draft->customer_name }}
-                    </div>
-                </div>
-            </div>
+
 
         </div>
     @endif
 
-    <script>
-        window.onload = function() {
-            window.print();
-        }
-    </script>
+
 </body>
 </html>

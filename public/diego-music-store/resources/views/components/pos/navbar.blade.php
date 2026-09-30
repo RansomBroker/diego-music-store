@@ -26,6 +26,7 @@
     'selectedBranchId'   => null,
     'showBranchSelector' => false,
     'showCloseSession'   => false,
+    'showSidebarToggle'  => true,
 ])
 
 @php
@@ -40,15 +41,17 @@
     {{-- ====== LEFT: Sidebar Toggle + Back Button + Page Identity ====== --}}
     <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial mr-2">
         {{-- Tombol Toggle Collapse / Expand Sidebar --}}
-        <button
-            onclick="window.dispatchEvent(new CustomEvent('toggle-sidebar'))"
-            type="button"
-            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-all cursor-pointer flex-shrink-0 shadow-xs active:scale-95"
-            title="Buka / Tutup Sidebar Navigasi"
-            aria-label="Toggle Sidebar"
-        >
-            <i class="ph-bold ph-list text-lg"></i>
-        </button>
+        @if ($showSidebarToggle)
+            <button
+                onclick="window.dispatchEvent(new CustomEvent('toggle-sidebar'))"
+                type="button"
+                class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-all cursor-pointer flex-shrink-0 shadow-xs active:scale-95"
+                title="Buka / Tutup Sidebar Navigasi"
+                aria-label="Toggle Sidebar"
+            >
+                <i class="ph-bold ph-list text-lg"></i>
+            </button>
+        @endif
 
         {{-- Tombol Kembali (hanya tampil jika showBack=true) --}}
         @if ($showBack)

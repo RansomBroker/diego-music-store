@@ -7,6 +7,18 @@
                 <x-pos.table.th sortable field="name" :sortField="$sortField" :sortDirection="$sortDirection">
                     Nama Kategori
                 </x-pos.table.th>
+                <!-- Prefix -->
+                <x-pos.table.th sortable field="prefix" :sortField="$sortField" :sortDirection="$sortDirection">
+                    Prefix
+                </x-pos.table.th>
+                <!-- Range Abjad -->
+                <x-pos.table.th>
+                    Range Abjad
+                </x-pos.table.th>
+                <!-- Panjang Angka -->
+                <x-pos.table.th sortable field="digit_length" :sortField="$sortField" :sortDirection="$sortDirection">
+                    Panjang Angka
+                </x-pos.table.th>
                 <!-- Actions -->
                 <x-pos.table.th class="text-right">
                     Aksi
@@ -19,6 +31,18 @@
                     <!-- Name -->
                     <x-pos.table.td class="whitespace-nowrap text-sm text-slate-900 dark:text-slate-100 font-semibold">
                         {{ $row->name }}
+                    </x-pos.table.td>
+                    <!-- Prefix -->
+                    <x-pos.table.td class="whitespace-nowrap text-sm text-slate-700 dark:text-slate-300 font-bold uppercase">
+                        {{ $row->prefix ?? '-' }}
+                    </x-pos.table.td>
+                    <!-- Range Abjad -->
+                    <x-pos.table.td class="whitespace-nowrap text-sm text-slate-700 dark:text-slate-300 font-bold uppercase">
+                        {{ $row->start_alphabet ?? 'A' }} - {{ $row->end_alphabet ?? 'Z' }}
+                    </x-pos.table.td>
+                    <!-- Panjang Angka -->
+                    <x-pos.table.td class="whitespace-nowrap text-sm text-slate-700 dark:text-slate-300">
+                        {{ $row->digit_length ?? 4 }} Digit
                     </x-pos.table.td>
                     <!-- Actions -->
                     <x-pos.table.td class="whitespace-nowrap text-right">
@@ -47,7 +71,7 @@
                     </x-pos.table.td>
                 </x-pos.table.tr>
             @empty
-                <x-pos.table.empty colspan="2" icon="ph-storefront" message="Tidak ada kategori penjualan ditemukan" />
+                <x-pos.table.empty colspan="5" icon="ph-storefront" message="Tidak ada kategori penjualan ditemukan" />
             @endforelse
         </tbody>
     </x-pos.table>

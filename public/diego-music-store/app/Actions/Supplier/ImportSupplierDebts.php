@@ -189,7 +189,7 @@ class ImportSupplierDebts
     /**
      * Record a balanced double-entry journal for initial supplier debts.
      *
-     * Debit: 311101001 - Modal Disetor (or 311201001 - Laba Ditahan)
+     * Debit: 311101003 - Modal Pemilik (or 311201001 - Laba Ditahan)
      * Credit: 211101001 - Hutang Dagang
      *
      * @param int $totalValue Total value of imported unpaid supplier debts.
@@ -216,8 +216,8 @@ class ImportSupplierDebts
 
         $contraAcc = $contraAccountId ? Account::find($contraAccountId) : null;
         if (!$contraAcc) {
-            $contraAcc = AccountHelper::findByCode('311101001')
-                ?: Account::find(AccountHelper::resolveAccountId('311101001', 'MODAL DISETOR', 'equity'));
+            $contraAcc = AccountHelper::findByCode('311101003')
+                ?: Account::find(AccountHelper::resolveAccountId('311101003', 'MODAL PEMILIK', 'equity'));
         }
 
         if (!$apAcc || !$contraAcc) {

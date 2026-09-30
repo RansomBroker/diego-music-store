@@ -1,4 +1,4 @@
-﻿no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
+no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
 1,111101001,KAS,asset,cash,debit
 2,111101002,KAS Kecil,asset,cash,debit
 3,111201001,BANK BCA,asset,bank,debit
@@ -41,6 +41,7 @@
 40,211701001,HUTANG PPH PASAL 23,liability,tax_payable,credit
 41,221101001,HUTANG JANGKA PANJANG,liability,long_term_liability,credit
 42,311101001,MODAL DISETOR,equity,paid_in_capital,credit
+42.5,311101003,MODAL PEMILIK,equity,paid_in_capital,credit
 43,311101002,PRIVE,equity,owner_withdrawal,debit
 44,311201001,LABA DITAHAN,equity,retained_earnings,credit
 45,311301001,LABA TAHUN BERJALAN,equity,current_year_earnings,credit
@@ -77,7 +78,7 @@
 76,611101023,BEBAN BERLANGGANAN APLIKASI,expense,operating_expense,debit
 77,611101024,BEBAN PENYUSUTAN INVENTARIS KANTOR,expense,depreciation,debit
 78,611101025,BEBAN PENYUSUTAN KENDARAAN,expense,depreciation,debit
-79,611101026,BEBAN ENTERTAIN,expense,operating_expense,debit
+79,611101026,BIAYA COMPLIMENTARY,expense,operating_expense,debit
 80,611101027,BEBAN VOUCHER KONSUMEN,expense,operating_expense,debit
 81,611101028,BEBAN SEWA,expense,operating_expense,debit
 82,611101029,PAJAK PPH FINAL,expense,tax_expense,debit

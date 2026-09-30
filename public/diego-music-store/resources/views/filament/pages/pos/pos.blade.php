@@ -31,6 +31,7 @@
     <!-- Full-Screen Transaction Area -->
     <x-pos-page::cart-sidebar 
         :cart="$cart"
+        :cartVariants="$this->cartVariants"
         :customerSearch="$customerSearch"
         :customers="$this->customers"
         :selectedCustomerId="$selectedCustomerId"
@@ -120,7 +121,7 @@
     <x-pos-page::modal 
         :show="$showHeldModal" 
         title="Daftar Transaksi Ditunda" 
-        closeAction="$set('showHeldModal', false)"
+        :closeAction="!$isHeldModalMandatory ? '$set(\'showHeldModal\', false)' : null"
         maxWidth="md"
     >
         <div class="space-y-3">
@@ -150,6 +151,20 @@
                         </div>
                     </div>
                 @endforeach
+            @endif
+            
+            @if ($isHeldModalMandatory)
+                <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <x-pos.utility.button 
+                        type="button" 
+                        variant="primary" 
+                        icon="ph-plus" 
+                        wire:click="startNewTransaction"
+                        class="w-full justify-center"
+                    >
+                        Buat Transaksi Baru
+                    </x-pos.utility.button>
+                </div>
             @endif
         </div>
     </x-pos-page::modal>
