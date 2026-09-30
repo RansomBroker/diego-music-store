@@ -104,12 +104,12 @@
                     </label>
                     <select wire:model.live="contraAccountId" class="w-full text-xs font-medium rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 shadow-xs">
                         @php
-                            $modalAcc = \App\Helpers\AccountHelper::findByCode('311101001');
+                            $modalAcc = \App\Helpers\AccountHelper::findByCode('311101003');
                             $retainedAcc = \App\Helpers\AccountHelper::findByCode('311201001');
                             $invAcc = \App\Helpers\AccountHelper::findByCode('111401001');
                         @endphp
                         @if($modalAcc)
-                            <option value="{{ $modalAcc->id }}">311101001 - MODAL DISETOR (Default Ekuitas)</option>
+                            <option value="{{ $modalAcc->id }}">311101003 - MODAL PEMILIK (Default Ekuitas)</option>
                         @endif
                         @if($retainedAcc)
                             <option value="{{ $retainedAcc->id }}">311201001 - LABA DITAHAN</option>
@@ -138,7 +138,7 @@
                 </div>
                 <div class="font-mono space-y-0.5 text-gray-700 dark:text-gray-300 pl-5">
                     <div>[D] <strong>111401001 - PERSEDIAAN BARANG DAGANG</strong> <span class="text-emerald-600 dark:text-emerald-400">(Aset Persediaan Bertambah)</span></div>
-                    <div>[K] <strong>{{ $selectedContra ? ($selectedContra->code . ' - ' . $selectedContra->name) : '311101001 - MODAL DISETOR' }}</strong> <span class="{{ $isSameAccount ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-blue-600 dark:text-blue-400' }}">{{ $isSameAccount ? '(Perhatian: Debit dan Kredit di akun yang sama, saldo akhir di neraca menjadi Rp 0)' : '(Penyeimbang Modal/Ekuitas)' }}</span></div>
+                    <div>[K] <strong>{{ $selectedContra ? ($selectedContra->code . ' - ' . $selectedContra->name) : '311101003 - MODAL PEMILIK' }}</strong> <span class="{{ $isSameAccount ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-blue-600 dark:text-blue-400' }}">{{ $isSameAccount ? '(Perhatian: Debit dan Kredit di akun yang sama, saldo akhir di neraca menjadi Rp 0)' : '(Penyeimbang Modal/Ekuitas)' }}</span></div>
                 </div>
             </div>
         </div>
@@ -194,11 +194,11 @@
                     </label>
                     <select wire:model.live="contraAccountId" class="w-full text-xs font-medium rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 shadow-xs">
                         @php
-                            $modalAcc = \App\Helpers\AccountHelper::findByCode('311101001');
+                            $modalAcc = \App\Helpers\AccountHelper::findByCode('311101003');
                             $retainedAcc = \App\Helpers\AccountHelper::findByCode('311201001');
                         @endphp
                         @if($modalAcc)
-                            <option value="{{ $modalAcc->id }}">311101001 - MODAL DISETOR (Default Ekuitas)</option>
+                            <option value="{{ $modalAcc->id }}">311101003 - MODAL PEMILIK (Default Ekuitas)</option>
                         @endif
                         @if($retainedAcc)
                             <option value="{{ $retainedAcc->id }}">311201001 - LABA DITAHAN</option>
@@ -222,7 +222,7 @@
                     <span class="font-mono text-[10px] text-gray-500">Status: POSTED</span>
                 </div>
                 <div class="font-mono space-y-0.5 text-gray-700 dark:text-gray-300 pl-5">
-                    <div>[D] <strong>{{ $selectedContra ? ($selectedContra->code . ' - ' . $selectedContra->name) : '311101001 - MODAL DISETOR' }}</strong> <span class="text-blue-600 dark:text-blue-400">(Penyeimbang Ekuitas Saldo Awal)</span></div>
+                    <div>[D] <strong>{{ $selectedContra ? ($selectedContra->code . ' - ' . $selectedContra->name) : '311101003 - MODAL PEMILIK' }}</strong> <span class="text-blue-600 dark:text-blue-400">(Penyeimbang Ekuitas Saldo Awal)</span></div>
                     <div>[K] <strong>211101001 - HUTANG DAGANG</strong> <span class="text-rose-600 dark:text-rose-400">(Kewajiban Hutang Supplier Bertambah)</span></div>
                 </div>
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 pt-1">
@@ -577,7 +577,7 @@
                                 <span class="font-semibold text-gray-800 dark:text-gray-200">Rp {{ number_format($totalStockValue, 0, ',', '.') }}</span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span>[K] {{ \App\Models\Account::find($contraAccountId)?->name ?? 'MODAL DISETOR' }}</span>
+                                <span>[K] {{ \App\Models\Account::find($contraAccountId)?->name ?? 'MODAL PEMILIK' }}</span>
                                 <span class="font-semibold text-gray-800 dark:text-gray-200">Rp {{ number_format($totalStockValue, 0, ',', '.') }}</span>
                             </div>
                         </div>

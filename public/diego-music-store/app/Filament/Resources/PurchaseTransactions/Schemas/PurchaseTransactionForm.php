@@ -120,8 +120,8 @@ class PurchaseTransactionForm
                                     ->default(0)
                                     ->disabled()
                                     ->dehydrated()
-                                    ->helperText(fn (Get $get) => intval($get('down_payment_amount') ?? 0) > 0 ? 'DP yang telah dibayar otomatis memotong sisa hutang faktur.' : null)
-                                    ->visible(fn (Get $get) => intval($get('down_payment_amount') ?? 0) > 0 || !empty($get('po_id'))),
+                                    ->helperText(fn ($get) => intval($get('down_payment_amount') ?? 0) > 0 ? 'DP yang telah dibayar otomatis memotong sisa hutang faktur.' : null)
+                                    ->visible(fn ($get) => intval($get('down_payment_amount') ?? 0) > 0 || !empty($get('po_id'))),
 
                                 Select::make('supplier_id')
                                     ->label('Supplier')

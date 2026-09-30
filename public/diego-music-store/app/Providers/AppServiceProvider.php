@@ -23,11 +23,8 @@ class AppServiceProvider extends ServiceProvider
             ]);
         }
 
-        try {
-            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        } catch (\Throwable $e) {
-            // Silence migration errors
-        }
+        // Auto-migrate is intentionally removed because it severely impacts performance if run on every HTTP request.
+        // Migrations should only be run during deployment or via CLI.
 
         \Illuminate\Support\Facades\Blade::anonymousComponentPath(
             resource_path('views/filament/pages/pos/components'),

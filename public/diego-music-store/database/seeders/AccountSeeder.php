@@ -86,7 +86,65 @@ class AccountSeeder extends Seeder
         }
 
         $rows = array_map('str_getcsv', file($csvPath));
-        $headerRow = array_shift($rows); // buang header: no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
+        $headerRow = array_shift($rows); // buang header
+
+        $subtypeHeadersMap = [
+            'cash' => ['code' => '111100000', 'name' => 'KAS'],
+            'bank' => ['code' => '111200000', 'name' => 'BANK'],
+            'purchase_advance' => ['code' => '111300000', 'name' => 'UANG MUKA PEMBELIAN'],
+            'current_other' => ['code' => '111400000', 'name' => 'ASET LANCAR LAINNYA'],
+            'settlement' => ['code' => '111500000', 'name' => 'PENAMPUNGAN / SETTLEMENT'],
+            'receivable' => ['code' => '111600000', 'name' => 'PIUTANG USAHA'],
+            'receivable_employee' => ['code' => '111700000', 'name' => 'PIUTANG KARYAWAN'],
+            'inventory' => ['code' => '111800000', 'name' => 'PERSEDIAAN'],
+            'employee_advance' => ['code' => '111900000', 'name' => 'PERSEKOT KARYAWAN'],
+            'other_receivable' => ['code' => '112000000', 'name' => 'PIUTANG LAIN-LAIN'],
+            'prepaid_expense' => ['code' => '112100000', 'name' => 'BIAYA DIBAYAR DIMUKA'],
+            'tax_receivable' => ['code' => '112200000', 'name' => 'PAJAK DIBAYAR DIMUKA'],
+            'fixed_asset' => ['code' => '121100000', 'name' => 'ASET TETAP'],
+            'accumulated_depreciation' => ['code' => '121200000', 'name' => 'AKUMULASI PENYUSUTAN'],
+            'intangible_asset' => ['code' => '122100000', 'name' => 'ASET TIDAK BERWUJUD'],
+            'accumulated_amortization' => ['code' => '122200000', 'name' => 'AKUMULASI AMORTISASI'],
+            
+            'trade_payable' => ['code' => '211100000', 'name' => 'HUTANG DAGANG'],
+            'tax_payable' => ['code' => '211200000', 'name' => 'HUTANG PAJAK'],
+            'other_payable' => ['code' => '211300000', 'name' => 'HUTANG LAIN-LAIN'],
+            'long_term_liability' => ['code' => '221100000', 'name' => 'HUTANG JANGKA PANJANG'],
+            
+            'paid_in_capital' => ['code' => '311100000', 'name' => 'MODAL'],
+            'owner_withdrawal' => ['code' => '311200000', 'name' => 'PRIVE'],
+            'retained_earnings' => ['code' => '311300000', 'name' => 'LABA DITAHAN'],
+            'current_year_earnings' => ['code' => '311400000', 'name' => 'LABA BERJALAN'],
+            
+            'sales' => ['code' => '411100000', 'name' => 'PENJUALAN'],
+            'sales_return' => ['code' => '411200000', 'name' => 'RETUR PENJUALAN'],
+            'sales_discount' => ['code' => '411300000', 'name' => 'POTONGAN PENJUALAN'],
+            
+            'purchase' => ['code' => '511100000', 'name' => 'PEMBELIAN'],
+            'purchase_freight' => ['code' => '511200000', 'name' => 'BIAYA ANGKUT PEMBELIAN'],
+            'purchase_return' => ['code' => '511300000', 'name' => 'RETUR PEMBELIAN'],
+            'purchase_discount' => ['code' => '511400000', 'name' => 'POTONGAN PEMBELIAN'],
+            'cost_of_goods_sold' => ['code' => '511500000', 'name' => 'HARGA POKOK PENJUALAN'],
+            
+            'operating_expense' => ['code' => '611100000', 'name' => 'BEBAN OPERASIONAL'],
+            'cash_shortage' => ['code' => '611200000', 'name' => 'SELISIH KAS KURANG'],
+            'depreciation' => ['code' => '611300000', 'name' => 'BEBAN PENYUSUTAN'],
+            'tax_expense' => ['code' => '611400000', 'name' => 'BEBAN PAJAK'],
+            'amortization' => ['code' => '611500000', 'name' => 'BEBAN AMORTISASI'],
+            'selling_expense' => ['code' => '611600000', 'name' => 'BEBAN PENJUALAN'],
+            'bank_expense' => ['code' => '621100000', 'name' => 'BIAYA ADMINISTRASI BANK'],
+            'other_expense' => ['code' => '631100000', 'name' => 'BIAYA LAIN-LAIN'],
+            'inventory_adjustment' => ['code' => '631200000', 'name' => 'PENYESUAIAN STOK'],
+            'payment_difference' => ['code' => '631300000', 'name' => 'SELISIH PEMBAYARAN'],
+            'corporate_tax' => ['code' => '641100000', 'name' => 'PAJAK BADAN'],
+            
+            'interest_income' => ['code' => '421100000', 'name' => 'PENDAPATAN BUNGA'],
+            'other_income' => ['code' => '421200000', 'name' => 'PENDAPATAN LAIN-LAIN'],
+            'cash_overage' => ['code' => '421300000', 'name' => 'SELISIH KAS LEBIH'],
+        ];
+
+        // Store Level 2 header instances
+        $level2Models = [];
 
         foreach ($rows as $row) {
             if (empty($row) || count($row) < 6) {
@@ -99,11 +157,33 @@ class AccountSeeder extends Seeder
             $subtype = trim($row[4]);
             $normalBalance = trim($row[5]);
 
-            // Tentukan Parent Header berdasarkan digit pertama
+            // 1. Tentukan Parent Header Root (Level 1)
             $firstDigit = substr($code, 0, 1);
-            $parentCode = $firstDigit . '00000000';
-            $parentId = $headerModels[$parentCode]->id ?? null;
+            $rootCode = $firstDigit . '00000000';
+            $rootId = $headerModels[$rootCode]->id ?? null;
 
+            // 2. Buat Parent Header Subtype (Level 2) jika belum ada
+            $level2Id = $rootId; // Fallback jika subtype tidak ditemukan
+            if (isset($subtypeHeadersMap[$subtype])) {
+                $subData = $subtypeHeadersMap[$subtype];
+                if (!isset($level2Models[$subtype])) {
+                    $level2Models[$subtype] = Account::updateOrCreate(
+                        ['code' => $subData['code']],
+                        [
+                            'name' => $subData['name'],
+                            'classification' => $type,
+                            'account_subtype' => $subtype,
+                            'normal_balance' => $normalBalance,
+                            'is_header' => true,
+                            'parent_id' => $rootId,
+                            'is_active' => true,
+                        ]
+                    );
+                }
+                $level2Id = $level2Models[$subtype]->id;
+            }
+
+            // 3. Buat Akun Detail (Level 3) mengarah ke Level 2
             Account::updateOrCreate(
                 ['code' => $code],
                 [
@@ -112,7 +192,7 @@ class AccountSeeder extends Seeder
                     'account_subtype' => $subtype,
                     'normal_balance' => $normalBalance,
                     'is_header' => false,
-                    'parent_id' => $parentId,
+                    'parent_id' => $level2Id,
                     'is_active' => true,
                 ]
             );
