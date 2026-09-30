@@ -100,6 +100,13 @@ class ImportProducts
                     }
 
                     $category = !empty($row['kategori_barang']) ? trim((string)$row['kategori_barang']) : (!empty($row['category']) ? trim((string)$row['category']) : null);
+
+                    $productType = 'physical';
+                    if ($category !== null && stripos($category, 'ONGKOS') !== false) {
+                        $productType = 'service';
+                        $category = 'Jasa/Service';
+                    }
+
                     $costPrice = $this->sanitizeNumber($row['harga_beli'] ?? $row['cost_price'] ?? 0);
                     $netto = $this->sanitizeNumber($row['netto'] ?? $row['hpp'] ?? 0);
                     $price = $this->sanitizeNumber($row['harga_jual'] ?? $row['harga_jual_cash'] ?? $row['price'] ?? 0);
@@ -122,6 +129,7 @@ class ImportProducts
                         $product = $variant->product;
                         $product->update([
                             'name' => $name,
+                            'type' => $productType,
                             'category' => $category ?: $product->category,
                             'unit_id' => $unitId ?: $product->unit_id,
                         ]);
@@ -177,7 +185,7 @@ class ImportProducts
                     } else {
                         $product = Product::create([
                             'name' => $name,
-                            'type' => 'physical',
+                            'type' => $productType,
                             'category' => $category,
                             'unit_id' => $unitId,
                             'inventory_account_id' => $inventoryAccId,
@@ -425,6 +433,12 @@ class ImportProducts
                         $category = trim((string)$row[$headerMap['category']]);
                     }
 
+                    $productType = 'physical';
+                    if ($category !== null && stripos($category, 'ONGKOS') !== false) {
+                        $productType = 'service';
+                        $category = 'Jasa/Service';
+                    }
+
                     // Extract Prices
                     $costPrice = isset($headerMap['cost_price']) ? $this->sanitizeNumber($row[$headerMap['cost_price']]) : 0;
                     $netto = isset($headerMap['netto']) ? $this->sanitizeNumber($row[$headerMap['netto']]) : 0;
@@ -455,6 +469,7 @@ class ImportProducts
                         $product = $variant->product;
                         $product->update([
                             'name' => $name,
+                            'type' => $productType,
                             'category' => $category ?: $product->category,
                             'unit_id' => $unitId ?: $product->unit_id,
                         ]);
@@ -513,7 +528,7 @@ class ImportProducts
                         // CREATE NEW PRODUCT & VARIANT
                         $product = Product::create([
                             'name' => $name,
-                            'type' => 'physical',
+                            'type' => $productType,
                             'category' => $category,
                             'unit_id' => $unitId,
                             'inventory_account_id' => $inventoryAccId,

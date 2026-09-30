@@ -95,8 +95,14 @@ class ImportCustomers
                 // Parse Loyalty Member & Points
                 $isLoyalty = false;
                 if (isset($row['is_loyalty_member'])) {
-                    $val = strtolower(trim((string) $row['is_loyalty_member']));
-                    $isLoyalty = in_array($val, ['1', 'true', 'yes', 'ya', 'y', 'member'], true);
+                    $rawVal = $row['is_loyalty_member'];
+                    if (is_bool($rawVal)) {
+                        $isLoyalty = $rawVal;
+                    } else {
+                        $val = strtolower(trim((string) $rawVal));
+                        $isLoyalty = in_array($val, ['1', '1.0', 'true', 'yes', 'ya', 'y', 'member'], true) 
+                            || (is_numeric($val) && (float)$val > 0);
+                    }
                 }
 
                 $loyaltyPoints = isset($row['loyalty_points']) ? max(0, (int) $row['loyalty_points']) : 0;
