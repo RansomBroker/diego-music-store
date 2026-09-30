@@ -71,7 +71,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <!-- 1. Branch Selector -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
@@ -84,10 +84,23 @@
                     </select>
                 </div>
 
-                <!-- 2. Inventory Account [DEBIT] -->
+                <!-- 2. HPP Column Source -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                        Kolom Perhitungan HPP
+                    </label>
+                    <select wire:model.live="hppColumn" class="w-full text-xs font-medium rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 shadow-xs">
+                        <option value="">(Otomatis: Netto / Harga Beli)</option>
+                        @foreach($detectedHeaders as $index => $col)
+                            <option value="{{ $col }}">Kolom: {{ $rawHeaders[$index] ?? $col }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- 3. Inventory Account [DEBIT] -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
-                        <span>Akun Persediaan [DEBIT]</span>
+                        <span>Akun Persediaan [D]</span>
                         <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Aset (+)</span>
                     </label>
                     <input type="text" 
@@ -96,10 +109,10 @@
                            class="w-full text-xs font-semibold rounded-lg border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 cursor-not-allowed shadow-xs" />
                 </div>
 
-                <!-- 3. Contra Account [KREDIT] -->
+                <!-- 4. Contra Account [KREDIT] -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
-                        <span>Akun Penyeimbang [KREDIT]</span>
+                        <span>Akun Penyeimbang [K]</span>
                         <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">Ekuitas / Modal</span>
                     </label>
                     <select wire:model.live="contraAccountId" class="w-full text-xs font-medium rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 shadow-xs">

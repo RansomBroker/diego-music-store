@@ -63,6 +63,7 @@ class SpreadsheetImporter extends Component
     public int $totalDebtValue = 0;
     public ?string $lastSupplierName = null;
     public ?string $generatedJournalNumber = null;
+    public ?string $hppColumn = null;
 
     public function mount(string $type = 'customer'): void
     {
@@ -136,6 +137,16 @@ class SpreadsheetImporter extends Component
         $this->totalRows = $info['total_rows'];
         $this->previewRows = $info['preview_rows'];
 
+        if ($this->type === 'product') {
+            if (in_array('netto', $this->detectedHeaders, true)) {
+                $this->hppColumn = 'netto';
+            } elseif (in_array('cost_price', $this->detectedHeaders, true)) {
+                $this->hppColumn = 'cost_price';
+            } else {
+                $this->hppColumn = null;
+            }
+        }
+
         $this->resetImportState();
     }
 
@@ -205,7 +216,7 @@ class SpreadsheetImporter extends Component
             $this->lastSupplierName = $result['last_supplier'] ?? $this->lastSupplierName;
         } elseif ($this->type === 'product') {
             $branchId = $this->branchId ?: (\App\Models\Branch::where('is_active', true)->first()?->id ?? 1);
-            $result = app(\App\Actions\Product\ImportProducts::class)->executeRows($rows, $branchId, auth()->id());
+            $result = app(\App\Actions\Product\ImportProducts::class)->executeRows($rows, $branchId, auth()->id(), $this->hppColumn);
             $this->totalStockValue += ($result['total_value'] ?? 0);
         } else {
             $result = ['imported' => 0, 'skipped' => 0, 'errors' => []];

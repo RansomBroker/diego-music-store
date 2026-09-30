@@ -46,7 +46,7 @@ class ImportProducts
      *
      * @throws Exception
      */
-    public function executeRows(array $rows, int $branchId, ?int $userId = null): array
+    public function executeRows(array $rows, int $branchId, ?int $userId = null, ?string $hppSource = null): array
     {
         $branch = Branch::find($branchId);
         if (!$branch) {
@@ -68,6 +68,7 @@ class ImportProducts
         DB::transaction(function () use (
             $rows,
             $branchId,
+            $hppSource,
             $defaultUnit,
             $inventoryAccId,
             $salesAccId,
@@ -115,7 +116,11 @@ class ImportProducts
                         $price = $this->sanitizeNumber($row['het']);
                     }
 
-                    $hpp = $netto > 0 ? $netto : $costPrice;
+                    if ($hppSource !== null && isset($row[$hppSource])) {
+                        $hpp = $this->sanitizeNumber($row[$hppSource]);
+                    } else {
+                        $hpp = $netto > 0 ? $netto : $costPrice;
+                    }
                     $discountValue = $this->sanitizeNumber($row['disc'] ?? $row['discount'] ?? 0);
 
                     $rawStock = (string)($row['jlh_stok'] ?? $row['stock'] ?? '0');
@@ -336,7 +341,7 @@ class ImportProducts
      * @throws Exception
      */
 
-    public function execute(string $filePath, int $branchId, ?int $userId = null): array
+    public function execute(string $filePath, int $branchId, ?int $userId = null, ?string $hppSource = null): array
     {
         if (!file_exists($filePath)) {
             throw new Exception("File import tidak ditemukan: {$filePath}");
@@ -400,6 +405,7 @@ class ImportProducts
             $dataRows,
             $headerMap,
             $branchId,
+            $hppSource,
             $defaultUnit,
             $inventoryAccId,
             $salesAccId,
@@ -450,7 +456,13 @@ class ImportProducts
                     }
 
                     // HPP logic: prioritize Netto, fallback to cost_price
-                    $hpp = $netto > 0 ? $netto : $costPrice;
+                    if ($hppSource !== null && isset($headerMap[$hppSource])) {
+                        $hpp = $this->sanitizeNumber($row[$headerMap[$hppSource]]);
+                    } elseif ($hppSource !== null && isset($row[$hppSource])) {
+                        $hpp = $this->sanitizeNumber($row[$hppSource]);
+                    } else {
+                        $hpp = $netto > 0 ? $netto : $costPrice;
+                    }
 
                     // Discount value
                     $discountValue = isset($headerMap['discount']) ? $this->sanitizeNumber($row[$headerMap['discount']]) : 0;
