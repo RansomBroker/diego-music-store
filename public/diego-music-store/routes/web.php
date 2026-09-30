@@ -108,3 +108,23 @@ Route::get('/admin/{path?}', function ($path = null) {
     $targetUrl = '/backoffice' . ($path ? '/' . $path : '') . ($queryString ? '?' . $queryString : '');
     return redirect($targetUrl);
 })->where('path', '.*');
+
+// DEV ONLY: Endpoint to run migrate:refresh --seed
+Route::get('/dev/migrate-refresh-seed', function () {
+    if (!app()->environment('local')) {
+        abort(403, 'Hanya bisa diakses di environment lokal (development).');
+    }
+
+    try {
+        set_time_limit(300); // 5 minutes
+        \Illuminate\Support\Facades\Artisan::call('migrate:refresh', [
+            '--seed' => true,
+            '--force' => true,
+        ]);
+        
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return response("<pre>Database Berhasil Di-Reset & Di-Seed!\n\n" . htmlspecialchars($output) . "</pre>");
+    } catch (\Exception $e) {
+        return response("<pre>Gagal melakukan migrate:refresh --seed!\n\n" . $e->getMessage() . "</pre>", 500);
+    }
+});
