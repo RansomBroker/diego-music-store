@@ -33,6 +33,7 @@
         :cart="$cart"
         :cartVariants="$this->cartVariants"
         :customerSearch="$customerSearch"
+        :customerLimit="$customerLimit"
         :customers="$this->customers"
         :selectedCustomerId="$selectedCustomerId"
         :selectedCustomerName="$selectedCustomerName"
@@ -131,10 +132,15 @@
                 @foreach ($this->heldTransactions as $held)
                     <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/50 dark:border-slate-700/60">
                         <div>
-                            <div class="font-bold text-sm text-slate-800 dark:text-slate-100">
-                                {{ $held->customer_name }}
+                            <div class="flex items-center gap-2">
+                                <div class="font-bold text-sm text-slate-800 dark:text-slate-100">
+                                    {{ $held->customer_name }}
+                                </div>
+                                <div class="font-black text-sm text-primary dark:text-blue-400 bg-primary/10 px-2 py-0.5 rounded-lg">
+                                    Rp {{ number_format($held->grand_total, 0, ',', '.') }}
+                                </div>
                             </div>
-                            <div class="text-[10px]  font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mt-0.5">
+                            <div class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mt-1">
                                 HLD-{{ strtoupper(substr($held->id, 0, 8)) }}
                             </div>
                             <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -143,7 +149,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <button type="button" wire:click="restoreHeldTransaction('{{ $held->id }}')" class="px-3 py-1.5 bg-primary hover:bg-primary-light text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer">
-                                Muat
+                                Lanjutkan
                             </button>
                             <button type="button" wire:click="deleteHeldTransaction('{{ $held->id }}')" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="Hapus">
                                 <i class="ph-bold ph-trash text-sm"></i>

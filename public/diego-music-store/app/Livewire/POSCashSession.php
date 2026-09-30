@@ -68,9 +68,8 @@ class POSCashSession extends Component
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         $this->selectedBranchId = $activeBranchId;
 
-        // Find if user has active (open) session for the selected branch
+        // Find if branch has active (open) session
         $this->activeSession = CashSession::with('user')
-            ->where('user_id', Auth::id())
             ->where('branch_id', $activeBranchId)
             ->where('status', 'open')
             ->first();
@@ -212,7 +211,7 @@ class POSCashSession extends Component
 
         try {
             // Check latest session
-            $latestSession = CashSession::where('user_id', $session->user_id)
+            $latestSession = CashSession::where('branch_id', $session->branch_id)
                 ->orderBy('id', 'desc')
                 ->first();
 
@@ -221,7 +220,7 @@ class POSCashSession extends Component
             }
 
             // Check if there is already an active session
-            $activeSession = CashSession::where('user_id', $session->user_id)
+            $activeSession = CashSession::where('branch_id', $session->branch_id)
                 ->where('status', 'open')
                 ->first();
 

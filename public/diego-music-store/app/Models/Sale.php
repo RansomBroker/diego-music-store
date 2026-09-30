@@ -133,7 +133,7 @@ class Sale extends Model
             return $remaining;
         }
 
-        if (str_contains(strtolower($this->payment_method), 'piutang') || str_contains(strtolower($this->payment_method), 'credit')) {
+        if (str_contains(strtolower($this->payment_method), 'piutang') && !str_contains(strtolower($this->payment_method), 'lunas')) {
             return floatval($this->grand_total);
         }
 

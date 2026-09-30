@@ -66,7 +66,7 @@
                     <i class="ph ph-tag text-slate-400 dark:text-slate-500 text-xs absolute left-2 pointer-events-none"></i>
                     <input 
                         type="number" 
-                        placeholder="{{ ($item['discount_type'] ?? 'fixed') === 'percent' ? '0 %' : 'Rp 0' }}" 
+                        placeholder="{{ ($item['discount_type'] ?? 'percent') === 'percent' ? '0 %' : 'Rp 0' }}" 
                         value="{{ ($item['discount_value'] ?? 0) > 0 ? $item['discount_value'] : '' }}"
                         onchange="@this.call('updateItemDiscountValue', {{ $id }}, this.value)"
                         class="w-full pl-7 pr-8 py-0 h-full bg-transparent border-none text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-0"
@@ -78,7 +78,7 @@
                         class="absolute right-0 top-0 bottom-0 px-2 bg-slate-100 dark:bg-slate-800 text-[10px] font-black border-l border-slate-200/50 dark:border-slate-700 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center select-none"
                         title="Klik untuk mengubah jenis diskon (Nominal / Persentase)"
                     >
-                        {{ ($item['discount_type'] ?? 'fixed') === 'percent' ? '%' : 'Rp' }}
+                        {{ ($item['discount_type'] ?? 'percent') === 'percent' ? '%' : 'Rp' }}
                     </button>
                 </div>
             </div>

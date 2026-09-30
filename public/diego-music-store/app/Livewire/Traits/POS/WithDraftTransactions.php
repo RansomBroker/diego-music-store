@@ -70,7 +70,7 @@ trait WithDraftTransactions
         $this->selectedPricingTierId = $held->pricing_tier_id;
         $this->usePoints = $held->use_points;
         $this->discountValue = $held->discount_value;
-        $this->discountType = $held->discount_type;
+        $this->discountType = $held->discount_type ?? 'percent';
 
         $this->currentDraftId = $held->id;
         $this->showHeldModal = false;

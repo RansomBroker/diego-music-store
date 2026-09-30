@@ -217,7 +217,8 @@ class POSTransactions extends Component
     public function processReturn(): void
     {
         // Check active cash session
-        $activeSession = \App\Models\CashSession::where('user_id', Auth::id())
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        $activeSession = \App\Models\CashSession::where('branch_id', $activeBranchId)
             ->where('status', 'open')
             ->first();
 

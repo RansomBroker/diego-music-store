@@ -138,7 +138,7 @@ class PosSupplierPayments extends Component
             ->where('customer_id', $value)
             ->where(function ($q) {
                 $q->where('payment_method', 'like', '%piutang%')
-                  ->orWhere('payment_method', 'like', '%credit%')
+                  
                   ->orWhere('status', '!=', 'completed');
             })
             ->get();
@@ -384,7 +384,7 @@ class PosSupplierPayments extends Component
         $salesPiutang = \App\Models\Sale::with(['customer', 'branch'])
             ->where(function ($q) {
                 $q->where('payment_method', 'like', '%piutang%')
-                  ->orWhere('payment_method', 'like', '%credit%')
+                  
                   ->orWhere('status', '!=', 'completed');
             })
             ->when($this->search, function ($q) {

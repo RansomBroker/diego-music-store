@@ -61,7 +61,7 @@ class Customer extends Model
         $unpaidSales = Sale::where('customer_id', $this->id)
             ->where(function ($q) {
                 $q->where('payment_method', 'like', '%piutang%')
-                  ->orWhere('payment_method', 'like', '%credit%')
+                  
                   ->orWhere('status', '!=', 'completed');
             })
             ->get();

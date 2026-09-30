@@ -41,8 +41,7 @@ class GetSalesEmployeeDashboardData
         // 1. Target Penjualan Bulanan & Skema Komisi Dinamis
         $branchId = $user?->branch_id ?: $employee?->branch_id;
         if (!$branchId && $userId) {
-            $branchId = \App\Models\CashSession::where('user_id', $userId)->where('status', 'open')->value('branch_id')
-                ?: \App\Models\Sale::where('sales_rep_id', $userId)->latest()->value('branch_id')
+            $branchId = \App\Models\Sale::where('sales_rep_id', $userId)->latest()->value('branch_id')
                 ?: \App\Models\Branch::first()?->id;
         }
 

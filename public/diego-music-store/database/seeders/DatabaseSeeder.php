@@ -50,6 +50,10 @@ class DatabaseSeeder extends Seeder
         $bankMandiri = \App\Helpers\AccountHelper::findByCode('111201002');
         $bankBri     = \App\Helpers\AccountHelper::findByCode('111201003');
         $bankBni     = \App\Helpers\AccountHelper::findByCode('111201004');
+        $bankDanamon = \App\Helpers\AccountHelper::findByCode('111201005');
+        
+        $tokopediaAcc= \App\Helpers\AccountHelper::findByCode('111202006');
+        $shopeeAcc   = \App\Helpers\AccountHelper::findByCode('111202007');
         $piutangAcc  = \App\Helpers\AccountHelper::findByCode('111301001');
         $voucherAcc  = \App\Helpers\AccountHelper::findByCode('411301001') ?? \App\Helpers\AccountHelper::findByCode('611101027');
         $complimentaryAcc= \App\Helpers\AccountHelper::findByCode('611101026');
@@ -72,6 +76,7 @@ class DatabaseSeeder extends Seeder
                     ['name' => 'BNI', 'code' => 'debit-bni', 'account_id' => $bankBni?->id],
                     ['name' => 'Mandiri', 'code' => 'debit-mandiri', 'account_id' => $bankMandiri?->id],
                     ['name' => 'BRI', 'code' => 'debit-bri', 'account_id' => $bankBri?->id],
+                    ['name' => 'Danamon', 'code' => 'debit-danamon', 'account_id' => $bankDanamon?->id],
                 ],
             ],
             [
@@ -121,14 +126,20 @@ class DatabaseSeeder extends Seeder
                 'children' => [
                     ['name' => 'Transfer BCA', 'code' => 'transfer-bca', 'account_id' => $bankBcaAcc?->id],
                     ['name' => 'Transfer Mandiri', 'code' => 'transfer-mandiri', 'account_id' => $bankMandiri?->id],
+                    ['name' => 'Transfer BNI', 'code' => 'transfer-bni', 'account_id' => $bankBni?->id],
+                    ['name' => 'Transfer BRI', 'code' => 'transfer-bri', 'account_id' => $bankBri?->id],
+                    ['name' => 'Transfer Danamon', 'code' => 'transfer-danamon', 'account_id' => $bankDanamon?->id],
                 ],
             ],
             [
-                'name' => 'Other Payment',
-                'code' => 'other_payment',
-                'account_id' => $cashAcc?->id,
+                'name' => 'Marketplace',
+                'code' => 'marketplace',
+                'account_id' => $tokopediaAcc?->id ?? $shopeeAcc?->id,
                 'parent_id' => null,
-                'children' => [],
+                'children' => [
+                    ['name' => 'Tokopedia', 'code' => 'marketplace-tokopedia', 'account_id' => $tokopediaAcc?->id],
+                    ['name' => 'Shopee', 'code' => 'marketplace-shopee', 'account_id' => $shopeeAcc?->id],
+                ],
             ],
         ];
 

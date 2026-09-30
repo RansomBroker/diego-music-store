@@ -94,11 +94,11 @@ class UpdatePOSSale
 
             $grandTotal = $subtotal - $discountAmount + $taxAmount;
 
-            $isPiutang = str_contains(strtolower($paymentMethod), 'piutang') || str_contains(strtolower($paymentMethod), 'credit');
+            $isPiutang = str_contains(strtolower($paymentMethod), 'piutang') || strtolower($paymentMethod) === 'credit';
             $creditAmount = 0;
             if (!empty($data['payments'])) {
                 foreach ($data['payments'] as $pay) {
-                    if (str_contains(strtolower($pay['method']), 'credit') || str_contains(strtolower($pay['method']), 'piutang')) {
+                    if (strtolower($pay['method']) === 'credit' || str_contains(strtolower($pay['method']), 'piutang')) {
                         $creditAmount += floatval($pay['amount']);
                     }
                 }

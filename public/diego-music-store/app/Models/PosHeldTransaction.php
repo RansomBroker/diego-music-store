@@ -47,4 +47,17 @@ class PosHeldTransaction extends Model
     {
         return $this->belongsTo(Branch::class);
     }
+
+    public function getGrandTotalAttribute()
+    {
+        $subtotal = collect($this->cart_data)->sum(function ($item) {
+            $price = $item['price'] ?? 0;
+            $qty = $item['qty'] ?? 1;
+            $discount = $item['discount_amount'] ?? 0;
+            $tax = $item['tax_amount'] ?? 0;
+            return ($price * $qty) - $discount + $tax;
+        });
+
+        return max(0, $subtotal - ($this->discount_amount ?? 0));
+    }
 }

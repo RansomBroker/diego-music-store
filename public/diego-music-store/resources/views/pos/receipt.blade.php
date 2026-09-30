@@ -119,9 +119,11 @@
 
     <!-- Items Section -->
     <div class="bold" style="margin-bottom: 5px;">Rincian Belanja:</div>
+    @php $totalItemsQty = 0; @endphp
     @foreach ($sale->items as $item)
+        @php $totalItemsQty += $item->quantity; @endphp
         <div class="item-row">
-            <div>{{ $item->variant->product->name }} {{ $item->variant->name ? '('.$item->variant->name.')' : '' }}</div>
+            <div>[{{ $item->variant->sku ?? '-' }}] {{ $item->variant->product->name }} {{ $item->variant->name ? '('.$item->variant->name.')' : '' }}</div>
             <div class="grid">
                 <span>  {{ $item->quantity }} x Rp {{ number_format($item->unit_price, 0, ',', '.') }}</span>
                 <span>Rp {{ number_format($item->total_price, 0, ',', '.') }}</span>
@@ -158,6 +160,11 @@
         <span>Total Akhir:</span>
         <span>Rp {{ number_format($sale->grand_total, 0, ',', '.') }}</span>
     </div>
+    <div class="divider"></div>
+    <div class="grid">
+        <span>Total Qty Barang:</span>
+        <span class="bold">{{ $totalItemsQty }} Item</span>
+    </div>
 
     <div class="divider"></div>
     <div class="bold" style="margin-bottom: 4px;">Metode & Rincian Bayar:</div>
@@ -179,19 +186,25 @@
 
     @if (!empty($journalPayments))
         @foreach ($journalPayments as $jp)
+            @php
+                $paymentName = $jp['name'];
+                if (strtolower($paymentName) === 'kas') {
+                    $paymentName = 'Cash';
+                }
+            @endphp
             <div class="grid">
-                <span>{{ $jp['name'] }}:</span>
+                <span>{{ $paymentName }}:</span>
                 <span>Rp {{ number_format($jp['amount'], 0, ',', '.') }}</span>
             </div>
         @endforeach
     @else
         <div class="grid">
             <span>Pembayaran:</span>
-            <span class="bold">{{ strtoupper($sale->payment_method) }}</span>
+            <span class="bold">{{ strtoupper($sale->payment_method) === 'KAS' ? 'CASH' : strtoupper($sale->payment_method) }}</span>
         </div>
     @endif
 
-    @if ($sale->status === 'pending' || ((str_contains(strtolower($sale->payment_method), 'piutang') || str_contains(strtolower($sale->payment_method), 'credit')) && !str_contains(strtolower($sale->payment_method), 'lunas')))
+    @if ($sale->status === 'pending' || (str_contains(strtolower($sale->payment_method), 'piutang') && !str_contains(strtolower($sale->payment_method), 'lunas')))
         <div class="grid bold" style="margin-top: 4px; color: #b45309;">
             <span>Status Transaksi:</span>
             <span>BELUM LUNAS (PIUTANG)</span>
@@ -227,8 +240,7 @@
     @endif
 
     <div class="footer">
-        {!! nl2br(e($setting?->footer_text ?: "Terima Kasih atas Kunjungan Anda\nBarang yang sudah dibeli tidak dapat ditukar/dikembalikan.")) !!}<br><br>
-        Diego Music Store ERP
+        {!! nl2br(e($setting?->footer_text ?: "Terima Kasih atas Kunjungan Anda")) !!}<br><br>
     </div>
 
 

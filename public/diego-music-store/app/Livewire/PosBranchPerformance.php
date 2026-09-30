@@ -107,7 +107,7 @@ class PosBranchPerformance extends Component
         $arSales = Sale::where('status', 'completed')
             ->where(function($q) {
                 $q->where('payment_method', 'like', '%piutang%')
-                  ->orWhere('payment_method', 'like', '%credit%')
+                  
                   ->orWhere('payment_method', 'like', '%kredit%');
             })
             ->when($targetBranchId, fn($q) => $q->where('branch_id', $targetBranchId))
@@ -154,7 +154,7 @@ class PosBranchPerformance extends Component
                 ->where('branch_id', $b->id)
                 ->where(function($q) {
                     $q->where('payment_method', 'like', '%piutang%')
-                      ->orWhere('payment_method', 'like', '%credit%')
+                      
                       ->orWhere('payment_method', 'like', '%kredit%');
                 })
                 ->get();

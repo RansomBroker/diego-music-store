@@ -148,7 +148,7 @@ class PosCustomerPayments extends Component
             ->where('customer_id', $value)
             ->where(function ($q) {
                 $q->where('payment_method', 'like', '%piutang%')
-                  ->orWhere('payment_method', 'like', '%credit%')
+                  
                   ->orWhere('status', '!=', 'completed');
             })
             ->get();

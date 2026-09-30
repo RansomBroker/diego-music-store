@@ -58,7 +58,7 @@
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                 Selesai
                             </span>
-                        @elseif ($sale->status === 'pending' || ((str_contains(strtolower($sale->payment_method), 'piutang') || str_contains(strtolower($sale->payment_method), 'credit')) && !str_contains(strtolower($sale->payment_method), 'lunas')))
+                        @elseif ($sale->status === 'pending' || (str_contains(strtolower($sale->payment_method), 'piutang') && !str_contains(strtolower($sale->payment_method), 'lunas')))
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-800/40 rounded-full text-xs font-bold text-amber-700 dark:text-amber-400">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                 Belum Selesai (Piutang)
@@ -112,7 +112,7 @@
                                 wire:click="printReceipt({{ $sale->id }})"
                                 title="Cetak Struk"
                             />
-                            @if ((str_contains(strtolower($sale->payment_method), 'piutang') || str_contains(strtolower($sale->payment_method), 'credit')) && !str_contains(strtolower($sale->payment_method), 'lunas'))
+                            @if ($sale->status === 'pending' || (str_contains(strtolower($sale->payment_method), 'piutang') && !str_contains(strtolower($sale->payment_method), 'lunas')))
                                 <x-pos.utility.button
                                     type="button"
                                     variant="success"

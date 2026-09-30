@@ -21,22 +21,22 @@ class ReopenCashSession
             throw new InvalidArgumentException('Hanya sesi tutup (closed) yang dapat dibuka kembali.');
         }
 
-        // Safeguard: Check if this is the most recently created session for this user
-        $latestSession = CashSession::where('user_id', $session->user_id)
+        // Safeguard: Check if this is the most recently created session for this branch
+        $latestSession = CashSession::where('branch_id', $session->branch_id)
             ->orderBy('id', 'desc')
             ->first();
 
         if ($latestSession && $latestSession->id !== $session->id) {
-            throw new InvalidArgumentException('Hanya sesi kasir terakhir yang dapat dibuka kembali.');
+            throw new InvalidArgumentException('Hanya sesi kasir terakhir di cabang ini yang dapat dibuka kembali.');
         }
 
-        // Safeguard: Check if there is already another active open session for this user
-        $activeSession = CashSession::where('user_id', $session->user_id)
+        // Safeguard: Check if there is already another active open session for this branch
+        $activeSession = CashSession::where('branch_id', $session->branch_id)
             ->where('status', 'open')
             ->first();
 
         if ($activeSession) {
-            throw new InvalidArgumentException('Anda sudah memiliki sesi kasir lain yang sedang aktif.');
+            throw new InvalidArgumentException('Cabang ini sudah memiliki sesi kasir lain yang sedang aktif.');
         }
 
         return DB::transaction(function () use ($session) {

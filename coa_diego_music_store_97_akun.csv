@@ -1,4 +1,4 @@
-﻿no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
+no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
 1,111101001,KAS,asset,cash,debit
 2,111101002,KAS Kecil,asset,cash,debit
 3,111201001,BANK BCA,asset,bank,debit
@@ -7,10 +7,8 @@
 6,111201004,BANK BNI,asset,bank,debit
 7,111201005,BANK Danamon,asset,bank,debit
 8,111201006,Uang Muka Pembelian,asset,purchase_advance,debit
-9,111202005,Kredit Plus,asset,current_other,debit
 10,111202006,Tokopedia,asset,settlement,debit
 11,111202007,Shopee,asset,settlement,debit
-12,111202008,Panel,asset,current_other,debit
 13,111301001,PIUTANG DAGANG,asset,receivable,debit
 14,111301002,PIUTANG KARYAWAN,asset,receivable_employee,debit
 15,111401001,PERSEDIAAN BARANG DAGANG,asset,inventory,debit

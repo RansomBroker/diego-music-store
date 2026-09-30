@@ -110,21 +110,42 @@ trait WithPaymentHandling
             if ($code === 'credit') $this->amountCredit = $parsed;
 
             $this->distributePaymentAmounts();
+            $this->autoBalancePayment($code, $parsed);
         }
 
         if ($property === 'amountCash') {
             $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
             $this->paymentAmounts['cash'] = $parsed;
             $this->distributePaymentAmounts();
+            $this->autoBalancePayment('cash', $parsed);
         }
         if ($property === 'amountDebit') {
             $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
             $this->paymentAmounts['debit'] = $parsed;
             $this->distributePaymentAmounts();
+            $this->autoBalancePayment('debit', $parsed);
         }
         if ($property === 'amountCredit') {
             $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
             $this->paymentAmounts['credit'] = $parsed;
+            $this->distributePaymentAmounts();
+            $this->autoBalancePayment('credit', $parsed);
+        }
+    }
+
+    protected function autoBalancePayment($changedMethod, $parsedValue)
+    {
+        if (count($this->selectedPaymentMethods) === 2) {
+            $otherMethods = array_values(array_filter($this->selectedPaymentMethods, fn($m) => $m !== $changedMethod));
+            $otherMethod = $otherMethods[0];
+            
+            $remaining = max(0, $this->grandTotal - $parsedValue);
+            
+            $this->paymentAmounts[$otherMethod] = $remaining;
+            if ($otherMethod === 'cash') $this->amountCash = $remaining;
+            if ($otherMethod === 'debit') $this->amountDebit = $remaining;
+            if ($otherMethod === 'credit') $this->amountCredit = $remaining;
+            
             $this->distributePaymentAmounts();
         }
     }
@@ -170,7 +191,7 @@ trait WithPaymentHandling
         }
 
         try {
-            $activeSession = CashSession::where('user_id', Auth::id())
+            $activeSession = CashSession::where('branch_id', $this->selectedBranchId)
                 ->where('status', 'open')
                 ->first();
 

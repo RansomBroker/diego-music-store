@@ -32,6 +32,7 @@ class POS extends Component
     
     // Customer search & selection
     public $customerSearch = '';
+    public $customerLimit = 20;
     public $selectedCustomerId = null;
     public $selectedCustomerName = 'Umum / Walk-in';
     public $customerPhone = '';
@@ -66,7 +67,7 @@ class POS extends Component
     public $notes = '';
     public $paymentMethod = 'cash';
     public $discountValue = 0;
-    public $discountType = 'fixed';
+    public $discountType = 'percent';
     public $enableTax = false;
     public $taxPercent = 11;
     public $amountPaid = 0;
@@ -109,9 +110,9 @@ class POS extends Component
 
     public function mount()
     {
-        // Enforce active cashier session check
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         $activeSession = \App\Models\CashSession::with('user')
-            ->where('user_id', Auth::id())
+            ->where('branch_id', $activeBranchId)
             ->where('status', 'open')
             ->first();
 
@@ -214,7 +215,7 @@ class POS extends Component
                             'emoji' => $v->product->isService() ? '🛠️' : ($v->product->isBundle() ? '📦' : '🎸'),
                             'notes' => $item->notes ?? '',
                             'discount_value' => $item->discount_amount / max(1, $item->quantity),
-                            'discount_type' => 'fixed',
+                            'discount_type' => 'percent',
                             'discount_amount' => $item->discount_amount,
                             'pricing_tier_id' => $this->selectedPricingTierId,
                         ];
@@ -242,7 +243,7 @@ class POS extends Component
     public function updatedSelectedBranchId($value)
     {
         // Enforce active session branch lock
-        $activeSession = \App\Models\CashSession::where('user_id', Auth::id())
+        $activeSession = \App\Models\CashSession::where('branch_id', $this->selectedBranchId)
             ->where('status', 'open')
             ->first();
 
@@ -377,17 +378,22 @@ class POS extends Component
         $this->productPage = 1;
     }
 
+    public function loadMoreCustomers(): void
+    {
+        $this->customerLimit += 20;
+    }
+
     // Get matching customers for live search dropdown
     public function getCustomersProperty()
     {
         if (empty($this->customerSearch)) {
-            return Customer::orderBy('name')->limit(5)->get();
+            return Customer::orderBy('name')->limit($this->customerLimit)->get();
         }
 
         $search = '%' . $this->customerSearch . '%';
         return Customer::where('name', 'like', $search)
             ->orWhere('phone', 'like', $search)
-            ->limit(5)
+            ->limit($this->customerLimit)
             ->get();
     }
 

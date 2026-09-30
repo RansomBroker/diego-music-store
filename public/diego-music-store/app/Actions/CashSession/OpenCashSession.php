@@ -29,14 +29,15 @@ class OpenCashSession
             throw new InvalidArgumentException('Cabang wajib ditentukan untuk membuka sesi.');
         }
 
-        // Check if there is already an active (open) session for this user at this branch
-        $activeSession = CashSession::where('user_id', $userId)
+        // Check if there is already an active (open) session at this branch (by ANY user)
+        $activeSession = CashSession::with('user')
             ->where('branch_id', $branchId)
             ->where('status', 'open')
             ->first();
 
         if ($activeSession) {
-            throw new InvalidArgumentException('Anda sudah memiliki sesi kasir aktif di cabang ini.');
+            $ownerName = $activeSession->user->name ?? 'Karyawan lain';
+            throw new InvalidArgumentException("Sesi kasir di cabang ini sedang dibuka oleh {$ownerName}. Harap tutup sesi tersebut terlebih dahulu.");
         }
 
         $session = CashSession::create([

@@ -6,10 +6,10 @@
     <title>
         @if($format === 'penawaran')
             Penawaran Harga #{{ $draft->invoice_number }}
-        @elseif($format === 'tagihan')
-            Draft Tagihan #{{ $draft->invoice_number }}
-        @else
+        @elseif($format === 'large')
             Large Bill #{{ $draft->invoice_number }}
+        @else
+            Invoice #{{ $draft->invoice_number }}
         @endif
     </title>
     <style>
@@ -37,7 +37,7 @@
             .item-row { margin-bottom: 6px; }
             .footer { margin-top: 25px; text-align: center; font-size: 10px; }
             .draft-banner { background-color: #000; color: #fff; text-align: center; font-weight: bold; padding: 4px; margin-bottom: 10px; font-size: 13px; }
-        @elseif ($format === 'large')
+        @elseif ($format === 'invoice')
             /* Simple Landscape styling for dot-matrix */
             body {
                 font-family: 'Courier New', Courier, monospace;
@@ -217,7 +217,7 @@
             }
         @endif
         @media print {
-            @if ($format === 'large')
+            @if ($format === 'invoice')
                 @page { size: landscape; margin: 10mm; }
             @endif
             body {
@@ -277,9 +277,11 @@
         <div class="divider"></div>
 
         <div class="bold" style="margin-bottom: 5px;">Rincian Belanja:</div>
+        @php $totalItemsQtyBill = 0; @endphp
         @foreach ($draft->items as $item)
+            @php $totalItemsQtyBill += $item->quantity; @endphp
             <div class="item-row">
-                <div>{{ $item->variant->product->name }} {{ $item->variant->name ? '('.$item->variant->name.')' : '' }}</div>
+                <div>[{{ $item->variant->sku ?? '-' }}] {{ $item->variant->product->name }} {{ $item->variant->name ? '('.$item->variant->name.')' : '' }}</div>
                 <div class="grid">
                     <span>  {{ $item->quantity }} x Rp {{ number_format($item->unit_price, 0, ',', '.') }}</span>
                     <span>Rp {{ number_format($item->total_price, 0, ',', '.') }}</span>
@@ -316,6 +318,11 @@
             <span>Total Akhir:</span>
             <span>Rp {{ number_format($draft->grand_total, 0, ',', '.') }}</span>
         </div>
+        <div class="divider"></div>
+        <div class="grid">
+            <span>Total Qty Barang:</span>
+            <span class="bold">{{ $totalItemsQtyBill }} Item</span>
+        </div>
 
         <div class="divider"></div>
         <div class="grid text-center bold" style="justify-content: center; font-size: 11px; border: 1px solid #000; padding: 4px;">
@@ -324,14 +331,16 @@
 
         <div class="footer">
             Harap simpan lembar tagihan ini untuk kasir.<br><br>
-            Diego Music Store ERP
         </div>
-    @elseif ($format === 'large')
+    @elseif ($format === 'invoice')
         <div class="large-container">
             <div class="large-header">
                 <div class="bold" style="font-size:20px;">{{ $draft->branch->store_name ?: 'Diego Music Store' }}</div>
                 <div>{{ $draft->branch->name }} | Telp: {{ $draft->branch->phone }}</div>
-                <h2 style="margin: 10px 0 0 0; text-transform: uppercase;">Large Bill</h2>
+                <h2 style="margin: 10px 0 0 0; text-transform: uppercase;">INVOICE</h2>
+                <div style="display: inline-block; padding: 4px 12px; border: 2px solid #000; font-weight: bold; font-size: 18px; margin-top: 10px; border-radius: 4px;">
+                    LUNAS / PAID
+                </div>
             </div>
             
             <div class="large-info">
@@ -349,6 +358,7 @@
                 <thead>
                     <tr>
                         <th style="width: 40px;" class="text-center">No.</th>
+                        <th style="width: 120px;">Kode Item</th>
                         <th>Deskripsi Produk</th>
                         <th style="width: 60px;" class="text-center">Qty</th>
                         <th style="width: 120px;" class="text-right">Harga Satuan</th>
@@ -357,9 +367,12 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php $totalItemsQtyInvoice = 0; @endphp
                     @foreach ($draft->items as $idx => $item)
+                        @php $totalItemsQtyInvoice += $item->quantity; @endphp
                         <tr>
                             <td class="text-center">{{ $idx + 1 }}</td>
+                            <td>{{ $item->variant->sku ?? '-' }}</td>
                             <td>
                                 {{ $item->variant->product->name }}
                                 @if ($item->variant->name)
@@ -381,7 +394,10 @@
                 </tbody>
             </table>
 
-            <div style="display: flex; justify-content: flex-end;">
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <div style="margin-bottom: 5px; font-weight: bold;">Total Qty Barang: {{ $totalItemsQtyInvoice }} Item</div>
+                </div>
                 <table style="width: 350px; border-collapse: collapse;">
                     <tr>
                         <td style="padding: 4px;">Subtotal</td>
@@ -404,6 +420,17 @@
                         <td class="text-right bold" style="padding: 4px; font-size: 16px;">Rp {{ number_format($draft->grand_total, 0, ',', '.') }}</td>
                     </tr>
                 </table>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 50px; padding: 0 50px;">
+                <div class="text-center">
+                    <div style="margin-bottom: 70px;">Penerima</div>
+                    <div style="border-bottom: 1px solid #000; width: 150px;"></div>
+                </div>
+                <div class="text-center">
+                    <div style="margin-bottom: 70px;">Hormat Kami</div>
+                    <div style="border-bottom: 1px solid #000; width: 150px;"></div>
+                </div>
             </div>
 
             <div class="text-center" style="margin-top: 30px; font-size: 12px; border-top: 1px dashed #000; padding-top: 10px;">
@@ -461,6 +488,7 @@
                 <thead>
                     <tr>
                         <th style="width: 40px; text-align: center;">No.</th>
+                        <th style="width: 120px;">Kode Item</th>
                         <th>Deskripsi Produk</th>
                         <th style="width: 80px; text-align: center;">Jumlah</th>
                         <th style="width: 120px; text-align: right;">Harga Satuan</th>
@@ -469,9 +497,12 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php $totalItemsQtyModern = 0; @endphp
                     @foreach ($draft->items as $idx => $item)
+                        @php $totalItemsQtyModern += $item->quantity; @endphp
                         <tr>
                             <td style="text-align: center;">{{ $idx + 1 }}</td>
+                            <td>{{ $item->variant->sku ?? '-' }}</td>
                             <td>
                                 <div class="item-name">{{ $item->variant->product->name }}</div>
                                 @if ($item->variant->name)
@@ -493,7 +524,11 @@
                 </tbody>
             </table>
 
-            <div class="summary-container">
+            <div class="summary-container" style="justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <div style="font-weight: 600; color: #475569; margin-bottom: 8px;">Total Qty Barang:</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #1e293b;">{{ $totalItemsQtyModern }} Item</div>
+                </div>
                 <table class="summary-table">
                     <tbody>
                         <tr>

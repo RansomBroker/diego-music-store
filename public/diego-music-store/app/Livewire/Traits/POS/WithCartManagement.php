@@ -55,7 +55,7 @@ trait WithCartManagement
                 'emoji' => $variant->product->isService() ? '🛠️' : ($variant->product->isBundle() ? '📦' : '🎸'),
                 'notes' => '',
                 'discount_value' => $variant->discount_value ?? 0,
-                'discount_type' => $variant->discount_type ?? 'fixed',
+                'discount_type' => (!empty($variant->discount_value) && $variant->discount_value > 0) ? ($variant->discount_type ?? 'percent') : 'percent',
                 'discount_amount' => 0,
                 'tax_value' => $variant->tax_value ?? 0,
                 'tax_type' => $variant->tax_type ?? 'percent',
@@ -132,8 +132,8 @@ trait WithCartManagement
     public function toggleItemDiscountType($variantId)
     {
         if (isset($this->cart[$variantId])) {
-            $currentType = $this->cart[$variantId]['discount_type'] ?? 'fixed';
-            $this->cart[$variantId]['discount_type'] = $currentType === 'fixed' ? 'percent' : 'fixed';
+            $currentType = $this->cart[$variantId]['discount_type'] ?? 'percent';
+            $this->cart[$variantId]['discount_type'] = $currentType === 'percent' ? 'fixed' : 'percent';
             $this->recalculateItemDiscountAmount($variantId);
             $this->recalculateItemTaxAmount($variantId);
         }
@@ -161,7 +161,7 @@ trait WithCartManagement
         if (isset($this->cart[$variantId])) {
             $item = &$this->cart[$variantId];
             $value = intval($item['discount_value'] ?? 0);
-            $type = $item['discount_type'] ?? 'fixed';
+            $type = $item['discount_type'] ?? 'percent';
             $price = intval($item['price'] ?? 0);
             $qty = intval($item['qty'] ?? 1);
 

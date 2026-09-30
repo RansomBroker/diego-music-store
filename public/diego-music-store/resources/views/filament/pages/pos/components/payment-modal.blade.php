@@ -13,7 +13,7 @@
     'amountDebit' => 0,
     'amountCredit' => 0,
     'debitRef' => '',
-    'discountType' => 'fixed',
+    'discountType' => 'percent',
     'discountValue' => 0,
     'paymentAmounts' => [],
     'paymentRefs' => [],

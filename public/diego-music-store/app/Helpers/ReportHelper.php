@@ -128,8 +128,7 @@ class ReportHelper
         // Query sales with credit or piutang payment method
         $query = Sale::with(['customer', 'branch'])
             ->where(function ($q) {
-                $q->where('payment_method', 'like', '%credit%')
-                  ->orWhere('payment_method', 'like', '%piutang%')
+                $q->where('payment_method', 'like', '%piutang%')
                   ->orWhere('status', '!=', 'completed');
             });
 

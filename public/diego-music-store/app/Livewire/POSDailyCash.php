@@ -68,7 +68,7 @@ class POSDailyCash extends Component
 
     protected function checkActiveSession()
     {
-        $this->activeSession = CashSession::where('user_id', Auth::id())
+        $this->activeSession = CashSession::where('branch_id', $this->selectedBranchId)
             ->where('status', 'open')
             ->first();
 

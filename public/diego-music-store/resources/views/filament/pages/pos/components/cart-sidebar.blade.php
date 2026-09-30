@@ -1,6 +1,7 @@
 @props([
     'cart',
     'customerSearch',
+    'customerLimit' => 20,
     'customers',
     'selectedCustomerId',
     'selectedCustomerName',
@@ -8,7 +9,7 @@
     'subtotal',
     'discountAmount',
     'discountValue' => 0,
-    'discountType' => 'fixed',
+    'discountType' => 'percent',
     'taxAmount',
     'grandTotal',
     'pricingTiers' => [],
@@ -172,16 +173,16 @@
                         Penawaran
                     </x-pos.utility.button>
 
-                    <!-- Print Tagihan -->
+                    <!-- Print Invoice -->
                     <x-pos.utility.button 
-                        wire:click="printDraft('tagihan')" 
-                        variant="info" 
+                        wire:click="printDraft('invoice')" 
+                        variant="success" 
                         size="sm" 
                         icon="ph-bold ph-file-arrow-up" 
-                        title="Cetak Tagihan / Draft Invoice" 
+                        title="Cetak Invoice" 
                         :disabled="empty($cart)"
                     >
-                        Tagihan
+                        Invoice
                     </x-pos.utility.button>
 
                     <!-- Print Struk Terakhir -->
@@ -267,7 +268,8 @@
                         />
                         
                         <!-- Customer Search Results Dropdown -->
-                        <div x-show="isOpen" x-cloak class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-20 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
+                        <div x-show="isOpen" x-cloak class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-20 overflow-hidden flex flex-col">
+                            <div class="max-h-60 overflow-y-auto no-scrollbar">
                             @if (count($customers) > 0)
                                 @foreach ($customers as $c)
                                     <button wire:click="selectCustomer({{ $c->id }}, '{{ $c->name }}', {{ $c->is_loyalty_member ? 'true' : 'false' }})" @click="isOpen = false" class="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 flex items-center justify-between">
@@ -280,7 +282,13 @@
                             @else
                                 <div class="px-4 py-3 text-sm text-slate-550 dark:text-slate-400">Tidak ada pelanggan ditemukan</div>
                             @endif
-                            <button type="button" wire:click="openCreateCustomerModal" @click="isOpen = false" class="w-full px-4 py-3 text-left text-xs bg-slate-50 dark:bg-slate-900/60 text-primary dark:text-blue-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-2 border-t border-slate-100 dark:border-slate-700">
+                            @if (count($customers) >= $customerLimit)
+                                <div x-intersect="$wire.loadMoreCustomers()" class="py-3 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-800 animate-pulse">
+                                    Memuat lebih banyak...
+                                </div>
+                            @endif
+                            </div>
+                            <button type="button" wire:click="openCreateCustomerModal" @click="isOpen = false" class="w-full px-4 py-3 text-left text-xs bg-slate-50 dark:bg-slate-900/60 text-primary dark:text-blue-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-2 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
                                 <i class="ph-bold ph-plus-circle text-sm"></i>
                                 <span>{{ $customerSearch ? 'Daftarkan "' . $customerSearch . '" sebagai Pelanggan Baru' : 'Daftarkan Pelanggan Baru' }}</span>
                             </button>
@@ -465,7 +473,7 @@
                                 <div class="flex items-center justify-end gap-1">
                                     <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20">
                                         <input type="number" placeholder="0" value="{{ ($item['discount_value'] ?? 0) > 0 ? $item['discount_value'] : '' }}" onchange="@this.call('updateItemDiscountValue', {{ $id }}, this.value)" class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" min="0">
-                                        <button type="button" wire:click="toggleItemDiscountType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-1.5 bg-slate-150 dark:bg-slate-800 text-[9px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['discount_type'] ?? 'fixed') === 'percent' ? '%' : 'Rp' }}</button>
+                                        <button type="button" wire:click="toggleItemDiscountType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-1.5 bg-slate-150 dark:bg-slate-800 text-[9px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['discount_type'] ?? 'percent') === 'percent' ? '%' : 'Rp' }}</button>
                                     </div>
                                 </div>
                             </td>
@@ -579,9 +587,9 @@
                 </div>
 
                 <!-- Total Tagihan -->
-                <div class="pt-2 border-t border-slate-300 dark:border-slate-700 flex flex-col justify-end mt-1">
+                <div class="pt-2 border-t border-slate-300 dark:border-slate-700 flex flex-col items-end mt-1">
                     <span class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none">Total Tagihan</span>
-                    <span class="text-2xl sm:text-3xl font-black text-primary dark:text-blue-400 leading-tight mt-0.5">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
+                    <span class="text-2xl sm:text-3xl font-black text-primary dark:text-blue-400 leading-tight mt-0.5 text-right">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
                 </div>
             </div>
 
