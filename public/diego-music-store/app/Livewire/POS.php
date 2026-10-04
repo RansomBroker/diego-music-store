@@ -91,14 +91,12 @@ class POS extends Component
     public bool $voucherIsValid = false;
 
     // Available branches and current branch
-    public $branches = [];
     public $selectedBranchId = null;
     public $selectedBranchName = '';
     public $selectedStoreName = '';
     public $selectedLogoUrl = '';
 
     // Pricing Tier selection
-    public $pricingTiers = [];
     public $selectedPricingTierId = null;
 
     // Sales Rep and Invoice Date
@@ -133,12 +131,10 @@ class POS extends Component
             'opened_by'    => $activeSession->user?->name ?? (Auth::user()?->name ?? 'Kasir'),
         ];
 
-        $this->branches = Branch::where('is_active', true)->get();
         // Lock selected branch to the active session's branch
         $this->selectedBranchId = $activeSession->branch_id;
 
         // Initialize pricing tiers
-        $this->pricingTiers = \App\Models\PricingTier::all();
         $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
             ->orWhere('name', 'like', '%umum%')
             ->first() ?? \App\Models\PricingTier::first();
@@ -335,6 +331,7 @@ class POS extends Component
                 'product:id,name,type,category,is_active',
                 'branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
                 'tierPrices' => fn($q) => $q->select('id', 'product_variant_id', 'pricing_tier_id', 'price'),
+                'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
             ])
             ->where('product_variants.is_active', true)
             ->where('products.is_active', true);
@@ -439,6 +436,16 @@ class POS extends Component
         return cache()->remember('pos_sale_categories', 600, fn() => \App\Models\SaleCategory::all());
     }
 
+    public function getBranchesProperty()
+    {
+        return cache()->remember('pos_branches', 86400, fn() => Branch::where('is_active', true)->get());
+    }
+
+    public function getPricingTiersProperty()
+    {
+        return cache()->remember('pos_pricing_tiers', 86400, fn() => \App\Models\PricingTier::all());
+    }
+
     // Get total sales of the active cash session
     public function getTodaySalesTotalProperty()
     {
@@ -517,6 +524,7 @@ class POS extends Component
                 'product:id,name,type',
                 'tierPrices:id,product_variant_id,pricing_tier_id,price',
                 'branchStocks:id,product_variant_id,branch_id,stock',
+                'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
             ])
             ->whereIn('id', array_keys($this->cart))
             ->get()

@@ -26,7 +26,7 @@
     class="flex flex-col h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200 relative"
 >
     <!-- Header -->
-    <x-pos-page::header :branches="$branches" :selectedBranchId="$selectedBranchId" :selectedStoreName="$selectedStoreName" :selectedBranchName="$selectedBranchName" :activeSessionInfo="$activeSessionInfo" :todaySalesTotal="$this->todaySalesTotal" />
+    <x-pos-page::header :branches="$this->branches" :selectedBranchId="$selectedBranchId" :selectedStoreName="$selectedStoreName" :selectedBranchName="$selectedBranchName" :activeSessionInfo="$activeSessionInfo" :todaySalesTotal="$this->todaySalesTotal" />
 
     <!-- Full-Screen Transaction Area -->
     <x-pos-page::cart-sidebar 
@@ -44,7 +44,7 @@
         :discountType="$discountType"
         :taxAmount="$this->taxAmount"
         :grandTotal="$this->grandTotal"
-        :pricingTiers="$pricingTiers"
+        :pricingTiers="$this->pricingTiers"
         :selectedPricingTierId="$selectedPricingTierId"
         :enableTax="$enableTax"
         :taxPercent="$taxPercent"
@@ -65,19 +65,21 @@
 
     <!-- Product Search Modal -->
     @if ($showProductSearchModal)
-        <x-pos-page::product-search-modal 
-            :show="$showProductSearchModal"
-            :products="$this->products"
-            :activeCategory="$activeCategory"
-            :search="$search"
-            :selectedBranchId="$selectedBranchId"
-            :selectedPricingTierId="$selectedPricingTierId"
-            :cart="$cart"
-            :categoryCounts="$this->categoryCounts"
-            :hasMoreProducts="$this->hasMoreProducts"
-            :availableCategories="$this->availableCategories"
-            :viewMode="$viewMode"
-        />
+        <div wire:key="pos-product-search-modal-wrapper">
+            <x-pos-page::product-search-modal 
+                :show="$showProductSearchModal"
+                :products="$this->products"
+                :activeCategory="$activeCategory"
+                :search="$search"
+                :selectedBranchId="$selectedBranchId"
+                :selectedPricingTierId="$selectedPricingTierId"
+                :cart="$cart"
+                :categoryCounts="$this->categoryCounts"
+                :hasMoreProducts="$this->hasMoreProducts"
+                :availableCategories="$this->availableCategories"
+                :viewMode="$viewMode"
+            />
+        </div>
     @endif
 
     <!-- Payment Detail Modal -->
@@ -119,7 +121,7 @@
             :newCustomerAddress="$newCustomerAddress"
             :newCustomerPricingTierId="$newCustomerPricingTierId"
             :newCustomerIsLoyaltyMember="$newCustomerIsLoyaltyMember"
-            :pricingTiers="$pricingTiers"
+            :pricingTiers="$this->pricingTiers"
         />
     @endif
 
