@@ -11,6 +11,7 @@ trait WithCartManagement
     public function setCategory($category)
     {
         $this->activeCategory = $category;
+        $this->productPage = 1;
     }
 
     public function addToCart($variantId)
@@ -90,6 +91,7 @@ trait WithCartManagement
             $variant = ProductVariant::with([
                 'product:id,name,type',
                 'branchStocks:id,product_variant_id,branch_id,stock',
+                'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
             ])->findOrFail($variantId);
 
             if (($variant->product->isPhysical() || $variant->product->isBundle())) {

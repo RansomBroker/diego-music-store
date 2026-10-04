@@ -195,7 +195,7 @@
             x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
             x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-            class="mb-3 w-80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
+            class="mb-3 w-80 bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
             x-cloak
             @click.away="showShortcuts = false"
         >
@@ -325,7 +325,7 @@
             <i class="ph-bold ph-x text-xl" x-show="showShortcuts" x-cloak></i>
             
             <!-- Hover Tooltip -->
-            <div class="absolute bottom-full right-0 mb-3 whitespace-nowrap bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md">
+            <div class="absolute bottom-full right-0 mb-3 whitespace-nowrap bg-slate-950/90 text-white text-[10px] font-black px-2.5 py-1 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md">
                 Panduan Shortcut (F12)
             </div>
         </button>

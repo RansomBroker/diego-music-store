@@ -17,7 +17,7 @@
 @endphp
 
 @if ($show)
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80">
         <div class="bg-white dark:bg-slate-800 rounded-3xl w-full {{ $maxWidthClass }} shadow-2xl transition-all border border-slate-100 dark:border-slate-700 mx-4 relative">
             <!-- Modal Header -->
             <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">

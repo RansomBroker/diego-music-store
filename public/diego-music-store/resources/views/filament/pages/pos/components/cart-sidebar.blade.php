@@ -397,7 +397,7 @@
             </div>
         @else
             <table class="w-full text-sm">
-                <thead class="sticky top-0 bg-slate-900 dark:bg-slate-950/95 backdrop-blur-sm z-[1]">
+                <thead class="sticky top-0 bg-slate-900/95 dark:bg-slate-950/95 z-[1]">
                     <tr class="border-b border-slate-800 dark:border-slate-800">
                         <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-8">No</th>
                         <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider">Item</th>
@@ -460,11 +460,11 @@
                             <td class="py-2 px-2 text-[11px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/20">{{ \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>
                             <td class="py-2 px-2 align-middle">
                                 <div class="flex items-center justify-center gap-1 bg-slate-100 dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-md p-0.5 mx-auto w-fit">
-                                    <button wire:click="updateQty({{ $id }}, -1)" class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
+                                    <button wire:click="updateQty({{ $id }}, -1)" wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-wait" class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
                                         <i class="ph-bold ph-minus text-[10px]"></i>
                                     </button>
                                     <span class="w-5 text-center text-xs font-extrabold text-slate-900 dark:text-white">{{ $item['qty'] }}</span>
-                                    <button wire:click="updateQty({{ $id }}, 1)" class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
+                                    <button wire:click="updateQty({{ $id }}, 1)" wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-wait" class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
                                         <i class="ph-bold ph-plus text-[10px]"></i>
                                     </button>
                                 </div>
@@ -487,7 +487,7 @@
                             </td>
                             <td class="py-2 px-2 text-xs sm:text-sm font-black text-emerald-500 dark:text-emerald-300 text-right align-middle whitespace-nowrap bg-emerald-50/30 dark:bg-emerald-950/15">{{ \App\Helpers\FormatHelper::rupiah($rowSubtotal) }}</td>
                             <td class="py-2 px-2 text-center align-middle">
-                                <button wire:click="updateQty({{ $id }}, -{{ $item['qty'] }})" class="w-6 h-6 rounded-md bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center justify-center transition-colors cursor-pointer" title="Hapus item">
+                                <button wire:click="updateQty({{ $id }}, -{{ $item['qty'] }})" wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-wait" class="w-6 h-6 rounded-md bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center justify-center transition-colors cursor-pointer" title="Hapus item">
                                     <i class="ph-bold ph-trash text-[10px]"></i>
                                 </button>
                             </td>

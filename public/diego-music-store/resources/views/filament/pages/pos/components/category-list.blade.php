@@ -34,6 +34,8 @@
     @php $totalInCart = $categoryCounts['Semua'] ?? 0; @endphp
     <button 
         wire:click="setCategory('Semua')" 
+        wire:loading.attr="disabled"
+        wire:loading.class="opacity-70 cursor-wait"
         class="px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0
             {{ $activeCategory === 'Semua' 
                 ? 'bg-primary text-white shadow-md shadow-blue-500/20' 
@@ -59,6 +61,8 @@
         <button 
             wire:key="cat-tab-{{ \Illuminate\Support\Str::slug($catName) }}"
             wire:click="setCategory('{{ $catName }}')" 
+            wire:loading.attr="disabled"
+            wire:loading.class="opacity-70 cursor-wait"
             class="px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0
                 {{ $isActive 
                     ? 'bg-primary text-white font-semibold shadow-md shadow-blue-500/20' 

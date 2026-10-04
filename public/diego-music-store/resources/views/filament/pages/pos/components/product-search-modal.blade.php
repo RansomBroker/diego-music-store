@@ -28,7 +28,7 @@
         x-transition:leave-end="opacity-0 scale-95"
         @keydown.escape.window="close()"
         x-init="$nextTick(() => { $refs.searchInput?.focus(); $refs.searchInput?.select() })"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm" 
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80" 
         @click.self="close()"
     >
         <div class="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-5xl max-h-[85vh] shadow-2xl transition-all border border-slate-100 dark:border-slate-700 mx-4 relative flex flex-col overflow-hidden">
@@ -83,29 +83,8 @@
                 />
             </div>
 
-            <!-- Products Grid (scrollable) - Infinite scroll via native scroll listener -->
             <div
                 class="flex-1 overflow-y-auto px-6 pb-6 no-scrollbar"
-                x-data="{ triggered: false }"
-                x-init="
-                    const container = $el;
-                    const wire = $wire;
-
-                    function onScroll() {
-                        if (triggered) return;
-                        const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 250;
-                        if (nearBottom) {
-                            triggered = true;
-                            container.removeEventListener('scroll', onScroll);
-                            wire.loadMoreProducts();
-                        }
-                    }
-
-                    // Pasang scroll listener hanya jika ada lebih banyak produk
-                    if ({{ $hasMoreProducts ? 'true' : 'false' }}) {
-                        container.addEventListener('scroll', onScroll, { passive: true });
-                    }
-                "
             >
                 @if ($products->isEmpty())
                     <div class="flex flex-col items-center justify-center py-16 text-slate-400">
@@ -145,7 +124,7 @@
 
                     @if ($hasMoreProducts)
                         <!-- Tombol fallback + indicator scroll -->
-                        <div class="w-full pt-5 pb-2 flex flex-col items-center gap-3">
+                        <div x-intersect.margin.bottom.200px="$wire.loadMoreProducts()" class="w-full pt-5 pb-2 flex flex-col items-center gap-3">
                             <button
                                 wire:click="loadMoreProducts"
                                 wire:loading.attr="disabled"
