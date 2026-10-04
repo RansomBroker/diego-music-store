@@ -417,7 +417,7 @@
                             $rowSubtotal = ($item['price'] * $item['qty']) - intval($item['discount_amount'] ?? 0); 
                             $itemVariant = $cartVariants[$id] ?? null;
                         @endphp
-                        <tr class="border-b border-slate-250 dark:border-slate-700 hover:bg-slate-100/40 dark:hover:bg-slate-700/30 transition-colors">
+                        <tr wire:key="cart-item-row-{{ $id }}" class="border-b border-slate-250 dark:border-slate-700 hover:bg-slate-100/40 dark:hover:bg-slate-700/30 transition-colors">
                             <td class="py-2 px-2 text-xs font-extrabold text-slate-700 dark:text-slate-300 align-middle">{{ $loop->iteration }}</td>
                             <td class="py-2 px-2 align-middle min-w-[150px]">
                                 <div class="flex items-center gap-1.5">

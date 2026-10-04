@@ -69,6 +69,7 @@
             <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-250 dark:border-slate-700 rounded-lg p-0.5">
                 <x-pos.utility.button 
                     wire:click.stop="updateQty({{ $variant->id }}, -1)"
+                    wire:loading.attr="disabled"
                     class="!rounded-full !w-6 !h-6 !p-0 !bg-white hover:!bg-red-500 !text-slate-700 hover:!text-white dark:!bg-slate-700 dark:!text-slate-300 dark:hover:!bg-red-650 dark:hover:!text-white !shadow-none flex-shrink-0"
                 >
                     <i class="ph-bold ph-minus text-[10px]"></i>
@@ -76,6 +77,7 @@
                 <span class="w-4 text-center text-xs font-black text-slate-800 dark:text-white">{{ $qtyInCart }}</span>
                 <x-pos.utility.button 
                     wire:click.stop="updateQty({{ $variant->id }}, 1)"
+                    wire:loading.attr="disabled"
                     class="!rounded-full !w-6 !h-6 !p-0 !bg-white hover:!bg-primary !text-slate-700 hover:!text-white dark:!bg-slate-700 dark:!text-slate-300 dark:hover:!bg-primary dark:hover:!text-white !shadow-none flex-shrink-0"
                 >
                     <i class="ph-bold ph-plus text-[10px]"></i>
@@ -84,6 +86,7 @@
         @else
             <x-pos.utility.button 
                 wire:click.stop="{{ $clickAction }}({{ $variant->id }})"
+                wire:loading.attr="disabled"
                 class="!rounded-full !w-8 !h-8 !p-0 !bg-primary-light hover:!bg-primary !text-primary hover:!text-white dark:!bg-blue-950/60 dark:!text-blue-400 dark:hover:!bg-primary dark:hover:!text-white !shadow-none flex-shrink-0"
             >
                 <i class="ph-bold ph-plus"></i>

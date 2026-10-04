@@ -57,6 +57,7 @@
             $isActive = $activeCategory === $catName;
         @endphp
         <button 
+            wire:key="cat-tab-{{ \Illuminate\Support\Str::slug($catName) }}"
             wire:click="setCategory('{{ $catName }}')" 
             class="px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0
                 {{ $isActive 

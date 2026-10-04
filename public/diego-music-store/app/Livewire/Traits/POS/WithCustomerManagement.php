@@ -107,6 +107,7 @@ trait WithCustomerManagement
             ->success()
             ->send();
 
+        cache()->forget('pos_default_customers_' . $this->customerLimit);
         $this->selectCustomer($customer->id, $customer->name, $customer->is_loyalty_member);
         $this->showCreateCustomerModal = false;
     }

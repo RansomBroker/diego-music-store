@@ -64,117 +64,123 @@
 
 
     <!-- Product Search Modal -->
-    <x-pos-page::product-search-modal 
-        :show="$showProductSearchModal"
-        :products="$this->products"
-        :activeCategory="$activeCategory"
-        :search="$search"
-        :selectedBranchId="$selectedBranchId"
-        :selectedPricingTierId="$selectedPricingTierId"
-        :cart="$cart"
-        :categoryCounts="$this->categoryCounts"
-        :hasMoreProducts="$this->hasMoreProducts"
-        :availableCategories="$this->availableCategories"
-        :viewMode="$viewMode"
-    />
-
-
+    @if ($showProductSearchModal)
+        <x-pos-page::product-search-modal 
+            :show="$showProductSearchModal"
+            :products="$this->products"
+            :activeCategory="$activeCategory"
+            :search="$search"
+            :selectedBranchId="$selectedBranchId"
+            :selectedPricingTierId="$selectedPricingTierId"
+            :cart="$cart"
+            :categoryCounts="$this->categoryCounts"
+            :hasMoreProducts="$this->hasMoreProducts"
+            :availableCategories="$this->availableCategories"
+            :viewMode="$viewMode"
+        />
+    @endif
 
     <!-- Payment Detail Modal -->
-    <x-pos-page::payment-modal 
-        :showPaymentModal="$showPaymentModal"
-        :paymentMethod="$paymentMethod"
-        :grandTotal="$this->grandTotal"
-        :amountPaid="$amountPaid"
-        :subtotal="$this->subtotal"
-        :discountAmount="$this->discountAmount"
-        :discountType="$discountType"
-        :discountValue="$discountValue"
-        :taxAmount="$this->taxAmount"
-        :pointDiscountAmount="$this->pointDiscountAmount"
-        :usePoints="$usePoints"
-        :selectedPaymentMethods="$selectedPaymentMethods"
-        :amountCash="$amountCash"
-        :amountDebit="$amountDebit"
-        :amountCredit="$amountCredit"
-        :debitRef="$debitRef"
-        :paymentAmounts="$paymentAmounts"
-        :paymentRefs="$paymentRefs"
-        :paymentMethods="$this->paymentMethods"
-        :voucherCodeInput="$voucherCodeInput"
-        :voucherValidationMessage="$voucherValidationMessage"
-        :voucherIsValid="$voucherIsValid"
-        :customerPhone="$customerPhone"
-    />
+    @if ($showPaymentModal)
+        <x-pos-page::payment-modal 
+            :showPaymentModal="$showPaymentModal"
+            :paymentMethod="$paymentMethod"
+            :grandTotal="$this->grandTotal"
+            :amountPaid="$amountPaid"
+            :subtotal="$this->subtotal"
+            :discountAmount="$this->discountAmount"
+            :discountType="$discountType"
+            :discountValue="$discountValue"
+            :taxAmount="$this->taxAmount"
+            :pointDiscountAmount="$this->pointDiscountAmount"
+            :usePoints="$usePoints"
+            :selectedPaymentMethods="$selectedPaymentMethods"
+            :amountCash="$amountCash"
+            :amountDebit="$amountDebit"
+            :amountCredit="$amountCredit"
+            :debitRef="$debitRef"
+            :paymentAmounts="$paymentAmounts"
+            :paymentRefs="$paymentRefs"
+            :paymentMethods="$this->paymentMethods"
+            :voucherCodeInput="$voucherCodeInput"
+            :voucherValidationMessage="$voucherValidationMessage"
+            :voucherIsValid="$voucherIsValid"
+            :customerPhone="$customerPhone"
+        />
+    @endif
 
     <!-- Create Customer Modal -->
-    <x-pos-page::create-customer-modal 
-        :showCreateCustomerModal="$showCreateCustomerModal"
-        :newCustomerName="$newCustomerName"
-        :newCustomerPhone="$newCustomerPhone"
-        :newCustomerEmail="$newCustomerEmail"
-        :newCustomerAddress="$newCustomerAddress"
-        :newCustomerPricingTierId="$newCustomerPricingTierId"
-        :newCustomerIsLoyaltyMember="$newCustomerIsLoyaltyMember"
-        :pricingTiers="$pricingTiers"
-    />
+    @if ($showCreateCustomerModal)
+        <x-pos-page::create-customer-modal 
+            :showCreateCustomerModal="$showCreateCustomerModal"
+            :newCustomerName="$newCustomerName"
+            :newCustomerPhone="$newCustomerPhone"
+            :newCustomerEmail="$newCustomerEmail"
+            :newCustomerAddress="$newCustomerAddress"
+            :newCustomerPricingTierId="$newCustomerPricingTierId"
+            :newCustomerIsLoyaltyMember="$newCustomerIsLoyaltyMember"
+            :pricingTiers="$pricingTiers"
+        />
+    @endif
 
     <!-- Held Transactions List Modal -->
-    <x-pos-page::modal 
-        :show="$showHeldModal" 
-        title="Daftar Transaksi Ditunda" 
-        :closeAction="!$isHeldModalMandatory ? '$set(\'showHeldModal\', false)' : null"
-        maxWidth="md"
-    >
-        <div class="space-y-3">
-            @if ($this->heldTransactions->isEmpty())
-                <p class="text-sm text-slate-500 dark:text-slate-400 text-center py-6">Tidak ada transaksi yang ditunda.</p>
-            @else
-                @foreach ($this->heldTransactions as $held)
-                    <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/50 dark:border-slate-700/60">
-                        <div>
+    @if ($showHeldModal)
+        <x-pos-page::modal 
+            :show="$showHeldModal" 
+            title="Daftar Transaksi Ditunda" 
+            :closeAction="!$isHeldModalMandatory ? '$set(\'showHeldModal\', false)' : null"
+            maxWidth="md"
+        >
+            <div class="space-y-3">
+                @if ($this->heldTransactions->isEmpty())
+                    <p class="text-sm text-slate-500 dark:text-slate-400 text-center py-6">Tidak ada transaksi yang ditunda.</p>
+                @else
+                    @foreach ($this->heldTransactions as $held)
+                        <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/50 dark:border-slate-700/60">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100">
+                                        {{ $held->customer_name }}
+                                    </div>
+                                    <div class="font-black text-sm text-primary dark:text-blue-400 bg-primary/10 px-2 py-0.5 rounded-lg">
+                                        Rp {{ number_format($held->grand_total, 0, ',', '.') }}
+                                    </div>
+                                </div>
+                                <div class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mt-1">
+                                    HLD-{{ strtoupper(substr($held->id, 0, 8)) }}
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    {{ count($held->cart_data) }} item • Jam {{ $held->created_at->format('H:i') }}
+                                </div>
+                            </div>
                             <div class="flex items-center gap-2">
-                                <div class="font-bold text-sm text-slate-800 dark:text-slate-100">
-                                    {{ $held->customer_name }}
-                                </div>
-                                <div class="font-black text-sm text-primary dark:text-blue-400 bg-primary/10 px-2 py-0.5 rounded-lg">
-                                    Rp {{ number_format($held->grand_total, 0, ',', '.') }}
-                                </div>
-                            </div>
-                            <div class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mt-1">
-                                HLD-{{ strtoupper(substr($held->id, 0, 8)) }}
-                            </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {{ count($held->cart_data) }} item • Jam {{ $held->created_at->format('H:i') }}
+                                <button type="button" wire:click="restoreHeldTransaction('{{ $held->id }}')" class="px-3 py-1.5 bg-primary hover:bg-primary-light text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer">
+                                    Lanjutkan
+                                </button>
+                                <button type="button" wire:click="deleteHeldTransaction('{{ $held->id }}')" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="Hapus">
+                                    <i class="ph-bold ph-trash text-sm"></i>
+                                </button>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button type="button" wire:click="restoreHeldTransaction('{{ $held->id }}')" class="px-3 py-1.5 bg-primary hover:bg-primary-light text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer">
-                                Lanjutkan
-                            </button>
-                            <button type="button" wire:click="deleteHeldTransaction('{{ $held->id }}')" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="Hapus">
-                                <i class="ph-bold ph-trash text-sm"></i>
-                            </button>
-                        </div>
+                    @endforeach
+                @endif
+                
+                @if ($isHeldModalMandatory)
+                    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <x-pos.utility.button 
+                            type="button" 
+                            variant="primary" 
+                            icon="ph-plus" 
+                            wire:click="startNewTransaction"
+                            class="w-full justify-center"
+                        >
+                            Buat Transaksi Baru
+                        </x-pos.utility.button>
                     </div>
-                @endforeach
-            @endif
-            
-            @if ($isHeldModalMandatory)
-                <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                    <x-pos.utility.button 
-                        type="button" 
-                        variant="primary" 
-                        icon="ph-plus" 
-                        wire:click="startNewTransaction"
-                        class="w-full justify-center"
-                    >
-                        Buat Transaksi Baru
-                    </x-pos.utility.button>
-                </div>
-            @endif
-        </div>
-    </x-pos-page::modal>
+                @endif
+            </div>
+        </x-pos-page::modal>
+    @endif
 
     <!-- Keyboard Shortcuts FAB and Popover -->
     <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">

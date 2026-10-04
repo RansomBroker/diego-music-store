@@ -62,7 +62,7 @@ class POS extends Component
     public $showProductSearchModal = false;
     public int $productPage = 1;
     public string $viewMode = 'grid';
-    const PRODUCTS_PER_PAGE = 24;
+    const PRODUCTS_PER_PAGE = 15;
 
     // Payment state
     public $notes = '';
@@ -401,7 +401,9 @@ class POS extends Component
     public function getCustomersProperty()
     {
         if (empty($this->customerSearch)) {
-            return Customer::orderBy('name')->limit($this->customerLimit)->get();
+            return cache()->remember('pos_default_customers_' . $this->customerLimit, 300, function () {
+                return Customer::orderBy('name')->limit($this->customerLimit)->get();
+            });
         }
 
         $search = '%' . $this->customerSearch . '%';
@@ -451,7 +453,7 @@ class POS extends Component
         });
     }
 
-    // Hitung jumlah item di cart per kategori DB (untuk badge di tab)
+    // Hitung jumlah item di cart per kategori (untuk badge di tab) secara in-memory tanpa query database
     public function getCategoryCountsProperty()
     {
         $counts = ['Semua' => 0];
@@ -460,18 +462,34 @@ class POS extends Component
             return $counts;
         }
 
-        $variantIds = array_keys($this->cart);
-        $variants = \App\Models\ProductVariant::with(['product:id,category'])
-            ->select(['id', 'product_id'])
-            ->whereIn('id', $variantIds)
-            ->get();
+        $missingVariantIds = [];
 
-        foreach ($variants as $variant) {
-            $qty   = $this->cart[$variant->id]['qty'] ?? 0;
-            $cat   = $variant->product->category ?? null;
+        foreach ($this->cart as $id => $item) {
+            $qty = $item['qty'] ?? 0;
             $counts['Semua'] += $qty;
-            if ($cat) {
-                $counts[$cat] = ($counts[$cat] ?? 0) + $qty;
+            if (isset($item['category'])) {
+                $cat = $item['category'];
+                if ($cat) {
+                    $counts[$cat] = ($counts[$cat] ?? 0) + $qty;
+                }
+            } else {
+                $missingVariantIds[] = $id;
+            }
+        }
+
+        // Fallback untuk item lawas di session yang belum punya field category
+        if (!empty($missingVariantIds)) {
+            $variants = \App\Models\ProductVariant::with(['product:id,category'])
+                ->select(['id', 'product_id'])
+                ->whereIn('id', $missingVariantIds)
+                ->get();
+
+            foreach ($variants as $variant) {
+                $qty = $this->cart[$variant->id]['qty'] ?? 0;
+                $cat = $variant->product->category ?? null;
+                if ($cat) {
+                    $counts[$cat] = ($counts[$cat] ?? 0) + $qty;
+                }
             }
         }
 
@@ -487,6 +505,7 @@ class POS extends Component
     {
         $this->showProductSearchModal = false;
         $this->search = '';
+        $this->productPage = 1;
     }
 
     public function getCartVariantsProperty()

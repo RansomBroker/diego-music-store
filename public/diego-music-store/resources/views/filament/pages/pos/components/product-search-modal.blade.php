@@ -14,9 +14,22 @@
 
 @if ($show)
     <div 
-        x-init="$nextTick(() => { $refs.searchInput.focus(); $refs.searchInput.select() })"
+        x-data="{ 
+            closing: false,
+            close() {
+                if (this.closing) return;
+                this.closing = true;
+                $wire.closeProductSearch();
+            }
+        }"
+        x-show="!closing"
+        x-transition:leave="transition ease-in duration-100"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        @keydown.escape.window="close()"
+        x-init="$nextTick(() => { $refs.searchInput?.focus(); $refs.searchInput?.select() })"
         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm" 
-        wire:click.self="closeProductSearch"
+        @click.self="close()"
     >
         <div class="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-5xl max-h-[85vh] shadow-2xl transition-all border border-slate-100 dark:border-slate-700 mx-4 relative flex flex-col overflow-hidden">
             <!-- Modal Header -->
@@ -42,7 +55,7 @@
                             <i class="ph-fill ph-list text-lg"></i>
                         </button>
                     </div>
-                    <button wire:click="closeProductSearch" class="w-8 h-8 rounded-full bg-slate-150 hover:bg-slate-200 dark:bg-slate-700 text-slate-650 hover:text-slate-955 dark:text-slate-300 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer">
+                    <button type="button" @click="close()" class="w-8 h-8 rounded-full bg-slate-150 hover:bg-slate-200 dark:bg-slate-700 text-slate-650 hover:text-slate-955 dark:text-slate-300 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer" title="Tutup (Esc)">
                         <i class="ph-bold ph-x text-lg"></i>
                     </button>
                 </div>
@@ -103,25 +116,29 @@
                     @if ($viewMode === 'grid')
                         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                             @foreach ($products as $variant)
-                                <x-pos.product-card 
-                                    :variant="$variant" 
-                                    :selectedBranchId="$selectedBranchId" 
-                                    :selectedPricingTierId="$selectedPricingTierId" 
-                                    :qtyInCart="$cart[$variant->id]['qty'] ?? 0"
-                                    clickAction="addToCart"
-                                />
+                                <div wire:key="pos-prod-card-{{ $variant->id }}">
+                                    <x-pos.product-card 
+                                        :variant="$variant" 
+                                        :selectedBranchId="$selectedBranchId" 
+                                        :selectedPricingTierId="$selectedPricingTierId" 
+                                        :qtyInCart="$cart[$variant->id]['qty'] ?? 0"
+                                        clickAction="addToCart"
+                                    />
+                                </div>
                             @endforeach
                         </div>
                     @else
                         <div class="flex flex-col gap-2">
                             @foreach ($products as $variant)
-                                <x-pos.product-list-item 
-                                    :variant="$variant" 
-                                    :selectedBranchId="$selectedBranchId" 
-                                    :selectedPricingTierId="$selectedPricingTierId" 
-                                    :qtyInCart="$cart[$variant->id]['qty'] ?? 0"
-                                    clickAction="addToCart"
-                                />
+                                <div wire:key="pos-prod-list-{{ $variant->id }}">
+                                    <x-pos.product-list-item 
+                                        :variant="$variant" 
+                                        :selectedBranchId="$selectedBranchId" 
+                                        :selectedPricingTierId="$selectedPricingTierId" 
+                                        :qtyInCart="$cart[$variant->id]['qty'] ?? 0"
+                                        clickAction="addToCart"
+                                    />
+                                </div>
                             @endforeach
                         </div>
                     @endif

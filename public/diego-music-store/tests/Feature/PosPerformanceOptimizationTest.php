@@ -177,4 +177,123 @@ class PosPerformanceOptimizationTest extends TestCase
         $this->assertTrue($firstVariant->relationLoaded('branchStocks'), 'branchStocks relationship was not eager-loaded.');
         $this->assertTrue($firstVariant->relationLoaded('tierPrices'), 'tierPrices relationship was not eager-loaded.');
     }
+
+    /** @test */
+    public function it_closes_product_search_modal_cleanly_and_resets_state(): void
+    {
+        $component = Livewire::test(\App\Livewire\POS::class)
+            ->set('showProductSearchModal', true)
+            ->set('search', 'Test Item')
+            ->set('productPage', 3);
+
+        $component->call('closeProductSearch');
+
+        $component->assertSet('showProductSearchModal', false);
+        $component->assertSet('search', '');
+        $component->assertSet('productPage', 1);
+
+        // When closed, products property should return empty collection without executing queries
+        $this->assertTrue($component->instance()->products->isEmpty());
+        $this->assertFalse($component->instance()->hasMoreProducts);
+    }
+
+    /** @test */
+    public function it_caches_default_customers_list(): void
+    {
+        \App\Models\Customer::create([
+            'name' => 'John Doe',
+            'phone' => '08123456789',
+        ]);
+
+        $component = Livewire::test(\App\Livewire\POS::class);
+
+        // First access should populate cache
+        $customers1 = $component->instance()->customers;
+        $this->assertNotEmpty($customers1);
+        $this->assertTrue(cache()->has('pos_default_customers_20'));
+
+        // Second access should hit cache
+        $customers2 = $component->instance()->customers;
+        $this->assertEquals($customers1->pluck('id'), $customers2->pluck('id'));
+    }
+
+    /** @test */
+    public function it_optimizes_cart_qty_updates_and_in_memory_category_counts(): void
+    {
+        $product = Product::create([
+            'name' => 'Akustik Yamaha',
+            'type' => 'physical',
+            'category' => 'GITAR',
+            'is_active' => true,
+        ]);
+
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'SKU-YMH-01',
+            'name' => 'Natural',
+            'price' => 1500000,
+            'cost_price' => 1000000,
+            'hpp' => 1000000,
+            'is_active' => true,
+        ]);
+
+        ProductBranchStock::create([
+            'product_variant_id' => $variant->id,
+            'branch_id' => $this->branch->id,
+            'stock' => 10,
+            'hpp' => 1000000,
+        ]);
+
+        $component = Livewire::test(\App\Livewire\POS::class, [
+            'selectedBranchId' => $this->branch->id,
+        ]);
+
+        // Add to cart
+        $component->call('addToCart', $variant->id);
+        $cart = $component->get('cart');
+        $this->assertArrayHasKey($variant->id, $cart);
+        $this->assertEquals(1, $cart[$variant->id]['qty']);
+        $this->assertEquals('GITAR', $cart[$variant->id]['category']);
+
+        // Check category counts calculated properly
+        $counts = $component->instance()->categoryCounts;
+        $this->assertEquals(1, $counts['Semua']);
+        $this->assertEquals(1, $counts['GITAR']);
+
+        // Increase qty
+        $component->call('updateQty', $variant->id, 1);
+        $cart = $component->get('cart');
+        $this->assertEquals(2, $cart[$variant->id]['qty']);
+        $counts = $component->instance()->categoryCounts;
+        $this->assertEquals(2, $counts['Semua']);
+        $this->assertEquals(2, $counts['GITAR']);
+
+        // Decrease qty (should not throw and reduce qty)
+        $component->call('updateQty', $variant->id, -1);
+        $cart = $component->get('cart');
+        $this->assertEquals(1, $cart[$variant->id]['qty']);
+    }
+
+    /** @test */
+    public function it_can_fetch_held_transactions_without_unknown_column_error(): void
+    {
+        \App\Models\PosHeldTransaction::create([
+            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'branch_id' => $this->branch->id,
+            'user_id' => $this->user->id,
+            'customer_name' => 'Held Customer',
+            'cart_data' => [
+                1 => ['price' => 100000, 'qty' => 2, 'discount_amount' => 0, 'tax_amount' => 0]
+            ],
+            'discount_amount' => 10000,
+        ]);
+
+        $component = Livewire::test(\App\Livewire\POS::class, [
+            'selectedBranchId' => $this->branch->id,
+        ]);
+
+        $heldList = $component->instance()->heldTransactions;
+        $this->assertCount(1, $heldList);
+        $this->assertEquals(190000, $heldList->first()->grand_total);
+    }
 }

@@ -15,7 +15,11 @@ trait WithCartManagement
 
     public function addToCart($variantId)
     {
-        $variant = ProductVariant::with(['product', 'branchStocks', 'tierPrices'])->findOrFail($variantId);
+        $variant = ProductVariant::with([
+            'product:id,name,type,category',
+            'branchStocks:id,product_variant_id,branch_id,stock',
+            'tierPrices:id,product_variant_id,pricing_tier_id,price',
+        ])->findOrFail($variantId);
         
         // Check stock for physical products and bundles
         if ($variant->product->isPhysical() || $variant->product->isBundle()) {
@@ -52,6 +56,7 @@ trait WithCartManagement
                 'price' => $variant->priceForTier($tierId),
                 'qty' => 1,
                 'type' => $variant->product->type,
+                'category' => $variant->product->category ?? null,
                 'emoji' => $variant->product->isService() ? '🛠️' : ($variant->product->isBundle() ? '📦' : '🎸'),
                 'notes' => '',
                 'discount_value' => $variant->discount_value ?? 0,
@@ -80,17 +85,23 @@ trait WithCartManagement
             return;
         }
 
-        // Check stock
-        $variant = ProductVariant::with(['product', 'branchStocks'])->findOrFail($variantId);
-        if (($variant->product->isPhysical() || $variant->product->isBundle()) && $change > 0) {
-            $stock = $variant->stockForBranch($this->selectedBranchId);
-            if ($stock < $newQty) {
-                Notification::make()
-                    ->title('Stok Tidak Cukup')
-                    ->body("Stok untuk {$variant->product->name} ({$variant->name}) tersisa {$stock} pcs.")
-                    ->warning()
-                    ->send();
-                return;
+        // Check stock only when increasing quantity (skip DB query entirely when decreasing)
+        if ($change > 0) {
+            $variant = ProductVariant::with([
+                'product:id,name,type',
+                'branchStocks:id,product_variant_id,branch_id,stock',
+            ])->findOrFail($variantId);
+
+            if (($variant->product->isPhysical() || $variant->product->isBundle())) {
+                $stock = $variant->stockForBranch($this->selectedBranchId);
+                if ($stock < $newQty) {
+                    Notification::make()
+                        ->title('Stok Tidak Cukup')
+                        ->body("Stok untuk {$variant->product->name} tersisa {$stock} pcs.")
+                        ->warning()
+                        ->send();
+                    return;
+                }
             }
         }
 
