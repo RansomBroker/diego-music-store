@@ -118,7 +118,11 @@ class ProductVariant extends Model
         }
 
         // Physical product stock
-        $branchStock = $this->branchStocks()->where('branch_id', $branchId)->first();
+        if ($this->relationLoaded('branchStocks')) {
+            $branchStock = $this->branchStocks->firstWhere('branch_id', $branchId);
+        } else {
+            $branchStock = $this->branchStocks()->where('branch_id', $branchId)->first();
+        }
         return $branchStock ? $branchStock->stock : 0;
     }
 
@@ -127,11 +131,11 @@ class ProductVariant extends Model
      */
     public function totalStock(): int
     {
-        if ($this->product->isService()) {
+        if ($this->product && $this->product->isService()) {
             return 999999;
         }
 
-        if ($this->product->isBundle()) {
+        if ($this->product && $this->product->isBundle()) {
             $branches = Branch::where('is_active', true)->get();
             $total = 0;
             foreach ($branches as $branch) {
@@ -140,7 +144,11 @@ class ProductVariant extends Model
             return $total;
         }
 
-        return $this->branchStocks()->sum('stock');
+        if ($this->relationLoaded('branchStocks')) {
+            return (int) $this->branchStocks->sum('stock');
+        }
+
+        return (int) $this->branchStocks()->sum('stock');
     }
 
     /**
@@ -152,7 +160,12 @@ class ProductVariant extends Model
             return $this->price;
         }
 
-        $tierPrice = $this->tierPrices()->where('pricing_tier_id', $pricingTierId)->first();
+        if ($this->relationLoaded('tierPrices')) {
+            $tierPrice = $this->tierPrices->firstWhere('pricing_tier_id', $pricingTierId);
+        } else {
+            $tierPrice = $this->tierPrices()->where('pricing_tier_id', $pricingTierId)->first();
+        }
+
         return $tierPrice ? $tierPrice->price : $this->price;
     }
 
@@ -161,7 +174,12 @@ class ProductVariant extends Model
      */
     public function priceForBranch(int $branchId): int
     {
-        $branchPrice = $this->branchPrices()->where('branch_id', $branchId)->first();
+        if ($this->relationLoaded('branchPrices')) {
+            $branchPrice = $this->branchPrices->firstWhere('branch_id', $branchId);
+        } else {
+            $branchPrice = $this->branchPrices()->where('branch_id', $branchId)->first();
+        }
+
         return $branchPrice ? $branchPrice->price : $this->price;
     }
 }

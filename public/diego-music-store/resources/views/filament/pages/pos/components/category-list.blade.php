@@ -9,21 +9,23 @@
      * Emoji mapping berdasarkan kata kunci di nama kategori.
      * Digunakan untuk memperindah tab kategori secara otomatis.
      */
-    function getCategoryEmoji(string $cat): string {
-        $c = strtolower($cat);
-        if (str_contains($c, 'gitar') || str_contains($c, 'guitar') || str_contains($c, 'bass') || str_contains($c, 'ukulele') || str_contains($c, 'cajon') || str_contains($c, 'harmonica') || str_contains($c, 'kalimba') || str_contains($c, 'pianika') || str_contains($c, 'suling') || str_contains($c, 'tamborin')) return '🎸';
-        if (str_contains($c, 'keyboard') || str_contains($c, 'piano') || str_contains($c, 'saxophone') || str_contains($c, 'footstool')) return '🎹';
-        if (str_contains($c, 'drum') || str_contains($c, 'stick') || str_contains($c, 'perkusi') || str_contains($c, 'metronom')) return '🥁';
-        if (str_contains($c, 'senar') || str_contains($c, 'kabel') || str_contains($c, 'jack') || str_contains($c, 'strap') || str_contains($c, 'pick') || str_contains($c, 'capo')) return '🎵';
-        if (str_contains($c, 'amplifier') || str_contains($c, 'speaker') || str_contains($c, 'mixer') || str_contains($c, 'audio') || str_contains($c, 'soundcard') || str_contains($c, 'recording') || str_contains($c, 'microphone') || str_contains($c, 'wireless')) return '🔊';
-        if (str_contains($c, 'effects') || str_contains($c, 'pedal') || str_contains($c, 'preamp') || str_contains($c, 'pedalboard')) return '🎛️';
-        if (str_contains($c, 'biola')) return '🎻';
-        if (str_contains($c, 'stand')) return '🗿';
-        if (str_contains($c, 'tas') || str_contains($c, 'gigbag') || str_contains($c, 'hardcase')) return '🎒';
-        if (str_contains($c, 'headphone') || str_contains($c, 'in ear')) return '🎧';
-        if (str_contains($c, 'ongkos')) return '🛠️';
-        if (str_contains($c, 'cleaner') || str_contains($c, 'tools')) return '🔧';
-        return '🎼';
+    if (!function_exists('getCategoryEmoji')) {
+        function getCategoryEmoji(string $cat): string {
+            $c = strtolower($cat);
+            if (str_contains($c, 'gitar') || str_contains($c, 'guitar') || str_contains($c, 'bass') || str_contains($c, 'ukulele') || str_contains($c, 'cajon') || str_contains($c, 'harmonica') || str_contains($c, 'kalimba') || str_contains($c, 'pianika') || str_contains($c, 'suling') || str_contains($c, 'tamborin')) return '🎸';
+            if (str_contains($c, 'keyboard') || str_contains($c, 'piano') || str_contains($c, 'saxophone') || str_contains($c, 'footstool')) return '🎹';
+            if (str_contains($c, 'drum') || str_contains($c, 'stick') || str_contains($c, 'perkusi') || str_contains($c, 'metronom')) return '🥁';
+            if (str_contains($c, 'senar') || str_contains($c, 'kabel') || str_contains($c, 'jack') || str_contains($c, 'strap') || str_contains($c, 'pick') || str_contains($c, 'capo')) return '🎵';
+            if (str_contains($c, 'amplifier') || str_contains($c, 'speaker') || str_contains($c, 'mixer') || str_contains($c, 'audio') || str_contains($c, 'soundcard') || str_contains($c, 'recording') || str_contains($c, 'microphone') || str_contains($c, 'wireless')) return '🔊';
+            if (str_contains($c, 'effects') || str_contains($c, 'pedal') || str_contains($c, 'preamp') || str_contains($c, 'pedalboard')) return '🎛️';
+            if (str_contains($c, 'biola')) return '🎻';
+            if (str_contains($c, 'stand')) return '🗿';
+            if (str_contains($c, 'tas') || str_contains($c, 'gigbag') || str_contains($c, 'hardcase')) return '🎒';
+            if (str_contains($c, 'headphone') || str_contains($c, 'in ear')) return '🎧';
+            if (str_contains($c, 'ongkos')) return '🛠️';
+            if (str_contains($c, 'cleaner') || str_contains($c, 'tools')) return '🔧';
+            return '🎼';
+        }
     }
 @endphp
 

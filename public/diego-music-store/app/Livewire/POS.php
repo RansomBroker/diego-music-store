@@ -61,7 +61,8 @@ class POS extends Component
     // Product search modal
     public $showProductSearchModal = false;
     public int $productPage = 1;
-    const PRODUCTS_PER_PAGE = 40;
+    public string $viewMode = 'grid';
+    const PRODUCTS_PER_PAGE = 24;
 
     // Payment state
     public $notes = '';
@@ -149,6 +150,7 @@ class POS extends Component
         $this->invoiceDate = now()->format('Y-m-d');
         $defaultCategory = \App\Models\SaleCategory::first();
         $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
+        $this->viewMode = session('pos_view_mode', 'grid');
 
         $this->updateBranchDetails();
 
@@ -255,12 +257,13 @@ class POS extends Component
 
     public function updatedSelectedPricingTierId($value)
     {
-        if ($value === 'custom') {
+        if ($value === 'custom' || empty($this->cart)) {
             return;
         }
 
+        $variants = ProductVariant::with('tierPrices')->whereIn('id', array_keys($this->cart))->get()->keyBy('id');
         foreach ($this->cart as $variantId => $item) {
-            $variant = ProductVariant::find($variantId);
+            $variant = $variants->get($variantId);
             if ($variant) {
                 $this->cart[$variantId]['pricing_tier_id'] = $value;
                 $this->cart[$variantId]['price'] = $variant->priceForTier($value);
@@ -296,18 +299,26 @@ class POS extends Component
      */
     public function getAvailableCategoriesProperty()
     {
-        return \App\Models\Product::where('is_active', true)
-            ->whereNotNull('category')
-            ->where('category', '!=', '')
-            ->selectRaw('category, COUNT(*) as total')
-            ->groupBy('category')
-            ->orderByDesc('total')
-            ->get()
-            ->map(fn($p) => ['name' => $p->category, 'count' => $p->total]);
+        return cache()->remember('pos_available_categories', 300, function () {
+            return \App\Models\Product::where('is_active', true)
+                ->whereNotNull('category')
+                ->where('category', '!=', '')
+                ->selectRaw('category, COUNT(*) as total')
+                ->groupBy('category')
+                ->orderByDesc('total')
+                ->get()
+                ->map(fn($p) => ['name' => $p->category, 'count' => $p->total]);
+        });
+    }
+
+    public function setViewMode(string $mode): void
+    {
+        $this->viewMode = in_array($mode, ['grid', 'list']) ? $mode : 'grid';
+        session(['pos_view_mode' => $this->viewMode]);
     }
 
     // Load products filtered by category and search
-    // OPTIMASI: hanya query ketika modal terbuka, filter kategori langsung di SQL
+    // OPTIMASI TINGGI: join langsung ke products, eager load kolom spesifik, tanpa subquery whereHas
     public function getProductsProperty()
     {
         // Guard: jangan query apapun kalau modal belum terbuka
@@ -317,27 +328,30 @@ class POS extends Component
 
         $take = self::PRODUCTS_PER_PAGE * $this->productPage;
 
-        $query = ProductVariant::with(['product', 'branchStocks'])
-            ->where('is_active', true)
-            ->whereHas('product', function ($q) {
-                $q->where('is_active', true);
+        $query = ProductVariant::query()
+            ->select('product_variants.*')
+            ->join('products', 'products.id', '=', 'product_variants.product_id')
+            ->with([
+                'product:id,name,type,category,is_active',
+                'branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
+                'tierPrices' => fn($q) => $q->select('id', 'product_variant_id', 'pricing_tier_id', 'price'),
+            ])
+            ->where('product_variants.is_active', true)
+            ->where('products.is_active', true);
 
-                // Filter langsung pakai nilai category dari DB
-                if ($this->activeCategory !== 'Semua') {
-                    $q->where('category', $this->activeCategory);
-                }
-            });
+        // Filter kategori langsung via kolom products.category
+        if ($this->activeCategory !== 'Semua') {
+            $query->where('products.category', $this->activeCategory);
+        }
 
         // Search filter (SKU, name, barcode, nama produk)
         if (!empty($this->search)) {
-            $search = '%' . $this->search . '%';
+            $search = '%' . trim($this->search) . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', $search)
-                  ->orWhere('sku', 'like', $search)
-                  ->orWhere('barcode', 'like', $search)
-                  ->orWhereHas('product', function ($pq) use ($search) {
-                      $pq->where('name', 'like', $search);
-                  });
+                $q->where('product_variants.name', 'like', $search)
+                  ->orWhere('product_variants.sku', 'like', $search)
+                  ->orWhere('product_variants.barcode', 'like', $search)
+                  ->orWhere('products.name', 'like', $search);
             });
         }
 
@@ -398,27 +412,29 @@ class POS extends Component
     }
 
     // Get matching users with "sales" role for live search dropdown
+    // Get matching users with "sales" role for live search dropdown
     public function getSalesRepsProperty()
     {
-        $query = \App\Models\User::role('sales');
-        
         if (!empty($this->salesSearch)) {
-            $search = '%' . $this->salesSearch . '%';
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', $search)
-                  ->orWhere('email', 'like', $search);
-            });
-        } else {
-            $query->orderBy('name');
+            $search = '%' . trim($this->salesSearch) . '%';
+            return \App\Models\User::role('sales')
+                ->where(function ($q) use ($search) {
+                    $q->where('name', 'like', $search)
+                      ->orWhere('email', 'like', $search);
+                })
+                ->limit(5)
+                ->get();
         }
-        
-        return $query->limit(5)->get();
+
+        return cache()->remember('pos_sales_reps_default', 300, function () {
+            return \App\Models\User::role('sales')->orderBy('name')->limit(5)->get();
+        });
     }
 
     // Get all sale categories
     public function getSaleCategoriesProperty()
     {
-        return \App\Models\SaleCategory::all();
+        return cache()->remember('pos_sale_categories', 600, fn() => \App\Models\SaleCategory::all());
     }
 
     // Get total sales of the active cash session
@@ -427,9 +443,12 @@ class POS extends Component
         if (empty($this->activeSessionInfo['id'])) {
             return 0;
         }
-        return \App\Models\Sale::where('cash_session_id', $this->activeSessionInfo['id'])
-            ->where('status', 'completed')
-            ->sum('grand_total');
+
+        return cache()->remember('pos_today_sales_' . $this->activeSessionInfo['id'], 60, function () {
+            return \App\Models\Sale::where('cash_session_id', $this->activeSessionInfo['id'])
+                ->where('status', 'completed')
+                ->sum('grand_total');
+        });
     }
 
     // Hitung jumlah item di cart per kategori DB (untuk badge di tab)
@@ -475,7 +494,14 @@ class POS extends Component
         if (empty($this->cart)) {
             return collect();
         }
-        return \App\Models\ProductVariant::whereIn('id', array_keys($this->cart))->get()->keyBy('id');
+        return \App\Models\ProductVariant::with([
+                'product:id,name,type',
+                'tierPrices:id,product_variant_id,pricing_tier_id,price',
+                'branchStocks:id,product_variant_id,branch_id,stock',
+            ])
+            ->whereIn('id', array_keys($this->cart))
+            ->get()
+            ->keyBy('id');
     }
 
     public function selectSalesRep($id, $name)

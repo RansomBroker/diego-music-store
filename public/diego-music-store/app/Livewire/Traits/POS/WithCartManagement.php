@@ -15,7 +15,7 @@ trait WithCartManagement
 
     public function addToCart($variantId)
     {
-        $variant = ProductVariant::with('product')->findOrFail($variantId);
+        $variant = ProductVariant::with(['product', 'branchStocks', 'tierPrices'])->findOrFail($variantId);
         
         // Check stock for physical products and bundles
         if ($variant->product->isPhysical() || $variant->product->isBundle()) {
@@ -81,7 +81,7 @@ trait WithCartManagement
         }
 
         // Check stock
-        $variant = ProductVariant::findOrFail($variantId);
+        $variant = ProductVariant::with(['product', 'branchStocks'])->findOrFail($variantId);
         if (($variant->product->isPhysical() || $variant->product->isBundle()) && $change > 0) {
             $stock = $variant->stockForBranch($this->selectedBranchId);
             if ($stock < $newQty) {
@@ -109,7 +109,7 @@ trait WithCartManagement
     public function updateItemPricingTier($variantId, $tierId)
     {
         if (isset($this->cart[$variantId])) {
-            $variant = ProductVariant::find($variantId);
+            $variant = ProductVariant::with('tierPrices')->find($variantId);
             if ($variant) {
                 $this->cart[$variantId]['pricing_tier_id'] = $tierId;
                 $this->cart[$variantId]['price'] = $variant->priceForTier($tierId);

@@ -9,11 +9,11 @@
     'categoryCounts' => [],
     'hasMoreProducts' => false,
     'availableCategories' => [],
+    'viewMode' => 'grid',
 ])
 
 @if ($show)
     <div 
-        x-data="{ viewMode: localStorage.getItem('posViewMode') || 'grid' }"
         x-init="$nextTick(() => { $refs.searchInput.focus(); $refs.searchInput.select() })"
         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm" 
         wire:click.self="closeProductSearch"
@@ -28,16 +28,16 @@
                 <div class="flex items-center gap-3">
                     <div class="flex bg-slate-100 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
                         <button 
-                            @click="viewMode = 'grid'; localStorage.setItem('posViewMode', 'grid')"
-                            :class="viewMode === 'grid' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'"
-                            class="px-2 py-1 rounded-md text-sm transition-all"
+                            wire:click="setViewMode('grid')"
+                            class="px-2 py-1 rounded-md text-sm transition-all {{ $viewMode === 'grid' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300' }}"
+                            title="Tampilan Grid"
                         >
                             <i class="ph-fill ph-squares-four text-lg"></i>
                         </button>
                         <button 
-                            @click="viewMode = 'list'; localStorage.setItem('posViewMode', 'list')"
-                            :class="viewMode === 'list' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'"
-                            class="px-2 py-1 rounded-md text-sm transition-all"
+                            wire:click="setViewMode('list')"
+                            class="px-2 py-1 rounded-md text-sm transition-all {{ $viewMode === 'list' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300' }}"
+                            title="Tampilan List"
                         >
                             <i class="ph-fill ph-list text-lg"></i>
                         </button>
@@ -100,7 +100,7 @@
                         <span class="text-sm font-medium">Tidak ada produk ditemukan</span>
                     </div>
                 @else
-                    <template x-if="viewMode === 'grid'">
+                    @if ($viewMode === 'grid')
                         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                             @foreach ($products as $variant)
                                 <x-pos.product-card 
@@ -112,9 +112,7 @@
                                 />
                             @endforeach
                         </div>
-                    </template>
-                    
-                    <template x-if="viewMode === 'list'">
+                    @else
                         <div class="flex flex-col gap-2">
                             @foreach ($products as $variant)
                                 <x-pos.product-list-item 
@@ -126,7 +124,7 @@
                                 />
                             @endforeach
                         </div>
-                    </template>
+                    @endif
 
                     @if ($hasMoreProducts)
                         <!-- Tombol fallback + indicator scroll -->

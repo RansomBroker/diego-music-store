@@ -75,6 +75,7 @@
         :categoryCounts="$this->categoryCounts"
         :hasMoreProducts="$this->hasMoreProducts"
         :availableCategories="$this->availableCategories"
+        :viewMode="$viewMode"
     />
 
 
