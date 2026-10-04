@@ -71,6 +71,8 @@ trait WithCartManagement
             $this->recalculateItemDiscountAmount($variantId);
             $this->recalculateItemTaxAmount($variantId);
         }
+
+        $this->autoSaveDraft();
     }
 
     public function updateQty($variantId, $change)
@@ -110,6 +112,8 @@ trait WithCartManagement
         $this->cart[$variantId]['qty'] = $newQty;
         $this->recalculateItemDiscountAmount($variantId);
         $this->recalculateItemTaxAmount($variantId);
+
+        $this->autoSaveDraft();
     }
 
     public function updateItemNote($variantId, $note)
@@ -268,6 +272,8 @@ trait WithCartManagement
         $this->salesSearch = '';
         $defaultCategory = \App\Models\SaleCategory::first();
         $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
+
+        $this->autoSaveDraft();
 
         Notification::make()
             ->title('Keranjang Direset')

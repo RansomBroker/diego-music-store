@@ -343,17 +343,22 @@ class POS extends Component
 
         // Search filter (SKU, name, barcode, nama produk)
         if (!empty($this->search)) {
-            $search = '%' . trim($this->search) . '%';
-            $query->where(function ($q) use ($search) {
-                $q->where('product_variants.name', 'like', $search)
-                  ->orWhere('product_variants.sku', 'like', $search)
-                  ->orWhere('product_variants.barcode', 'like', $search)
-                  ->orWhere('products.name', 'like', $search);
+            $search = trim($this->search);
+            $likeSearch = '%' . $search . '%';
+            
+            $query->where(function ($q) use ($search, $likeSearch) {
+                $q->where('product_variants.barcode', $search)
+                  ->orWhere('product_variants.sku', $search)
+                  ->orWhere('product_variants.name', 'like', $likeSearch)
+                  ->orWhere('products.name', 'like', $likeSearch);
             });
         }
 
-        // Ambil $take + 1 untuk deteksi apakah masih ada data, lalu potong ke $take
-        return $query->limit($take + 1)->get()->take($take);
+        // Exact 15 items using offset
+        $take = 15;
+        $offset = ($this->productPage - 1) * $take;
+        
+        return $query->offset($offset)->limit($take)->get();
     }
 
     /**
@@ -366,8 +371,9 @@ class POS extends Component
         if (!$this->showProductSearchModal) {
             return false;
         }
-        $take = self::PRODUCTS_PER_PAGE * $this->productPage;
-        return $this->products->count() >= $take;
+        
+        $take = 15;
+        return $this->products->count() === $take;
     }
 
     // Muat halaman produk berikutnya (dipanggil oleh infinite scroll di frontend)
@@ -553,12 +559,11 @@ class POS extends Component
                 return $sale->invoice_number;
             }
         }
-        return \App\Models\Sale::generateInvoiceNumber($this->saleCategory);
+        return 'DRAFT-' . strtoupper(substr(session()->getId() ?? uniqid(), 0, 6));
     }
 
     public function render()
     {
-        $this->autoSaveDraft();
         return view('filament.pages.pos.pos')
             ->layout('layouts.pos');
     }

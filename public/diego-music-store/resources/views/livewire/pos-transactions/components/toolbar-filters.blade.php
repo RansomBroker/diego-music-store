@@ -1,102 +1,65 @@
 <!-- Toolbar (Filters & Search) -->
-<div class="p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4">
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+<div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3.5">
         
-        <!-- Search Input -->
-        <div class="relative lg:col-span-2">
-            <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Cari Transaksi</label>
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <i class="ph ph-magnifying-glass text-slate-400 dark:text-slate-550 text-base"></i>
-                </span>
-                <input
-                    type="text"
-                    wire:model.live.debounce.300ms="search"
-                    placeholder="No. Invoice, pelanggan, kasir..."
-                    class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors"
-                >
-            </div>
+        <!-- Pencarian -->
+        <div class="sm:col-span-2 lg:col-span-4 xl:col-span-2">
+            <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Pencarian Transaksi</label>
+            <x-pos.form.input model="search" :live="true" placeholder="No. Invoice, pelanggan, kasir..." icon="ph-magnifying-glass" rounded="rounded-lg" />
         </div>
 
-        <!-- Branch Filter -->
+        <!-- Filter Cabang -->
         <div>
-            <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Cabang</label>
-            <select
-                wire:model.live="selectedBranchId"
-                class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors"
-            >
+            <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Filter Cabang</label>
+            <x-pos.form.select model="selectedBranchId" :live="true" rounded="rounded-lg" icon="ph-storefront">
                 <option value="">Semua Cabang</option>
                 @foreach($branches as $b)
                     <option value="{{ $b->id }}">{{ $b->name }}</option>
                 @endforeach
-            </select>
+            </x-pos.form.select>
         </div>
 
-        <!-- Status Filter -->
+        <!-- Filter Status -->
         <div>
-            <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Status</label>
-            <select
-                wire:model.live="selectedStatus"
-                class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors"
-            >
+            <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Status Transaksi</label>
+            <x-pos.form.select model="selectedStatus" :live="true" rounded="rounded-lg" icon="ph-squares-four">
                 <option value="all">Semua Status</option>
                 <option value="completed">Selesai</option>
                 <option value="pending">Belum Selesai (Piutang)</option>
                 <option value="draft">Draft</option>
                 <option value="cancelled">Dibatalkan</option>
-            </select>
+            </x-pos.form.select>
         </div>
 
-        <!-- Payment Method Filter -->
+        <!-- Filter Metode Bayar -->
         <div>
-            <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Metode Bayar</label>
-            <select
-                wire:model.live="selectedPaymentMethod"
-                class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors"
-            >
+            <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Metode Bayar</label>
+            <x-pos.form.select model="selectedPaymentMethod" :live="true" rounded="rounded-lg" icon="ph-credit-card">
                 <option value="all">Semua Metode</option>
                 <option value="Tunai">Tunai / Cash</option>
                 <option value="Debit">Debit BCA</option>
                 <option value="Piutang">Piutang</option>
-            </select>
+            </x-pos.form.select>
         </div>
 
-        <!-- From Date -->
+        <!-- Dari Tanggal -->
         <div>
-            <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Dari Tanggal</label>
-            <input
-                type="date"
-                wire:model.live="fromDate"
-                class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors"
-            >
+            <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Dari Tanggal</label>
+            <x-pos.form.input type="date" model="fromDate" :live="true" rounded="rounded-lg" />
         </div>
 
-    </div>
-
-    <div class="flex items-center justify-between pt-2 border-t border-slate-150 dark:border-slate-800">
-        <!-- To Date -->
-        <div class="flex items-center gap-3">
-            <div>
-                <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Sampai Tanggal</label>
-                <input
-                    type="date"
-                    wire:model.live="toDate"
-                    class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors"
-                >
-            </div>
+        <!-- Sampai Tanggal -->
+        <div>
+            <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Sampai Tanggal</label>
+            <x-pos.form.input type="date" model="toDate" :live="true" rounded="rounded-lg" />
         </div>
 
-        <!-- Reset Button -->
-        <div class="self-end">
-            <x-pos.utility.button
-                type="button"
-                variant="danger"
-                size="sm"
-                icon="ph-arrows-counter-clockwise"
-                wire:click="resetFilters"
-            >
-                Reset Filter
+        <!-- Tombol Reset -->
+        <div class="flex items-end">
+            <x-pos.utility.button variant="danger" icon="ph-arrow-counter-clockwise" class="w-full" wire:click="resetFilters" title="Reset Filter">
+                Reset
             </x-pos.utility.button>
         </div>
+
     </div>
 </div>
