@@ -10,10 +10,31 @@ use Illuminate\Support\Str;
 
 class ProductHelper
 {
-    public static function generateUniqueSku(): string
+    public static function generateUniqueSku(?string $prefix = null, ?int $branchId = null): string
     {
+        $basePrefix = null;
+
+        if ($prefix) {
+            $basePrefix = trim($prefix);
+        } elseif ($branchId) {
+            $branch = Branch::find($branchId);
+            if ($branch && !empty($branch->sku_prefix)) {
+                $basePrefix = trim($branch->sku_prefix);
+            }
+        } else {
+            $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+            if ($activeBranchId) {
+                $branch = Branch::find($activeBranchId);
+                if ($branch && !empty($branch->sku_prefix)) {
+                    $basePrefix = trim($branch->sku_prefix);
+                }
+            }
+        }
+
+        $cleanPrefix = $basePrefix ? rtrim(strtoupper($basePrefix), '-') . '-' : 'DG-';
+
         do {
-            $sku = 'SKU-' . strtoupper(Str::random(8));
+            $sku = $cleanPrefix . strtoupper(Str::random(8));
         } while (ProductVariant::where('sku', $sku)->exists());
         
         return $sku;

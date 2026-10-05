@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Branches\Schemas;
 
 use App\Models\User;
+use App\Models\Account;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -138,6 +139,51 @@ class BranchForm
                         ->label('Alokasi Staf & Kasir Cabang')
                         ->helperText('Pilih staf/kasir yang diberikan akses ke cabang ini')
                         ->columnSpanFull(),
+                ]),
+
+            Step::make('Akun Akuntansi & COA')
+                ->description('Pengaturan Akun COA untuk Persediaan dan Transfer Antar Cabang')
+                ->schema([
+                    Select::make('inventory_account_id')
+                        ->label('Akun Persediaan Cabang')
+                        ->helperText('Akun aset untuk persediaan barang dagang khusus cabang ini')
+                        ->options(fn () => Account::where('classification', 'asset')->where('is_header', false)->orderBy('code')->get()->mapWithKeys(fn ($a) => [$a->id => "{$a->code} - {$a->name}"]))
+                        ->searchable()
+                        ->preload()
+                        ->placeholder('Pilih Akun Persediaan'),
+
+                    Select::make('interbranch_receivable_account_id')
+                        ->label('Akun Piutang Antar Cabang')
+                        ->helperText('Akun aset piutang saat cabang ini mentransfer barang keluar ke cabang lain')
+                        ->options(fn () => Account::where('classification', 'asset')->where('is_header', false)->orderBy('code')->get()->mapWithKeys(fn ($a) => [$a->id => "{$a->code} - {$a->name}"]))
+                        ->searchable()
+                        ->preload()
+                        ->placeholder('Pilih Akun Piutang Antar Cabang'),
+
+                    Select::make('interbranch_payable_account_id')
+                        ->label('Akun Hutang Antar Cabang')
+                        ->helperText('Akun kewajiban hutang saat cabang ini menerima transfer barang dari cabang lain')
+                        ->options(fn () => Account::where('classification', 'liability')->where('is_header', false)->orderBy('code')->get()->mapWithKeys(fn ($a) => [$a->id => "{$a->code} - {$a->name}"]))
+                        ->searchable()
+                        ->preload()
+                        ->placeholder('Pilih Akun Hutang Antar Cabang'),
+                ]),
+
+            Step::make('Prefix Kode & Penomoran')
+                ->description('Prefix kode produk / SKU dan kode penomoran jurnal cabang')
+                ->schema([
+                    TextInput::make('sku_prefix')
+                        ->label('Prefix Kode Produk / SKU')
+                        ->default('DG')
+                        ->placeholder('Contoh: DG, DG-SKW, DG-KTP')
+                        ->helperText('Prefix otomatis untuk penomoran SKU saat tambah produk atau import produk di cabang ini (misal: DG -> DG-ABC12345)')
+                        ->maxLength(20),
+
+                    TextInput::make('journal_prefix')
+                        ->label('Prefix Kode Jurnal')
+                        ->placeholder('Contoh: JV-PTK, JV-SKW')
+                        ->helperText('Prefix untuk format nomor jurnal umum transaksi akuntansi cabang ini (misal: JV-PTK -> JV-PTK-20261005-0001)')
+                        ->maxLength(20),
                 ]),
         ];
     }

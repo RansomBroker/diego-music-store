@@ -34,15 +34,24 @@ class JournalEntry extends Model
     {
         static::creating(function ($entry) {
             if (empty($entry->entry_no)) {
-                $entry->entry_no = static::generateEntryNo();
+                $entry->entry_no = static::generateEntryNo($entry->branch_id);
             }
         });
     }
 
-    public static function generateEntryNo(): string
+    public static function generateEntryNo(?int $branchId = null): string
     {
         $date = now()->format('Ymd');
-        $prefix = 'JV-' . $date . '-';
+        $basePrefix = 'JV';
+
+        if ($branchId) {
+            $branch = Branch::find($branchId);
+            if ($branch && !empty($branch->journal_prefix)) {
+                $basePrefix = trim($branch->journal_prefix);
+            }
+        }
+
+        $prefix = rtrim($basePrefix, '-') . '-' . $date . '-';
 
         $lastEntry = static::where('entry_no', 'like', $prefix . '%')
             ->orderBy('entry_no', 'desc')

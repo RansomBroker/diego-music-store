@@ -28,6 +28,8 @@ class CreateBranch
             $branch = Branch::create([
                 'name'           => $data['name'],
                 'store_name'     => $data['store_name'] ?? 'Diego Music Store',
+                'sku_prefix'     => $data['sku_prefix'] ?? null,
+                'journal_prefix' => $data['journal_prefix'] ?? null,
                 'logo_path'      => $data['logo_path'] ?? null,
                 'address'        => $data['address'] ?? null,
                 'phone'          => $data['phone'] ?? null,
@@ -43,7 +45,13 @@ class CreateBranch
                 'shift_end_time'   => $data['shift_end_time'] ?? '17:00:00',
                 'manager_id'     => $data['manager_id'] ?? null,
                 'is_active'      => $data['is_active'] ?? true,
+                'inventory_account_id' => $data['inventory_account_id'] ?? null,
+                'interbranch_receivable_account_id' => $data['interbranch_receivable_account_id'] ?? null,
+                'interbranch_payable_account_id' => $data['interbranch_payable_account_id'] ?? null,
             ]);
+
+            // Ensure COA accounts are provisioned if not provided
+            \App\Actions\Branch\EnsureBranchCoaAccounts::execute($branch);
 
             // 2. Attach Owner / Admin users to branch_user pivot automatically
             $adminUserIds = User::whereHas('roles', function ($q) {

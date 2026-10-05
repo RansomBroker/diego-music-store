@@ -63,6 +63,18 @@ class BranchesTable
                     ->color('info')
                     ->getStateUsing(fn ($record) => ($record->shift_start_time ? substr($record->shift_start_time, 0, 5) : '09:00') . ' - ' . ($record->shift_end_time ? substr($record->shift_end_time, 0, 5) : '17:00')),
 
+                TextColumn::make('sku_prefix')
+                    ->label('Prefix SKU')
+                    ->badge()
+                    ->color('warning')
+                    ->placeholder('-'),
+
+                TextColumn::make('journal_prefix')
+                    ->label('Prefix Jurnal')
+                    ->badge()
+                    ->color('primary')
+                    ->placeholder('-'),
+
                 ToggleColumn::make('is_active')
                     ->label('Status Aktif'),
 
@@ -71,6 +83,18 @@ class BranchesTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Dibuat Pada'),
+
+                TextColumn::make('inventoryAccount.name')
+                    ->label('Akun Persediaan')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('interbranchReceivableAccount.name')
+                    ->label('Piutang Antar Cabang')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('interbranchPayableAccount.name')
+                    ->label('Hutang Antar Cabang')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //

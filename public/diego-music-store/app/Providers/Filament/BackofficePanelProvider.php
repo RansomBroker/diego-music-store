@@ -66,6 +66,9 @@ class BackofficePanelProvider extends PanelProvider
                      ->label('Inventori')
                      ->icon('heroicon-o-archive-box'),
                 NavigationGroup::make()
+                     ->label('Persediaan')
+                     ->icon('heroicon-o-clipboard-document-list'),
+                NavigationGroup::make()
                     ->label('Kelola User')
                     ->icon('heroicon-o-users'),
                 NavigationGroup::make()
@@ -93,7 +96,7 @@ class BackofficePanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                AccountWidget::class,
+                \App\Filament\Widgets\CustomAccountWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

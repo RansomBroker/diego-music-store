@@ -16,3 +16,7 @@ Schedule::command('app:year-end-closing')
     ->yearlyOn(12, 31, '23:59')
     ->name('year-end-closing-31-dec');
 
+// Otomasi Produk Fokus: Cek kadaluarsa setiap jam & evaluasi rule setiap malam
+Schedule::command('focus-products:expire')->hourly();
+Schedule::command('focus-products:evaluate')->dailyAt('01:00');
+

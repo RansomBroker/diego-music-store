@@ -67,6 +67,7 @@ class ImportProducts
 
         DB::transaction(function () use (
             $rows,
+            $branch,
             $branchId,
             $hppSource,
             $defaultUnit,
@@ -89,9 +90,8 @@ class ImportProducts
                     }
 
                     if ($sku === '') {
-                        $skippedCount++;
-                        $errors[] = "Baris {$rowNum}: KODE BARANG (SKU) tidak boleh kosong.";
-                        continue;
+                        // Otomatis generate SKU menggunakan prefix cabang
+                        $sku = ProductHelper::generateUniqueSku($branch->sku_prefix ?? null, $branchId);
                     }
 
                     if ($name === '') {
@@ -283,8 +283,10 @@ class ImportProducts
             return null;
         }
 
-        $inventoryAcc = AccountHelper::findByCode('111401001')
-            ?: Account::find(AccountHelper::resolveAccountId('111401001', 'PERSEDIAAN BARANG DAGANG', 'asset'));
+        $branch = Branch::find($branchId);
+        $inventoryAcc = ($branch && $branch->inventory_account_id)
+            ? Account::find($branch->inventory_account_id)
+            : (AccountHelper::findByCode('111401001') ?: Account::find(AccountHelper::resolveAccountId('111401001', 'PERSEDIAAN BARANG DAGANG', 'asset')));
 
         $contraAcc = $contraAccountId ? Account::find($contraAccountId) : null;
         if (!$contraAcc) {
@@ -298,6 +300,7 @@ class ImportProducts
 
         return DB::transaction(function () use ($totalValue, $branchId, $inventoryAcc, $contraAcc, $userId, $itemCount) {
             $journal = JournalEntry::create([
+                'entry_no' => JournalEntry::generateEntryNo($branchId),
                 'branch_id' => $branchId,
                 'date' => now()->format('Y-m-d'),
                 'description' => "Saldo Awal Persediaan dari Import Produk ({$itemCount} item)",
@@ -404,6 +407,7 @@ class ImportProducts
         DB::transaction(function () use (
             $dataRows,
             $headerMap,
+            $branch,
             $branchId,
             $hppSource,
             $defaultUnit,
@@ -426,7 +430,8 @@ class ImportProducts
                     }
 
                     if ($sku === '') {
-                        throw new Exception("Baris {$rowNumber}: KODE BARANG (SKU) tidak boleh kosong.");
+                        // Otomatis generate SKU menggunakan prefix cabang
+                        $sku = ProductHelper::generateUniqueSku($branch->sku_prefix ?? null, $branchId);
                     }
 
                     if ($name === '') {

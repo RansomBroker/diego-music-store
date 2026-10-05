@@ -168,7 +168,7 @@ CSV;
         }
     }
 
-    public function test_handles_missing_sku_gracefully(): void
+    public function test_handles_missing_sku_by_auto_generating_sku(): void
     {
         $csvContent = <<<'CSV'
 NO,KODE BARANG,NAMA STOK,KATEGORI BARANG,Harga Beli,Netto,Disc,HET,HARGA JUAL,JLH.STOK
@@ -182,9 +182,12 @@ CSV;
             $action = app(ImportProducts::class);
             $result = $action->execute($tempFile, $this->branch->id);
 
-            $this->assertEquals(0, $result['imported']);
-            $this->assertEquals(1, $result['failed']);
-            $this->assertStringContainsString('KODE BARANG (SKU) tidak boleh kosong', $result['errors'][0]);
+            $this->assertEquals(1, $result['imported']);
+            $this->assertEquals(0, $result['failed']);
+
+            $variant = ProductVariant::whereHas('product', fn($q) => $q->where('name', 'BARANG TANPA KODE'))->first();
+            $this->assertNotNull($variant);
+            $this->assertNotEmpty($variant->sku);
         } finally {
             if (file_exists($tempFile)) unlink($tempFile);
         }
@@ -252,4 +255,42 @@ CSV;
             if (file_exists($tempFile)) unlink($tempFile);
         }
     }
+
+    public function test_can_auto_generate_sku_using_branch_sku_prefix_when_importing_without_sku(): void
+    {
+        $this->branch->update([
+            'sku_prefix' => 'PTK',
+            'journal_prefix' => 'JV-PTK',
+        ]);
+
+        $csvContent = <<<'CSV'
+NO,KODE BARANG,NAMA STOK,KATEGORI BARANG,Harga Beli,Netto,Disc,HET,HARGA JUAL,JLH.STOK
+1,,GITAR AKUSTIK TANPA SKU,GUITAR,1500000,1500000,0,2000000,2000000,2 Pcs
+CSV;
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'import_auto_sku_') . '.csv';
+        file_put_contents($tempFile, $csvContent);
+
+        try {
+            $action = app(ImportProducts::class);
+            $result = $action->execute($tempFile, $this->branch->id);
+
+            $this->assertEquals(1, $result['imported']);
+            $this->assertEquals(0, $result['failed']);
+
+            $product = Product::where('name', 'GITAR AKUSTIK TANPA SKU')->first();
+            $this->assertNotNull($product);
+
+            $variant = $product->variants()->first();
+            $this->assertNotNull($variant);
+            $this->assertStringStartsWith('PTK-', $variant->sku);
+
+            // Verifikasi bahwa nomor jurnal menggunakan prefix cabang 'JV-PTK-'
+            $this->assertNotNull($result['journal_entry_no']);
+            $this->assertStringStartsWith('JV-PTK-', $result['journal_entry_no']);
+        } finally {
+            if (file_exists($tempFile)) unlink($tempFile);
+        }
+    }
 }
+

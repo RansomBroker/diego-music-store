@@ -20,6 +20,8 @@ class UpdateBranch
             $branch->update([
                 'name'           => $data['name'] ?? $branch->name,
                 'store_name'     => $data['store_name'] ?? $branch->store_name,
+                'sku_prefix'     => array_key_exists('sku_prefix', $data) ? $data['sku_prefix'] : $branch->sku_prefix,
+                'journal_prefix' => array_key_exists('journal_prefix', $data) ? $data['journal_prefix'] : $branch->journal_prefix,
                 'logo_path'      => array_key_exists('logo_path', $data) ? $data['logo_path'] : $branch->logo_path,
                 'address'        => $data['address'] ?? $branch->address,
                 'phone'          => $data['phone'] ?? $branch->phone,
@@ -35,6 +37,9 @@ class UpdateBranch
                 'shift_end_time'   => $data['shift_end_time'] ?? $branch->shift_end_time,
                 'manager_id'     => $data['manager_id'] ?? $branch->manager_id,
                 'is_active'      => $data['is_active'] ?? $branch->is_active,
+                'inventory_account_id' => array_key_exists('inventory_account_id', $data) ? $data['inventory_account_id'] : $branch->inventory_account_id,
+                'interbranch_receivable_account_id' => array_key_exists('interbranch_receivable_account_id', $data) ? $data['interbranch_receivable_account_id'] : $branch->interbranch_receivable_account_id,
+                'interbranch_payable_account_id' => array_key_exists('interbranch_payable_account_id', $data) ? $data['interbranch_payable_account_id'] : $branch->interbranch_payable_account_id,
             ]);
 
             $staffIds = null;

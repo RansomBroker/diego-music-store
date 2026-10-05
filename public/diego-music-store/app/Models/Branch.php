@@ -14,6 +14,8 @@ class Branch extends Model
     protected $fillable = [
         'name',
         'store_name',
+        'sku_prefix',
+        'journal_prefix',
         'logo_path',
         'address',
         'phone',
@@ -35,6 +37,9 @@ class Branch extends Model
         'fonnte_whatsapp_number',
         'is_whatsapp_enabled',
         'is_active',
+        'inventory_account_id',
+        'interbranch_receivable_account_id',
+        'interbranch_payable_account_id',
     ];
 
     protected $casts = [
@@ -59,5 +64,29 @@ class Branch extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'branch_user');
+    }
+
+    /**
+     * Get the inventory account for this branch.
+     */
+    public function inventoryAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'inventory_account_id');
+    }
+
+    /**
+     * Get the inter-branch receivable account for this branch.
+     */
+    public function interbranchReceivableAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'interbranch_receivable_account_id');
+    }
+
+    /**
+     * Get the inter-branch payable account for this branch.
+     */
+    public function interbranchPayableAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'interbranch_payable_account_id');
     }
 }

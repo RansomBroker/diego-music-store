@@ -22,16 +22,44 @@ class DatabaseSeeder extends Seeder
         $this->call(RoleAndPermissionSeeder::class);
         $this->call(UserSeeder::class);
         $this->call(UnitSeeder::class);
+        $this->call(FocusProductRuleSeeder::class);
 
-        // Seed default branch (Back Office / Cabang Pusat)
+        // Seed default branches (Cabang Pusat & Cabang Singkawang)
         if (Branch::count() === 0) {
             Branch::create([
                 'name' => 'Cabang Pusat (Back Office)',
+                'store_name' => 'Diego Music Store Pusat',
+                'sku_prefix' => 'DG',
+                'journal_prefix' => 'JV-PST',
                 'address' => 'Jl. Gajah Mada No. 21-22, Pontianak, Kalimantan Barat',
                 'phone' => '0561-734567',
                 'is_active' => true,
             ]);
+            Branch::create([
+                'name' => 'Cabang Singkawang',
+                'store_name' => 'Diego Music Store Singkawang',
+                'sku_prefix' => 'DG',
+                'journal_prefix' => 'JV-SKW',
+                'address' => 'Jl. Diponegoro No. 88, Singkawang, Kalimantan Barat',
+                'phone' => '0562-631234',
+                'is_active' => true,
+            ]);
+        } elseif (Branch::count() === 1) {
+            Branch::firstOrCreate(
+                ['name' => 'Cabang Singkawang'],
+                [
+                    'store_name' => 'Diego Music Store Singkawang',
+                    'sku_prefix' => 'DG',
+                    'journal_prefix' => 'JV-SKW',
+                    'address' => 'Jl. Diponegoro No. 88, Singkawang, Kalimantan Barat',
+                    'phone' => '0562-631234',
+                    'is_active' => true,
+                ]
+            );
         }
+
+        // Pastikan default sku_prefix terisi 'DG' jika kosong atau 'PST'
+        Branch::where('sku_prefix', 'PST')->orWhereNull('sku_prefix')->update(['sku_prefix' => 'DG']);
 
         // Seed default pricing tier
         if (PricingTier::count() === 0) {
@@ -43,6 +71,7 @@ class DatabaseSeeder extends Seeder
 
         // Seed Chart of Accounts
         $this->call(AccountSeeder::class);
+        $this->call(BranchCoaSeeder::class);
 
         // Seed default payment methods (9 Parent Categories + Sub-methods)
         $cashAcc     = \App\Helpers\AccountHelper::findByCode('111101001');
