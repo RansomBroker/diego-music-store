@@ -34,12 +34,13 @@
         <!-- Filter Metode Bayar -->
         <div>
             <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Metode Bayar</label>
-            <x-pos.form.select model="selectedPaymentMethod" :live="true" rounded="rounded-lg" icon="ph-credit-card">
-                <option value="all">Semua Metode</option>
-                <option value="Tunai">Tunai / Cash</option>
-                <option value="Debit">Debit BCA</option>
-                <option value="Piutang">Piutang</option>
-            </x-pos.form.select>
+            <x-pos.form.multiselect 
+                model="selectedPaymentMethod" 
+                :options="$paymentMethods->pluck('name', 'name')"
+                rounded="rounded-lg" 
+                icon="ph-credit-card" 
+                placeholder="Semua Metode"
+            />
         </div>
 
         <!-- Dari Tanggal -->

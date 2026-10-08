@@ -13,6 +13,7 @@
     $isCustomerPayments = request()->is('pos/customer-payments*');
     $isServiceManagement = request()->is('pos/service-management*');
     $isEmployees       = request()->is('pos/employees*');
+    $isEmployeeTasks   = request()->is('pos/employee-tasks*');
     $isAttendances     = request()->is('pos/attendances*');
     $isAttendanceRadiuses = request()->is('pos/attendance-radiuses*');
     $isCommissions     = request()->is('pos/commissions*');
@@ -50,7 +51,7 @@
     @toggle-sidebar.window="toggleSidebar()"
     @keydown.escape.window="closeMobile()"
     @resize.window="if (window.innerWidth >= 768) closeMobile()"
-    class="w-0 flex-shrink-0 z-40 transition-all duration-300"
+    class="w-0 flex-shrink-0 z-40 transition-[width]"
     :class="isCompact ? 'md:w-20' : 'md:w-64'"
 >
     <!-- BACKDROP OVERLAY (MOBILE ONLY) -->
@@ -69,7 +70,7 @@
 
     <!-- MAIN SIDEBAR NAVIGATION -->
     <aside
-        class="h-screen max-h-screen bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shadow-2xl md:shadow-md transition-all duration-300 overflow-hidden fixed inset-y-0 left-0 z-50 md:static md:z-auto w-72 md:w-full -translate-x-full md:translate-x-0"
+        class="h-screen max-h-screen bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shadow-2xl md:shadow-md transition-transform ease-in-out duration-300 overflow-hidden fixed inset-y-0 left-0 z-50 md:static md:z-auto w-72 md:w-full -translate-x-full md:translate-x-0"
         :class="isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
     >
         <!-- BRAND / LOGO HEADER -->
@@ -132,7 +133,7 @@
                 <!-- Dashboard -->
                 <a href="/pos/front-office"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isDashboard ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isDashboard ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Dashboard Front Office' : ''">
                     <i class="ph-bold ph-layout text-xl flex-shrink-0 {{ $isDashboard ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -142,7 +143,7 @@
                 <!-- POS Kasir -->
                 <a href="/pos"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isPos ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isPos ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'POS Kasir Transaksi' : ''">
                     <i class="ph-bold ph-squares-four text-xl flex-shrink-0 {{ $isPos ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -152,7 +153,7 @@
                 <!-- Sesi Kasir -->
                 <a href="/pos/session"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isSession ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isSession ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Sesi Kasir' : ''">
                     <i class="ph-bold ph-clock-counter-clockwise text-xl flex-shrink-0 {{ $isSession ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -162,7 +163,7 @@
                 <!-- Histori Transaksi -->
                 <a href="/pos/transactions?fromDate={{ now()->format('Y-m-d') }}&toDate={{ now()->format('Y-m-d') }}"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isTransactions ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isTransactions ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Daftar Transaksi' : ''">
                     <i class="ph-bold ph-receipt text-xl flex-shrink-0 {{ $isTransactions ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -172,7 +173,7 @@
                 <!-- Deposit Pelanggan -->
                 <a href="/pos/customer-deposits"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isCustomerDeposits ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isCustomerDeposits ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Deposit Pelanggan' : ''">
                     <i class="ph-bold ph-piggy-bank text-xl flex-shrink-0 {{ $isCustomerDeposits ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -189,7 +190,7 @@
                 <!-- Kas Harian -->
                 <a href="/pos/daily-cash"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isDailyCash ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isDailyCash ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Arus Kas Harian' : ''">
                     <i class="ph-bold ph-wallet text-xl flex-shrink-0 {{ $isDailyCash ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -199,7 +200,7 @@
                 <!-- Pelunasan Piutang -->
                 <a href="/pos/customer-payments"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isCustomerPayments ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isCustomerPayments ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Pelunasan Piutang' : ''">
                     <i class="ph-bold ph-hand-coins text-xl flex-shrink-0 {{ $isCustomerPayments ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -209,7 +210,7 @@
                 <!-- Barang Service -->
                 <a href="/pos/service-management"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isServiceManagement ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isServiceManagement ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Manajemen Service' : ''">
                     <i class="ph-bold ph-wrench text-xl flex-shrink-0 {{ $isServiceManagement ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -227,7 +228,7 @@
                 @if($canManageAdmin)
                 <a href="/pos/employees"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isEmployees ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isEmployees ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Data Personel Karyawan' : ''">
                     <i class="ph-bold ph-user-gear text-xl flex-shrink-0 {{ $isEmployees ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -235,10 +236,20 @@
                 </a>
                 @endif
 
+                <!-- Tugas Karyawan -->
+                <a href="/pos/employee-tasks"
+                   @click="if (window.innerWidth < 768) closeMobile()"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isEmployeeTasks ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   :class="isCompact ? 'justify-center px-0' : ''"
+                   :title="isCompact ? 'Tugas Karyawan' : ''">
+                    <i class="ph-bold ph-clipboard-text text-xl flex-shrink-0 {{ $isEmployeeTasks ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                    <span x-show="!isCompact" class="truncate font-semibold">Tugas Karyawan</span>
+                </a>
+
                 <!-- Presensi Karyawan -->
                 <a href="/pos/attendances"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isAttendances ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isAttendances ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Presensi Staf' : ''">
                     <i class="ph-bold ph-calendar-check text-xl flex-shrink-0 {{ $isAttendances ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -248,7 +259,7 @@
                 <!-- Komisi Sales -->
                 <a href="/pos/commissions"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isCommissions ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isCommissions ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Komisi Sales' : ''">
                     <i class="ph-bold ph-percent text-xl flex-shrink-0 {{ $isCommissions ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -258,7 +269,7 @@
                 <!-- KPI & Bonus -->
                 <a href="/pos/kpi-performance"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isKpi ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isKpi ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Performance KPI' : ''">
                     <i class="ph-bold ph-trophy text-xl flex-shrink-0 {{ $isKpi ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -269,7 +280,7 @@
                 @if($canManageAdmin)
                 <a href="/pos/payroll"
                    @click="if (window.innerWidth < 768) closeMobile()"
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all {{ $isPayroll ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isPayroll ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
                    :class="isCompact ? 'justify-center px-0' : ''"
                    :title="isCompact ? 'Payroll Gaji' : ''">
                     <i class="ph-bold ph-bank text-xl flex-shrink-0 {{ $isPayroll ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
@@ -288,7 +299,7 @@
                 <div class="space-y-1">
                     <button
                         @click="if (isCompact) { isCollapsed = false; openReports = true; } else { openReports = !openReports; }"
-                        class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all {{ $isReports ? 'text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}"
+                        class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors {{ $isReports ? 'text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}"
                         :class="isCompact ? 'justify-center px-0' : ''"
                         :title="isCompact ? 'Laporan ERP' : ''"
                     >
@@ -328,7 +339,7 @@
                 <div class="space-y-1">
                     <button
                         @click="if (isCompact) { isCollapsed = false; openInputData = true; } else { openInputData = !openInputData; }"
-                        class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all {{ $isInputData ? 'text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}"
+                        class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors {{ $isInputData ? 'text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}"
                         :class="isCompact ? 'justify-center px-0' : ''"
                         :title="isCompact ? 'Input Master Data' : ''"
                     >
@@ -381,7 +392,7 @@
                 <div class="space-y-1">
                     <button
                         @click="if (isCompact) { isCollapsed = false; openUtility = true; } else { openUtility = !openUtility; }"
-                        class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all {{ $isUtility ? 'text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}"
+                        class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors {{ $isUtility ? 'text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}"
                         :class="isCompact ? 'justify-center px-0' : ''"
                         :title="isCompact ? 'Pengaturan & Utility' : ''"
                     >
@@ -440,7 +451,7 @@
         @if($canManageAdmin)
         <div class="p-3 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             <a href="/backoffice"
-               class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all group"
+               class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors group"
                :class="isCompact ? 'justify-center px-0' : ''"
                :title="isCompact ? 'Panel Backoffice Admin' : ''">
                 <div class="flex items-center gap-3">

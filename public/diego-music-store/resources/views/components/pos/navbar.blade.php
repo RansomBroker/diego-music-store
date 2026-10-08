@@ -34,7 +34,8 @@
 @endphp
 
 <header 
-    x-data="{ mobileMenuOpen: false }"
+    x-data="{ mobileMenuOpen: false, unreadCount: {{ auth()->user()?->unreadNotifications->count() ?? 0 }} }"
+    @notifications-updated.window="unreadCount = $event.detail.count"
     class="bg-white dark:bg-slate-800 px-3 sm:px-6 py-2.5 sm:py-3.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 z-30 transition-colors flex-shrink-0 w-full min-w-0 shadow-xs"
 >
 
@@ -302,6 +303,21 @@
             </div>
         @endif
 
+        {{-- Notifications Toggle --}}
+        <button @click="$dispatch('open-notifications')"
+                type="button"
+                class="relative w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 cursor-pointer shadow-xs"
+                title="Pusat Notifikasi & Tugas">
+            <i class="ph-bold ph-bell text-base"></i>
+            {{-- Notification Badge Indicator --}}
+            <span x-show="unreadCount > 0" x-cloak class="absolute top-1 right-1 flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white dark:border-slate-700"></span>
+            </span>
+            <!-- Number Counter (Desktop) -->
+            <span x-show="unreadCount > 0" x-cloak class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-700 shadow-sm" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
+        </button>
+
         {{-- Dark Mode Toggle --}}
         <button onclick="toggleDarkMode()"
                 type="button"
@@ -401,6 +417,20 @@
                 </div>
             @endif
         @endif
+
+        {{-- Notifications Toggle (Mobile) --}}
+        <button @click="$dispatch('open-notifications')"
+                type="button"
+                class="relative w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 cursor-pointer shadow-xs">
+            <i class="ph-bold ph-bell text-base"></i>
+            {{-- Notification Badge Indicator --}}
+            <span x-show="unreadCount > 0" x-cloak class="absolute top-1 right-1 flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white dark:border-slate-700"></span>
+            </span>
+            <!-- Number Counter (Mobile) -->
+            <span x-show="unreadCount > 0" x-cloak class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-700 shadow-sm" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
+        </button>
 
         {{-- Tombol Pemicu Mobile Action Drawer --}}
         <button
@@ -608,6 +638,9 @@
     </div>
     </template>
 </header>
+
+<!-- NOTIFICATIONS RIGHT SLIDE-OVER (Global - Livewire) -->
+<livewire:pos-notification-drawer />
 
 <script>
     function toggleDarkMode() {

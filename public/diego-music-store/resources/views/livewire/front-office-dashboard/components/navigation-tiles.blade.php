@@ -54,6 +54,17 @@
             </div>
         </a>
 
+        <!-- Tugas Karyawan -->
+        <a href="{{ route('pos.employee-tasks') }}" class="group bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-700 hover:border-amber-500 dark:hover:border-amber-400 shadow-sm hover:shadow-lg hover:shadow-amber-500/10 transition-all flex flex-col items-center gap-3 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-clipboard-text text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-slate-800 dark:text-slate-100 text-sm">Tugas Karyawan</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Berikan & pantau tugas</p>
+            </div>
+        </a>
+
         <!-- Backoffice -->
         <a href="/backoffice" class="group bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 shadow-sm hover:shadow-lg hover:shadow-emerald-500/10 transition-all flex flex-col items-center gap-3 text-center">
             <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">

@@ -34,7 +34,7 @@ no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
 35,211601001,HUTANG LAIN LAIN,liability,other_payable,credit
 36,211601002,HUTANG ONGKIR,liability,other_payable,credit
 37,211601003,HUTANG PINJAMAN INTERNAL,liability,other_payable,credit
-38,211601004,HUTANG PENITIPAN DANA,liability,other_payable,credit
+38,211601004,HUTANG PENITIPAN DANA PELANGGAN,liability,other_payable,credit
 39,211601005,HUTANG KONSUMEN,liability,other_payable,credit
 40,211701001,HUTANG PPH PASAL 23,liability,tax_payable,credit
 41,221101001,HUTANG JANGKA PANJANG,liability,long_term_liability,credit

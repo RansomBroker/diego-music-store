@@ -24,7 +24,7 @@ class PosReportsSales extends Component
     public ?string $dateTo = null;
     public ?int $selectedBranchId = null;
     public ?int $selectedCustomerId = null;
-    public ?string $selectedPaymentMethod = null;
+    public array $selectedPaymentMethod = [];
     public ?int $selectedSalesRepId = null;
     public ?int $selectedCashierId = null;
     public ?string $selectedSaleCategory = null;
@@ -92,7 +92,7 @@ class PosReportsSales extends Component
     {
         $this->selectedBranchId = null;
         $this->selectedCustomerId = null;
-        $this->selectedPaymentMethod = null;
+        $this->selectedPaymentMethod = [];
         $this->selectedSalesRepId = null;
         $this->selectedCashierId = null;
         $this->selectedSaleCategory = null;
@@ -179,7 +179,7 @@ class PosReportsSales extends Component
             ->orWhereIn('id', Sale::whereNotNull('created_by')->distinct()->pluck('created_by'))
             ->orderBy('name')->get();
 
-        $paymentMethods = Sale::whereNotNull('payment_method')->where('payment_method', '!=', '')->distinct()->pluck('payment_method');
+        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->pluck('name');
         $saleCategories = Sale::whereNotNull('sale_category')->where('sale_category', '!=', '')->distinct()->pluck('sale_category');
         $productCategories = Product::whereNotNull('category')->where('category', '!=', '')->distinct()->pluck('category');
         $products = Product::orderBy('name')->get();

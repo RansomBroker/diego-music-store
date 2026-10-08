@@ -71,6 +71,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::middleware(['role:owner|admin|super_admin|Owner|Admin|Super Admin'])->group(function () {
         // SDM & Manajemen Karyawan
         Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
+        Route::get('/pos/employee-tasks', App\Livewire\PosEmployeeTasks::class)->name('pos.employee-tasks');
         Route::get('/pos/attendance-radiuses', App\Livewire\PosAttendanceRadiuses::class)->name('pos.attendance-radiuses');
         Route::get('/pos/attendance-violations', App\Livewire\PosAttendanceViolations::class)->name('pos.attendance-violations');
 

@@ -17,7 +17,7 @@ class POSTransactions extends Component
     public string $search = '';
     public ?int $selectedBranchId = null;
     public string $selectedStatus = 'all';
-    public string $selectedPaymentMethod = 'all';
+    public array $selectedPaymentMethod = [];
     public string $fromDate = '';
     public string $toDate = '';
 
@@ -51,7 +51,7 @@ class POSTransactions extends Component
         'search' => ['except' => ''],
         'selectedBranchId' => ['except' => null],
         'selectedStatus' => ['except' => 'all'],
-        'selectedPaymentMethod' => ['except' => 'all'],
+        'selectedPaymentMethod' => ['except' => []],
         'fromDate' => ['except' => ''],
         'toDate' => ['except' => ''],
     ];
@@ -129,7 +129,7 @@ class POSTransactions extends Component
         $this->search = '';
         $this->selectedBranchId = null;
         $this->selectedStatus = 'all';
-        $this->selectedPaymentMethod = 'all';
+        $this->selectedPaymentMethod = [];
         $this->fromDate = now()->format('Y-m-d');
         $this->toDate = now()->format('Y-m-d');
         $this->resetPage();
@@ -458,8 +458,12 @@ class POSTransactions extends Component
             ->when($this->selectedStatus !== 'all', function ($query) {
                 $query->where('status', $this->selectedStatus);
             })
-            ->when($this->selectedPaymentMethod !== 'all', function ($query) {
-                $query->where('payment_method', 'like', "%{$this->selectedPaymentMethod}%");
+            ->when(!empty($this->selectedPaymentMethod), function ($query) {
+                $query->where(function ($q) {
+                    foreach ($this->selectedPaymentMethod as $method) {
+                        $q->orWhere('payment_method', 'like', "%{$method}%");
+                    }
+                });
             })
             ->when($this->fromDate, function ($query) {
                 $query->whereDate('invoice_date', '>=', $this->fromDate);
@@ -476,12 +480,14 @@ class POSTransactions extends Component
             ->get();
 
         $customers = \App\Models\Customer::orderBy('name')->get();
+        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get();
 
         return view('livewire.pos-transactions', [
             'sales' => $sales,
             'branches' => $branches,
             'accounts' => $accounts,
             'customers' => $customers,
+            'paymentMethods' => $paymentMethods,
             'selectedLogoUrl' => $selectedLogoUrl,
         ])->layout('layouts.pos', ['title' => 'Daftar Transaksi — POS']);
     }

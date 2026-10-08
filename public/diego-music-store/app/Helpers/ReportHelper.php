@@ -34,7 +34,15 @@ class ReportHelper
             $query->where('customer_id', $filters['customerId']);
         }
         if (!empty($filters['paymentMethod'])) {
-            $query->where('payment_method', $filters['paymentMethod']);
+            if (is_array($filters['paymentMethod'])) {
+                $query->where(function ($q) use ($filters) {
+                    foreach ($filters['paymentMethod'] as $method) {
+                        $q->orWhere('payment_method', 'like', "%{$method}%");
+                    }
+                });
+            } else {
+                $query->where('payment_method', 'like', "%{$filters['paymentMethod']}%");
+            }
         }
         if (!empty($filters['salesRepId'])) {
             $query->where('sales_rep_id', $filters['salesRepId']);

@@ -8,7 +8,10 @@ use App\Models\ProductTierPrice;
 use App\Models\ProductBranchPrice;
 use App\Models\ProductBranchStock;
 use App\Models\ProductBundle;
+use App\Models\User;
+use App\Notifications\NewProductNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class CreateProduct
 {
@@ -141,6 +144,10 @@ class CreateProduct
                     }
                 }
             }
+
+            // Send notification to active users
+            $users = User::where('is_active', true)->get();
+            Notification::send($users, new NewProductNotification($product));
 
             return $product;
         });

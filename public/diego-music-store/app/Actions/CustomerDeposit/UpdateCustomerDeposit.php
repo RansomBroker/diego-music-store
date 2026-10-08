@@ -87,7 +87,7 @@ class UpdateCustomerDeposit
                 ?: Account::firstOrCreate(
                     ['code' => '211601004'],
                     [
-                        'name' => 'HUTANG PENITIPAN DANA',
+                        'name' => 'HUTANG PENITIPAN DANA PELANGGAN',
                         'classification' => 'liability',
                         'account_subtype' => 'other_payable',
                         'normal_balance' => 'credit',

@@ -59,7 +59,7 @@ class AccountSeeder extends Seeder
             '1-1200' => '111301001', // Piutang Dagang -> PIUTANG DAGANG
             '1-1300' => '111401001', // Persediaan Barang Dagang -> PERSEDIAAN BARANG DAGANG
             '2-1000' => '211101001', // Hutang Dagang -> HUTANG DAGANG
-            '2-1200' => '211601004', // Penitipan Dana -> HUTANG PENITIPAN DANA
+            '2-1200' => '211601004', // Penitipan Dana -> HUTANG PENITIPAN DANA PELANGGAN
             '3-1000' => '311101003', // Modal Pemilik -> MODAL PEMILIK
             '4-1000' => '411101001', // Pendapatan Penjualan -> PENJUALAN
             '5-1000' => '511501001', // Harga Pokok Penjualan (HPP) -> HARGA POKOK PENJUALAN

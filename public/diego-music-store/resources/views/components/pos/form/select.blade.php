@@ -72,7 +72,9 @@
             {{ $slot }}
         </select>
 
-        <i class="ph ph-caret-down text-slate-400 dark:text-slate-500 absolute {{ $caretClass }} top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        @if (!$attributes->has('multiple'))
+            <i class="ph ph-caret-down text-slate-400 dark:text-slate-500 absolute {{ $caretClass }} top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        @endif
     </div>
 
     @if ($modelName)

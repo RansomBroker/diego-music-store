@@ -78,12 +78,13 @@
             <!-- Col 6: Jenis Pembayaran -->
             <div>
                 <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Jenis Pembayaran</label>
-                <x-pos.form.select model="selectedPaymentMethod" :live="true" size="sm" icon="ph-credit-card">
-                    <option value="">Semua Jenis Bayar</option>
-                    @foreach ($paymentMethods as $pm)
-                        <option value="{{ $pm }}">{{ $pm }}</option>
-                    @endforeach
-                </x-pos.form.select>
+                <x-pos.form.multiselect 
+                    model="selectedPaymentMethod" 
+                    :options="$paymentMethods" 
+                    size="sm" 
+                    icon="ph-credit-card"
+                    placeholder="Semua Jenis Bayar"
+                />
             </div>
 
             <!-- Col 7: Sales Rep -->
