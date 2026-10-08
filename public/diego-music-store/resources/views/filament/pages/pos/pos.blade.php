@@ -84,30 +84,16 @@
 
     <!-- Payment Detail Modal -->
     @if ($showPaymentModal)
-        <x-pos-page::payment-modal 
-            :showPaymentModal="$showPaymentModal"
-            :paymentMethod="$paymentMethod"
-            :grandTotal="$this->grandTotal"
-            :amountPaid="$amountPaid"
+        <livewire:pos.payment-modal 
+            :grand-total="$this->grandTotal"
             :subtotal="$this->subtotal"
-            :discountAmount="$this->discountAmount"
-            :discountType="$discountType"
-            :discountValue="$discountValue"
-            :taxAmount="$this->taxAmount"
-            :pointDiscountAmount="$this->pointDiscountAmount"
-            :usePoints="$usePoints"
-            :selectedPaymentMethods="$selectedPaymentMethods"
-            :amountCash="$amountCash"
-            :amountDebit="$amountDebit"
-            :amountCredit="$amountCredit"
-            :debitRef="$debitRef"
-            :paymentAmounts="$paymentAmounts"
-            :paymentRefs="$paymentRefs"
-            :paymentMethods="$this->paymentMethods"
-            :voucherCodeInput="$voucherCodeInput"
-            :voucherValidationMessage="$voucherValidationMessage"
-            :voucherIsValid="$voucherIsValid"
-            :customerPhone="$customerPhone"
+            :discount-amount="$this->discountAmount"
+            :discount-type="$discountType"
+            :discount-value="$discountValue"
+            :tax-amount="$this->taxAmount"
+            :point-discount-amount="$this->pointDiscountAmount"
+            :use-points="$usePoints"
+            :customer-phone="$customerPhone"
         />
     @endif
 

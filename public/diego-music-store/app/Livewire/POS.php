@@ -23,7 +23,6 @@ class POS extends Component
     use WithCustomerManagement;
     use WithDraftTransactions;
     use WithPaymentHandling;
-    use WithVouchers;
 
     // Livewire states
     public $search = '';
@@ -66,29 +65,11 @@ class POS extends Component
 
     // Payment state
     public $notes = '';
-    public $paymentMethod = 'cash';
     public $discountValue = 0;
     public $discountType = 'percent';
     public $enableTax = false;
     public $taxPercent = 11;
-    public $amountPaid = 0;
     public $showPaymentModal = false;
-
-    // Split payment state
-    public $selectedPaymentMethods = ['cash'];
-    public $amountCash = 0;
-    public $amountDebit = 0;
-    public $amountCredit = 0;
-    public $debitRef = '';
-    public array $paymentAmounts = [];
-    public array $paymentRefs = [];
-    public array $paymentSubMethods = [];
-
-    // Live Voucher validation state
-    public string $voucherCodeInput = '';
-    public ?\App\Models\Voucher $appliedVoucher = null;
-    public string $voucherValidationMessage = '';
-    public bool $voucherIsValid = false;
 
     // Available branches and current branch
     public $selectedBranchId = null;
@@ -185,14 +166,6 @@ class POS extends Component
                     $this->enableTax = $sale->tax_amount > 0;
                     $this->notes = $sale->notes ?? '';
                     $this->invoiceDate = $sale->invoice_date->format('Y-m-d');
-                    
-                    // Parse payment method
-                    $this->paymentMethod = 'cash';
-                    if (str_contains(strtolower($sale->payment_method), 'debit')) {
-                        $this->paymentMethod = 'debit';
-                    } elseif (str_contains(strtolower($sale->payment_method), 'credit') || str_contains(strtolower($sale->payment_method), 'piutang')) {
-                        $this->paymentMethod = 'credit';
-                    }
                     
                     $this->cart = [];
                     foreach ($sale->items as $item) {

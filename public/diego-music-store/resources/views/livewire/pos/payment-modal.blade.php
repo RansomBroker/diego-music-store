@@ -1,31 +1,6 @@
-@props([
-    'showPaymentModal',
-    'paymentMethod',
-    'grandTotal',
-    'amountPaid',
-    'subtotal' => 0,
-    'discountAmount' => 0,
-    'taxAmount' => 0,
-    'pointDiscountAmount' => 0,
-    'usePoints' => false,
-    'selectedPaymentMethods' => ['cash'],
-    'amountCash' => 0,
-    'amountDebit' => 0,
-    'amountCredit' => 0,
-    'debitRef' => '',
-    'discountType' => 'percent',
-    'discountValue' => 0,
-    'paymentAmounts' => [],
-    'paymentRefs' => [],
-    'paymentMethods' => [],
-    'voucherCodeInput' => '',
-    'voucherValidationMessage' => '',
-    'voucherIsValid' => false,
-    'customerPhone' => '',
-])
-
+<div>
 @php
-    $allMethodsRaw = $paymentMethods;
+    $allMethodsRaw = $this->paymentMethods;
     if (empty($allMethodsRaw) || count($allMethodsRaw) === 0) {
         $allMethodsRaw = [
             (object)['id' => 1, 'code' => 'cash', 'name' => 'Tunai', 'parent_id' => null, 'parent' => null, 'children' => collect()],
@@ -49,7 +24,7 @@
 @endphp
 
 <x-pos-page::modal 
-    :show="$showPaymentModal" 
+    :show="$show" 
     title="Detail Pembayaran" 
     closeAction="closePayment"
     maxWidth="lg"
@@ -470,3 +445,4 @@
         </x-pos.utility.button>
     @endif
 </x-pos-page::modal>
+</div>

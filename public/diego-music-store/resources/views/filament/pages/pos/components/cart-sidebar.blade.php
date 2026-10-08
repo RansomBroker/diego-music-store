@@ -446,13 +446,26 @@
                             </td>
                             <!-- Dedicated Catatan Column -->
                             <td class="py-2 px-2 align-middle">
-                                <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-full max-w-[160px]">
+                                <div 
+                                    x-data="{ 
+                                        notes: @js($item['notes'] ?? ''),
+                                        originalNotes: @js($item['notes'] ?? ''),
+                                        save() {
+                                            if (this.notes !== this.originalNotes) {
+                                                this.originalNotes = this.notes;
+                                                $wire.updateItemNote({{ $id }}, this.notes);
+                                            }
+                                        }
+                                    }"
+                                    class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-full max-w-[160px]"
+                                >
                                     <i class="ph ph-note-pencil text-slate-500 dark:text-slate-400 text-[10px] absolute left-1.5 pointer-events-none"></i>
                                     <input 
                                         type="text" 
                                         placeholder="Catatan..." 
-                                        value="{{ $item['notes'] ?? '' }}"
-                                        onchange="@this.call('updateItemNote', {{ $id }}, this.value)"
+                                        x-model="notes"
+                                        @blur="save()"
+                                        @keydown.enter.prevent="$el.blur()"
                                         class="w-full pl-6 pr-2 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-0"
                                     >
                                 </div>
@@ -471,16 +484,56 @@
                             </td>
                             <td class="py-2 px-2 align-middle">
                                 <div class="flex items-center justify-end gap-1">
-                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20">
-                                        <input type="number" placeholder="0" value="{{ ($item['discount_value'] ?? 0) > 0 ? $item['discount_value'] : '' }}" onchange="@this.call('updateItemDiscountValue', {{ $id }}, this.value)" class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" min="0">
+                                    <div 
+                                        x-data="{
+                                            discountVal: @js(($item['discount_value'] ?? 0) > 0 ? (string)$item['discount_value'] : ''),
+                                            originalVal: @js(($item['discount_value'] ?? 0) > 0 ? (string)$item['discount_value'] : ''),
+                                            save() {
+                                                if (this.discountVal !== this.originalVal) {
+                                                    this.originalVal = this.discountVal;
+                                                    $wire.updateItemDiscountValue({{ $id }}, this.discountVal || 0);
+                                                }
+                                            }
+                                        }"
+                                        class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20"
+                                    >
+                                        <input 
+                                            type="number" 
+                                            placeholder="0" 
+                                            x-model="discountVal"
+                                            @blur="save()"
+                                            @keydown.enter.prevent="$el.blur()"
+                                            class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" 
+                                            min="0"
+                                        >
                                         <button type="button" wire:click="toggleItemDiscountType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-1.5 bg-slate-150 dark:bg-slate-800 text-[9px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['discount_type'] ?? 'percent') === 'percent' ? '%' : 'Rp' }}</button>
                                     </div>
                                 </div>
                             </td>
                             <td class="py-2 px-2 align-middle">
                                 <div class="flex items-center justify-end gap-1">
-                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20">
-                                        <input type="number" placeholder="0" value="{{ ($item['tax_value'] ?? 0) > 0 ? $item['tax_value'] : '' }}" onchange="@this.call('updateItemTaxValue', {{ $id }}, this.value)" class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" min="0">
+                                    <div 
+                                        x-data="{
+                                            taxVal: @js(($item['tax_value'] ?? 0) > 0 ? (string)$item['tax_value'] : ''),
+                                            originalVal: @js(($item['tax_value'] ?? 0) > 0 ? (string)$item['tax_value'] : ''),
+                                            save() {
+                                                if (this.taxVal !== this.originalVal) {
+                                                    this.originalVal = this.taxVal;
+                                                    $wire.updateItemTaxValue({{ $id }}, this.taxVal || 0);
+                                                }
+                                            }
+                                        }"
+                                        class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20"
+                                    >
+                                        <input 
+                                            type="number" 
+                                            placeholder="0" 
+                                            x-model="taxVal"
+                                            @blur="save()"
+                                            @keydown.enter.prevent="$el.blur()"
+                                            class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" 
+                                            min="0"
+                                        >
                                         <button type="button" wire:click="toggleItemTaxType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-1.5 bg-slate-150 dark:bg-slate-800 text-[9px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['tax_type'] ?? 'percent') === 'percent' ? '%' : 'Rp' }}</button>
                                     </div>
                                 </div>

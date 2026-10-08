@@ -8,19 +8,16 @@ use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\SaleCategory;
 use App\Models\PosHeldTransaction;
+use App\Models\Voucher;
 use App\Actions\Sales\CreatePOSSale;
 use App\Actions\Sales\UpdatePOSSale;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\On;
 
 trait WithPaymentHandling
 {
-    public function getPaymentMethodsProperty()
-    {
-        return \App\Models\PaymentMethod::with('children')->get();
-    }
-
     public function openPayment()
     {
         if (empty($this->cart)) {
@@ -31,136 +28,39 @@ trait WithPaymentHandling
             return;
         }
         
-        $this->selectedPaymentMethods = ['cash'];
-        $this->amountCash = $this->grandTotal;
-        $this->amountDebit = 0;
-        $this->amountCredit = 0;
-        $this->debitRef = '';
-        $this->amountPaid = $this->grandTotal;
-        
-        $this->paymentAmounts = [
-            'cash' => $this->grandTotal
-        ];
-        $this->paymentRefs = [];
-        $this->notes = '';
-        
         $this->showPaymentModal = true;
     }
 
+    #[On('close-payment-modal')]
     public function closePayment()
     {
         $this->showPaymentModal = false;
     }
 
-    public function togglePaymentMethod($method)
+    #[On('execute-checkout')]
+    public function executeCheckout(array $paymentData, bool $sendWhatsApp = false)
     {
-        if (in_array($method, $this->selectedPaymentMethods)) {
-            if (count($this->selectedPaymentMethods) > 1) {
-                $this->selectedPaymentMethods = array_values(array_diff($this->selectedPaymentMethods, [$method]));
-                if ($method === 'cash') $this->amountCash = 0;
-                if ($method === 'debit') {
-                    $this->amountDebit = 0;
-                    $this->debitRef = '';
-                }
-                if ($method === 'credit') $this->amountCredit = 0;
-                
-                unset($this->paymentAmounts[$method]);
-                unset($this->paymentRefs[$method]);
+        $selectedPaymentMethods = $paymentData['selectedPaymentMethods'] ?? ['cash'];
+        $paymentAmounts = $paymentData['paymentAmounts'] ?? [];
+        $amountCash = $paymentData['amountCash'] ?? 0;
+        $amountDebit = $paymentData['amountDebit'] ?? 0;
+        $amountCredit = $paymentData['amountCredit'] ?? 0;
+        $debitRef = $paymentData['debitRef'] ?? '';
+        $paymentRefs = $paymentData['paymentRefs'] ?? [];
+        $paymentSubMethods = $paymentData['paymentSubMethods'] ?? [];
+        $notes = $paymentData['notes'] ?? '';
+        $customerPhone = $paymentData['customerPhone'] ?? '';
+        $appliedVoucherId = $paymentData['appliedVoucherId'] ?? null;
 
-                if (count($this->selectedPaymentMethods) === 1) {
-                    $onlyMethod = $this->selectedPaymentMethods[0];
-                    $this->paymentAmounts[$onlyMethod] = $this->grandTotal;
-                    if ($onlyMethod === 'cash') $this->amountCash = $this->grandTotal;
-                    if ($onlyMethod === 'debit') $this->amountDebit = $this->grandTotal;
-                    if ($onlyMethod === 'credit') $this->amountCredit = $this->grandTotal;
-                }
-            }
-        } else {
-            $this->selectedPaymentMethods[] = $method;
-            $existingSum = 0;
-            foreach ($this->selectedPaymentMethods as $m) {
-                if ($m !== $method) {
-                    $existingSum += intval($this->paymentAmounts[$m] ?? ($m === 'cash' ? $this->amountCash : ($m === 'debit' ? $this->amountDebit : ($m === 'credit' ? $this->amountCredit : 0))));
-                }
-            }
-            $remaining = max(0, $this->grandTotal - $existingSum);
-            $this->paymentAmounts[$method] = $remaining;
-            if ($method === 'cash') $this->amountCash = $remaining;
-            if ($method === 'debit') $this->amountDebit = $remaining;
-            if ($method === 'credit') $this->amountCredit = $remaining;
-        }
-
-        $this->distributePaymentAmounts();
-    }
-
-    public function distributePaymentAmounts()
-    {
-        $this->amountCash = intval(\App\Helpers\FormatHelper::parseRupiah($this->paymentAmounts['cash'] ?? $this->amountCash));
-        $this->amountDebit = intval(\App\Helpers\FormatHelper::parseRupiah($this->paymentAmounts['debit'] ?? $this->amountDebit));
-        $this->amountCredit = intval(\App\Helpers\FormatHelper::parseRupiah($this->paymentAmounts['credit'] ?? $this->amountCredit));
-    }
-
-    public function updated($property, $value)
-    {
-        if (str_starts_with($property, 'paymentAmounts.')) {
-            $code = str_replace('paymentAmounts.', '', $property);
-            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
-            if ($code === 'cash') $this->amountCash = $parsed;
-            if ($code === 'debit') $this->amountDebit = $parsed;
-            if ($code === 'credit') $this->amountCredit = $parsed;
-
-            $this->distributePaymentAmounts();
-            $this->autoBalancePayment($code, $parsed);
-        }
-
-        if ($property === 'amountCash') {
-            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
-            $this->paymentAmounts['cash'] = $parsed;
-            $this->distributePaymentAmounts();
-            $this->autoBalancePayment('cash', $parsed);
-        }
-        if ($property === 'amountDebit') {
-            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
-            $this->paymentAmounts['debit'] = $parsed;
-            $this->distributePaymentAmounts();
-            $this->autoBalancePayment('debit', $parsed);
-        }
-        if ($property === 'amountCredit') {
-            $parsed = intval(\App\Helpers\FormatHelper::parseRupiah($value));
-            $this->paymentAmounts['credit'] = $parsed;
-            $this->distributePaymentAmounts();
-            $this->autoBalancePayment('credit', $parsed);
-        }
-    }
-
-    protected function autoBalancePayment($changedMethod, $parsedValue)
-    {
-        if (count($this->selectedPaymentMethods) === 2) {
-            $otherMethods = array_values(array_filter($this->selectedPaymentMethods, fn($m) => $m !== $changedMethod));
-            $otherMethod = $otherMethods[0];
-            
-            $remaining = max(0, $this->grandTotal - $parsedValue);
-            
-            $this->paymentAmounts[$otherMethod] = $remaining;
-            if ($otherMethod === 'cash') $this->amountCash = $remaining;
-            if ($otherMethod === 'debit') $this->amountDebit = $remaining;
-            if ($otherMethod === 'credit') $this->amountCredit = $remaining;
-            
-            $this->distributePaymentAmounts();
-        }
-    }
-
-    public function checkout(bool $sendWhatsApp = false)
-    {
         $totalPaid = 0;
-        foreach ($this->selectedPaymentMethods as $method) {
-            $totalPaid += intval($this->paymentAmounts[$method] ?? ($method === 'cash' ? $this->amountCash : ($method === 'debit' ? $this->amountDebit : ($method === 'credit' ? $this->amountCredit : 0))));
+        foreach ($selectedPaymentMethods as $method) {
+            $totalPaid += intval($paymentAmounts[$method] ?? ($method === 'cash' ? $amountCash : ($method === 'debit' ? $amountDebit : ($method === 'credit' ? $amountCredit : 0))));
         }
 
-        $hasCredit = in_array('credit', $this->selectedPaymentMethods);
+        $hasCredit = in_array('credit', $selectedPaymentMethods);
 
         if (!$hasCredit) {
-            if (in_array('cash', $this->selectedPaymentMethods)) {
+            if (in_array('cash', $selectedPaymentMethods)) {
                 if ($totalPaid < $this->grandTotal) {
                     Notification::make()
                         ->title('Jumlah Bayar Kurang')
@@ -178,15 +78,6 @@ trait WithPaymentHandling
                         ->send();
                     return;
                 }
-            }
-        } else {
-            // Auto-fill or adjust credit amount with remaining balance if less than grand total
-            $currentCredit = intval($this->paymentAmounts['credit'] ?? $this->amountCredit);
-            if ($totalPaid < $this->grandTotal) {
-                $deficit = $this->grandTotal - $totalPaid;
-                $newCredit = $currentCredit + $deficit;
-                $this->paymentAmounts['credit'] = $newCredit;
-                $this->amountCredit = $newCredit;
             }
         }
 
@@ -221,7 +112,7 @@ trait WithPaymentHandling
             // Compile payments data for split payment support
             $paymentsData = [];
             $change = 0;
-            $cashPaid = in_array('cash', $this->selectedPaymentMethods) ? intval($this->paymentAmounts['cash'] ?? $this->amountCash) : 0;
+            $cashPaid = in_array('cash', $selectedPaymentMethods) ? intval($paymentAmounts['cash'] ?? $amountCash) : 0;
             if ($cashPaid > 0) {
                 $change = max(0, $totalPaid - $this->grandTotal);
                 $netCash = $cashPaid - $change;
@@ -234,13 +125,13 @@ trait WithPaymentHandling
                 }
             }
 
-            foreach ($this->selectedPaymentMethods as $method) {
+            foreach ($selectedPaymentMethods as $method) {
                 if ($method === 'cash') continue;
                 
-                $amount = intval($this->paymentAmounts[$method] ?? ($method === 'debit' ? $this->amountDebit : ($method === 'credit' ? $this->amountCredit : 0)));
+                $amount = intval($paymentAmounts[$method] ?? ($method === 'debit' ? $amountDebit : ($method === 'credit' ? $amountCredit : 0)));
                 if ($amount > 0) {
-                    $refValue = $this->paymentRefs[$method] ?? ($method === 'debit' ? $this->debitRef : null);
-                    $subValue = $this->paymentSubMethods[$method] ?? null;
+                    $refValue = $paymentRefs[$method] ?? ($method === 'debit' ? $debitRef : null);
+                    $subValue = $paymentSubMethods[$method] ?? null;
                     $combinedRef = trim(($subValue ? "Bank: {$subValue}" : '') . ($refValue ? ($subValue ? ' | ' : '') . "Ref: {$refValue}" : ''));
 
                     $paymentsData[] = [
@@ -253,12 +144,12 @@ trait WithPaymentHandling
 
             // Compile human-readable payment method name
             $methodNames = [];
-            foreach ($this->selectedPaymentMethods as $m) {
-                $amount = intval($this->paymentAmounts[$m] ?? ($m === 'cash' ? $this->amountCash : ($m === 'debit' ? $this->amountDebit : ($m === 'credit' ? $this->amountCredit : 0))));
+            foreach ($selectedPaymentMethods as $m) {
+                $amount = intval($paymentAmounts[$m] ?? ($m === 'cash' ? $amountCash : ($m === 'debit' ? $amountDebit : ($m === 'credit' ? $amountCredit : 0))));
                 if ($amount > 0) {
                     $dbMethod = PaymentMethod::where('code', $m)->first();
                     $baseName = $dbMethod ? $dbMethod->name : ($m === 'cash' ? 'Tunai' : ($m === 'debit' ? 'Debit Card' : ($m === 'credit' ? 'Piutang' : ucfirst($m))));
-                    $subValue = $this->paymentSubMethods[$m] ?? null;
+                    $subValue = $paymentSubMethods[$m] ?? null;
                     if (!empty($subValue)) {
                         $baseName .= " ({$subValue})";
                     }
@@ -281,7 +172,7 @@ trait WithPaymentHandling
                     'tax_amount' => $this->taxAmount,
                     'items' => $itemsData,
                     'sale_category' => $this->saleCategory,
-                    'notes' => $this->notes,
+                    'notes' => $notes,
                 ]);
             } else {
                 $sale = app(CreatePOSSale::class)->execute([
@@ -296,7 +187,7 @@ trait WithPaymentHandling
                     'tax_amount' => $this->taxAmount,
                     'items' => $itemsData,
                     'sale_category' => $this->saleCategory,
-                    'notes' => $this->notes,
+                    'notes' => $notes,
                 ]);
             }
 
@@ -309,15 +200,14 @@ trait WithPaymentHandling
             }
 
             // Increment used count for applied voucher
-            if ($this->appliedVoucher) {
-                $this->appliedVoucher->increment('used_count');
-                $this->appliedVoucher = null;
-                $this->voucherCodeInput = '';
-                $this->voucherValidationMessage = '';
-                $this->voucherIsValid = false;
+            if ($appliedVoucherId) {
+                $voucher = Voucher::find($appliedVoucherId);
+                if ($voucher) {
+                    $voucher->increment('used_count');
+                }
             }
 
-            $targetPhone = trim($this->customerPhone);
+            $targetPhone = trim($customerPhone);
 
             // Reset POS State
             if ($this->currentDraftId) {
@@ -340,15 +230,6 @@ trait WithPaymentHandling
             $this->amountPaid = 0;
             $this->usePoints = false;
             
-            // Reset Split Payment state
-            $this->selectedPaymentMethods = ['cash'];
-            $this->amountCash = 0;
-            $this->amountDebit = 0;
-            $this->amountCredit = 0;
-            $this->debitRef = '';
-            $this->paymentAmounts = [];
-            $this->paymentRefs = [];
-
             // Dispatch print event for thermal receipt printing
             $this->lastSaleId = $sale->id;
             $this->dispatch('print-receipt', saleId: $sale->id);
@@ -419,17 +300,6 @@ trait WithPaymentHandling
         $this->enableTax = false;
         $this->taxPercent = 11;
         $this->usePoints = false;
-        $this->selectedPaymentMethods = ['cash'];
-        $this->amountCash = 0;
-        $this->amountDebit = 0;
-        $this->amountCredit = 0;
-        $this->debitRef = '';
-        $this->paymentAmounts = [];
-        $this->paymentRefs = [];
-        $this->appliedVoucher = null;
-        $this->voucherCodeInput = '';
-        $this->voucherValidationMessage = '';
-        $this->voucherIsValid = false;
 
         $this->currentDraftId = \Illuminate\Support\Str::uuid()->toString();
         $this->lastSavedDraftHash = null;
