@@ -26,8 +26,9 @@
 @endphp
 
 <div 
-    @if (!$isOutOfStock) wire:click="{{ $clickAction }}({{ $variant->id }})" @endif 
-    class="p-3 rounded-2xl shadow-sm border transition-all flex items-center justify-between gap-4 {{ $isOutOfStock ? 'opacity-40 saturate-50 bg-slate-100/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 pointer-events-none cursor-not-allowed select-none' : ($qtyInCart > 0 ? 'bg-blue-50/30 dark:bg-blue-950/20 border-primary dark:border-blue-500 shadow-blue-500/5 cursor-pointer group' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:shadow-md hover:border-primary dark:hover:border-blue-500 cursor-pointer group') }}"
+    tabindex="0"
+    @if (!$isOutOfStock) wire:click="{{ $clickAction }}({{ $variant->id }})" wire:keydown.enter="{{ $clickAction }}({{ $variant->id }})" @endif 
+    class="pos-product-item outline-none focus:ring-4 focus:ring-primary/50 focus:border-primary p-3 rounded-2xl shadow-sm border transition-all flex items-center justify-between gap-4 {{ $isOutOfStock ? 'opacity-40 saturate-50 bg-slate-100/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 pointer-events-none cursor-not-allowed select-none' : ($qtyInCart > 0 ? 'bg-blue-50/30 dark:bg-blue-950/20 border-primary dark:border-blue-500 shadow-blue-500/5 cursor-pointer group' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:shadow-md hover:border-primary dark:hover:border-blue-500 cursor-pointer group') }}"
 >
     <div class="flex items-center gap-4 flex-1 overflow-hidden">
         <div class="w-14 h-14 shrink-0 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center text-3xl group-hover:scale-105 transition-transform relative overflow-hidden">
@@ -40,12 +41,21 @@
         </div>
         
         <div class="min-w-0">
-            <h3 class="font-bold text-slate-900 dark:text-white text-sm truncate mb-1">
+            <h3 class="font-bold text-slate-900 dark:text-white text-sm truncate mb-1" title="{{ $product->name }} {{ $variant->name ? '(' . $variant->name . ')' : '' }}">
                 {{ $product->name }} 
                 @if ($variant->name)
                     <span class="text-xs text-slate-700 dark:text-slate-300 font-semibold">({{ $variant->name }})</span>
                 @endif
             </h3>
+            
+            <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                @if ($product->category)
+                    <span class="text-[9px] uppercase tracking-wider font-black text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{{ $product->category }}</span>
+                @endif
+                @if ($variant->sku)
+                    <span class="text-[9px] uppercase tracking-wider font-black text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded"><i class="ph-bold ph-barcode mr-0.5"></i>{{ $variant->sku }}</span>
+                @endif
+            </div>
             
             <div class="flex items-center gap-1.5 flex-wrap">
                 @if ($isService)

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\ProductVariant;
 use App\Models\Customer;
 use App\Models\Branch;
@@ -23,10 +24,12 @@ class POS extends Component
     use WithCustomerManagement;
     use WithDraftTransactions;
     use WithPaymentHandling;
+    use WithPagination;
 
     // Livewire states
     public $search = '';
     public $activeCategory = 'Semua';
+    public $sortBy = 'name_asc';
     public $cart = [];
     
     // Customer search & selection
@@ -319,53 +322,51 @@ class POS extends Component
             $search = trim($this->search);
             $likeSearch = '%' . $search . '%';
             
-            $query->where(function ($q) use ($search, $likeSearch) {
-                $q->where('product_variants.barcode', $search)
-                  ->orWhere('product_variants.sku', $search)
+            $query->where(function ($q) use ($likeSearch) {
+                $q->where('product_variants.barcode', 'like', $likeSearch)
+                  ->orWhere('product_variants.sku', 'like', $likeSearch)
                   ->orWhere('product_variants.name', 'like', $likeSearch)
                   ->orWhere('products.name', 'like', $likeSearch);
             });
         }
 
-        // Exact 15 items using offset
-        $take = 15;
-        $offset = ($this->productPage - 1) * $take;
-        
-        return $query->offset($offset)->limit($take)->get();
-    }
-
-    /**
-     * Computed property: apakah masih ada produk berikutnya.
-     * Dibandingkan jumlah produk yang sudah dimuat vs kapasitas halaman saat ini.
-     * Kalau produk yang tampil == $take (kapasitas penuh), artinya masih ada lebih.
-     */
-    public function getHasMoreProductsProperty(): bool
-    {
-        if (!$this->showProductSearchModal) {
-            return false;
+        // Apply Sorting
+        switch ($this->sortBy) {
+            case 'name_desc':
+                $query->orderBy('products.name', 'desc');
+                break;
+            case 'price_asc':
+                $query->orderBy('product_variants.price', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('product_variants.price', 'desc');
+                break;
+            case 'name_asc':
+            default:
+                $query->orderBy('products.name', 'asc');
+                break;
         }
-        
-        $take = 15;
-        return $this->products->count() === $take;
-    }
 
-    // Muat halaman produk berikutnya (dipanggil oleh infinite scroll di frontend)
-    public function loadMoreProducts(): void
-    {
-        $this->productPage++;
+        // Apply Pagination
+        return $query->paginate(15, ['*'], 'productPage');
     }
-
 
     // Reset paginasi produk saat search berubah
     public function updatedSearch(): void
     {
-        $this->productPage = 1;
+        $this->resetPage('productPage');
     }
 
     // Reset paginasi produk saat kategori berubah
     public function updatedActiveCategory(): void
     {
-        $this->productPage = 1;
+        $this->resetPage('productPage');
+    }
+
+    // Reset paginasi produk saat sorting berubah
+    public function updatedSortBy(): void
+    {
+        $this->resetPage('productPage');
     }
 
     public function loadMoreCustomers(): void
@@ -485,13 +486,14 @@ class POS extends Component
     public function openProductSearch()
     {
         $this->showProductSearchModal = true;
+        $this->resetPage('productPage');
     }
 
     public function closeProductSearch()
     {
         $this->showProductSearchModal = false;
         $this->search = '';
-        $this->productPage = 1;
+        $this->resetPage('productPage');
     }
 
     public function getCartVariantsProperty()
