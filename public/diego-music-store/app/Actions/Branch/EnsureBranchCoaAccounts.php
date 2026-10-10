@@ -79,6 +79,15 @@ class EnsureBranchCoaAccounts
             ? Account::find($accountId)
             : null;
 
+        // If a branch is explicitly linked to a generic/manual COA account,
+        // respect that configuration instead of renaming it as branch-specific.
+        if ($account && !str_contains(
+            mb_strtolower($account->name),
+            mb_strtolower(strstr($existingName, ' - ', true) ?: $existingName),
+        )) {
+            return $account;
+        }
+
         $account ??= Account::query()
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($existingName)])
             ->first();
