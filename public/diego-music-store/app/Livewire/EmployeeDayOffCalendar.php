@@ -112,7 +112,7 @@ class EmployeeDayOffCalendar extends Component
 
             $monthStart = CarbonImmutable::parse($date)->startOfMonth()->toDateString();
             $monthEnd = CarbonImmutable::parse($date)->endOfMonth()->toDateString();
-            $monthlyQuota = max(0, (int) ($employee->monthly_off_days_quota ?? 4));
+            $monthlyQuota = max(0, (int) ($branch->monthly_off_days_quota ?? 4));
             $monthlyUsed = EmployeeDayOff::query()
                 ->where('employee_id', $employee->id)
                 ->where('status', 'active')
@@ -324,7 +324,7 @@ class EmployeeDayOffCalendar extends Component
 
         $currentEmployee = auth()->user()?->employee;
         $personalMonthlyUsed = 0;
-        $personalMonthlyQuota = (int) ($currentEmployee?->monthly_off_days_quota ?? 4);
+        $personalMonthlyQuota = (int) ($branch?->monthly_off_days_quota ?? 4);
         $selectedDayQuotaUsed = $selectedDayOffs->where('status', 'active')->count();
 
         if ($currentEmployee && $this->selectedDate) {
