@@ -25,7 +25,7 @@ class EmployeeDayOffCalendarTest extends TestCase
         $this->branch = Branch::create([
             'name' => 'Cabang Test',
             'store_name' => 'Cabang Test',
-            'daily_off_quota' => 1,
+            'monthly_off_days_quota' => 4,
             'is_active' => true,
         ]);
     }
@@ -100,21 +100,21 @@ class EmployeeDayOffCalendarTest extends TestCase
         $this->assertDatabaseCount('employee_day_offs', 1);
     }
 
-    public function test_branch_daily_quota_prevents_another_employee_registering_on_a_full_date(): void
+    public function test_branch_monthly_quota_applies_to_each_employee_individually(): void
     {
-        [, $existingEmployee] = $this->createEmployeeInBranch();
-        [$applicant] = $this->createEmployeeInBranch();
-        $date = now()->addDays(3)->toDateString();
-        $this->createDayOff($existingEmployee, $date);
+        $this->branch->update(['monthly_off_days_quota' => 2]);
+        [$applicant, $employee] = $this->createEmployeeInBranch();
+        $this->createDayOff($employee, now()->addDays(2)->toDateString());
+        $this->createDayOff($employee, now()->addDays(3)->toDateString());
 
         $this->actingAs($applicant);
 
         Livewire::test(EmployeeDayOffCalendar::class)
-            ->set('selectedDate', $date)
+            ->set('selectedDate', now()->addDays(4)->toDateString())
             ->call('registerMyself')
             ->assertHasErrors('selectedDate');
 
-        $this->assertDatabaseCount('employee_day_offs', 1);
+        $this->assertDatabaseCount('employee_day_offs', 2);
     }
 
     public function test_owner_can_cancel_only_the_selected_employee_day_off(): void
