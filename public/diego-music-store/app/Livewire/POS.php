@@ -558,16 +558,6 @@ class POS extends Component
         $this->salesSearch = '';
     }
 
-    public function getPreviewInvoiceNumberProperty()
-    {
-        if ($this->editingSaleId) {
-            $sale = \App\Models\Sale::find($this->editingSaleId);
-            if ($sale) {
-                return $sale->invoice_number;
-            }
-        }
-        return 'DRAFT-' . strtoupper(substr(session()->getId() ?? uniqid(), 0, 6));
-    }
 
     public function render()
     {
