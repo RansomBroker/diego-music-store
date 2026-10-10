@@ -65,8 +65,8 @@
                             Edit Mode
                         </x-pos.utility.pill>
                     @else
-                        <x-pos.utility.pill variant="warning" size="xs">
-                            Draft
+                        <x-pos.utility.pill variant="info" size="xs">
+                            Kandidat
                         </x-pos.utility.pill>
                     @endif
                 </div>
