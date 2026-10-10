@@ -54,8 +54,9 @@ class ImportProducts
             throw new Exception("Cabang dengan ID {$branchId} tidak ditemukan.");
         }
 
-        $branch = $this->resolveBranchInventoryAccount($branch);
-        $inventoryAccId = $branch->inventory_account_id;
+        // Product master is shared across branches; keep its generic inventory COA.
+        // Branch-specific stock opening journals use Branch::inventory_account_id.
+        $inventoryAccId = AccountHelper::findByCode('111401001')?->id;
         $salesAccId = AccountHelper::findByCode('411101001')?->id;
         $cogsAccId = AccountHelper::findByCode('511501001')?->id;
 
@@ -287,7 +288,7 @@ class ImportProducts
 
         $branch = Branch::find($branchId);
         $branch = $branch ? $this->resolveBranchInventoryAccount($branch) : null;
-        $inventoryAcc = $branch?->inventoryAccount;;
+        $inventoryAcc = $branch?->inventoryAccount;
 
         $contraAcc = $contraAccountId ? Account::find($contraAccountId) : null;
         if (!$contraAcc) {
@@ -390,9 +391,9 @@ class ImportProducts
             throw new Exception("Cabang dengan ID {$branchId} tidak ditemukan.");
         }
 
-        // 1. Resolve accounting accounts using the target branch's inventory COA.
-        $branch = $this->resolveBranchInventoryAccount($branch);
-        $inventoryAccId = $branch->inventory_account_id;
+        // 1. Resolve product-level default accounting accounts.
+        // Product is shared across branches; opening-stock journals resolve the branch COA separately.
+        $inventoryAccId = AccountHelper::findByCode('111401001')?->id;
         $salesAccId = AccountHelper::findByCode('411101001')?->id;
         $cogsAccId = AccountHelper::findByCode('511501001')?->id;
 
