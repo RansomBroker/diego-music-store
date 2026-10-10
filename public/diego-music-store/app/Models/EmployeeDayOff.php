@@ -9,6 +9,7 @@ class EmployeeDayOff extends Model
 {
     protected $fillable = [
         'employee_id',
+        'branch_id',
         'off_date',
         'status',
         'created_by',
@@ -25,6 +26,11 @@ class EmployeeDayOff extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function creator(): BelongsTo
