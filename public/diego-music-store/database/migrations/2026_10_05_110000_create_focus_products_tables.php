@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Drop partial tables if previous migration attempt failed halfway
+        Schema::dropIfExists('focus_products');
+        Schema::dropIfExists('focus_product_recommendations');
+        Schema::dropIfExists('focus_product_rules');
+
         // 1. Focus Product Rules
         Schema::create('focus_product_rules', function (Blueprint $table) {
             $table->id();
@@ -35,7 +40,7 @@ return new class extends Migration
             $table->integer('aging_days')->nullable();
             $table->text('reason');
             $table->string('status', 20)->default('PENDING'); // PENDING, ACCEPTED, DISMISSED
-            $table->timestamp('evaluated_at');
+            $table->timestamp('evaluated_at')->nullable()->useCurrent();
             $table->timestamp('dismissed_at')->nullable();
             $table->foreignId('dismissed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
@@ -56,9 +61,9 @@ return new class extends Migration
             $table->string('status', 20)->default('ACTIVE'); // ACTIVE, EXPIRED, RESOLVED, DISMISSED
             $table->text('reason');
             $table->text('note')->nullable();
-            $table->timestamp('active_from');
+            $table->timestamp('active_from')->nullable()->useCurrent();
             $table->timestamp('active_until')->nullable();
-            $table->timestamp('focused_at');
+            $table->timestamp('focused_at')->nullable()->useCurrent();
             $table->foreignId('focused_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('resolved_at')->nullable();
             $table->foreignId('resolved_by')->nullable()->constrained('users')->nullOnDelete();
