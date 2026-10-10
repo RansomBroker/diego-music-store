@@ -340,6 +340,8 @@ class EmployeeDayOffCalendar extends Component
         $currentEmployee = auth()->user()?->employee;
         $personalMonthlyUsed = 0;
         $personalMonthlyQuota = (int) ($currentEmployee?->monthly_off_days_quota ?? 4);
+        $selectedDayQuotaUsed = $selectedDayOffs->where('status', 'active')->count();
+        $selectedDayQuotaReached = $selectedDayQuotaUsed >= $dailyQuota;
 
         if ($currentEmployee && $this->selectedDate) {
             $selectedMonth = CarbonImmutable::parse($this->selectedDate);
@@ -364,6 +366,8 @@ class EmployeeDayOffCalendar extends Component
             'dailyQuota' => $dailyQuota,
             'personalMonthlyUsed' => $personalMonthlyUsed,
             'personalMonthlyQuota' => $personalMonthlyQuota,
+            'selectedDayQuotaUsed' => $selectedDayQuotaUsed,
+            'selectedDayQuotaReached' => $selectedDayQuotaReached,
         ])->layout('layouts.pos', ['title' => 'Kalender Jadwal Off — POS Diego Music Store']);
     }
 }
