@@ -6,6 +6,7 @@ use App\Helpers\AccountHelper;
 use App\Helpers\ProductHelper;
 use App\Models\Account;
 use App\Models\Branch;
+use App\Actions\Branch\EnsureBranchCoaAccounts;
 use App\Models\JournalEntry;
 use App\Models\JournalItem;
 use App\Models\Product;
@@ -53,7 +54,8 @@ class ImportProducts
             throw new Exception("Cabang dengan ID {$branchId} tidak ditemukan.");
         }
 
-        $inventoryAccId = AccountHelper::findByCode('111401001')?->id;
+        $branch = $this->resolveBranchInventoryAccount($branch);
+        $inventoryAccId = $branch->inventory_account_id;
         $salesAccId = AccountHelper::findByCode('411101001')?->id;
         $cogsAccId = AccountHelper::findByCode('511501001')?->id;
 
@@ -284,9 +286,8 @@ class ImportProducts
         }
 
         $branch = Branch::find($branchId);
-        $inventoryAcc = ($branch && $branch->inventory_account_id)
-            ? Account::find($branch->inventory_account_id)
-            : (AccountHelper::findByCode('111401001') ?: Account::find(AccountHelper::resolveAccountId('111401001', 'PERSEDIAAN BARANG DAGANG', 'asset')));
+        $branch = $branch ? $this->resolveBranchInventoryAccount($branch) : null;
+        $inventoryAcc = $branch?->inventoryAccount;;
 
         $contraAcc = $contraAccountId ? Account::find($contraAccountId) : null;
         if (!$contraAcc) {
@@ -334,6 +335,40 @@ class ImportProducts
     }
 
     /**
+     * Resolve the posting inventory account for the target branch.
+     *
+     * Legacy imports used the generic 111401001 account. Re-link that legacy
+     * default to a branch-specific account before importing stock.
+     */
+    private function resolveBranchInventoryAccount(Branch $branch): Branch
+    {
+        $branch->load('inventoryAccount');
+
+        $account = $branch->inventoryAccount;
+        $isLegacyGenericInventory = $account
+            && (
+                $account->code === '111401001'
+                || mb_strtolower(trim($account->name)) === 'persediaan barang dagang'
+            );
+
+        if (!$account || $isLegacyGenericInventory) {
+            if ($isLegacyGenericInventory) {
+                $branch->inventory_account_id = null;
+                $branch->save();
+            }
+
+            $branch = EnsureBranchCoaAccounts::execute($branch);
+            $branch->load('inventoryAccount');
+        }
+
+        if (!$branch->inventoryAccount) {
+            throw new Exception("Akun persediaan untuk cabang {$branch->name} belum dikonfigurasi.");
+        }
+
+        return $branch;
+    }
+
+    /**
      * Execute the import process from an Excel or CSV file.
      *
      * @param  string  $filePath  Absolute path to the uploaded Excel or CSV file.
@@ -355,8 +390,9 @@ class ImportProducts
             throw new Exception("Cabang dengan ID {$branchId} tidak ditemukan.");
         }
 
-        // 1. Resolve default accounting accounts
-        $inventoryAccId = AccountHelper::findByCode('111401001')?->id;
+        // 1. Resolve accounting accounts using the target branch's inventory COA.
+        $branch = $this->resolveBranchInventoryAccount($branch);
+        $inventoryAccId = $branch->inventory_account_id;
         $salesAccId = AccountHelper::findByCode('411101001')?->id;
         $cogsAccId = AccountHelper::findByCode('511501001')?->id;
 
