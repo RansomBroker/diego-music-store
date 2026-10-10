@@ -122,10 +122,12 @@ jobs:
               git fetch origin
               git checkout -f main
             else
-              echo "Repository found. Pulling latest changes..."
+              echo "Repository found. Fetching latest changes and resetting to origin/main..."
               cd "$TARGET_DIR"
               git remote set-url origin "$REPO_URL"
-              git pull origin main
+              git fetch origin main
+              git checkout -f main || git checkout -B main origin/main
+              git reset --hard origin/main
             fi
 
             # Check and setup .env in the Laravel directory
