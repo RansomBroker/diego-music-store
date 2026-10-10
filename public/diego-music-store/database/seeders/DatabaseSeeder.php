@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         $this->call(UserSeeder::class);
         $this->call(UnitSeeder::class);
         $this->call(FocusProductRuleSeeder::class);
+        $this->call(SaleCategorySeeder::class);
 
         // Seed default branches (Cabang Pusat & Cabang Singkawang)
         if (Branch::count() === 0) {
