@@ -10,7 +10,8 @@
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Kalender Jadwal Off</h2>
-                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Jadwal off bersama seluruh karyawan.</p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Jadwal off cabang {{ $selectedBranch?->name ?? "belum dipilih" }}.</p>
+                        <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Kuota off bersamaan: {{ $dailyQuota }} karyawan per tanggal.</p>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -54,7 +55,7 @@
                                         <span class="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold {{ $day['isToday'] ? 'bg-primary text-white' : ($day['isCurrentMonth'] ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600') }}">
                                             {{ $day['day'] }}
                                         </span>
-                                        @if ($day['isSelectable'] && ($currentEmployee?->is_active || $isOwner))
+                                        @if ($day['isSelectable'] && (($currentEmployee?->is_active && $currentEmployee?->branch_id) || $isOwner))
                                             <button type="button" wire:click="openDate('{{ $day['date'] }}')"
                                                 class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-primary/10 hover:text-primary dark:hover:bg-blue-950/60 dark:hover:text-blue-400"
                                                 title="Tambah jadwal off">
@@ -76,6 +77,9 @@
                                                 class="block w-full text-left text-[10px] font-bold text-primary hover:underline sm:text-xs">
                                                 +{{ $day['activeDayOffs']->count() - 3 }} lainnya
                                             </button>
+                                        @endif
+                                        @if ($day['activeDayOffs']->isNotEmpty())
+                                            <div class="px-1 text-[10px] font-bold {{ $day['quotaReached'] ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400' }}">{{ $day['quotaUsed'] }}/{{ $dailyQuota }} kuota</div>
                                         @endif
                                         @if ($isOwner && $day['cancelledCount'] > 0)
                                             <div class="px-1 text-[10px] font-semibold text-slate-400">{{ $day['cancelledCount'] }} dibatalkan</div>
@@ -145,11 +149,14 @@
                         @endif
                     </div>
 
-                    @if ($currentEmployee?->is_active && !$isOwner && !$selectedDayOffs->contains(fn ($item) => $item->employee_id === $currentEmployee->id && $item->status === 'active'))
+                    @if ($currentEmployee?->is_active && $currentEmployee?->branch_id && !$isOwner && !$selectedDayOffs->contains(fn ($item) => $item->employee_id === $currentEmployee->id && $item->status === 'active'))
                         <div class="border-t border-slate-200 pt-4 dark:border-slate-800">
+                            @if ($selectedDayQuotaReached)
+                                <p class="mb-3 rounded-lg bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">Kuota off cabang sudah penuh ({{ $selectedDayQuotaUsed }}/{{ $dailyQuota }} karyawan).</p>
+                            @endif
                             <p class="mb-3 text-sm text-slate-500 dark:text-slate-400">Daftarkan diri Anda untuk off pada tanggal ini.</p>
-                            <button type="button" wire:click="registerMyself" wire:loading.attr="disabled"
-                                class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-extrabold text-white transition hover:opacity-90 disabled:opacity-50">
+                            <button type="button" wire:click="registerMyself" wire:loading.attr="disabled" @disabled($selectedDayQuotaReached)
+                                class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-extrabold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
                                 <span wire:loading.remove wire:target="registerMyself">Daftarkan Saya Off</span>
                                 <span wire:loading wire:target="registerMyself">Menyimpan...</span>
                             </button>
