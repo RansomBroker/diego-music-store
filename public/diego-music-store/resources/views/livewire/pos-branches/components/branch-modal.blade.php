@@ -93,6 +93,14 @@
                     <input type="file" wire:model="logo" class="w-full text-xs border border-slate-200 dark:border-slate-800 rounded-xl p-2 bg-white dark:bg-slate-900">
                 </div>
 
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                    <label for="daily_off_quota" class="mb-1 block font-bold text-slate-700 dark:text-slate-300">Kuota Off Bersamaan per Hari</label>
+                    <input id="daily_off_quota" type="number" min="1" max="100" wire:model="daily_off_quota"
+                        class="w-full rounded-xl border-slate-200 bg-white text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                    <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Maksimal karyawan dari cabang ini yang boleh terjadwal off pada tanggal yang sama. Default: 1 orang.</p>
+                    @error('daily_off_quota') <span class="text-rose-500 text-[10px]">{{ $message }}</span> @enderror
+                </div>
+
                 <div class="flex items-center gap-2 pt-2">
                     <input type="checkbox" wire:model="is_active" id="is_active_cb" class="w-4 h-4 rounded text-blue-600">
                     <label for="is_active_cb" class="font-bold text-slate-700 dark:text-slate-300">Status Cabang Aktif</label>
