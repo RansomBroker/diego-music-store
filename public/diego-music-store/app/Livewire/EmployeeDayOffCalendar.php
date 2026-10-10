@@ -123,18 +123,6 @@ class EmployeeDayOffCalendar extends Component
                 return "Kuota off bulanan Anda sudah penuh ({$monthlyUsed}/{$monthlyQuota} hari).";
             }
 
-            $dailyQuota = max(1, (int) ($branch->daily_off_quota ?? 1));
-            $branchDailyUsed = EmployeeDayOff::query()
-                ->where('branch_id', $branch->id)
-                ->whereDate('off_date', $date)
-                ->where('status', 'active')
-                ->lockForUpdate()
-                ->count();
-
-            if ($branchDailyUsed >= $dailyQuota) {
-                return "Kuota off cabang untuk tanggal ini sudah penuh ({$branchDailyUsed}/{$dailyQuota} karyawan).";
-            }
-
             EmployeeDayOff::create([
                 'employee_id' => $employee->id,
                 'branch_id' => $branch->id,
@@ -289,7 +277,6 @@ class EmployeeDayOffCalendar extends Component
         $calendarEnd = $monthEnd->endOfWeek(Carbon::SUNDAY);
         $branchId = $this->activeBranchId();
         $branch = $branchId ? Branch::find($branchId) : null;
-        $dailyQuota = max(1, (int) ($branch?->daily_off_quota ?? 1));
 
         $dayOffs = EmployeeDayOff::query()
             ->with(['employee', 'canceller'])
@@ -316,8 +303,6 @@ class EmployeeDayOffCalendar extends Component
                 'isSelectable' => $this->isSelectableDate($dateString),
                 'activeDayOffs' => $activeDayOffs,
                 'cancelledCount' => $cancelledCount,
-                'quotaReached' => $activeDayOffs->count() >= $dailyQuota,
-                'quotaUsed' => $activeDayOffs->count(),
             ];
 
             if (count($week) === 7) {
@@ -341,7 +326,6 @@ class EmployeeDayOffCalendar extends Component
         $personalMonthlyUsed = 0;
         $personalMonthlyQuota = (int) ($currentEmployee?->monthly_off_days_quota ?? 4);
         $selectedDayQuotaUsed = $selectedDayOffs->where('status', 'active')->count();
-        $selectedDayQuotaReached = $selectedDayQuotaUsed >= $dailyQuota;
 
         if ($currentEmployee && $this->selectedDate) {
             $selectedMonth = CarbonImmutable::parse($this->selectedDate);
@@ -363,11 +347,9 @@ class EmployeeDayOffCalendar extends Component
             'isOwner' => $this->isOwner(),
             'currentEmployee' => $currentEmployee,
             'selectedBranch' => $branch,
-            'dailyQuota' => $dailyQuota,
+            'monthlyOffQuota' => (int) ($branch?->monthly_off_days_quota ?? 4),
             'personalMonthlyUsed' => $personalMonthlyUsed,
             'personalMonthlyQuota' => $personalMonthlyQuota,
-            'selectedDayQuotaUsed' => $selectedDayQuotaUsed,
-            'selectedDayQuotaReached' => $selectedDayQuotaReached,
         ])->layout('layouts.pos', ['title' => 'Kalender Jadwal Off — POS Diego Music Store']);
     }
 }
