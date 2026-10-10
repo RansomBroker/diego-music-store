@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Livewire\EmployeeDayOffCalendar;
+use App\Models\Branch;
+use App\Models\Employee;
 use App\Models\EmployeeDayOff;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,22 +16,56 @@ class EmployeeDayOffCalendarTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_employee_can_register_themselves_for_a_valid_day_off_date(): void
+    private Branch $branch;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->branch = Branch::create([
+            'name' => 'Cabang Test',
+            'store_name' => 'Cabang Test',
+            'daily_off_quota' => 1,
+            'is_active' => true,
+        ]);
+    }
+
+    private function createEmployeeInBranch(): array
     {
         $user = User::factory()->create();
-        $employee = $user->employee;
+        $user->employee()->update(['branch_id' => $this->branch->id]);
+
+        return [$user, $user->employee()->firstOrFail()];
+    }
+
+    private function createDayOff(Employee $employee, string $date, string $status = 'active'): EmployeeDayOff
+    {
+        return EmployeeDayOff::create([
+            'employee_id' => $employee->id,
+            'branch_id' => $this->branch->id,
+            'off_date' => $date,
+            'status' => $status,
+            'created_by' => $employee->user_id,
+        ]);
+    }
+
+    public function test_employee_can_register_themselves_for_a_valid_day_off_date(): void
+    {
+        [$user, $employee] = $this->createEmployeeInBranch();
+        $date = now()->addDays(2)->toDateString();
 
         $this->actingAs($user);
 
         Livewire::test(EmployeeDayOffCalendar::class)
-            ->call('openDate', now()->addDays(2)->toDateString())
+            ->call('openDate', $date)
             ->call('registerMyself')
             ->assertHasNoErrors()
             ->assertDispatched('toast');
 
         $this->assertDatabaseHas('employee_day_offs', [
             'employee_id' => $employee->id,
-            'off_date' => now()->addDays(2)->toDateString(),
+            'branch_id' => $this->branch->id,
+            'off_date' => $date,
             'status' => 'active',
             'created_by' => $user->id,
         ]);
@@ -37,7 +73,7 @@ class EmployeeDayOffCalendarTest extends TestCase
 
     public function test_employee_cannot_register_for_a_date_outside_the_allowed_window(): void
     {
-        $user = User::factory()->create();
+        [$user] = $this->createEmployeeInBranch();
         $this->actingAs($user);
 
         Livewire::test(EmployeeDayOffCalendar::class)
@@ -50,18 +86,28 @@ class EmployeeDayOffCalendarTest extends TestCase
 
     public function test_employee_cannot_register_twice_for_the_same_active_date(): void
     {
-        $user = User::factory()->create();
-        $employee = $user->employee;
+        [$user, $employee] = $this->createEmployeeInBranch();
         $date = now()->addDays(3)->toDateString();
-
-        EmployeeDayOff::create([
-            'employee_id' => $employee->id,
-            'off_date' => $date,
-            'status' => 'active',
-            'created_by' => $user->id,
-        ]);
+        $this->createDayOff($employee, $date);
 
         $this->actingAs($user);
+
+        Livewire::test(EmployeeDayOffCalendar::class)
+            ->set('selectedDate', $date)
+            ->call('registerMyself')
+            ->assertHasErrors('selectedDate');
+
+        $this->assertDatabaseCount('employee_day_offs', 1);
+    }
+
+    public function test_branch_daily_quota_prevents_another_employee_registering_on_a_full_date(): void
+    {
+        [, $existingEmployee] = $this->createEmployeeInBranch();
+        [$applicant] = $this->createEmployeeInBranch();
+        $date = now()->addDays(3)->toDateString();
+        $this->createDayOff($existingEmployee, $date);
+
+        $this->actingAs($applicant);
 
         Livewire::test(EmployeeDayOffCalendar::class)
             ->set('selectedDate', $date)
@@ -78,22 +124,12 @@ class EmployeeDayOffCalendarTest extends TestCase
         $owner = User::factory()->create();
         $owner->assignRole('owner');
 
-        $employeeA = User::factory()->create()->employee;
-        $employeeB = User::factory()->create()->employee;
+        [, $employeeA] = $this->createEmployeeInBranch();
+        [, $employeeB] = $this->createEmployeeInBranch();
         $date = now()->addDays(4)->toDateString();
 
-        $dayOffA = EmployeeDayOff::create([
-            'employee_id' => $employeeA->id,
-            'off_date' => $date,
-            'status' => 'active',
-            'created_by' => $employeeA->user_id,
-        ]);
-        $dayOffB = EmployeeDayOff::create([
-            'employee_id' => $employeeB->id,
-            'off_date' => $date,
-            'status' => 'active',
-            'created_by' => $employeeB->user_id,
-        ]);
+        $dayOffA = $this->createDayOff($employeeA, $date);
+        $dayOffB = $this->createDayOff($employeeB, $date);
 
         $this->actingAs($owner);
 
@@ -119,14 +155,9 @@ class EmployeeDayOffCalendarTest extends TestCase
 
     public function test_non_owner_cannot_cancel_a_day_off(): void
     {
-        $user = User::factory()->create();
-        $otherEmployee = User::factory()->create()->employee;
-        $dayOff = EmployeeDayOff::create([
-            'employee_id' => $otherEmployee->id,
-            'off_date' => now()->addDays(5)->toDateString(),
-            'status' => 'active',
-            'created_by' => $otherEmployee->user_id,
-        ]);
+        [$user] = $this->createEmployeeInBranch();
+        [, $otherEmployee] = $this->createEmployeeInBranch();
+        $dayOff = $this->createDayOff($otherEmployee, now()->addDays(5)->toDateString());
 
         $this->actingAs($user);
 
