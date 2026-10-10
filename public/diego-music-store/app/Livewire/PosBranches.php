@@ -47,6 +47,7 @@ class PosBranches extends Component
     public string $fonnte_whatsapp_number = '';
     public bool $is_whatsapp_enabled = true;
     public bool $is_active = true;
+    public int $daily_off_quota = 1;
 
     public function updatingSearch()
     {
@@ -81,11 +82,12 @@ class PosBranches extends Component
             'name', 'store_name', 'logo', 'existing_logo_path', 'address',
             'phone', 'email', 'city', 'province', 'postal_code',
             'npwp', 'bank_info', 'receipt_header', 'receipt_footer',
-            'manager_id', 'fonnte_token', 'fonnte_whatsapp_number', 'editingId', 'isEditing'
+            'manager_id', 'fonnte_token', 'fonnte_whatsapp_number', 'editingId', 'isEditing', 'daily_off_quota'
         ]);
         $this->store_name = 'Diego Music Store';
         $this->is_whatsapp_enabled = true;
         $this->is_active = true;
+        $this->daily_off_quota = 1;
         $this->showModal = true;
     }
 
@@ -112,6 +114,7 @@ class PosBranches extends Component
         $this->fonnte_whatsapp_number = $branch->fonnte_whatsapp_number ?: '';
         $this->is_whatsapp_enabled    = (bool) ($branch->is_whatsapp_enabled ?? true);
         $this->is_active              = (bool) $branch->is_active;
+        $this->daily_off_quota        = (int) ($branch->daily_off_quota ?? 1);
 
         $this->showModal = true;
     }
@@ -123,6 +126,7 @@ class PosBranches extends Component
             'store_name' => 'required|string|max:255',
             'phone'      => 'nullable|string|max:50',
             'email'      => 'nullable|email|max:255',
+            'daily_off_quota' => 'required|integer|min:1|max:100',
         ], [
             'name.required'       => 'Nama cabang wajib diisi.',
             'store_name.required' => 'Nama toko wajib diisi.',
@@ -152,6 +156,7 @@ class PosBranches extends Component
             'fonnte_whatsapp_number' => \App\Helpers\FonnteHelper::formatPhoneNumber($this->fonnte_whatsapp_number),
             'is_whatsapp_enabled'    => $this->is_whatsapp_enabled,
             'is_active'              => $this->is_active,
+            'daily_off_quota'        => $this->daily_off_quota,
         ];
 
         if ($this->isEditing) {
