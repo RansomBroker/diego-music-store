@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Account;
+use App\Models\AccountClassification;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 
@@ -10,6 +11,23 @@ class AccountSeeder extends Seeder
 {
     public function run(): void
     {
+        // Pastikan master klasifikasi tersedia dan label UI konsisten sebelum akun dibuat.
+        $classifications = [
+            'asset' => 'Aset',
+            'liability' => 'Liabilitas',
+            'equity' => 'Ekuitas',
+            'revenue' => 'Pendapatan',
+            'cost' => 'Harga Pokok Penjualan',
+            'expense' => 'Beban',
+        ];
+
+        foreach ($classifications as $key => $name) {
+            AccountClassification::updateOrCreate(
+                ['key' => $key],
+                ['name' => $name],
+            );
+        }
+
         // 1. Definisikan Root Headers Level 1 (9-digit)
         $headers = [
             '100000000' => ['name' => 'ASET', 'classification' => 'asset'],
