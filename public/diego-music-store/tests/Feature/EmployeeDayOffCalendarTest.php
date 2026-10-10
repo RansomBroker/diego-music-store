@@ -132,7 +132,7 @@ class EmployeeDayOffCalendarTest extends TestCase
 
         Livewire::test(EmployeeDayOffCalendar::class)
             ->call('openCancelModal', $dayOff->id)
-            ->assertForbidden();
+            ->assertStatus(403);
 
         $this->assertDatabaseHas('employee_day_offs', [
             'id' => $dayOff->id,
