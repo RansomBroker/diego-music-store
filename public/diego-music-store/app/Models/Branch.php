@@ -37,6 +37,7 @@ class Branch extends Model
         'fonnte_whatsapp_number',
         'is_whatsapp_enabled',
         'is_active',
+        'monthly_off_days_quota',
         'inventory_account_id',
         'interbranch_receivable_account_id',
         'interbranch_payable_account_id',
@@ -48,6 +49,7 @@ class Branch extends Model
         'attendance_radius_meters' => 'integer',
         'is_whatsapp_enabled' => 'boolean',
         'is_active' => 'boolean',
+        'monthly_off_days_quota' => 'integer',
     ];
 
     /**

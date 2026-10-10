@@ -45,6 +45,7 @@ class CreateBranch
                 'shift_end_time'   => $data['shift_end_time'] ?? '17:00:00',
                 'manager_id'     => $data['manager_id'] ?? null,
                 'is_active'      => $data['is_active'] ?? true,
+                'monthly_off_days_quota' => $data['monthly_off_days_quota'] ?? 4,
                 'inventory_account_id' => $data['inventory_account_id'] ?? null,
                 'interbranch_receivable_account_id' => $data['interbranch_receivable_account_id'] ?? null,
                 'interbranch_payable_account_id' => $data['interbranch_payable_account_id'] ?? null,

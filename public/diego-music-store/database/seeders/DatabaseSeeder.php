@@ -59,6 +59,8 @@ class DatabaseSeeder extends Seeder
             );
         }
 
+        $this->call(BranchMonthlyOffQuotaSeeder::class);
+
         // Pastikan default sku_prefix terisi 'DG' jika kosong atau 'PST'
         Branch::where('sku_prefix', 'PST')->orWhereNull('sku_prefix')->update(['sku_prefix' => 'DG']);
 

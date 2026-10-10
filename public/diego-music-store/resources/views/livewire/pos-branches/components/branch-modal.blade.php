@@ -93,6 +93,14 @@
                     <input type="file" wire:model="logo" class="w-full text-xs border border-slate-200 dark:border-slate-800 rounded-xl p-2 bg-white dark:bg-slate-900">
                 </div>
 
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                    <label for="monthly_off_days_quota" class="mb-1 block font-bold text-slate-700 dark:text-slate-300">Kuota Off Bulanan per Karyawan</label>
+                    <input id="monthly_off_days_quota" type="number" min="0" max="31" wire:model="monthly_off_days_quota"
+                        class="w-full rounded-xl border-slate-200 bg-white text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                    <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Jumlah maksimal hari off yang dapat didaftarkan setiap karyawan dalam satu bulan di cabang ini. Isi 0 untuk menonaktifkan pendaftaran off. Default: 4 hari.</p>
+                    @error('monthly_off_days_quota') <span class="text-rose-500 text-[10px]">{{ $message }}</span> @enderror
+                </div>
+
                 <div class="flex items-center gap-2 pt-2">
                     <input type="checkbox" wire:model="is_active" id="is_active_cb" class="w-4 h-4 rounded text-blue-600">
                     <label for="is_active_cb" class="font-bold text-slate-700 dark:text-slate-300">Status Cabang Aktif</label>

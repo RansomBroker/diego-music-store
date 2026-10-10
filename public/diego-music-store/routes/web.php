@@ -40,6 +40,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/customer-payments', App\Livewire\PosCustomerPayments::class)->name('pos.customer-payments');
     Route::get('/pos/customers', App\Livewire\PosCustomers::class)->name('pos.customers');
     Route::get('/pos/attendances', App\Livewire\PosAttendances::class)->name('pos.attendances');
+    Route::get('/pos/day-off-calendar', App\\Livewire\\EmployeeDayOffCalendar::class)->name('pos.day-off-calendar');
     Route::get('/pos/service-management', App\Livewire\PosServiceManagement::class)->name('pos.service-management');
     Route::get('/pos/barcode-print', App\Livewire\PosBarcodePrint::class)->name('pos.barcode-print');
     Route::get('/pos/barcode-print/sheet', [App\Http\Controllers\POS\POSBarcodePrintController::class, 'show'])->name('pos.barcode-print.sheet');
