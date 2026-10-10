@@ -8,6 +8,7 @@
     'cart' => [],
     'categoryCounts' => [],
     'availableCategories' => [],
+    'visibleCategoryTabs' => [],
     'viewMode' => 'grid',
 ])
 
@@ -99,6 +100,40 @@
                         </select>
                         <i class="ph-bold ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none"></i>
                     </div>
+
+                    {{-- Filter Categories Button --}}
+                    <div x-data="{ open: false }" class="relative hidden sm:block">
+                        <button 
+                            @click="open = !open" 
+                            class="flex items-center justify-center px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors gap-1.5 text-xs font-semibold"
+                            title="Atur Kategori yang Tampil di Depan"
+                        >
+                            <i class="ph ph-push-pin text-base"></i>
+                            <span>Pin Kategori</span>
+                        </button>
+
+                        <div 
+                            x-show="open" 
+                            @click.outside="open = false"
+                            x-transition
+                            class="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-[60] overflow-hidden"
+                            style="display: none;"
+                        >
+                            <div class="p-3 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
+                                <h4 class="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">Pin Kategori (Max 6)</h4>
+                            </div>
+                            <div class="p-2 max-h-60 overflow-y-auto">
+                                @foreach ($availableCategories as $catConfig)
+                                    <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer {{ (count($visibleCategoryTabs) >= 6 && !in_array($catConfig['name'], $visibleCategoryTabs)) ? 'opacity-50 cursor-not-allowed' : '' }}">
+                                        <input type="checkbox" wire:model.live="visibleCategoryTabs" value="{{ $catConfig['name'] }}" 
+                                            @if(count($visibleCategoryTabs) >= 6 && !in_array($catConfig['name'], $visibleCategoryTabs)) disabled @endif
+                                            class="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 disabled:opacity-50">
+                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ $catConfig['name'] }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                     <button type="button" @click="close()" class="w-8 h-8 rounded-full bg-slate-150 hover:bg-slate-200 dark:bg-slate-700 text-slate-650 hover:text-slate-955 dark:text-slate-300 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer" title="Tutup (Esc)">
                         <i class="ph-bold ph-x text-lg"></i>
                     </button>
@@ -126,11 +161,12 @@
                     :activeCategory="$activeCategory" 
                     :categoryCounts="$categoryCounts"
                     :availableCategories="$availableCategories"
+                    :visibleCategoryTabs="$visibleCategoryTabs"
                 />
             </div>
 
             <div
-                class="flex-1 overflow-y-auto px-6 pb-6 no-scrollbar"
+                class="flex-1 overflow-y-auto px-6 pb-6"
             >
                 @if ($products->isEmpty())
                     <div class="flex flex-col items-center justify-center py-16 text-slate-400">

@@ -29,6 +29,8 @@ class POS extends Component
     // Livewire states
     public $search = '';
     public $activeCategory = 'Semua';
+    public $visibleCategoryTabs = [];
+    public $showCategoryFilterModal = false;
     public $sortBy = 'name_asc';
     public $cart = [];
     
@@ -131,6 +133,12 @@ class POS extends Component
         $defaultCategory = \App\Models\SaleCategory::first();
         $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
         $this->viewMode = session('pos_view_mode', 'grid');
+
+        $this->visibleCategoryTabs = session('pos_visible_categories', []);
+        if (empty($this->visibleCategoryTabs)) {
+            // default top 6 categories
+            $this->visibleCategoryTabs = collect($this->availableCategories)->take(6)->pluck('name')->toArray();
+        }
 
         $this->updateBranchDetails();
 
@@ -287,6 +295,21 @@ class POS extends Component
     {
         $this->viewMode = in_array($mode, ['grid', 'list']) ? $mode : 'grid';
         session(['pos_view_mode' => $this->viewMode]);
+    }
+
+    public function updateVisibleCategories($categories)
+    {
+        $this->visibleCategoryTabs = $categories;
+        session(['pos_visible_categories' => $this->visibleCategoryTabs]);
+        $this->showCategoryFilterModal = false;
+    }
+
+    public function updatedVisibleCategoryTabs($value)
+    {
+        if (count($value) > 6) {
+            $this->visibleCategoryTabs = array_slice($value, 0, 6);
+        }
+        session(['pos_visible_categories' => $this->visibleCategoryTabs]);
     }
 
     // Load products filtered by category and search

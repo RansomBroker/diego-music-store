@@ -76,6 +76,7 @@
                 :cart="$cart"
                 :categoryCounts="$this->categoryCounts"
                 :availableCategories="$this->availableCategories"
+                :visibleCategoryTabs="$visibleCategoryTabs"
                 :viewMode="$viewMode"
             />
         </div>

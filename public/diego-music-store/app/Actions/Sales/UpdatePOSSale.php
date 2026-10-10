@@ -89,6 +89,7 @@ class UpdatePOSSale
                     'discount_amount' => $itemDiscount,
                     'total_price' => $itemTotal,
                     'notes' => $item['notes'] ?? null,
+                    'sales_rep_id' => $item['sales_rep_id'] ?? null,
                 ];
             }
 
@@ -148,6 +149,7 @@ class UpdatePOSSale
                     'discount_amount' => $pi['discount_amount'],
                     'total_price' => $pi['total_price'],
                     'notes' => $pi['notes'],
+                    'sales_rep_id' => $pi['sales_rep_id'],
                 ]);
 
                 // Check and handle physical inventory deductions

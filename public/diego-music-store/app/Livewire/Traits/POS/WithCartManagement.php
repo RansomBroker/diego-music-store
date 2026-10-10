@@ -67,6 +67,7 @@ trait WithCartManagement
                 'tax_type' => $variant->tax_type ?? 'percent',
                 'tax_amount' => 0,
                 'pricing_tier_id' => $tierId,
+                'sales_rep_id' => null, // Optional item-level sales rep
             ];
             $this->recalculateItemDiscountAmount($variantId);
             $this->recalculateItemTaxAmount($variantId);
@@ -134,6 +135,14 @@ trait WithCartManagement
                 $this->recalculateItemTaxAmount($variantId);
                 $this->selectedPricingTierId = 'custom';
             }
+        }
+    }
+
+    public function updateItemSalesRep($variantId, $salesRepId)
+    {
+        if (isset($this->cart[$variantId])) {
+            $this->cart[$variantId]['sales_rep_id'] = empty($salesRepId) ? null : $salesRepId;
+            $this->autoSaveDraft();
         }
     }
 

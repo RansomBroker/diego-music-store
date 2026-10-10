@@ -18,6 +18,7 @@ class SaleItem extends Model
         'discount_amount',
         'total_price',
         'notes',
+        'sales_rep_id',
     ];
 
     protected $casts = [
@@ -55,5 +56,10 @@ class SaleItem extends Model
     public function getAvailableQtyForReturnAttribute(): int
     {
         return max(0, $this->quantity - $this->returned_qty);
+    }
+
+    public function salesRep(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sales_rep_id');
     }
 }

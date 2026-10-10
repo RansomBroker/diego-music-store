@@ -78,6 +78,16 @@ class PaymentModal extends Component
                 }
             }
         } else {
+            $nonVoucherMethodsCount = count(array_filter($this->selectedPaymentMethods, fn($m) => $m !== 'voucher'));
+            if ($nonVoucherMethodsCount >= 2) {
+                Notification::make()
+                    ->title('Batas Metode Pembayaran')
+                    ->body('Anda hanya dapat memilih maksimal 2 metode pembayaran.')
+                    ->warning()
+                    ->send();
+                return;
+            }
+
             $this->selectedPaymentMethods[] = $method;
             $existingSum = 0;
             foreach ($this->selectedPaymentMethods as $m) {

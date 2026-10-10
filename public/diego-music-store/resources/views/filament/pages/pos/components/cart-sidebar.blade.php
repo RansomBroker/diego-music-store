@@ -403,6 +403,7 @@
                         <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider">Item</th>
                         <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-40">Tingkat Harga</th>
                         <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-36">Catatan</th>
+                        <th class="text-left py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-32">Sales (Opt)</th>
                         <th class="text-right py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider !bg-slate-800 dark:!bg-slate-900/60 w-24">Harga</th>
                         <th class="text-center py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-24">Qty</th>
                         <th class="text-right py-2 px-2 text-[10px] font-black text-slate-200 dark:text-slate-300 uppercase tracking-wider w-28">Diskon</th>
@@ -468,6 +469,24 @@
                                         @keydown.enter.prevent="$el.blur()"
                                         class="w-full pl-6 pr-2 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-0"
                                     >
+                                </div>
+                            </td>
+                            <!-- Dedicated Sales Rep Column -->
+                            <td class="py-2 px-2 align-middle">
+                                <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-full max-w-[130px]">
+                                    <i class="ph ph-identification-card text-slate-500 dark:text-slate-400 text-[10px] absolute left-1.5 pointer-events-none"></i>
+                                    <select 
+                                        onchange="@this.call('updateItemSalesRep', {{ $id }}, this.value)"
+                                        class="w-full pl-6 pr-5 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-0 cursor-pointer appearance-none"
+                                    >
+                                        <option value="">- Utama -</option>
+                                        @foreach ($salesReps as $rep)
+                                            <option value="{{ $rep->id }}" {{ ($item['sales_rep_id'] ?? '') == $rep->id ? 'selected' : '' }} class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
+                                                {{ $rep->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <i class="ph ph-caret-down text-slate-500 dark:text-slate-400 absolute right-1.5 pointer-events-none text-[8px]"></i>
                                 </div>
                             </td>
                             <td class="py-2 px-2 text-[11px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/20">{{ \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>

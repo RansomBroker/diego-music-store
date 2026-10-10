@@ -2,6 +2,7 @@
     'activeCategory', 
     'categoryCounts' => [],
     'availableCategories' => [],
+    'visibleCategoryTabs' => [],
 ])
 
 @php
@@ -29,52 +30,68 @@
     }
 @endphp
 
-<div class="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
-    {{-- Tab "Semua" selalu di depan --}}
-    @php $totalInCart = $categoryCounts['Semua'] ?? 0; @endphp
-    <button 
-        wire:click="setCategory('Semua')" 
-        wire:loading.attr="disabled"
-        wire:loading.class="opacity-70 cursor-wait"
-        class="px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0
-            {{ $activeCategory === 'Semua' 
-                ? 'bg-primary text-white shadow-md shadow-blue-500/20' 
-                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary dark:hover:border-blue-500 hover:text-primary dark:hover:text-blue-400' }}"
-    >
-        <span>🌐</span>
-        <span>Semua</span>
-        @if ($totalInCart > 0)
-            <span class="px-1.5 py-0.5 {{ $activeCategory === 'Semua' ? 'bg-white text-primary' : 'bg-primary/10 text-primary dark:bg-blue-950/60 dark:text-blue-400' }} text-[10px] font-black rounded-full leading-none">
-                {{ $totalInCart }}
-            </span>
-        @endif
-    </button>
-
-    {{-- Tab kategori dari DB, diurutkan berdasarkan jumlah produk terbanyak --}}
-    @foreach ($availableCategories as $cat)
-        @php
-            $catName  = $cat['name'];
-            $emoji    = getCategoryEmoji($catName);
-            $inCart   = $categoryCounts[$catName] ?? 0;
-            $isActive = $activeCategory === $catName;
-        @endphp
+<div class="flex items-center gap-3 mb-4">
+    {{-- The Scrollable Tabs --}}
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 flex-1">
+        {{-- Tab "Semua" selalu di depan --}}
+        @php $totalInCart = $categoryCounts['Semua'] ?? 0; @endphp
         <button 
-            wire:key="cat-tab-{{ \Illuminate\Support\Str::slug($catName) }}"
-            wire:click="setCategory('{{ $catName }}')" 
+            wire:click="setCategory('Semua')" 
             wire:loading.attr="disabled"
             wire:loading.class="opacity-70 cursor-wait"
-            class="px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0
-                {{ $isActive 
-                    ? 'bg-primary text-white font-semibold shadow-md shadow-blue-500/20' 
-                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium hover:border-primary dark:hover:border-blue-500 hover:text-primary dark:hover:text-blue-400' }}"
+            class="px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0
+                {{ $activeCategory === 'Semua' 
+                    ? 'bg-primary text-white shadow-md shadow-blue-500/20' 
+                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary dark:hover:border-blue-500 hover:text-primary dark:hover:text-blue-400' }}"
         >
-            <span>{{ $emoji }}</span>
-            <span>{{ $catName }}</span>
-            @if ($inCart > 0)
-                <span class="px-1.5 py-0.5 {{ $isActive ? 'bg-white text-primary' : 'bg-primary/10 text-primary dark:bg-blue-950/60 dark:text-blue-400' }} text-[10px] font-black rounded-full leading-none">
-                    {{ $inCart }}
+            <span>🌐</span>
+            <span>Semua</span>
+            @if ($totalInCart > 0)
+                <span class="px-1.5 py-0.5 {{ $activeCategory === 'Semua' ? 'bg-white text-primary' : 'bg-primary/10 text-primary dark:bg-blue-950/60 dark:text-blue-400' }} text-[10px] font-black rounded-full leading-none">
+                    {{ $totalInCart }}
                 </span>
             @endif
         </button>
-    @endforeach
+
+        {{-- Tab kategori dari DB, diurutkan: yang dipin di depan, sisanya di belakang --}}
+        @php
+            $pinnedCats = [];
+            $otherCats = [];
+            foreach ($availableCategories as $cat) {
+                if (in_array($cat['name'], $visibleCategoryTabs)) {
+                    $pinnedCats[] = $cat;
+                } else {
+                    $otherCats[] = $cat;
+                }
+            }
+            $sortedCats = array_merge($pinnedCats, $otherCats);
+        @endphp
+
+        @foreach ($sortedCats as $cat)
+            @php
+                $catName  = $cat['name'];
+                $emoji    = getCategoryEmoji($catName);
+                $inCart   = $categoryCounts[$catName] ?? 0;
+                $isActive = $activeCategory === $catName;
+            @endphp
+            <button 
+                wire:key="cat-tab-{{ \Illuminate\Support\Str::slug($catName) }}"
+                wire:click="setCategory('{{ $catName }}')" 
+                wire:loading.attr="disabled"
+                wire:loading.class="opacity-70 cursor-wait"
+                class="px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0
+                    {{ $isActive 
+                        ? 'bg-primary text-white font-semibold shadow-md shadow-blue-500/20' 
+                        : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium hover:border-primary dark:hover:border-blue-500 hover:text-primary dark:hover:text-blue-400' }}"
+            >
+                <span>{{ $emoji }}</span>
+                <span>{{ $catName }}</span>
+                @if ($inCart > 0)
+                    <span class="px-1.5 py-0.5 {{ $isActive ? 'bg-white text-primary' : 'bg-primary/10 text-primary dark:bg-blue-950/60 dark:text-blue-400' }} text-[10px] font-black rounded-full leading-none">
+                        {{ $inCart }}
+                    </span>
+                @endif
+            </button>
+        @endforeach
+    </div>
 </div>

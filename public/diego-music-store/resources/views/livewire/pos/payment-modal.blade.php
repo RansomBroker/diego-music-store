@@ -10,7 +10,7 @@
     }
 
     $allMethodsCollection = collect($allMethodsRaw);
-    $parentMethods = $allMethodsCollection->filter(fn ($m) => empty($m->parent_id));
+    $parentMethods = $allMethodsCollection->filter(fn ($m) => empty($m->parent_id) && !str_contains(strtolower($m->code), 'voucher'));
 
     $flatMethods = collect();
     foreach ($allMethodsCollection as $m) {
@@ -153,6 +153,10 @@
     <!-- Payment Inputs -->
     <div class="space-y-4 mb-6">
         @foreach ($selectedPaymentMethods as $method)
+            @if (str_contains(strtolower($method), 'voucher'))
+                @continue
+            @endif
+            
             @php
                 $dbMethod = $parentMethods->firstWhere('code', $method) ?? $flatMethods->firstWhere('code', $method);
                 $methodName = $dbMethod ? $dbMethod->name : ucfirst($method);
@@ -255,34 +259,6 @@
                             class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
                             placeholder="0" />
                     </div>
-                @elseif (str_contains(strtolower($method), 'voucher'))
-                    <div class="space-y-2">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div class="relative flex items-center gap-1.5">
-                                <input type="text" 
-                                       wire:model="voucherCodeInput" 
-                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold uppercase text-sm focus:ring-2 focus:ring-primary text-slate-900 dark:text-white" 
-                                       placeholder="e.g. PROMO50K">
-                                <button type="button" 
-                                        wire:click="validateAndApplyVoucher" 
-                                        class="px-3 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-xs whitespace-nowrap cursor-pointer shadow-sm">
-                                    Cek & Pasang
-                                </button>
-                            </div>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
-                                <x-money-input 
-                                    wire:model.live.debounce.500ms="paymentAmounts.{{ $method }}" 
-                                    wire:keyup="distributePaymentAmounts" 
-                                    class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary text-slate-850 dark:text-slate-100" 
-                                    placeholder="0" />
-                            </div>
-                        </div>
-                        @if ($voucherValidationMessage)
-                            <div class="p-2.5 rounded-xl text-xs font-semibold {{ $voucherIsValid ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60' }}">
-                                {{ $voucherValidationMessage }}
-                            </div>
-                        @endif
                     </div>
                 @else
                     @php
@@ -331,6 +307,41 @@
         
         $change = max(0, $totalPaid - $grandTotal);
     @endphp
+
+    <!-- Voucher Input Section -->
+    <div class="mb-6">
+        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">Punya Kode Voucher?</label>
+        <div class="space-y-2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="relative flex items-center gap-1.5">
+                    <input type="text" 
+                           wire:model="voucherCodeInput" 
+                           class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold uppercase text-sm focus:ring-2 focus:ring-primary text-slate-900 dark:text-white" 
+                           placeholder="e.g. PROMO50K">
+                    <button type="button" 
+                            wire:click="validateAndApplyVoucher" 
+                            class="px-3 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-xs whitespace-nowrap cursor-pointer shadow-sm">
+                        Cek & Pasang
+                    </button>
+                </div>
+                @if (in_array('voucher', $selectedPaymentMethods))
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 dark:text-slate-500 text-sm z-10">Rp</span>
+                    <x-money-input 
+                        wire:model.live.debounce.500ms="paymentAmounts.voucher" 
+                        wire:keyup="distributePaymentAmounts" 
+                        class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary text-slate-850 dark:text-slate-100" 
+                        placeholder="0" />
+                </div>
+                @endif
+            </div>
+            @if ($voucherValidationMessage)
+                <div class="p-2.5 rounded-xl text-xs font-semibold {{ $voucherIsValid ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60' }}">
+                    {{ $voucherValidationMessage }}
+                </div>
+            @endif
+        </div>
+    </div>
 
     <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 mb-6">
         <div>
