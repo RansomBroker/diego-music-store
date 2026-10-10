@@ -439,6 +439,15 @@ class POS extends Component
         return cache()->remember('pos_sale_categories', 600, fn() => \App\Models\SaleCategory::all());
     }
 
+    /**
+     * Preview the next invoice number for the currently selected sale category.
+     * This is a candidate number only; checkout generates the definitive number.
+     */
+    public function getPreviewInvoiceNumberProperty(): string
+    {
+        return \App\Models\Sale::generateInvoiceNumber($this->saleCategory);
+    }
+
     public function getBranchesProperty()
     {
         return cache()->remember('pos_branches', 86400, fn() => Branch::where('is_active', true)->get());
