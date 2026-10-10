@@ -39,7 +39,7 @@ class CreatePOSSale
             $taxAmount = intval($data['tax_amount'] ?? 0);
 
             // 1. Generate Invoice Number
-            $invoiceNumber = Sale::generateInvoiceNumber();
+            $invoiceNumber = Sale::generateInvoiceNumber($data['sale_category'] ?? null);
 
             // 2. Pre-calculate subtotal
             $processedItems = [];
