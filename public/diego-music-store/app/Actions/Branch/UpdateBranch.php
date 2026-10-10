@@ -37,6 +37,7 @@ class UpdateBranch
                 'shift_end_time'   => $data['shift_end_time'] ?? $branch->shift_end_time,
                 'manager_id'     => $data['manager_id'] ?? $branch->manager_id,
                 'is_active'      => $data['is_active'] ?? $branch->is_active,
+                'daily_off_quota' => $data['daily_off_quota'] ?? $branch->daily_off_quota,
                 'inventory_account_id' => array_key_exists('inventory_account_id', $data) ? $data['inventory_account_id'] : $branch->inventory_account_id,
                 'interbranch_receivable_account_id' => array_key_exists('interbranch_receivable_account_id', $data) ? $data['interbranch_receivable_account_id'] : $branch->interbranch_receivable_account_id,
                 'interbranch_payable_account_id' => array_key_exists('interbranch_payable_account_id', $data) ? $data['interbranch_payable_account_id'] : $branch->interbranch_payable_account_id,
