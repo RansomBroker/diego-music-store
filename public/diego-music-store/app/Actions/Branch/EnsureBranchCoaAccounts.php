@@ -22,9 +22,9 @@ class EnsureBranchCoaAccounts
             // Inter-branch balances are not supplier trade payables.
             $payableParent = Account::where('code', '211300000')->first();
 
-            if (!$branch->inventory_account_id) {
-                $branch->inventory_account_id = static::ensureBranchAccount(
+            $branch->inventory_account_id = static::ensureBranchAccount(
                     branch: $branch,
+                    accountId: $branch->inventory_account_id,
                     parent: $inventoryParent,
                     existingName: 'Persediaan Barang Dagang - ' . $branch->name,
                     codePrefix: '11180',
@@ -32,11 +32,10 @@ class EnsureBranchCoaAccounts
                     subtype: 'inventory',
                     normalBalance: 'debit',
                 )->id;
-            }
 
-            if (!$branch->interbranch_receivable_account_id) {
-                $branch->interbranch_receivable_account_id = static::ensureBranchAccount(
+            $branch->interbranch_receivable_account_id = static::ensureBranchAccount(
                     branch: $branch,
+                    accountId: $branch->interbranch_receivable_account_id,
                     parent: $receivableParent,
                     existingName: 'Piutang Antar Cabang - ' . $branch->name,
                     codePrefix: '11160',
@@ -44,11 +43,10 @@ class EnsureBranchCoaAccounts
                     subtype: 'receivable',
                     normalBalance: 'debit',
                 )->id;
-            }
 
-            if (!$branch->interbranch_payable_account_id) {
-                $branch->interbranch_payable_account_id = static::ensureBranchAccount(
+            $branch->interbranch_payable_account_id = static::ensureBranchAccount(
                     branch: $branch,
+                    accountId: $branch->interbranch_payable_account_id,
                     parent: $payableParent,
                     existingName: 'Hutang Antar Cabang - ' . $branch->name,
                     codePrefix: '21130',
@@ -56,7 +54,6 @@ class EnsureBranchCoaAccounts
                     subtype: 'other_payable',
                     normalBalance: 'credit',
                 )->id;
-            }
 
             $branch->save();
 
@@ -70,6 +67,7 @@ class EnsureBranchCoaAccounts
      */
     private static function ensureBranchAccount(
         Branch $branch,
+        ?int $accountId,
         ?Account $parent,
         string $existingName,
         string $codePrefix,
@@ -77,10 +75,12 @@ class EnsureBranchCoaAccounts
         string $subtype,
         string $normalBalance,
     ): Account {
-        $account = Account::query()
-            ->where(function ($query) use ($existingName) {
-                $query->whereRaw('LOWER(name) = ?', [mb_strtolower($existingName)]);
-            })
+        $account = $accountId
+            ? Account::find($accountId)
+            : null;
+
+        $account ??= Account::query()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($existingName)])
             ->first();
 
         $attributes = [
