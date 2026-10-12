@@ -65,10 +65,16 @@ class EmployeeDayOffCalendarTest extends TestCase
         $this->assertDatabaseHas('employee_day_offs', [
             'employee_id' => $employee->id,
             'branch_id' => $this->branch->id,
-            'off_date' => $date,
             'status' => 'active',
             'created_by' => $user->id,
         ]);
+
+        $savedDayOff = EmployeeDayOff::query()
+            ->where('employee_id', $employee->id)
+            ->where('branch_id', $this->branch->id)
+            ->first();
+        $this->assertNotNull($savedDayOff);
+        $this->assertSame($date, $savedDayOff->off_date->format('Y-m-d'));
     }
 
     public function test_employee_cannot_register_for_a_date_outside_the_allowed_window(): void

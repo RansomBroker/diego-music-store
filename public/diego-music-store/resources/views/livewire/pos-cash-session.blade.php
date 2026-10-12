@@ -1,6 +1,6 @@
 <div class="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200" x-data="{ 
     openModal: @entangle('showSupervisorModal') 
-}" @print-z-report.window="window.open($event.detail[0].url, '_blank', 'width=400,height=600,menubar=no,toolbar=no,location=no,status=no')">
+}" @print-z-report.window="window.open($event.detail[0].url, '_blank')">
     <!-- Left Navigation Sidebar -->
     <x-pos-page::sidebar :selectedLogoUrl="$selectedLogoUrl" />
 

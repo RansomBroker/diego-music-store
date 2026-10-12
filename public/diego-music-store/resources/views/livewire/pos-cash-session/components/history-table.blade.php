@@ -56,7 +56,7 @@
                                         variant="primary"
                                         size="xs"
                                         icon="ph-printer"
-                                        onclick="window.open('{{ route('pos.z-report', $item->id) }}', '_blank', 'width=400,height=600,menubar=no,toolbar=no')"
+                                        onclick="window.open('{{ route('pos.z-report', $item->id) }}', '_blank')"
                                         @click.stop
                                         title="Cetak Z-Report"
                                     />

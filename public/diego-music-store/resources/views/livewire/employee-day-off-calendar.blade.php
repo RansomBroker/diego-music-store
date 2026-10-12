@@ -37,6 +37,10 @@
                     <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
                         Akun Anda belum terhubung dengan profil karyawan aktif. Anda tetap dapat melihat kalender, tetapi tidak dapat mendaftarkan jadwal off.
                     </div>
+                @elseif ($currentEmployee && !$currentEmployee->branch_id && !$isOwner)
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                        Profil karyawan Anda belum terhubung ke cabang toko. Silakan hubungi admin atau supervisor untuk menghubungkan cabang Anda.
+                    </div>
                 @endif
 
                 <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -50,14 +54,20 @@
                         @foreach ($weeks as $week)
                             @foreach ($week as $day)
                                 <div wire:key="calendar-day-{{ $day['date'] }}"
-                                    class="min-h-24 border-b border-r border-slate-100 p-1.5 sm:min-h-32 sm:p-2.5 dark:border-slate-800 {{ !$day['isCurrentMonth'] ? 'bg-slate-50/70 dark:bg-slate-950/30' : 'bg-white dark:bg-slate-900' }}">
+                                    @if ($day['isSelectable'] && (($currentEmployee?->is_active && $currentEmployee?->branch_id) || $isOwner))
+                                        wire:click="openDate('{{ $day['date'] }}')"
+                                        class="min-h-24 border-b border-r border-slate-100 p-1.5 sm:min-h-32 sm:p-2.5 dark:border-slate-800 cursor-pointer transition-colors hover:bg-primary/5 dark:hover:bg-blue-950/20 group {{ !$day['isCurrentMonth'] ? 'bg-slate-50/70 dark:bg-slate-950/30' : 'bg-white dark:bg-slate-900' }}"
+                                    @else
+                                        class="min-h-24 border-b border-r border-slate-100 p-1.5 sm:min-h-32 sm:p-2.5 dark:border-slate-800 {{ !$day['isCurrentMonth'] ? 'bg-slate-50/70 dark:bg-slate-950/30' : 'bg-white dark:bg-slate-900' }}"
+                                    @endif
+                                >
                                     <div class="mb-1 flex items-center justify-between gap-1">
                                         <span class="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold {{ $day['isToday'] ? 'bg-primary text-white' : ($day['isCurrentMonth'] ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600') }}">
                                             {{ $day['day'] }}
                                         </span>
                                         @if ($day['isSelectable'] && (($currentEmployee?->is_active && $currentEmployee?->branch_id) || $isOwner))
-                                            <button type="button" wire:click="openDate('{{ $day['date'] }}')"
-                                                class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-primary/10 hover:text-primary dark:hover:bg-blue-950/60 dark:hover:text-blue-400"
+                                            <button type="button" wire:click.stop="openDate('{{ $day['date'] }}')"
+                                                class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-primary/10 hover:text-primary dark:hover:bg-blue-950/60 dark:hover:text-blue-400 group-hover:text-primary"
                                                 title="Tambah jadwal off">
                                                 <i class="ph-bold ph-plus"></i>
                                             </button>

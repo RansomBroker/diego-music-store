@@ -154,4 +154,49 @@ class POSCashSessionTest extends TestCase
         $this->assertNull($session->actual_cash);
         $this->assertNull($session->difference);
     }
+
+    /** @test */
+    public function it_can_render_the_z_report_page()
+    {
+        $session = CashSession::create([
+            'user_id' => $this->user->id,
+            'branch_id' => $this->branch->id,
+            'status' => 'closed',
+            'opened_at' => now()->subHours(5),
+            'closed_at' => now()->subHours(1),
+            'opening_cash' => 500000,
+            'expected_cash' => 750000,
+            'actual_cash' => 750000,
+            'difference' => 0,
+        ]);
+
+        $response = $this->get(route('pos.z-report', $session->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('Z-REPORT SHIFT KASIR');
+        $response->assertSee('Cetak Struk');
+        $response->assertSee('Download as PDF');
+        $response->assertSee(route('pos.z-report.pdf', $session->id));
+    }
+
+    /** @test */
+    public function it_can_download_the_z_report_as_pdf()
+    {
+        $session = CashSession::create([
+            'user_id' => $this->user->id,
+            'branch_id' => $this->branch->id,
+            'status' => 'closed',
+            'opened_at' => now()->subHours(5),
+            'closed_at' => now()->subHours(1),
+            'opening_cash' => 500000,
+            'expected_cash' => 750000,
+            'actual_cash' => 750000,
+            'difference' => 0,
+        ]);
+
+        $response = $this->get(route('pos.z-report.pdf', $session->id));
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+    }
 }

@@ -20,12 +20,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RoleAndPermissionSeeder::class);
-        $this->call(UserSeeder::class);
-        $this->call(UnitSeeder::class);
-        $this->call(FocusProductRuleSeeder::class);
-        $this->call(SaleCategorySeeder::class);
 
-        // Seed default branches (Cabang Pusat & Cabang Singkawang)
+        // Seed default branches (Cabang Pusat & Cabang Singkawang) - Harus sebelum UserSeeder agar user & employee terhubung ke cabang
         if (Branch::count() === 0) {
             Branch::create([
                 'name' => 'Cabang Pusat (Back Office)',
@@ -63,6 +59,11 @@ class DatabaseSeeder extends Seeder
 
         // Pastikan default sku_prefix terisi 'DG' jika kosong atau 'PST'
         Branch::where('sku_prefix', 'PST')->orWhereNull('sku_prefix')->update(['sku_prefix' => 'DG']);
+
+        $this->call(UserSeeder::class);
+        $this->call(UnitSeeder::class);
+        $this->call(FocusProductRuleSeeder::class);
+        $this->call(SaleCategorySeeder::class);
 
         // Seed default pricing tier
         if (PricingTier::count() === 0) {

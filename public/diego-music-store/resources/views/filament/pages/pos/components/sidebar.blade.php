@@ -127,7 +127,7 @@
             
             <!-- SECTION 1: UTAMA -->
             <div class="space-y-1">
-                <div x-show="!isCompact" class="px-3.5 text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                <div x-show="!isCompact" class="px-3.5 text-xs font-black text-black dark:text-white uppercase tracking-wider mb-2">
                     Menu Utama
                 </div>
 
@@ -184,7 +184,7 @@
 
             <!-- SECTION 2: OPERASIONAL & KAS -->
             <div class="space-y-1">
-                <div x-show="!isCompact" class="px-3.5 text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                <div x-show="!isCompact" class="px-3.5 text-xs font-black text-black dark:text-white uppercase tracking-wider mb-2">
                     Operasional & Keuangan
                 </div>
 
@@ -221,7 +221,7 @@
 
             <!-- SECTION 3: SDM & KARYAWAN -->
             <div class="space-y-1">
-                <div x-show="!isCompact" class="px-3.5 text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                <div x-show="!isCompact" class="px-3.5 text-xs font-black text-black dark:text-white uppercase tracking-wider mb-2">
                     SDM & Kehadiran
                 </div>
 
@@ -302,7 +302,7 @@
 
             <!-- SECTION 4: MASTER DATA & LAPORAN -->
             <div class="space-y-1">
-                <div x-show="!isCompact" class="px-3.5 text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                <div x-show="!isCompact" class="px-3.5 text-xs font-black text-black dark:text-white uppercase tracking-wider mb-2">
                     Master Data & Laporan
                 </div>
 
