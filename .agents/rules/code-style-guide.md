@@ -67,4 +67,13 @@ Setiap penambahan fitur baru, perubahan logika bisnis, atau pembuatan Action Cla
 * **Aturan:**
   * Letakkan di `tests/Unit/` (tanpa interaksi DB) atau `tests/Feature/` (dengan DB/HTTP).
   * Gunakan akhiran `Test.php` (contoh: `CreateInventoryMutationTest.php`).
-```
+
+---
+
+## 7. Eksekusi Docker & Schema Inspection (JIT)
+* **Eksekusi Docker:** Gunakan wrapper `./docker-artisan.sh <command>` atau langsung via container:
+  `docker exec -w /var/www/public/diego-music-store lemp-app-diego-music-store php artisan <command>`
+* **Just-In-Time (JIT) Model Inspection:** Dilarang menebak kolom, relasi, atau tipe data model. Periksa skema model langsung via artisan:
+  `docker exec -w /var/www/public/diego-music-store lemp-app-diego-music-store php artisan model:show <ModelName>`
+  *(Contoh: `docker exec -w /var/www/public/diego-music-store lemp-app-diego-music-store php artisan model:show Product`)*
+* **Fallback:** Jika container tidak aktif, periksa langsung file model di `public/diego-music-store/app/Models/<ModelName>.php` atau file migrasi terkait di `database/migrations/`.
