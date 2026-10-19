@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\User;
+use App\Helpers\BranchHelper;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,6 +46,34 @@ class RoleAndPermissionAccessTest extends TestCase
         $admin->assignRole($adminRole);
 
         $this->assertFalse($admin->canAccessPanel($panel));
+    }
+
+    public function test_regular_user_without_branch_is_denied_instead_of_falling_back(): void
+    {
+        $user = User::factory()->create(['is_active' => true]);
+        $user->assignRole('karyawan');
+
+        $this->actingAs($user);
+        $this->expectException(HttpException::class);
+
+        BranchHelper::getActiveBranchId();
+    }
+
+    public function test_regular_user_cannot_switch_active_branch_to_unassigned_branch(): void
+    {
+        $otherBranch = Branch::create([
+            'name' => 'Cabang Lain',
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create(['is_active' => true]);
+        $user->assignRole('karyawan');
+        $user->branches()->attach($this->branch->id);
+
+        session(['pos_active_branch_id' => $otherBranch->id]);
+        $this->actingAs($user);
+
+        $this->assertSame($this->branch->id, BranchHelper::getActiveBranchId());
     }
 
     public function test_karyawan_and_sales_cannot_access_backoffice_panel(): void
