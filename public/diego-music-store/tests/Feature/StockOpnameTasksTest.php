@@ -121,7 +121,9 @@ class StockOpnameTasksTest extends TestCase
 
         $owner = User::factory()->create();
         $employeeUser = User::factory()->create();
+        $otherAssignedUser = User::factory()->create();
         $employeeUser->employee()->update(['branch_id' => $branch->id, 'is_active' => true]);
+        $otherAssignedUser->employee()->update(['branch_id' => $branch->id, 'is_active' => true]);
 
         $period = StockOpnamePeriod::create([
             'branch_id' => $branch->id,
@@ -140,7 +142,7 @@ class StockOpnameTasksTest extends TestCase
         $otherAssignment = StockOpnameAssignment::create([
             'stock_opname_period_id' => $period->id,
             'stock_opname_preset_id' => $preset->id,
-            'assigned_user_id' => $owner->id,
+            'assigned_user_id' => $otherAssignedUser->id,
             'assigned_by' => $owner->id,
         ]);
 
