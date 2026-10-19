@@ -82,7 +82,7 @@
                                         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Periksa setiap lokasi sebelum finalisasi.</p>
                                     </div>
                                     @if ($selectedPeriod->status === \App\Models\StockOpnamePeriod::STATUS_COMPLETED)
-                                        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"><i class="ph-bold ph-check-circle"></i> Sudah difinalisasi</span>
+                                        <div class="text-right"><span class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"><i class="ph-bold ph-check-circle"></i> Sudah difinalisasi</span>@if ($selectedPeriod->finalStockOpname)<p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Dokumen: <strong>{{ $selectedPeriod->finalStockOpname->opname_number }}</strong></p>@endif</div>
                                     @elseif ($canFinalize)
                                         <x-pos.utility.button wire:click="finalizePeriod({{ $selectedPeriod->id }})" wire:confirm="Finalisasi akan mengubah stok cabang dan membuat jurnal penyesuaian. Pastikan semua lokasi sudah disetujui dan semua produk fisik sudah dihitung." wire:loading.attr="disabled" class="!rounded-xl !px-4 !py-2">
                                             <i class="ph-bold ph-lock-key mr-1"></i> Finalisasi periode
