@@ -50,24 +50,30 @@ class StockOpnameAssignment extends Model
                 ]);
             }
 
-            if ((int) $period->branch_id !== (int) $preset->branch_id) {
-                throw ValidationException::withMessages([
-                    'assignments' => 'Preset lokasi harus berasal dari cabang yang sama dengan periode opname.',
-                ]);
-            }
+            if (!$assignment->exists || $assignment->isDirty([
+                'stock_opname_period_id',
+                'stock_opname_preset_id',
+                'assigned_user_id',
+            ])) {
+                if ((int) $period->branch_id !== (int) $preset->branch_id) {
+                    throw ValidationException::withMessages([
+                        'assignments' => 'Preset lokasi harus berasal dari cabang yang sama dengan periode opname.',
+                    ]);
+                }
 
-            if (!$preset->is_active) {
-                throw ValidationException::withMessages([
-                    'assignments' => 'Preset lokasi yang tidak aktif tidak dapat ditugaskan.',
-                ]);
-            }
+                if (!$preset->is_active) {
+                    throw ValidationException::withMessages([
+                        'assignments' => 'Preset lokasi yang tidak aktif tidak dapat ditugaskan.',
+                    ]);
+                }
 
-            $employeeBranchId = $user->employee?->branch_id;
-            $userHasBranch = $user->branches()->where('branches.id', $period->branch_id)->exists();
-            if ((int) $employeeBranchId !== (int) $period->branch_id && !$userHasBranch) {
-                throw ValidationException::withMessages([
-                    'assignments' => 'Karyawan harus terdaftar pada cabang yang sama dengan periode opname.',
-                ]);
+                $employeeBranchId = $user->employee?->branch_id;
+                $userHasBranch = $user->branches()->where('branches.id', $period->branch_id)->exists();
+                if ((int) $employeeBranchId !== (int) $period->branch_id && !$userHasBranch) {
+                    throw ValidationException::withMessages([
+                        'assignments' => 'Karyawan harus terdaftar pada cabang yang sama dengan periode opname.',
+                    ]);
+                }
             }
 
             if (!$assignment->exists) {
