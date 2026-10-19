@@ -75,6 +75,7 @@ Route::middleware('auth.pos')->group(function () {
         // SDM & Manajemen Karyawan
         Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
         Route::get('/pos/employee-tasks', App\Livewire\PosEmployeeTasks::class)->name('pos.employee-tasks');
+        Route::get('/pos/stock-opname-review', App\Livewire\StockOpnameReview::class)->name('pos.stock-opname-review');
         Route::get('/pos/attendance-radiuses', App\Livewire\PosAttendanceRadiuses::class)->name('pos.attendance-radiuses');
         Route::get('/pos/attendance-violations', App\Livewire\PosAttendanceViolations::class)->name('pos.attendance-violations');
 
