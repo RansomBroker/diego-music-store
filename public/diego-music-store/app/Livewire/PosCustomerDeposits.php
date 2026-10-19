@@ -75,6 +75,14 @@ class PosCustomerDeposits extends Component
         'page' => ['except' => 1],
     ];
 
+    /**
+     * Enforce this restriction on initial page loads and every Livewire request.
+     */
+    public function boot(): void
+    {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount(): void
     {
         abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
