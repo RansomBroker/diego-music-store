@@ -42,6 +42,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/customers', App\Livewire\PosCustomers::class)->name('pos.customers');
     Route::get('/pos/attendances', App\Livewire\PosAttendances::class)->name('pos.attendances');
     Route::get('/pos/day-off-calendar', App\Livewire\EmployeeDayOffCalendar::class)->name('pos.day-off-calendar');
+    Route::get('/pos/stock-opname-tasks', App\Livewire\StockOpnameTasks::class)->name('pos.stock-opname-tasks');
     Route::get('/pos/service-management', App\Livewire\PosServiceManagement::class)->name('pos.service-management');
     Route::get('/pos/barcode-print', App\Livewire\PosBarcodePrint::class)->name('pos.barcode-print');
     Route::get('/pos/barcode-print/sheet', [App\Http\Controllers\POS\POSBarcodePrintController::class, 'show'])->name('pos.barcode-print.sheet');
@@ -74,6 +75,7 @@ Route::middleware('auth.pos')->group(function () {
         // SDM & Manajemen Karyawan
         Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
         Route::get('/pos/employee-tasks', App\Livewire\PosEmployeeTasks::class)->name('pos.employee-tasks');
+        Route::get('/pos/stock-opname-review', App\Livewire\StockOpnameReview::class)->name('pos.stock-opname-review');
         Route::get('/pos/attendance-radiuses', App\Livewire\PosAttendanceRadiuses::class)->name('pos.attendance-radiuses');
         Route::get('/pos/attendance-violations', App\Livewire\PosAttendanceViolations::class)->name('pos.attendance-violations');
 
