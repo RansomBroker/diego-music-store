@@ -86,14 +86,8 @@ class EmployeeDayOffCalendar extends Component
         }
 
         if (!$employee->branch_id) {
-            $fallbackBranchId = $this->activeBranchId();
-            if ($fallbackBranchId) {
-                $employee->update(['branch_id' => $fallbackBranchId]);
-                $employee->refresh();
-            } else {
-                $this->addError('selectedDate', 'Profil karyawan belum ditetapkan ke cabang.');
-                return;
-            }
+            $this->addError('selectedDate', 'Profil karyawan belum ditetapkan ke cabang. Hubungi Owner untuk memperbaikinya.');
+            return;
         }
 
         $error = DB::transaction(function () use ($employee, $user, $date) {
@@ -223,22 +217,25 @@ class EmployeeDayOffCalendar extends Component
         $user = auth()->user();
         $employee = $user?->employee;
 
-        // Staff always use their assigned branch, not a branch selected in the UI session.
-        if ($employee && !$this->isOwner()) {
-            if ($employee->branch_id) {
-                return (int) $employee->branch_id;
+        // Staff always use their assigned employee branch, never an implicit global fallback.
+        if ($user && !$this->isOwner()) {
+            if ($employee) {
+                return $employee->branch_id ? (int) $employee->branch_id : null;
             }
-            $fallbackBranchId = $user->branches()->first()?->id ?: Branch::where('is_active', true)->value('id');
-            if ($fallbackBranchId) {
-                $employee->update(['branch_id' => $fallbackBranchId]);
-                return (int) $fallbackBranchId;
-            }
+
+            $assignedBranchId = $user->branches()
+                ->where('branches.is_active', true)
+                ->value('branches.id');
+
+            return $assignedBranchId ? (int) $assignedBranchId : null;
         }
 
-        $branchId = session('pos_active_branch_id') ?: $user?->branches()->first()?->id;
+        $branchId = session('pos_active_branch_id') ?: $user?->branches()
+            ->where('branches.is_active', true)
+            ->value('branches.id');
 
         if (!$branchId) {
-            $branchId = Branch::query()->value('id');
+            $branchId = Branch::query()->where('is_active', true)->value('id');
         }
 
         return $branchId ? (int) $branchId : null;
