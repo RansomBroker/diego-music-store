@@ -163,6 +163,23 @@ class RoleAndPermissionAccessTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_sales_role_cannot_access_transaction_cash_and_payment_pages(): void
+    {
+        $sales = User::factory()->create(['is_active' => true]);
+        $sales->assignRole('sales');
+        $sales->branches()->attach($this->branch->id);
+
+        foreach ([
+            '/pos/transactions',
+            '/pos/daily-cash',
+            '/pos/customer-deposits',
+            '/pos/customer-payments',
+            '/pos/reports/sales',
+        ] as $path) {
+            $this->actingAs($sales)->get($path)->assertStatus(403);
+        }
+    }
+
     public function test_sales_role_cannot_create_pos_sale_even_by_calling_action_directly(): void
     {
         $sales = User::factory()->create(['is_active' => true]);
