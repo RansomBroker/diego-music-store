@@ -58,6 +58,8 @@ class PosReportsSales extends Component
 
     public function mount()
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         $this->dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->dateTo = Carbon::now()->format('Y-m-d');
         if (!$this->selectedBranchId) {
