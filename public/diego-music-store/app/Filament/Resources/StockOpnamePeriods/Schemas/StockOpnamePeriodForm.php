@@ -5,7 +5,10 @@ namespace App\Filament\Resources\StockOpnamePeriods\Schemas;
 use App\Helpers\BranchHelper;
 use App\Models\Branch;
 use App\Models\StockOpnamePeriod;
+use App\Models\StockOpnamePreset;
+use App\Models\User;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -36,6 +39,7 @@ class StockOpnamePeriodForm
                     ->default(fn () => BranchHelper::getActiveBranchId())
                     ->required()
                     ->searchable()
+                    ->live()
                     ->disabled(fn ($record) => $record !== null)
                     ->rules(['exists:branches,id']),
 
@@ -75,6 +79,53 @@ class StockOpnamePeriodForm
                     ->rows(3)
                     ->maxLength(2000),
             ]),
+
+            Section::make('Penugasan Lokasi dan Karyawan')
+                ->description('Satu preset lokasi hanya dapat ditugaskan satu kali dalam periode yang sama. Penugasan dapat dirotasi pada periode berikutnya.')
+                ->schema([
+                    Repeater::make('assignments')
+                        ->label('Daftar Penugasan')
+                        ->relationship('assignments')
+                        ->schema([
+                            Select::make('stock_opname_preset_id')
+                                ->label('Lokasi')
+                                ->options(fn ($get) => StockOpnamePreset::query()
+                                    ->where('is_active', true)
+                                    ->when($get('../../branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                                    ->all())
+                                ->required()
+                                ->searchable()
+                                ->live(),
+
+                            Select::make('assigned_user_id')
+                                ->label('Karyawan')
+                                ->options(fn () => User::query()
+                                    ->where('is_active', true)
+                                    ->whereHas('employee', fn ($query) => $query->where('is_active', true))
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                                    ->all())
+                                ->required()
+                                ->searchable(),
+
+                            Textarea::make('review_notes')
+                                ->label('Catatan Penugasan')
+                                ->rows(1)
+                                ->maxLength(1000),
+                        ])
+                        ->columns(3)
+                        ->addActionLabel('Tambah Penugasan')
+                        ->reorderable(false)
+                        ->collapsible()
+                        ->itemLabel(fn (array $state): ?string => isset($state['stock_opname_preset_id'])
+                            ? (StockOpnamePreset::find($state['stock_opname_preset_id'])?->name ?? 'Penugasan baru')
+                            : 'Penugasan baru')
+                        ->disabled(fn ($record) => $record !== null && $record->status !== StockOpnamePeriod::STATUS_DRAFT)
+                        ->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
         ]);
     }
 }
