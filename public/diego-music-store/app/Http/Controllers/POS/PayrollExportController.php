@@ -6,6 +6,8 @@ use App\Actions\Payroll\ExportPayrollItemToExcel;
 use App\Actions\Payroll\ExportPayrollToExcel;
 use App\Http\Controllers\Controller;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Models\PayrollItem;
+use Illuminate\Support\Facades\Auth;
 
 class PayrollExportController extends Controller
 {
@@ -30,6 +32,11 @@ class PayrollExportController extends Controller
      */
     public function exportItem(int $itemId, ExportPayrollItemToExcel $action): BinaryFileResponse
     {
-        return $action->execute($itemId);
+        $item = PayrollItem::query()->with('employee')->findOrFail($itemId);
+        $user = Auth::user();
+        $isManagement = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        abort_unless($isManagement || ($user?->employee?->id && (int) $user->employee->id === (int) $item->employee_id), 403);
+
+        return $action->execute($item);
     }
 }
