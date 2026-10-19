@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('status')->default('draft');
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('final_stock_opname_id')->nullable()->unique()->constrained('stock_opnames')->nullOnDelete();
             $table->timestamps();
 
             $table->unique(['branch_id', 'period']);
