@@ -101,7 +101,7 @@
                             </button>
                             <p class="text-xs font-bold uppercase tracking-widest text-primary dark:text-blue-400">{{ $activeAssignment->period->name }}</p>
                             <h1 class="mt-1 text-2xl font-black text-slate-900 dark:text-white">Hitung: {{ $activeAssignment->preset->name }}</h1>
-                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Cari produk berdasarkan nama, SKU, barcode, atau kategori. Masukkan jumlah fisik yang benar-benar ditemukan di lokasi ini.</p>
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Cari produk berdasarkan nama, SKU, barcode, atau kategori. Hitung semua produk yang terdaftar pada stok cabang untuk lokasi ini; masukkan 0 jika produk tidak ada di lokasi tersebut.</p>
                         </div>
                         <div class="flex gap-2">
                             <x-pos.utility.button wire:click="submitTask" wire:loading.attr="disabled" class="!rounded-xl !px-4 !py-2">
