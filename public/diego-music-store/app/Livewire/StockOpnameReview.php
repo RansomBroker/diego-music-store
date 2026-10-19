@@ -173,7 +173,7 @@ class StockOpnameReview extends Component
     private function findReviewablePeriod(int $periodId): StockOpnamePeriod
     {
         return StockOpnamePeriod::query()
-            ->with(['branch', 'assignments.preset', 'assignments.assignedUser', 'assignments.stockOpname.items.productVariant.product'])
+            ->with(['branch', 'assignments.preset', 'assignments.assignedUser', 'assignments.stockOpname.items.productVariant.product', 'finalStockOpname'])
             ->whereKey($periodId)
             ->whereIn('status', [
                 StockOpnamePeriod::STATUS_ACTIVE,
@@ -201,7 +201,7 @@ class StockOpnameReview extends Component
     public function render()
     {
         $periods = StockOpnamePeriod::query()
-            ->with(['branch', 'assignments.preset', 'assignments.assignedUser', 'assignments.stockOpname.items'])
+            ->with(['branch', 'assignments.preset', 'assignments.assignedUser', 'assignments.stockOpname.items', 'finalStockOpname'])
             ->whereIn('status', [
                 StockOpnamePeriod::STATUS_ACTIVE,
                 StockOpnamePeriod::STATUS_REVIEW,
