@@ -4,12 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\User;
+use App\Actions\Sales\CreatePOSSale;
 use App\Helpers\BranchHelper;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class RoleAndPermissionAccessTest extends TestCase
@@ -160,6 +162,25 @@ class RoleAndPermissionAccessTest extends TestCase
 
         $response = $this->actingAs($owner)->get('/pos/branches');
         $response->assertStatus(200);
+    }
+
+    public function test_sales_role_cannot_create_pos_sale_even_by_calling_action_directly(): void
+    {
+        $sales = User::factory()->create(['is_active' => true]);
+        $sales->assignRole('sales');
+
+        $this->actingAs($sales);
+        $this->expectException(HttpException::class);
+
+        app(CreatePOSSale::class)->execute([]);
+    }
+
+    public function test_seeder_does_not_recreate_retired_admin_role(): void
+    {
+        $this->assertDatabaseMissing('roles', [
+            'name' => 'admin',
+            'guard_name' => 'web',
+        ]);
     }
 
     public function test_seeder_assigns_correct_default_permissions_to_roles(): void
