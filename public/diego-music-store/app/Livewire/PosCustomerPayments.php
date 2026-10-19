@@ -48,6 +48,8 @@ class PosCustomerPayments extends Component
     // ── Lifecycle & Helpers ──────────────────────────────────────────────
     public function mount(): void
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         $this->payment_date = now()->format('Y-m-d');
         $this->branch_id = Auth::user()?->branches()->first()?->id
             ?? Auth::user()?->branch_id
