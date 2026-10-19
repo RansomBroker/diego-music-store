@@ -114,6 +114,13 @@
                         <div class="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">{{ $message }}</div>
                     @enderror
 
+                    @if ($activeAssignment->status === \\App\\Models\\StockOpnameAssignment::STATUS_NEEDS_REVISION && $activeAssignment->review_notes)
+                        <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200">
+                            <p class="font-black">Catatan revisi dari pemeriksa</p>
+                            <p class="mt-1">{{ $activeAssignment->review_notes }}</p>
+                        </div>
+                    @endif
+
                     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
                         <div class="border-b border-slate-200 p-4 dark:border-slate-700">
                             <label for="opname-product-search" class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Cari produk</label>
