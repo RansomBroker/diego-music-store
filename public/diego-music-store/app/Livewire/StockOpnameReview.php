@@ -7,7 +7,6 @@ use App\Models\StockOpnameAssignment;
 use App\Models\StockOpnamePeriod;
 use App\Models\Branch;
 use Illuminate\Support\Facades\Storage;
-use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -86,7 +85,7 @@ class StockOpnameReview extends Component
             ]);
         });
 
-        Notification::make()->title('Tugas disetujui')->success()->send();
+        $this->dispatchToast('success', 'Tugas disetujui', 'Hitungan lokasi disetujui dan menunggu finalisasi periode.');
         $this->selectedAssignmentId = null;
         $this->reviewNotes = '';
     }
@@ -140,7 +139,7 @@ class StockOpnameReview extends Component
             $period->update(['status' => StockOpnamePeriod::STATUS_ACTIVE]);
         });
 
-        Notification::make()->title('Revisi dikirim ke karyawan')->warning()->send();
+        $this->dispatchToast('warning', 'Revisi dikirim', 'Karyawan dapat memperbaiki hitungan berdasarkan catatan pemeriksa.');
         $this->selectedAssignmentId = null;
     }
 
@@ -159,11 +158,11 @@ class StockOpnameReview extends Component
             return;
         }
 
-        Notification::make()
-            ->title('Periode berhasil difinalisasi')
-            ->body('Dokumen stok opname: ' . $opname->opname_number . '. Stok cabang dan jurnal telah diproses.')
-            ->success()
-            ->send();
+        $this->dispatchToast(
+            'success',
+            'Periode berhasil difinalisasi',
+            'Dokumen stok opname: ' . $opname->opname_number . '. Stok cabang dan jurnal telah diproses.'
+        );
 
         $this->selectedPeriodId = $periodId;
         $this->selectedAssignmentId = null;
@@ -196,6 +195,15 @@ class StockOpnameReview extends Component
         ], true), 404);
 
         return $assignment;
+    }
+
+    private function dispatchToast(string $type, string $title, string $body): void
+    {
+        $this->dispatch('toast', [
+            'type' => $type,
+            'title' => $title,
+            'body' => $body,
+        ]);
     }
 
     public function render()
