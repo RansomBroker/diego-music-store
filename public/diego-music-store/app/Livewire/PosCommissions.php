@@ -79,6 +79,7 @@ class PosCommissions extends Component
 
     public function openSchemeModal(?int $id = null): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $this->resetSchemeForm();
         if ($id) {
             $scheme = CommissionScheme::with('employees')->findOrFail($id);
@@ -115,6 +116,7 @@ class PosCommissions extends Component
 
     public function saveScheme(): void
     {
+        abort_unless($this->isManagementUser(), 403);
         if (is_string($this->rate)) {
             $cleaned = preg_replace('/[^\d.]/', '', str_replace(',', '.', $this->rate));
             $this->rate = $cleaned !== '' ? (float) $cleaned : 0;
@@ -186,6 +188,7 @@ class PosCommissions extends Component
 
     public function toggleSchemeStatus(int $id): void
     {
+        abort_unless($this->isManagementUser(), 403);
         try {
             $scheme = CommissionScheme::findOrFail($id);
             $scheme->is_active = !$scheme->is_active;
@@ -208,6 +211,7 @@ class PosCommissions extends Component
 
     public function deleteScheme(int $id): void
     {
+        abort_unless($this->isManagementUser(), 403);
         try {
             $scheme = CommissionScheme::findOrFail($id);
             $schemeName = $scheme->name;
@@ -229,6 +233,7 @@ class PosCommissions extends Component
 
     public function approveEmployeeRecap(int $employeeId): void
     {
+        abort_unless($this->isManagementUser(), 403);
         try {
             $action = app(ApproveCommissionRecap::class);
             $count = $action->execute($employeeId, $this->filterMonth ?: now()->format('Y-m'));
@@ -259,6 +264,7 @@ class PosCommissions extends Component
     // ── Group Commission Handlers ────────────────────────────────────────
     public function openGroupModal(?int $id = null): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $this->resetGroupForm();
         if ($id) {
             $group = CommissionGroup::with('members')->findOrFail($id);
@@ -305,6 +311,7 @@ class PosCommissions extends Component
 
     public function saveGroup(): void
     {
+        abort_unless($this->isManagementUser(), 403);
         if (is_string($this->groupRate)) {
             $cleaned = preg_replace('/[^\d.]/', '', str_replace(',', '.', $this->groupRate));
             $this->groupRate = $cleaned !== '' ? (float) $cleaned : 0;
@@ -373,6 +380,7 @@ class PosCommissions extends Component
 
     public function deleteGroup(int $id): void
     {
+        abort_unless($this->isManagementUser(), 403);
         try {
             CommissionGroup::findOrFail($id)->delete();
             Notification::make()->title('Grup Komisi Dihapus')->success()->send();
@@ -392,6 +400,7 @@ class PosCommissions extends Component
 
     public function openGroupDetailModal(int $groupId): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $group = CommissionGroup::with(['leader', 'members.employee'])->findOrFail($groupId);
         $yearMonth = explode('-', $this->filterMonth ?: now()->format('Y-m'));
         $year = (int) ($yearMonth[0] ?? now()->year);
