@@ -197,6 +197,8 @@ class PosAttendances extends Component
 
     public function saveRecord(RecordAttendance $actionClass): void
     {
+        abort_unless($this->isManagementUser(), 403);
+
         $user = auth()->user();
         $isManagement = $this->isManagementUser();
         $currentEmployee = $user?->employee;
