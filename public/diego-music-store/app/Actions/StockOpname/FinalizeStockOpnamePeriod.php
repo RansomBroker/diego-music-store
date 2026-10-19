@@ -64,8 +64,19 @@ class FinalizeStockOpnamePeriod
             // Each product already stocked by this branch must be explicitly counted
             // in every location task. Enter zero when the product is absent at that location.
             $branchVariantIds = ProductBranchStock::query()
-                ->where('branch_id', $lockedPeriod->branch_id)
-                ->pluck('product_variant_id')
+                ->join('product_variants', 'product_variants.id', '=', 'product_branch_stocks.product_variant_id')
+                ->join('products', 'products.id', '=', 'product_variants.product_id')
+                ->where('product_branch_stocks.branch_id', $lockedPeriod->branch_id)
+                ->where('products.type', 'physical')
+                ->where(function ($query) {
+                    $query->where('products.is_active', true)
+                        ->orWhere('product_branch_stocks.stock', '>', 0);
+                })
+                ->where(function ($query) {
+                    $query->where('product_variants.is_active', true)
+                        ->orWhere('product_branch_stocks.stock', '>', 0);
+                })
+                ->pluck('product_branch_stocks.product_variant_id')
                 ->map(fn ($id) => (int) $id)
                 ->unique()
                 ->values();
