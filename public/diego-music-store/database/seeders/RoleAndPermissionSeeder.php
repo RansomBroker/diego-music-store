@@ -52,14 +52,15 @@ class RoleAndPermissionSeeder extends Seeder
 
         // 2. Create simplified standard roles
         $ownerRole    = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
-        $adminRole    = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        // Do not recreate the retired admin role. Revoke any legacy permissions.
+        $adminRole = Role::query()->where('name', 'admin')->where('guard_name', 'web')->first();
+        $adminRole?->syncPermissions([]);
         $karyawanRole = Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
         $salesRole    = Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
 
         // 3. Assign permissions to roles
-        // Owner & Admin: Full permissions
+        // Owner is the only standard role with full permissions.
         $ownerRole->syncPermissions($permissions);
-        $adminRole->syncPermissions($permissions);
 
         // Karyawan (Kasir): POS operations, session, daily cash, customers, receipt, barcode
         $karyawanRole->syncPermissions([
