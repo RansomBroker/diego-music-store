@@ -207,7 +207,6 @@ class StockOpnameReview extends Component
                 StockOpnamePeriod::STATUS_REVIEW,
                 StockOpnamePeriod::STATUS_COMPLETED,
             ])
-            ->when($this->selectedPeriodId, fn ($query) => $query->whereKey($this->selectedPeriodId))
             ->orderByDesc('period')
             ->get();
 
