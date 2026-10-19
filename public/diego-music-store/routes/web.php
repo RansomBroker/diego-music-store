@@ -70,7 +70,11 @@ Route::middleware('auth.pos')->group(function () {
         return redirect()->back();
     })->name('pos.switch-branch');
 
-    // Rute Khusus Admin & Owner (Sensitif: Payroll, User, Hak Akses, Cabang, Pengaturan)
+    // Individual payslip routes enforce employee ownership in their controllers.
+    Route::get('/pos/payroll/payslip-pdf/{id}', [App\\Http\\Controllers\\POS\\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
+    Route::get('/pos/payroll/item/export-excel/{id}', [App\\Http\\Controllers\\POS\\PayrollExportController::class, 'exportItem'])->name('pos.payroll.item.export-excel');
+
+    // Rute Khusus Owner (Sensitif: Payroll, User, Hak Akses, Cabang, Pengaturan)
     Route::middleware(['role:owner|super_admin|Owner|Super Admin'])->group(function () {
         // SDM & Manajemen Karyawan
         Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
