@@ -272,10 +272,6 @@ class StockOpnameTasks extends Component
             ->where('product_variants.is_active', true)
             ->where('products.is_active', true)
             ->where('products.type', 'physical')
-            ->where(function ($query) use ($assignment) {
-                $query->whereHas('branchStocks', fn ($stock) => $stock->where('branch_id', $assignment->period->branch_id))
-                    ->orWhereDoesntHave('branchStocks');
-            })
             ->when(trim($this->search) !== '', function ($query) {
                 $term = '%' . addcslashes(trim($this->search), '%_') . '%';
                 $query->where(function ($nested) use ($term) {
@@ -317,12 +313,14 @@ class StockOpnameTasks extends Component
             ->get();
 
         $activeAssignment = $this->activeAssignment();
-        $products = $activeAssignment && $activeAssignment->period->status === StockOpnamePeriod::STATUS_ACTIVE
+        $products = $activeAssignment
+            && $activeAssignment->period->status === StockOpnamePeriod::STATUS_ACTIVE
             && in_array($activeAssignment->status, [
                 StockOpnameAssignment::STATUS_ASSIGNED,
                 StockOpnameAssignment::STATUS_IN_PROGRESS,
                 StockOpnameAssignment::STATUS_NEEDS_REVISION,
             ], true)
+            && mb_strlen(trim($this->search)) >= 2
             ? $this->searchableVariants($activeAssignment)->get()
             : collect();
 
