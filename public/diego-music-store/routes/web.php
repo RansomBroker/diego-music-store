@@ -63,7 +63,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/switch-branch/{branch}', function (\App\Models\Branch $branch) {
         if (auth()->check()) {
             $user = auth()->user();
-            if ($user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin']) || $user->branches()->where('branches.id', $branch->id)->exists()) {
+            if ($user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']) || $user->branches()->where('branches.id', $branch->id)->exists()) {
                 session(['pos_active_branch_id' => $branch->id]);
             }
         }
@@ -71,7 +71,7 @@ Route::middleware('auth.pos')->group(function () {
     })->name('pos.switch-branch');
 
     // Rute Khusus Admin & Owner (Sensitif: Payroll, User, Hak Akses, Cabang, Pengaturan)
-    Route::middleware(['role:owner|admin|super_admin|Owner|Admin|Super Admin'])->group(function () {
+    Route::middleware(['role:owner|super_admin|Owner|Super Admin'])->group(function () {
         // SDM & Manajemen Karyawan
         Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
         Route::get('/pos/employee-tasks', App\Livewire\PosEmployeeTasks::class)->name('pos.employee-tasks');
