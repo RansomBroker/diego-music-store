@@ -19,6 +19,9 @@ class POSReceiptController extends Controller
             abort(403, 'Unauthorized.');
         }
 
+        // Sales role is read-only and must not access transaction receipts by ID.
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         // Load relations
         $sale->load(['branch', 'customer', 'salesRep', 'items.variant.product']);
 
@@ -35,6 +38,9 @@ class POSReceiptController extends Controller
         if (!Auth::check()) {
             abort(403, 'Unauthorized.');
         }
+
+        // Sales role cannot access POS transaction print/preview flows.
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
 
         $data = json_decode(base64_decode($request->query('data')), true);
         if (!$data) {
