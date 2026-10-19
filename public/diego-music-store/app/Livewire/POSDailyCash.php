@@ -60,6 +60,8 @@ class POSDailyCash extends Component
 
     public function mount()
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         $this->branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
         $this->selectedBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         $this->checkActiveSession();
