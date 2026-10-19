@@ -23,11 +23,11 @@
                     <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
                         @forelse ($assignments as $assignment)
                             @php
-                                $isEditable = $assignment->period->status === AppModelsStockOpnamePeriod::STATUS_ACTIVE
+                                $isEditable = $assignment->period->status === \App\Models\StockOpnamePeriod::STATUS_ACTIVE
                                     && in_array($assignment->status, [
-                                        AppModelsStockOpnameAssignment::STATUS_ASSIGNED,
-                                        AppModelsStockOpnameAssignment::STATUS_IN_PROGRESS,
-                                        AppModelsStockOpnameAssignment::STATUS_NEEDS_REVISION,
+                                        \App\Models\StockOpnameAssignment::STATUS_ASSIGNED,
+                                        \App\Models\StockOpnameAssignment::STATUS_IN_PROGRESS,
+                                        \App\Models\StockOpnameAssignment::STATUS_NEEDS_REVISION,
                                     ], true);
                                 $countedItems = $assignment->stockOpname?->items?->count() ?? 0;
                                 $statusLabels = [
@@ -60,7 +60,7 @@
                                     </span>
                                 </div>
 
-                                @if ($assignment->review_notes && $assignment->status === AppModelsStockOpnameAssignment::STATUS_NEEDS_REVISION)
+                                @if ($assignment->review_notes && $assignment->status === \App\Models\StockOpnameAssignment::STATUS_NEEDS_REVISION)
                                     <div class="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200">
                                         <p class="font-bold">Catatan revisi</p>
                                         <p class="mt-1">{{ $assignment->review_notes }}</p>
@@ -76,9 +76,9 @@
                                             <i class="ph-bold ph-clipboard-text mr-1"></i>
                                             {{ $assignment->status === 'assigned' ? 'Mulai hitung' : ($assignment->status === 'needs_revision' ? 'Perbaiki hitungan' : 'Lanjutkan') }}
                                         </x-pos.utility.button>
-                                    @elseif ($assignment->status === AppModelsStockOpnameAssignment::STATUS_SUBMITTED)
+                                    @elseif ($assignment->status === \App\Models\StockOpnameAssignment::STATUS_SUBMITTED)
                                         <span class="text-xs font-semibold text-amber-700 dark:text-amber-300">Menunggu pemeriksaan owner</span>
-                                    @elseif ($assignment->status === AppModelsStockOpnameAssignment::STATUS_COMPLETED)
+                                    @elseif ($assignment->status === \App\Models\StockOpnameAssignment::STATUS_COMPLETED)
                                         <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">Tugas disetujui</span>
                                     @endif
                                 </div>
