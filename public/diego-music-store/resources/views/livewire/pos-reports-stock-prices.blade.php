@@ -54,14 +54,19 @@
                         </div>
                     </div>
 
-                    <!-- Filter Toolbar Card -->
-                    @include('livewire.pos-reports-stock-prices.components.filter-card')
-
-                    <!-- KPI Summary Cards -->
+                    <!-- KPI Summary Cards (Dipindahkan ke atas) -->
                     @include('livewire.pos-reports-stock-prices.components.summary-cards')
 
-                    <!-- Stock & Price Valuation Table Card -->
-                    @include('livewire.pos-reports-stock-prices.components.stock-table')
+                    <!-- Table Card Wrapper (Filament Style - Terhubung dengan Filter & Search seperti Daftar Transaksi) -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden transition-colors duration-200">
+
+                        <!-- Toolbar (Filters & Search) -->
+                        @include('livewire.pos-reports-stock-prices.components.filter-card')
+
+                        <!-- Table List -->
+                        @include('livewire.pos-reports-stock-prices.components.stock-table')
+
+                    </div>
 
                 </div>
             </div>

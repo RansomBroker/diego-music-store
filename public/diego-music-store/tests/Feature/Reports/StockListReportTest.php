@@ -96,6 +96,10 @@ class StockListReportTest extends TestCase
         $this->assertEquals('STOK RENDAH', $row['status_label']);
         $this->assertEquals('10%', $row['discount']);
         $this->assertEquals('11%', $row['tax']);
+        $this->assertEquals(10000000, $row['cost_price']);
+        $this->assertEquals(10000000, $row['hpp']);
+        $this->assertEquals(15000000, $row['retail_price']);
+        $this->assertEquals(13500000, $row['net_retail_price']);
     }
 
     /** @test */

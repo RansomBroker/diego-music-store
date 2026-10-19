@@ -166,7 +166,7 @@ class StockListReport extends Page implements HasForms
             fputcsv($file, ['Tanggal Dicetak:', now()->format('d/m/Y H:i')]);
             fputcsv($file, []);
 
-            fputcsv($file, ['SKU', 'Barcode', 'Nama Produk & Variasi', 'Kategori', 'Merk', 'Stok Fisik', 'Batas Min', 'Satuan', 'Status Stok', 'Diskon', 'PPN', 'Harga Beli/HPP (Rp)', 'Harga Jual (Rp)', 'Total Nilai Aset (Rp)', 'Potensi Nilai Jual (Rp)']);
+            fputcsv($file, ['SKU', 'Barcode', 'Nama Produk & Variasi', 'Kategori', 'Merk', 'Stok Fisik', 'Batas Min', 'Satuan', 'Status Stok', 'Diskon', 'PPN', 'Harga Beli (Rp)', 'Harga Beli HPP (Rp)', 'Harga Jual (Rp)', 'Harga Jual Netto (Rp)', 'Total Nilai Aset (Rp)', 'Potensi Nilai Jual (Rp)']);
 
             foreach ($data['rows'] as $row) {
                 fputcsv($file, [
@@ -182,7 +182,9 @@ class StockListReport extends Page implements HasForms
                     $row['discount'],
                     $row['tax'],
                     $row['cost_price'],
+                    $row['hpp'],
                     $row['retail_price'],
+                    $row['net_retail_price'],
                     $row['valuation'],
                     $row['retail_value'],
                 ]);

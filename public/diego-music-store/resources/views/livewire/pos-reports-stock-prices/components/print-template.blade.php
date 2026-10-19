@@ -95,8 +95,12 @@
                 <th style="width: 45px;" class="text-center">MIN</th>
                 <th style="width: 45px;" class="text-center">SATUAN</th>
                 <th style="width: 70px;" class="text-center">STATUS</th>
-                <th style="width: 75px;" class="text-right">HARGA HPP</th>
+                <th style="width: 85px;" class="text-right">
+                    <div style="padding-bottom: 2px;">HARGA BELI</div>
+                    <div style="padding-top: 2px; border-top: 1px solid #aaa;">HARGA BELI (HPP)</div>
+                </th>
                 <th style="width: 75px;" class="text-right">HARGA JUAL</th>
+                <th style="width: 75px;" class="text-right">HARGA NETTO</th>
                 <th style="width: 90px;" class="text-right">NILAI HPP</th>
                 <th style="width: 90px;" class="text-right">NILAI JUAL</th>
             </tr>
@@ -113,14 +117,18 @@
                     <td class="text-center ">{{ number_format($row['min_stock'], 0, ',', '.') }}</td>
                     <td class="text-center">{{ $row['unit'] }}</td>
                     <td class="text-center font-bold" style="font-size: 7.5pt;">{{ $row['status_label'] }}</td>
-                    <td class="text-right ">Rp {{ number_format($row['cost_price'], 0, ',', '.') }}</td>
+                    <td class="text-right">
+                        <div style="padding-bottom: 2px;">Rp {{ number_format($row['cost_price'], 0, ',', '.') }}</div>
+                        <div style="padding-top: 2px; border-top: 1px solid #e5e7eb;">Rp {{ number_format($row['hpp'], 0, ',', '.') }}</div>
+                    </td>
                     <td class="text-right ">Rp {{ number_format($row['retail_price'], 0, ',', '.') }}</td>
+                    <td class="text-right ">Rp {{ number_format($row['net_retail_price'], 0, ',', '.') }}</td>
                     <td class="text-right  font-bold">Rp {{ number_format($row['valuation'], 0, ',', '.') }}</td>
                     <td class="text-right  font-bold">Rp {{ number_format($row['retail_value'], 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="13" class="text-center" style="padding: 15px; font-style: italic;">Belum ada data stok produk ditemukan.</td>
+                    <td colspan="14" class="text-center" style="padding: 15px; font-style: italic;">Belum ada data stok produk ditemukan.</td>
                 </tr>
             @endforelse
         </tbody>

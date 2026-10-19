@@ -101,10 +101,11 @@ class GenerateStockListReport
                 continue;
             }
 
-            $costPrice = (float) ($variant->hpp ?: $variant->cost_price);
+            $costPrice = (float) ($variant->cost_price ?: ($variant->hpp ?: 0));
+            $hpp = (float) ($variant->hpp ?: ($variant->cost_price ?: 0));
             $retailPrice = (float) $variant->price;
 
-            $valuation = $product->isService() ? 0.0 : ($stockQty * $costPrice);
+            $valuation = $product->isService() ? 0.0 : ($stockQty * $hpp);
             $retailValue = $product->isService() ? 0.0 : ($stockQty * $retailPrice);
 
             $totalVariants++;
@@ -120,15 +121,23 @@ class GenerateStockListReport
                 }
             }
 
-            // Diskon String
+            // Diskon String & Amount
             $discountStr = '-';
-            if (!empty($variant->discount_value) && $variant->discount_value > 0) {
-                if ($variant->discount_type === 'percent' || $variant->discount_type === '%') {
-                    $discountStr = number_format($variant->discount_value, 0, ',', '.') . '%';
+            $discountValue = (float) ($variant->discount_value ?? 0);
+            $discountType = $variant->discount_type ?? 'percent';
+            $discountAmount = 0.0;
+
+            if ($discountValue > 0) {
+                if ($discountType === 'percent' || $discountType === '%') {
+                    $discountStr = number_format($discountValue, 0, ',', '.') . '%';
+                    $discountAmount = $retailPrice * ($discountValue / 100.0);
                 } else {
-                    $discountStr = 'Rp ' . number_format($variant->discount_value, 0, ',', '.');
+                    $discountStr = 'Rp ' . number_format($discountValue, 0, ',', '.');
+                    $discountAmount = min($retailPrice, $discountValue);
                 }
             }
+
+            $netRetailPrice = max(0.0, $retailPrice - $discountAmount);
 
             // PPN String
             $taxStr = '-';
@@ -141,26 +150,28 @@ class GenerateStockListReport
             }
 
             $rows[] = [
-                'id'            => $variant->id,
-                'sku'           => $variant->sku ?: '-',
-                'barcode'       => $variant->barcode ?: '-',
-                'product_name'  => $product->name,
-                'variant_name'  => $variant->name ?: 'Standard',
-                'full_name'     => $product->name . ($variant->name && $variant->name !== 'Standard' ? " ({$variant->name})" : ''),
-                'category'      => $product->category ?: 'Umum',
-                'brand'         => $product->brand ?: '-',
-                'unit'          => $product->unit?->name ?? 'Pcs',
-                'stock'         => $stockQty,
-                'min_stock'     => $minStock,
-                'status_key'    => $statusKey,
-                'status_label'  => $statusLabel,
-                'badge_color'   => $badgeColor,
-                'cost_price'    => $costPrice,
-                'retail_price'  => $retailPrice,
-                'discount'      => $discountStr,
-                'tax'           => $taxStr,
-                'valuation'     => $valuation,
-                'retail_value'  => $retailValue,
+                'id'                => $variant->id,
+                'sku'               => $variant->sku ?: '-',
+                'barcode'           => $variant->barcode ?: '-',
+                'product_name'      => $product->name,
+                'variant_name'      => $variant->name ?: 'Standard',
+                'full_name'         => $product->name . ($variant->name && $variant->name !== 'Standard' ? " ({$variant->name})" : ''),
+                'category'          => $product->category ?: 'Umum',
+                'brand'             => $product->brand ?: '-',
+                'unit'              => $product->unit?->name ?? 'Pcs',
+                'stock'             => $stockQty,
+                'min_stock'         => $minStock,
+                'status_key'        => $statusKey,
+                'status_label'      => $statusLabel,
+                'badge_color'       => $badgeColor,
+                'cost_price'        => $costPrice,
+                'hpp'               => $hpp,
+                'retail_price'      => $retailPrice,
+                'net_retail_price'  => $netRetailPrice,
+                'discount'          => $discountStr,
+                'tax'               => $taxStr,
+                'valuation'         => $valuation,
+                'retail_value'      => $retailValue,
             ];
         }
 

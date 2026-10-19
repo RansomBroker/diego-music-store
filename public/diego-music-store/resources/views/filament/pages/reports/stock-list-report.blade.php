@@ -73,8 +73,12 @@
                         <th class="py-2.5 px-4 whitespace-nowrap text-center">Status</th>
                         <th class="py-2.5 px-4 whitespace-nowrap text-center">Diskon</th>
                         <th class="py-2.5 px-4 whitespace-nowrap text-center">PPN</th>
-                        <th class="py-2.5 px-4 whitespace-nowrap text-right">Harga Beli (HPP)</th>
+                        <th class="py-2.5 px-4 whitespace-nowrap text-right">
+                            <div class="pb-1 text-gray-700 dark:text-gray-300">Harga Beli</div>
+                            <div class="pt-1 border-t border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">Harga Beli (HPP)</div>
+                        </th>
                         <th class="py-2.5 px-4 whitespace-nowrap text-right">Harga Jual</th>
+                        <th class="py-2.5 px-4 whitespace-nowrap text-right">Harga Jual (Netto)</th>
                         <th class="py-2.5 px-4 whitespace-nowrap text-right">Nilai Aset (HPP)</th>
                     </tr>
                 </thead>
@@ -114,11 +118,19 @@
                             <td class="py-2.5 px-4 text-center  text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                 {{ $row['tax'] }}
                             </td>
-                            <td class="py-2.5 px-4 text-right  text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['cost_price']) }}
+                            <td class="py-2.5 px-4 text-right text-xs whitespace-nowrap">
+                                <div class="pb-1 font-semibold text-gray-800 dark:text-gray-200">
+                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['cost_price']) }}
+                                </div>
+                                <div class="pt-1 border-t border-gray-200 dark:border-gray-700 font-semibold text-gray-800 dark:text-gray-200">
+                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['hpp']) }}
+                                </div>
                             </td>
                             <td class="py-2.5 px-4 text-right  text-xs text-gray-900 dark:text-white whitespace-nowrap">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['retail_price']) }}
+                            </td>
+                            <td class="py-2.5 px-4 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['net_retail_price']) }}
                             </td>
                             <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['valuation']) }}
@@ -126,7 +138,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="py-6 text-center text-gray-400 text-xs">
+                            <td colspan="13" class="py-6 text-center text-gray-400 text-xs">
                                 Tidak ada data stok barang yang sesuai dengan filter.
                             </td>
                         </tr>

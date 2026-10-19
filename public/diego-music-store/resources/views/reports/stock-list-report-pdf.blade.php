@@ -113,8 +113,12 @@
                 <th style="width: 9%;" class="text-center">Status</th>
                 <th style="width: 6%;" class="text-center">Diskon</th>
                 <th style="width: 5%;" class="text-center">PPN</th>
-                <th style="width: 8%;" class="text-right">Harga Beli (Rp)</th>
+                <th style="width: 9%;" class="text-right">
+                    <div style="padding-bottom: 2px;">Harga Beli</div>
+                    <div style="padding-top: 2px; border-top: 1px solid #9ca3af;">Harga Beli (HPP)</div>
+                </th>
                 <th style="width: 8%;" class="text-right">Harga Jual (Rp)</th>
+                <th style="width: 8%;" class="text-right">Harga Netto (Rp)</th>
                 <th style="width: 7%;" class="text-right">Nilai Aset (Rp)</th>
             </tr>
         </thead>
@@ -130,13 +134,17 @@
                     <td class="text-center font-bold">{{ $row['status_label'] }}</td>
                     <td class="text-center ">{{ $row['discount'] }}</td>
                     <td class="text-center ">{{ $row['tax'] }}</td>
-                    <td class="text-right ">{{ number_format($row['cost_price'], 0, ',', '.') }}</td>
+                    <td class="text-right">
+                        <div style="padding-bottom: 2px;">{{ number_format($row['cost_price'], 0, ',', '.') }}</div>
+                        <div style="padding-top: 2px; border-top: 1px solid #e5e7eb;">{{ number_format($row['hpp'], 0, ',', '.') }}</div>
+                    </td>
                     <td class="text-right ">{{ number_format($row['retail_price'], 0, ',', '.') }}</td>
+                    <td class="text-right ">{{ number_format($row['net_retail_price'], 0, ',', '.') }}</td>
                     <td class="text-right  font-bold">{{ number_format($row['valuation'], 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="12" class="text-center" style="color: #6b7280; font-style: italic;">Tidak ada data stok barang yang sesuai dengan filter</td>
+                    <td colspan="13" class="text-center" style="color: #6b7280; font-style: italic;">Tidak ada data stok barang yang sesuai dengan filter</td>
                 </tr>
             @endforelse
         </tbody>

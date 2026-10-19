@@ -1,11 +1,5 @@
-<!-- Table Card (Identik dengan Kolom Back Office StockListReport) -->
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-    <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 font-bold text-sm text-slate-900 dark:text-white flex justify-between items-center">
-        <span>LAPORAN DAFTAR STOK & NILAI PERSEDIAAN BARANG</span>
-        <span class="text-xs text-slate-400 font-normal">Cabang: {{ $reportData['branch_name'] ?? 'Semua Cabang' }} &bull; Kategori: {{ $reportData['category'] ?? 'Semua Kategori' }}</span>
-    </div>
-
-    <x-pos.table.container>
+<!-- Table List -->
+<x-pos.table.container>
         <x-pos.table>
             <thead class="bg-slate-50 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-medium">
                 <tr>
@@ -18,8 +12,12 @@
                     <x-pos.table.th class="text-center">Status Stok</x-pos.table.th>
                     <x-pos.table.th class="text-center">Diskon</x-pos.table.th>
                     <x-pos.table.th class="text-center">PPN</x-pos.table.th>
-                    <x-pos.table.th class="text-right">Harga Beli (HPP)</x-pos.table.th>
+                    <x-pos.table.th class="text-right">
+                        <div class="pb-1 text-slate-700 dark:text-slate-200">Harga Beli</div>
+                        <div class="pt-1 border-t border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">Harga Beli (HPP)</div>
+                    </x-pos.table.th>
                     <x-pos.table.th class="text-right">Harga Jual</x-pos.table.th>
+                    <x-pos.table.th class="text-right">Harga Jual (Netto)</x-pos.table.th>
                     <x-pos.table.th class="text-right">Total Nilai HPP</x-pos.table.th>
                     <x-pos.table.th class="text-right">Total Nilai Jual</x-pos.table.th>
                 </tr>
@@ -84,12 +82,21 @@
                             {{ $row['tax'] }}
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-right  text-xs text-rose-600 dark:text-rose-400 font-semibold">
-                            Rp {{ number_format($row['cost_price'], 0, ',', '.') }}
+                        <x-pos.table.td class="text-right text-xs whitespace-nowrap">
+                            <div class="pb-1 font-semibold text-rose-600 dark:text-rose-400">
+                                Rp {{ number_format($row['cost_price'], 0, ',', '.') }}
+                            </div>
+                            <div class="pt-1 border-t border-slate-200 dark:border-slate-800 font-semibold text-rose-600 dark:text-rose-400">
+                                Rp {{ number_format($row['hpp'], 0, ',', '.') }}
+                            </div>
                         </x-pos.table.td>
 
                         <x-pos.table.td class="text-right  text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
                             Rp {{ number_format($row['retail_price'], 0, ',', '.') }}
+                        </x-pos.table.td>
+
+                        <x-pos.table.td class="text-right text-xs text-teal-600 dark:text-teal-400 font-bold">
+                            Rp {{ number_format($row['net_retail_price'], 0, ',', '.') }}
                         </x-pos.table.td>
 
                         <x-pos.table.td class="text-right  font-extrabold text-xs text-blue-600 dark:text-blue-400">
@@ -101,10 +108,9 @@
                         </x-pos.table.td>
                     </x-pos.table.tr>
                 @empty
-                    <x-pos.table.empty colspan="13" icon="ph-package" message="Belum ada data stok produk ditemukan." />
+                    <x-pos.table.empty colspan="14" icon="ph-package" message="Belum ada data stok produk ditemukan." />
                 @endforelse
             </tbody>
         </x-pos.table>
         <x-pos.table.footer :paginator="$reportData['paginated_rows'] ?? null" :total="count($reportData['rows'] ?? [])" perPageModel="perPage" />
     </x-pos.table.container>
-</div>
