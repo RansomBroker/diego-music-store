@@ -77,6 +77,8 @@ class PosCustomerDeposits extends Component
 
     public function mount(): void
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         $this->deposit_date = now()->format('Y-m-d');
         $this->loadDefaultAccount();
 
