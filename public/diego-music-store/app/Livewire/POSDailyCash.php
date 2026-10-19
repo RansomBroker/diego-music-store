@@ -58,6 +58,14 @@ class POSDailyCash extends Component
     // Outflow destinations option
     public $outflowDestinations = [];
 
+    /**
+     * Enforce this restriction on initial page loads and every Livewire request.
+     */
+    public function boot(): void
+    {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount()
     {
         abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
