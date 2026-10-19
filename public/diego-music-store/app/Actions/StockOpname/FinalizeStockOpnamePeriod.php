@@ -61,25 +61,37 @@ class FinalizeStockOpnamePeriod
                 ]);
             }
 
-            // Fail closed: every active physical variant in the catalog must be represented
-            // at least once across the submitted location counts before branch stock is adjusted.
-            $missingVariant = ProductVariant::query()
-                ->join('products', 'products.id', '=', 'product_variants.product_id')
-                ->where('products.type', 'physical')
-                ->where('products.is_active', true)
-                ->where('product_variants.is_active', true)
-                ->whereNotIn('product_variants.id', array_keys($physicalCounts))
-                ->select('product_variants.id', 'products.name', 'product_variants.name as variant_name', 'product_variants.sku')
-                ->first();
+            // Each product already stocked by this branch must be explicitly counted
+            // in every location task. Enter zero when the product is absent at that location.
+            $branchVariantIds = ProductBranchStock::query()
+                ->where('branch_id', $lockedPeriod->branch_id)
+                ->pluck('product_variant_id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
 
-            if ($missingVariant) {
-                throw ValidationException::withMessages([
-                    'period' => 'Finalisasi diblokir. Produk belum memiliki hitungan di lokasi mana pun: '
-                        . $missingVariant->name
-                        . ($missingVariant->variant_name ? ' - ' . $missingVariant->variant_name : '')
-                        . ($missingVariant->sku ? ' (SKU ' . $missingVariant->sku . ')' : '')
-                        . '. Pastikan seluruh produk fisik sudah dihitung sebelum finalisasi.',
-                ]);
+            foreach ($assignments as $assignment) {
+                $countedAtLocation = $assignment->stockOpname->items
+                    ->pluck('product_variant_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->unique();
+
+                $missingAtLocation = $branchVariantIds->diff($countedAtLocation);
+                if ($missingAtLocation->isNotEmpty()) {
+                    $missingVariant = ProductVariant::query()
+                        ->with('product')
+                        ->whereKey($missingAtLocation->first())
+                        ->first();
+
+                    throw ValidationException::withMessages([
+                        'period' => 'Finalisasi diblokir. Lokasi ' . $assignment->preset->name
+                            . ' belum menghitung semua produk yang terdaftar pada stok cabang. '
+                            . ($missingVariant?->product?->name ?? 'Produk')
+                            . ($missingVariant?->name ? ' - ' . $missingVariant->name : '')
+                            . ($missingVariant?->sku ? ' (SKU ' . $missingVariant->sku . ')' : '')
+                            . '. Masukkan jumlah fisik, termasuk 0 jika produk tidak ada di lokasi tersebut.',
+                    ]);
+                }
             }
 
             $consolidated = StockOpname::create([
