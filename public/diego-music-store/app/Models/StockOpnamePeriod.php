@@ -21,6 +21,7 @@ class StockOpnamePeriod extends Model
         'status',
         'notes',
         'created_by',
+        'final_stock_opname_id',
     ];
 
     protected $casts = [
@@ -40,5 +41,10 @@ class StockOpnamePeriod extends Model
     public function assignments(): HasMany
     {
         return $this->hasMany(StockOpnameAssignment::class);
+    }
+
+    public function finalStockOpname(): BelongsTo
+    {
+        return $this->belongsTo(StockOpname::class, 'final_stock_opname_id');
     }
 }
