@@ -413,6 +413,7 @@ class PosCommissions extends Component
 
     public function claimGroupCommission(int $groupId): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $group = CommissionGroup::with(['leader', 'members.employee'])->findOrFail($groupId);
         $yearMonth = explode('-', $this->filterMonth ?: now()->format('Y-m'));
         $year = (int) ($yearMonth[0] ?? now()->year);
