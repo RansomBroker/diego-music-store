@@ -16,6 +16,7 @@
     $isEmployeeTasks   = request()->is('pos/employee-tasks*');
     $isAttendances     = request()->is('pos/attendances*');
     $isDayOffCalendar  = request()->is('pos/day-off-calendar*');
+    $isStockOpnameTasks = request()->is('pos/stock-opname-tasks*');
     $isAttendanceRadiuses = request()->is('pos/attendance-radiuses*');
     $isCommissions     = request()->is('pos/commissions*');
     $isViolations      = request()->is('pos/attendance-violations*');
@@ -255,6 +256,16 @@
                    :title="isCompact ? 'Kalender Jadwal Off' : ''">
                     <i class="ph-bold ph-calendar-blank text-xl flex-shrink-0 {{ $isDayOffCalendar ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Kalender Jadwal Off</span>
+                </a>
+
+                <!-- Tugas Stok Opname -->
+                <a href="/pos/stock-opname-tasks"
+                   @click="if (window.innerWidth < 768) closeMobile()"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isStockOpnameTasks ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   :class="isCompact ? 'justify-center px-0' : ''"
+                   :title="isCompact ? 'Tugas Stok Opname' : ''">
+                    <i class="ph-bold ph-clipboard-text text-xl flex-shrink-0 {{ $isStockOpnameTasks ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                    <span x-show="!isCompact" class="truncate font-semibold">Tugas Stok Opname</span>
                 </a>
 
                 <!-- Presensi Karyawan -->
