@@ -137,4 +137,112 @@ class FinalizeStockOpnamePeriodTest extends TestCase
             'status' => StockOpnamePeriod::STATUS_REVIEW,
         ]);
     }
+
+    public function test_finalization_aggregates_location_counts_and_cannot_run_twice(): void
+    {
+        $branch = Branch::create([
+            'name' => 'Cabang Pontianak',
+            'address' => 'Pontianak',
+            'is_active' => true,
+        ]);
+
+        $employee = User::factory()->create();
+        $employee->employee()->update([
+            'branch_id' => $branch->id,
+            'is_active' => true,
+        ]);
+
+        $period = StockOpnamePeriod::create([
+            'branch_id' => $branch->id,
+            'period' => '2026-10-01',
+            'name' => 'SO Oktober 2026',
+            'status' => StockOpnamePeriod::STATUS_DRAFT,
+            'created_by' => $employee->id,
+        ]);
+
+        $product = Product::create([
+            'name' => 'Keyboard Yamaha',
+            'type' => 'physical',
+            'category' => 'Keyboard',
+            'is_active' => true,
+        ]);
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'name' => 'Hitam',
+            'sku' => 'KEY-001',
+            'price' => 1000000,
+            'cost_price' => 700000,
+            'hpp' => 700000,
+            'is_active' => true,
+        ]);
+        $branchStock = ProductBranchStock::create([
+            'branch_id' => $branch->id,
+            'product_variant_id' => $variant->id,
+            'stock' => 10,
+            'hpp' => 700000,
+        ]);
+
+        foreach ([
+            ['name' => 'Lantai 1', 'physical' => 4],
+            ['name' => 'Lantai 2', 'physical' => 6],
+        ] as $index => $location) {
+            $preset = StockOpnamePreset::create([
+                'branch_id' => $branch->id,
+                'name' => $location['name'],
+                'is_active' => true,
+            ]);
+            $opname = StockOpname::create([
+                'branch_id' => $branch->id,
+                'opname_date' => '2026-10-01',
+                'status' => 'draft',
+                'notes' => 'Hitungan ' . $location['name'],
+            ]);
+            StockOpnameItem::create([
+                'stock_opname_id' => $opname->id,
+                'product_variant_id' => $variant->id,
+                'system_qty' => 10,
+                'physical_qty' => $location['physical'],
+                'difference' => $location['physical'] - 10,
+                'cost_price' => 700000,
+            ]);
+            StockOpnameAssignment::create([
+                'stock_opname_period_id' => $period->id,
+                'stock_opname_preset_id' => $preset->id,
+                'assigned_user_id' => $employee->id,
+                'stock_opname_id' => $opname->id,
+                'status' => StockOpnameAssignment::STATUS_COMPLETED,
+                'assigned_by' => $employee->id,
+            ]);
+        }
+
+        $period->update(['status' => StockOpnamePeriod::STATUS_REVIEW]);
+
+        $finalOpname = app(FinalizeStockOpnamePeriod::class)->execute($period);
+
+        $this->assertSame('completed', $finalOpname->status);
+        $this->assertDatabaseHas('stock_opname_items', [
+            'stock_opname_id' => $finalOpname->id,
+            'product_variant_id' => $variant->id,
+            'system_qty' => 10,
+            'physical_qty' => 10,
+            'difference' => 0,
+        ]);
+        $this->assertSame(10, (int) $branchStock->fresh()->stock);
+        $this->assertDatabaseHas('stock_opname_periods', [
+            'id' => $period->id,
+            'status' => StockOpnamePeriod::STATUS_COMPLETED,
+            'final_stock_opname_id' => $finalOpname->id,
+        ]);
+        $this->assertSame(3, StockOpname::query()->count(), 'One final document should be created in addition to two location drafts.');
+
+        try {
+            app(FinalizeStockOpnamePeriod::class)->execute($period->fresh());
+            $this->fail('A finalized period must not be finalized again.');
+        } catch (ValidationException $exception) {
+            $this->assertNotEmpty($exception->errors());
+        }
+
+        $this->assertSame(3, StockOpname::query()->count(), 'A second finalization must not create another document.');
+    }
+
 }
