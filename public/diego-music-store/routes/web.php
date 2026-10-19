@@ -71,8 +71,10 @@ Route::middleware('auth.pos')->group(function () {
     })->name('pos.switch-branch');
 
     // Individual payslip routes enforce employee ownership in their controllers.
-    Route::get('/pos/payroll/payslip-pdf/{id}', [App\\Http\\Controllers\\POS\\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
-    Route::get('/pos/payroll/item/export-excel/{id}', [App\\Http\\Controllers\\POS\\PayrollExportController::class, 'exportItem'])->name('pos.payroll.item.export-excel');
+
+    // Individual payslip routes enforce employee ownership in their controllers.
+    Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
+    Route::get('/pos/payroll/item/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'exportItem'])->name('pos.payroll.item.export-excel');
 
     // Rute Khusus Owner (Sensitif: Payroll, User, Hak Akses, Cabang, Pengaturan)
     Route::middleware(['role:owner|super_admin|Owner|Super Admin'])->group(function () {
@@ -101,10 +103,8 @@ Route::middleware('auth.pos')->group(function () {
 
         // Payroll & Gaji Karyawan
         Route::get('/pos/payroll', App\Livewire\PosPayrollManagement::class)->name('pos.payroll');
-        Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
         Route::get('/pos/payroll/bulk-payslip-pdf/{id}', [App\Http\Controllers\POS\BulkPayrollPayslipController::class, 'show'])->name('pos.payroll.bulk-payslip-pdf');
         Route::get('/pos/payroll/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'export'])->name('pos.payroll.export-excel');
-        Route::get('/pos/payroll/item/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'exportItem'])->name('pos.payroll.item.export-excel');
     });
 });
 
