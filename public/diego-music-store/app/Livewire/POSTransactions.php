@@ -56,6 +56,14 @@ class POSTransactions extends Component
         'toDate' => ['except' => ''],
     ];
 
+    /**
+     * Enforce this restriction on initial page loads and every Livewire request.
+     */
+    public function boot(): void
+    {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount(): void
     {
         // Sales is read-only and must not browse or mutate transaction/cash records.
