@@ -119,7 +119,8 @@ class FinalizeStockOpnamePeriodTest extends TestCase
             app(FinalizeStockOpnamePeriod::class)->execute($period);
             $this->fail('Finalization should be blocked until every active physical variant is counted.');
         } catch (ValidationException $exception) {
-            $this->assertStringContainsString('belum memiliki hitungan', strtolower($exception->getMessage()));
+            $messages = implode(' ', array_merge(...array_values($exception->errors())));
+            $this->assertStringContainsString('belum memiliki hitungan', strtolower($messages));
         }
 
         $this->assertSame(10, (int) $branchStock->fresh()->stock);
