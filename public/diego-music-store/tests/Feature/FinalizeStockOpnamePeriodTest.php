@@ -127,7 +127,7 @@ class FinalizeStockOpnamePeriodTest extends TestCase
             $this->fail('Finalization should be blocked until every active physical variant is counted.');
         } catch (ValidationException $exception) {
             $messages = implode(' ', array_merge(...array_values($exception->errors())));
-            $this->assertStringContainsString('belum memiliki hitungan', strtolower($messages));
+            $this->assertStringContainsString('belum menghitung semua produk', strtolower($messages));
         }
 
         $this->assertSame(10, (int) $branchStock->fresh()->stock);
