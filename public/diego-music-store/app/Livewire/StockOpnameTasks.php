@@ -1,16 +1,16 @@
 <?php
 
-namespace App\\Livewire;
+namespace App\Livewire;
 
-use App\\Models\\ProductBranchStock;
-use App\\Models\\ProductVariant;
-use App\\Models\\StockOpname;
-use App\\Models\\StockOpnameAssignment;
-use App\\Models\\StockOpnameItem;
-use App\\Models\\StockOpnamePeriod;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Validation\\ValidationException;
-use Livewire\\Component;
+use App\Models\ProductBranchStock;
+use App\Models\ProductVariant;
+use App\Models\StockOpname;
+use App\Models\StockOpnameAssignment;
+use App\Models\StockOpnameItem;
+use App\Models\StockOpnamePeriod;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Livewire\Component;
 
 class StockOpnameTasks extends Component
 {
@@ -333,8 +333,8 @@ class StockOpnameTasks extends Component
         $selectedLogoUrl = null;
         $activeBranchId = session('pos_active_branch_id') ?: auth()->user()?->employee?->branch_id;
         if ($activeBranchId) {
-            $branch = \\App\\Models\\Branch::find($activeBranchId);
-            $selectedLogoUrl = ($branch && $branch->logo_path) ? \\Illuminate\\Support\\Facades\\Storage::url($branch->logo_path) : null;
+            $branch = \App\Models\Branch::find($activeBranchId);
+            $selectedLogoUrl = ($branch && $branch->logo_path) ? \Illuminate\Support\Facades\Storage::url($branch->logo_path) : null;
         }
 
         return view('livewire.stock-opname-tasks', [
