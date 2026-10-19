@@ -58,6 +58,9 @@ class POSTransactions extends Component
 
     public function mount(): void
     {
+        // Sales is read-only and must not browse or mutate transaction/cash records.
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         // Default date range is today
         $this->fromDate = now()->format('Y-m-d');
         $this->toDate = now()->format('Y-m-d');
