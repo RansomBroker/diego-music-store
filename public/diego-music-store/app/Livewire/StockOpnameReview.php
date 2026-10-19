@@ -218,10 +218,18 @@ class StockOpnameReview extends Component
             ? $this->findReviewableAssignment($this->selectedAssignmentId)
             : null;
 
+        $selectedLogoUrl = null;
+        $activeBranchId = session('pos_active_branch_id') ?: auth()->user()?->employee?->branch_id;
+        if ($activeBranchId) {
+            $branch = Branch::find($activeBranchId);
+            $selectedLogoUrl = ($branch && $branch->logo_path) ? Storage::url($branch->logo_path) : null;
+        }
+
         return view('livewire.stock-opname-review', [
             'periods' => $periods,
             'selectedPeriod' => $selectedPeriod,
             'selectedAssignment' => $selectedAssignment,
+            'selectedLogoUrl' => $selectedLogoUrl,
         ])->layout('layouts.pos', ['title' => 'Review Stok Opname']);
     }
 }
