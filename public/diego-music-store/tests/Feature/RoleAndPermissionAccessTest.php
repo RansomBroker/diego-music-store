@@ -30,7 +30,7 @@ class RoleAndPermissionAccessTest extends TestCase
         ]);
     }
 
-    public function test_owner_and_admin_can_access_backoffice_panel(): void
+    public function test_owner_can_access_backoffice_panel_and_legacy_admin_cannot(): void
     {
         $owner = User::factory()->create(['is_active' => true]);
         $owner->assignRole('owner');
@@ -39,11 +39,11 @@ class RoleAndPermissionAccessTest extends TestCase
         $panel = Filament::getPanel('backoffice');
         $this->assertTrue($owner->canAccessPanel($panel));
 
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $admin = User::factory()->create(['is_active' => true]);
-        $admin->assignRole('admin');
-        $admin->branches()->attach($this->branch->id);
+        $admin->assignRole($adminRole);
 
-        $this->assertTrue($admin->canAccessPanel($panel));
+        $this->assertFalse($admin->canAccessPanel($panel));
     }
 
     public function test_karyawan_and_sales_cannot_access_backoffice_panel(): void
@@ -68,7 +68,7 @@ class RoleAndPermissionAccessTest extends TestCase
         $panel = Filament::getPanel('backoffice');
 
         $inactiveAdmin = User::factory()->create(['is_active' => false]);
-        $inactiveAdmin->assignRole('admin');
+        $inactiveAdmin->assignRole(Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']));
         $inactiveAdmin->branches()->attach($this->branch->id);
 
         $this->assertFalse($inactiveAdmin->canAccessPanel($panel));
@@ -113,7 +113,7 @@ class RoleAndPermissionAccessTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_admin_and_owner_can_access_sensitive_pos_routes(): void
+    public function test_owner_can_access_sensitive_pos_routes(): void
     {
         $owner = User::factory()->create(['is_active' => true]);
         $owner->assignRole('owner');
@@ -152,14 +152,14 @@ class RoleAndPermissionAccessTest extends TestCase
 
     public function test_user_privileges_page_form_populates_checked_permissions(): void
     {
-        $admin = User::factory()->create(['is_active' => true]);
-        $admin->assignRole('admin');
-        $admin->branches()->attach($this->branch->id);
+        $owner = User::factory()->create(['is_active' => true]);
+        $owner->assignRole('owner');
+        $owner->branches()->attach($this->branch->id);
 
         $karyawanRole = Role::findByName('karyawan');
         $this->assertTrue($karyawanRole->hasPermissionTo('pos.access'));
 
-        \Livewire\Livewire::actingAs($admin)
+        \Livewire\Livewire::actingAs($owner)
             ->test(\App\Filament\Pages\UserPrivileges::class)
             ->mountTableAction('editPermissions', $karyawanRole)
             ->assertTableActionDataSet(function (array $data): bool {
