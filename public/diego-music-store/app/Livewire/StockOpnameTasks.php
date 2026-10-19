@@ -269,9 +269,19 @@ class StockOpnameTasks extends Component
                 $query->where('branch_id', $assignment->period->branch_id)
                     ->select('id', 'product_variant_id', 'branch_id', 'stock');
             }])
-            ->where('product_variants.is_active', true)
-            ->where('products.is_active', true)
             ->where('products.type', 'physical')
+            ->where(function ($query) use ($assignment) {
+                $query->where('product_variants.is_active', true)
+                    ->orWhereHas('branchStocks', fn ($stock) => $stock
+                        ->where('branch_id', $assignment->period->branch_id)
+                        ->where('stock', '>', 0));
+            })
+            ->where(function ($query) use ($assignment) {
+                $query->where('products.is_active', true)
+                    ->orWhereHas('branchStocks', fn ($stock) => $stock
+                        ->where('branch_id', $assignment->period->branch_id)
+                        ->where('stock', '>', 0));
+            })
             ->when(trim($this->search) !== '', function ($query) {
                 $term = '%' . addcslashes(trim($this->search), '%_') . '%';
                 $query->where(function ($nested) use ($term) {
