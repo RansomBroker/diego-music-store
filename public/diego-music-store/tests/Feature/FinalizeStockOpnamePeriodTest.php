@@ -71,7 +71,7 @@ class FinalizeStockOpnamePeriodTest extends TestCase
             'category' => 'Gitar',
             'is_active' => true,
         ]);
-        ProductVariant::create([
+        $variantB = ProductVariant::create([
             'product_id' => $productB->id,
             'name' => 'Natural',
             'sku' => 'GTR-001',
@@ -86,6 +86,13 @@ class FinalizeStockOpnamePeriodTest extends TestCase
             'product_variant_id' => $variantA->id,
             'stock' => 10,
             'hpp' => 700000,
+        ]);
+
+        ProductBranchStock::create([
+            'branch_id' => $branch->id,
+            'product_variant_id' => $variantB->id,
+            'stock' => 0,
+            'hpp' => 900000,
         ]);
 
         $opname = StockOpname::create([
