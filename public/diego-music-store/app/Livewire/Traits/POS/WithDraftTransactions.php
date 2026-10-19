@@ -27,6 +27,7 @@ trait WithDraftTransactions
 
     public function holdTransaction()
     {
+        abort_if(Auth::user()?->hasRole('sales'), 403);
         if (empty($this->cart) && !$this->selectedCustomerId) {
             Notification::make()
                 ->title('Keranjang Kosong')
@@ -47,6 +48,7 @@ trait WithDraftTransactions
 
     public function restoreHeldTransaction($holdId)
     {
+        abort_if(Auth::user()?->hasRole('sales'), 403);
         $held = PosHeldTransaction::find($holdId);
         if (!$held) {
             Notification::make()
@@ -84,6 +86,7 @@ trait WithDraftTransactions
 
     public function deleteHeldTransaction($holdId)
     {
+        abort_if(Auth::user()?->hasRole('sales'), 403);
         $held = PosHeldTransaction::find($holdId);
         if ($held) {
             $held->delete();
