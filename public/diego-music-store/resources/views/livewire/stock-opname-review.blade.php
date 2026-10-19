@@ -92,7 +92,7 @@
 
                                 @if ($canFinalize)
                                     <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-                                        Semua tugas lokasi sudah disetujui. Finalisasi akan menggabungkan hitungan per SKU/varian, membandingkannya dengan stok sistem cabang saat finalisasi, lalu menjalankan penyesuaian stok dan jurnal satu kali.
+                                        Semua tugas lokasi sudah disetujui. Setiap lokasi wajib memiliki hitungan untuk seluruh varian yang terdaftar pada stok cabang; masukkan 0 jika produk tidak ada di lokasi tersebut. Finalisasi menjumlahkan hitungan antar lokasi per SKU/varian, membandingkannya dengan stok sistem cabang saat finalisasi, lalu menjalankan penyesuaian stok dan jurnal satu kali.
                                     </div>
                                 @elseif ($selectedPeriod->status !== \App\Models\StockOpnamePeriod::STATUS_COMPLETED)
                                     <div class="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-900 dark:text-slate-300">
