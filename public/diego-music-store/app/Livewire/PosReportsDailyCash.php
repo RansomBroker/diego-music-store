@@ -20,6 +20,11 @@ class PosReportsDailyCash extends Component
     public ?int $selectedBranchId = null;
     public int $perPage = 15;
 
+    public function boot(): void
+    {
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function updatingPerPage(): void
     {
         $this->resetPage();
