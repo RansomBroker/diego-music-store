@@ -144,6 +144,16 @@ class RoleAndPermissionAccessTest extends TestCase
         $response->assertStatus(403);
     }
 
+    public function test_super_admin_cannot_manage_global_role_privileges(): void
+    {
+        $superAdminRole = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $superAdmin = User::factory()->create(['is_active' => true]);
+        $superAdmin->assignRole($superAdminRole);
+        $superAdmin->branches()->attach($this->branch->id);
+
+        $this->actingAs($superAdmin)->get('/backoffice/user-privileges')->assertForbidden();
+    }
+
     public function test_owner_can_access_sensitive_pos_routes(): void
     {
         $owner = User::factory()->create(['is_active' => true]);
