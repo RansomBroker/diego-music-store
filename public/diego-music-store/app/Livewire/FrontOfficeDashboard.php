@@ -54,6 +54,10 @@ class FrontOfficeDashboard extends Component
                 $sub->where('branch_id', $branch->id);
                 if ($isOwner) {
                     $sub->orWhereNull('branch_id');
+                } else {
+                    $sub->orWhere(function ($ownEmployee) {
+                        $ownEmployee->where('user_id', Auth::id())->whereNull('branch_id');
+                    });
                 }
             });
         })
