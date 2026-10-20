@@ -17,6 +17,12 @@ class PosKpiPerformance extends Component
 {
     use WithPagination;
 
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public string $activeTab = 'recap'; // 'recap', 'dashboard', 'templates'
     public string $filterMonth = '';
     public string $filterBranchId = '';
