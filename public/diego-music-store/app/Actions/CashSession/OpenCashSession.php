@@ -25,6 +25,11 @@ class OpenCashSession
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
         abort_unless((int) $userId === (int) Auth::id(), 403, 'Sesi hanya dapat dibuka untuk akun yang sedang login.');
         abort_unless(in_array($branchId, $allowedBranchIds, true), 403, 'Cabang tidak diizinkan untuk akun ini.');
+        $currentUser = Auth::user();
+        $isManagement = $currentUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        if (!$isManagement) {
+            abort_unless($currentUser->employee && (int) $currentUser->employee->branch_id === $branchId, 403, 'Sesi kasir hanya dapat dibuka di cabang utama karyawan.');
+        }
         $openingCash = intval($data['opening_cash'] ?? 0);
         $notes = $data['notes'] ?? null;
 
