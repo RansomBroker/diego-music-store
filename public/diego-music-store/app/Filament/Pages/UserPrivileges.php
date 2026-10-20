@@ -114,7 +114,7 @@ class UserPrivileges extends Page implements HasActions, HasForms, HasTable
             ])
             ->actions([
                 Action::make('editPermissions')
-                    ->visible(fn (Role $record): bool => ! in_array(strtolower($record->name), ['owner', 'super_admin'], true))
+                    ->visible(fn (Role $record): bool => ! in_array(strtolower($record->name), ['owner', 'super_admin', 'super admin'], true))
                     ->label('Atur Hak Akses')
                     ->icon('heroicon-o-adjustments-horizontal')
                     ->color('primary')
@@ -184,7 +184,7 @@ class UserPrivileges extends Page implements HasActions, HasForms, HasTable
                     }),
 
                 DeleteAction::make()
-                    ->visible(fn (Role $record): bool => ! in_array(strtolower($record->name), ['owner', 'super_admin'], true)),
+                    ->visible(fn (Role $record): bool => ! in_array(strtolower($record->name), ['owner', 'super_admin', 'super admin'], true)),
             ]);
     }
 
