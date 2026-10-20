@@ -22,6 +22,12 @@ class PosAttendances extends Component
 {
     use WithPagination, WithFileUploads;
 
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     // ── Tab State ────────────────────────────────────────────────────────
     public string $activeTab = 'attendances'; // 'attendances' or 'backdate_requests'
 
