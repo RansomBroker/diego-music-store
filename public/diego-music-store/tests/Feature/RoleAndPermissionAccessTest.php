@@ -163,6 +163,16 @@ class RoleAndPermissionAccessTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_sales_can_view_read_only_catalog_but_cannot_open_transactional_pos(): void
+    {
+        $sales = User::factory()->create(['is_active' => true]);
+        $sales->assignRole('sales');
+        $sales->branches()->attach($this->branch->id);
+
+        $this->actingAs($sales)->get('/pos/catalog')->assertStatus(200);
+        $this->actingAs($sales)->get('/pos')->assertStatus(403);
+    }
+
     public function test_sales_role_cannot_access_transaction_cash_and_payment_pages(): void
     {
         $sales = User::factory()->create(['is_active' => true]);
