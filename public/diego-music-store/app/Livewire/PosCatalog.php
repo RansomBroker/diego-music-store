@@ -6,7 +6,6 @@ use App\Helpers\BranchHelper;
 use App\Models\Branch;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,12 +16,6 @@ class PosCatalog extends Component
     public string $search = '';
     public string $category = '';
     public int $perPage = 20;
-
-    public function boot(): void
-    {
-        // Sales gets a read-only catalog, not transaction or administration tools.
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']) === false, 403);
-    }
 
     public function updatingSearch(): void
     {
@@ -70,6 +63,7 @@ class PosCatalog extends Component
             ->with([
                 'variants' => fn ($query) => $query->where('is_active', true)->orderBy('name'),
                 'variants.branchStocks' => fn ($query) => $query->where('branch_id', $branchId),
+                'variants.branchPrices' => fn ($query) => $query->where('branch_id', $branchId),
                 'variants.bundleItems.childVariant.branchStocks' => fn ($query) => $query->where('branch_id', $branchId),
             ])
             ->orderBy('name')
