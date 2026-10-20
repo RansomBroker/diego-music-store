@@ -15,6 +15,12 @@ class PosServiceManagement extends Component
 {
     use WithPagination;
 
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public ?int $selectedBranchId = null;
     public ?string $selectedStatus = null;
     public ?int $selectedTechnicianId = null;
