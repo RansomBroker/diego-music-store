@@ -62,7 +62,16 @@ class PosReportsArAging extends Component
 
     public function showDetails(int $saleId): void
     {
-        $sale = Sale::with(['customer', 'branch', 'salesRep', 'items.variant.product'])->find($saleId);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $authorizedBranchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless(in_array($authorizedBranchId, $allowedBranchIds, true), 403);
+
+        $sale = Sale::with(['customer', 'branch', 'salesRep', 'items.variant.product'])
+            ->where('branch_id', $authorizedBranchId)
+            ->find($saleId);
         if (!$sale) {
             return;
         }
