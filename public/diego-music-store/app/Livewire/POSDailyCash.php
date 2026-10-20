@@ -58,8 +58,36 @@ class POSDailyCash extends Component
     // Outflow destinations option
     public $outflowDestinations = [];
 
+    /**
+     * Enforce this restriction on initial page loads and every Livewire request.
+     */
+    public function boot(): void
+    {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
+    private function resolveAuthorizedBranchId(): int
+    {
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $branchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+
+        abort_unless(in_array($branchId, $allowedBranchIds, true), 403);
+        $this->selectedBranchId = $branchId;
+
+        return $branchId;
+    }
+
     public function mount()
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         $this->branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
         $this->selectedBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         $this->checkActiveSession();
@@ -68,7 +96,9 @@ class POSDailyCash extends Component
 
     protected function checkActiveSession()
     {
-        $this->activeSession = CashSession::where('branch_id', $this->selectedBranchId)
+        $branchId = $this->resolveAuthorizedBranchId();
+        $this->activeSession = null;
+        $this->activeSession = CashSession::where('branch_id', $branchId)
             ->where('status', 'open')
             ->first();
 
@@ -129,6 +159,10 @@ class POSDailyCash extends Component
 
     public function saveInflow()
     {
+        $branchId = $this->resolveAuthorizedBranchId();
+        $this->checkActiveSession();
+        abort_unless($this->activeSession && (int) $this->activeSession->branch_id === $branchId, 403);
+
         $this->validate([
             'inAmount' => 'required|integer|min:1',
             'inSourceAccountId' => 'required|exists:accounts,id',
@@ -148,7 +182,7 @@ class POSDailyCash extends Component
             }
 
             app(CreateCashTransaction::class)->execute([
-                'branch_id' => $this->selectedBranchId,
+                'branch_id' => $branchId,
                 'cash_session_id' => $this->activeSession->id,
                 'type' => 'in',
                 'transaction_date' => now()->toDateString(),
@@ -187,6 +221,10 @@ class POSDailyCash extends Component
 
     public function saveOutflow()
     {
+        $branchId = $this->resolveAuthorizedBranchId();
+        $this->checkActiveSession();
+        abort_unless($this->activeSession && (int) $this->activeSession->branch_id === $branchId, 403);
+
         $this->validate([
             'outAmount' => 'required|integer|min:1',
             'outDestinationAccountId' => 'required|exists:accounts,id',
@@ -250,6 +288,7 @@ class POSDailyCash extends Component
 
     public function render()
     {
+        $branchId = $this->resolveAuthorizedBranchId();
         $transactions = [];
         if ($this->activeSession) {
             $transactions = CashTransaction::where('cash_session_id', $this->activeSession->id)
@@ -257,7 +296,7 @@ class POSDailyCash extends Component
                 ->paginate($this->perPage > 0 ? $this->perPage : 1000);
         }
 
-        $branch = Branch::find($this->selectedBranchId);
+        $branch = Branch::find($branchId);
         $selectedLogoUrl = ($branch && !empty($branch->logo_path) && trim($branch->logo_path) !== '') ? \Illuminate\Support\Facades\Storage::url($branch->logo_path) : null;
 
         return view('livewire.pos-daily-cash', [

@@ -16,8 +16,20 @@ class OpenCashSession
      */
     public function execute(array $data): CashSession
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(Auth::check(), 403);
+
         $userId = $data['user_id'] ?? Auth::id();
-        $branchId = $data['branch_id'] ?? null;
+        $branchId = (int) ($data['branch_id'] ?? 0);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        abort_unless((int) $userId === (int) Auth::id(), 403, 'Sesi hanya dapat dibuka untuk akun yang sedang login.');
+        abort_unless(in_array($branchId, $allowedBranchIds, true), 403, 'Cabang tidak diizinkan untuk akun ini.');
+        $currentUser = Auth::user();
+        $isManagement = $currentUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        if (!$isManagement) {
+            abort_unless($currentUser->employee && (int) $currentUser->employee->branch_id === $branchId, 403, 'Sesi kasir hanya dapat dibuka di cabang utama karyawan.');
+        }
         $openingCash = intval($data['opening_cash'] ?? 0);
         $notes = $data['notes'] ?? null;
 
@@ -52,7 +64,7 @@ class OpenCashSession
 
         // Auto clock-in employee if linked to this user (kecualikan Owner / Admin)
         $user = \App\Models\User::find($userId);
-        if ($user && $user->employee && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+        if ($user && $user->employee && !$user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
             app(\App\Actions\Attendance\ClockIn::class)->execute(
                 $user->employee,
                 $branchId,

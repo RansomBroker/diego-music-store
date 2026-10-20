@@ -55,8 +55,10 @@ class ZReportController extends Controller
      */
     public function show(Request $request, CashSession $cashSession)
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless((int) $cashSession->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
         // Enforce that only authorized users or the cashier themselves can view the report
-        if (Auth::id() !== $cashSession->user_id && !Auth::user()->hasAnyRole(['owner', 'admin'])) {
+        if (Auth::id() !== $cashSession->user_id && !Auth::user()->hasAnyRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
             abort(403, 'Anda tidak diizinkan untuk melihat Z-Report ini.');
         }
 
@@ -74,8 +76,10 @@ class ZReportController extends Controller
      */
     public function downloadPdf(CashSession $cashSession)
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless((int) $cashSession->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
         // Enforce that only authorized users or the cashier themselves can view the report
-        if (Auth::id() !== $cashSession->user_id && !Auth::user()->hasAnyRole(['owner', 'admin'])) {
+        if (Auth::id() !== $cashSession->user_id && !Auth::user()->hasAnyRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
             abort(403, 'Anda tidak diizinkan untuk melihat Z-Report ini.');
         }
 

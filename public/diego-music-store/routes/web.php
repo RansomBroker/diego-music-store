@@ -9,12 +9,15 @@ Route::get('/', function () {
 });
 
 Route::get('/backoffice/purchase-orders/{purchaseOrder}/print', [App\Http\Controllers\BackOffice\PurchaseOrderPrintController::class, 'show'])
+    ->middleware('auth')
     ->name('backoffice.purchase-orders.print');
 
 Route::get('/backoffice/inventory-mutations/{inventoryMutation}/print', [App\Http\Controllers\BackOffice\InventoryMutationPrintController::class, 'show'])
+    ->middleware('auth')
     ->name('backoffice.inventory-mutations.print');
 
 Route::get('/backoffice/sales-invoices/{salesInvoice}/print', [App\Http\Controllers\BackOffice\SalesInvoicePrintController::class, 'show'])
+    ->middleware('auth')
     ->name('backoffice.sales-invoices.print');
 
 // Custom POS Routes
@@ -29,6 +32,7 @@ Route::post('/pos/logout', function () {
 Route::middleware('auth.pos')->group(function () {
     // General Operasional POS (Kasir, Sales, Admin, Owner)
     Route::get('/pos/front-office', App\Livewire\FrontOfficeDashboard::class)->name('pos.front-office');
+    Route::get('/pos/catalog', App\Livewire\PosCatalog::class)->name('pos.catalog');
     Route::get('/pos', App\Livewire\POS::class)->name('pos');
     Route::get('/pos/receipt/{sale}', [App\Http\Controllers\POS\POSReceiptController::class, 'show'])->name('pos.receipt');
     Route::get('/pos/receipt-draft', [App\Http\Controllers\POS\POSReceiptController::class, 'showDraft'])->name('pos.receipt-draft');
@@ -39,7 +43,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/customer-deposits', App\Livewire\PosCustomerDeposits::class)->name('pos.customer-deposits');
     Route::get('/pos/daily-cash', App\Livewire\POSDailyCash::class)->name('pos.daily-cash');
     Route::get('/pos/customer-payments', App\Livewire\PosCustomerPayments::class)->name('pos.customer-payments');
-    Route::get('/pos/customers', App\Livewire\PosCustomers::class)->name('pos.customers');
+    Route::get('/pos/customers', App\Livewire\PosCustomers::class)->middleware('role:owner|super_admin|Owner|Super Admin|karyawan|Karyawan')->name('pos.customers');
     Route::get('/pos/attendances', App\Livewire\PosAttendances::class)->name('pos.attendances');
     Route::get('/pos/day-off-calendar', App\Livewire\EmployeeDayOffCalendar::class)->name('pos.day-off-calendar');
     Route::get('/pos/stock-opname-tasks', App\Livewire\StockOpnameTasks::class)->name('pos.stock-opname-tasks');
@@ -63,15 +67,19 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/switch-branch/{branch}', function (\App\Models\Branch $branch) {
         if (auth()->check()) {
             $user = auth()->user();
-            if ($user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin']) || $user->branches()->where('branches.id', $branch->id)->exists()) {
+            if ($user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']) || $user->branches()->where('branches.id', $branch->id)->exists()) {
                 session(['pos_active_branch_id' => $branch->id]);
             }
         }
         return redirect()->back();
     })->name('pos.switch-branch');
 
-    // Rute Khusus Admin & Owner (Sensitif: Payroll, User, Hak Akses, Cabang, Pengaturan)
-    Route::middleware(['role:owner|admin|super_admin|Owner|Admin|Super Admin'])->group(function () {
+    // Individual payslip routes enforce employee ownership in their controllers.
+    Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
+    Route::get('/pos/payroll/item/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'exportItem'])->name('pos.payroll.item.export-excel');
+
+    // Rute Khusus Owner (Sensitif: Payroll, User, Hak Akses, Cabang, Pengaturan)
+    Route::middleware(['role:owner|super_admin|Owner|Super Admin'])->group(function () {
         // SDM & Manajemen Karyawan
         Route::get('/pos/employees', App\Livewire\PosEmployees::class)->name('pos.employees');
         Route::get('/pos/employee-tasks', App\Livewire\PosEmployeeTasks::class)->name('pos.employee-tasks');
@@ -97,10 +105,8 @@ Route::middleware('auth.pos')->group(function () {
 
         // Payroll & Gaji Karyawan
         Route::get('/pos/payroll', App\Livewire\PosPayrollManagement::class)->name('pos.payroll');
-        Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
         Route::get('/pos/payroll/bulk-payslip-pdf/{id}', [App\Http\Controllers\POS\BulkPayrollPayslipController::class, 'show'])->name('pos.payroll.bulk-payslip-pdf');
         Route::get('/pos/payroll/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'export'])->name('pos.payroll.export-excel');
-        Route::get('/pos/payroll/item/export-excel/{id}', [App\Http\Controllers\POS\PayrollExportController::class, 'exportItem'])->name('pos.payroll.item.export-excel');
     });
 });
 

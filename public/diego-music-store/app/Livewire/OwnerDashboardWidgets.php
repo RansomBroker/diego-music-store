@@ -40,7 +40,7 @@ class OwnerDashboardWidgets extends Component
     public function render(GetOwnerDashboardData $action)
     {
         $user = Auth::user();
-        $isOwner = $user && $user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
+        $isOwner = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
 
         if (!$isOwner) {
             return view('livewire.owner-dashboard-widgets', [

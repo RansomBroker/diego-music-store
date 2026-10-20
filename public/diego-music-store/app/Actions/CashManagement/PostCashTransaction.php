@@ -3,6 +3,7 @@
 namespace App\Actions\CashManagement;
 
 use App\Models\CashTransaction;
+use App\Models\CashSession;
 use App\Models\JournalEntry;
 use App\Models\JournalItem;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,15 @@ class PostCashTransaction
 {
     public function execute(CashTransaction $cashTransaction): CashTransaction
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        abort_unless(in_array((int) $cashTransaction->branch_id, $allowedBranchIds, true), 403);
+        if ($cashTransaction->cash_session_id) {
+            abort_unless(CashSession::query()->whereKey($cashTransaction->cash_session_id)
+                ->where('branch_id', $cashTransaction->branch_id)->exists(), 403);
+        }
+
         return DB::transaction(function () use ($cashTransaction) {
             if ($cashTransaction->status !== 'draft') {
                 throw new InvalidArgumentException('Hanya transaksi draf yang dapat diposting.');

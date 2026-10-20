@@ -21,6 +21,11 @@ class PosReportsStockPrices extends Component
     public ?string $search = '';
     public int $perPage = 15;
 
+    public function boot(): void
+    {
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function updatingPerPage(): void
     {
         $this->resetPage();
@@ -51,8 +56,14 @@ class PosReportsStockPrices extends Component
     public function render()
     {
         $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
-        $activeBranchId = $this->selectedBranchId ?: \App\Helpers\BranchHelper::getActiveBranchId();
-        $currentBranch = Branch::find($activeBranchId);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $activeBranchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless(in_array($activeBranchId, $allowedBranchIds, true), 403);
+        $this->selectedBranchId = $activeBranchId;
+        $currentBranch = Branch::findOrFail($activeBranchId);
 
         $selectedLogoUrl = !empty($currentBranch?->logo_path) ? Storage::url($currentBranch->logo_path) : null;
 

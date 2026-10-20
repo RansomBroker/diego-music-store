@@ -66,6 +66,8 @@ class UserForm
                     ->multiple()
                     ->relationship('roles', 'name')
                     ->preload()
+                    ->disabled(fn (): bool => ! auth()->user()?->hasRole(['owner', 'Owner']))
+                    ->helperText('Hanya Owner yang dapat mengubah role pengguna.')
                     ->label('Roles'),
             ]);
     }

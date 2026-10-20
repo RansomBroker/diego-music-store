@@ -24,7 +24,11 @@ class ProcessBackdateAttendanceApproval
             throw new InvalidArgumentException('Aksi tidak valid.');
         }
 
-        $approverUser = $approver ?: auth()->user();
+        $authenticatedUser = auth()->user();
+        abort_unless($authenticatedUser && $authenticatedUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']), 403);
+        abort_unless((int) $request->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
+
+        $approverUser = $authenticatedUser;
 
         return DB::transaction(function () use ($request, $action, $approverUser, $adminNotes) {
             if ($action === 'approve') {

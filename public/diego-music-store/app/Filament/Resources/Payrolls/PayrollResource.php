@@ -41,6 +41,12 @@ class PayrollResource extends Resource
         return true;
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId());
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return 'Manajemen Karyawan';

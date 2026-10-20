@@ -16,6 +16,12 @@ class InventoryMutationPrintController extends Controller
      */
     public function show(InventoryMutation $inventoryMutation): View
     {
+        $user = auth()->user();
+        abort_unless($user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']), 403);
+
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless((int) $inventoryMutation->sender_branch_id === (int) $activeBranchId || (int) $inventoryMutation->receiver_branch_id === (int) $activeBranchId, 403);
+
         $inventoryMutation->load([
             'senderBranch',
             'receiverBranch',

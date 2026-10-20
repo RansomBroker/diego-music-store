@@ -4,6 +4,7 @@ namespace App\Actions\Sales;
 
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\CashSession;
 use App\Models\SalesReturn;
 use App\Models\SalesReturnItem;
 use App\Models\ProductVariant;
@@ -25,9 +26,18 @@ class CreateSalesReturn
      */
     public function execute(array $data): SalesReturn
     {
-        return DB::transaction(function () use ($data) {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+
+        return DB::transaction(function () use ($data, $allowedBranchIds) {
             $saleId = $data['sale_id'];
-            $sale = Sale::findOrFail($saleId);
+            $sale = Sale::query()->whereIn('branch_id', $allowedBranchIds)->findOrFail($saleId);
+
+            if (!empty($data['cash_session_id'])) {
+                $cashSession = CashSession::query()->findOrFail($data['cash_session_id']);
+                abort_unless((int) $cashSession->branch_id === (int) $sale->branch_id && $cashSession->status === 'open', 403);
+            }
 
             if ($sale->status === 'cancelled') {
                 throw new \Exception('Tidak dapat melakukan retur pada transaksi yang sudah dibatalkan.');
@@ -65,7 +75,7 @@ class CreateSalesReturn
                     continue;
                 }
 
-                $saleItem = SaleItem::findOrFail($saleItemId);
+                $saleItem = SaleItem::query()->where('sale_id', $sale->id)->findOrFail($saleItemId);
 
                 // Validation
                 if ($qty > $saleItem->available_qty_for_return) {

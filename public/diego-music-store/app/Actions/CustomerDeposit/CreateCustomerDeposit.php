@@ -21,17 +21,19 @@ class CreateCustomerDeposit
      */
     public function execute(array $data, ?User $user = null): CustomerDeposit
     {
-        return DB::transaction(function () use ($data, $user) {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless($activeBranchId, 403);
+        abort_unless(!isset($data['branch_id']) || (int) $data['branch_id'] === (int) $activeBranchId, 403);
+
+        return DB::transaction(function () use ($data, $user, $activeBranchId) {
             $user = $user ?: Auth::user();
             $userId = $user?->id;
 
             $customerId = $data['customer_id'] ?? null;
             $customer = Customer::findOrFail($customerId);
 
-            $branchId = $data['branch_id']
-                ?? $user?->branches()->first()?->id
-                ?? $user?->branch_id
-                ?? 1;
+            $branchId = $activeBranchId;
 
             $productType = $data['product_type'] ?? 'existing';
             $productId = null;

@@ -46,12 +46,20 @@ class PosCustomerPayments extends Component
     ];
 
     // ── Lifecycle & Helpers ──────────────────────────────────────────────
+    /**
+     * Enforce this restriction on initial page loads and every Livewire request.
+     */
+    public function boot(): void
+    {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount(): void
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         $this->payment_date = now()->format('Y-m-d');
-        $this->branch_id = Auth::user()?->branches()->first()?->id
-            ?? Auth::user()?->branch_id
-            ?? Branch::first()?->id;
+        $this->branch_id = \App\Helpers\BranchHelper::getActiveBranchId();
 
         $defaultAccount = Account::where('classification', 'asset')
             ->where('is_header', false)
@@ -99,9 +107,7 @@ class PosCustomerPayments extends Component
             'customer_id', 'payment_reference', 'notes', 'items'
         ]);
         $this->payment_date = now()->format('Y-m-d');
-        $this->branch_id = Auth::user()?->branches()->first()?->id
-            ?? Auth::user()?->branch_id
-            ?? Branch::first()?->id;
+        $this->branch_id = \App\Helpers\BranchHelper::getActiveBranchId();
 
         $paymentMethodsData = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get();
         if ($paymentMethodsData->isNotEmpty()) {
@@ -144,7 +150,14 @@ class PosCustomerPayments extends Component
             return;
         }
 
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        if (!$activeBranchId) {
+            $this->items = [];
+            return;
+        }
+
         $unpaidSales = \App\Models\Sale::query()
+            ->where('branch_id', $activeBranchId)
             ->where('customer_id', $value)
             ->where(function ($q) {
                 $q->where('payment_method', 'like', '%piutang%')
@@ -207,11 +220,10 @@ class PosCustomerPayments extends Component
     // ── Save Payment ───────────────────────────────────────────────────
     public function save(string $status = 'posted'): void
     {
-        if (!$this->branch_id) {
-            $this->branch_id = Auth::user()?->branches()->first()?->id
-                ?? Auth::user()?->branch_id
-                ?? Branch::first()?->id;
-        }
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless($activeBranchId, 403);
+        // Never trust a public Livewire branch_id supplied by the browser.
+        $this->branch_id = $activeBranchId;
 
         if ($this->payment_method) {
             $pm = \App\Models\PaymentMethod::where('name', $this->payment_method)
@@ -252,7 +264,7 @@ class PosCustomerPayments extends Component
 
         $selectedItems = collect($this->items)->filter(function ($item) {
             return ($item['is_selected'] ?? false) && floatval($item['amount_paid'] ?? 0) > 0;
-        });
+        })->unique(fn ($item) => $item['sale_id'] ?? null);
 
         if ($selectedItems->isEmpty()) {
             $msg = 'Paling sedikit satu transaksi piutang harus dipilih dan diisi jumlah pembayaran yang lebih dari 0.';
@@ -262,14 +274,23 @@ class PosCustomerPayments extends Component
         }
 
         try {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($selectedItems) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($selectedItems, $activeBranchId) {
                 $totalPaid = 0;
                 foreach ($selectedItems as $item) {
-                    $sale = \App\Models\Sale::find($item['sale_id'] ?? null);
-                    if ($sale) {
-                        $paid = floatval($item['amount_paid']);
-                        $currentPiutang = $sale->getPiutangAmount();
-                        $isFullyPaid = ($paid >= $currentPiutang);
+                    $sale = \App\Models\Sale::query()
+                        ->where('branch_id', $activeBranchId)
+                        ->where('customer_id', $this->customer_id)
+                        ->find($item['sale_id'] ?? null);
+                    if (!$sale) {
+                        throw new \Illuminate\Auth\Access\AuthorizationException('Transaksi tidak berada pada cabang atau pelanggan yang dipilih.');
+                    }
+
+                    $currentPiutang = max(0, (float) $sale->getPiutangAmount());
+                    $paid = min(max(0, (float) ($item['amount_paid'] ?? 0)), $currentPiutang);
+                    if ($paid <= 0) {
+                        continue;
+                    }
+                    $isFullyPaid = ($paid >= $currentPiutang);
                         $totalPaid += $paid;
 
                         $refText = $this->payment_reference ? " | Ref: {$this->payment_reference}" : '';
@@ -350,7 +371,9 @@ class PosCustomerPayments extends Component
     // ── Show Detail & Settlement History Modal ──────────────────────────
     public function showDetails(int $id): void
     {
-        $sale = \App\Models\Sale::with(['customer', 'branch', 'salesRep', 'items.variant.product'])->find($id);
+        $sale = \App\Models\Sale::with(['customer', 'branch', 'salesRep', 'items.variant.product'])
+            ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())
+            ->find($id);
         if (!$sale) {
             return;
         }
@@ -402,7 +425,9 @@ class PosCustomerPayments extends Component
     // ── Render ───────────────────────────────────────────────────────────
     public function render()
     {
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         $salesPiutang = \App\Models\Sale::with(['customer', 'branch'])
+            ->where('branch_id', $activeBranchId)
             ->when($this->statusFilter, function ($q) {
                 if ($this->statusFilter === 'completed') {
                     $q->where('status', 'completed');
@@ -411,14 +436,15 @@ class PosCustomerPayments extends Component
                 }
             })
             ->when($this->search, function ($q) {
-                $q->where('invoice_number', 'like', "%{$this->search}%")
-                  ->orWhereHas('customer', fn ($sq) => $sq->where('name', 'like', "%{$this->search}%"));
+                $q->where(function ($searchQuery) {
+                    $searchQuery->where('invoice_number', 'like', "%{$this->search}%")
+                        ->orWhereHas('customer', fn ($customerQuery) => $customerQuery->where('name', 'like', "%{$this->search}%"));
+                });
             })
             ->latest()
             ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
-        $userBranchId = Auth::user()?->branches()->first()?->id ?? Branch::first()?->id;
-        $branch = $userBranchId ? Branch::find($userBranchId) : null;
+        $branch = $activeBranchId ? Branch::find($activeBranchId) : null;
         $selectedLogoUrl = ($branch && !empty($branch->logo_path))
             ? Storage::url($branch->logo_path)
             : null;
@@ -432,7 +458,9 @@ class PosCustomerPayments extends Component
 
         return view('livewire.pos-customer-payments', [
             'payments' => $salesPiutang,
-            'customers' => \App\Models\Customer::orderBy('name')->get()->filter(fn ($c) => $c->total_piutang > 0),
+            'customers' => \App\Models\Customer::query()
+                ->whereIn('id', \App\Models\Sale::query()->where('branch_id', $activeBranchId)->whereNotNull('customer_id')->distinct()->pluck('customer_id'))
+                ->orderBy('name')->get(),
             'accounts' => $accounts,
             'paymentMethodsData' => $paymentMethodsData,
             'selectedLogoUrl' => $selectedLogoUrl,

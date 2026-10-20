@@ -75,16 +75,23 @@ class PosCustomerDeposits extends Component
         'page' => ['except' => 1],
     ];
 
+    /**
+     * Enforce this restriction on initial page loads and every Livewire request.
+     */
+    public function boot(): void
+    {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount(): void
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         $this->deposit_date = now()->format('Y-m-d');
         $this->loadDefaultAccount();
 
         // Load branch logo
-        $userBranchId = session('pos_active_branch_id')
-            ?? Auth::user()?->branches()->first()?->id
-            ?? Auth::user()?->branch_id
-            ?? Branch::first()?->id;
+        $userBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
 
         $branch = $userBranchId ? Branch::find($userBranchId) : null;
         $this->selectedLogoUrl = ($branch && !empty($branch->logo_path) && trim($branch->logo_path) !== '')
@@ -299,7 +306,7 @@ class PosCustomerDeposits extends Component
 
     public function openEditModal(int $id): void
     {
-        $deposit = CustomerDeposit::findOrFail($id);
+        $deposit = CustomerDeposit::query()->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())->findOrFail($id);
 
         if (!$deposit->isPending()) {
             Notification::make()->title('Perhatian')->body('Hanya deposit berstatus pending yang dapat diubah.')->warning()->send();
@@ -372,7 +379,7 @@ class PosCustomerDeposits extends Component
             ];
 
             if ($this->isEditMode && $this->editingDepositId) {
-                $deposit = CustomerDeposit::findOrFail($this->editingDepositId);
+                $deposit = CustomerDeposit::query()->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())->findOrFail($this->editingDepositId);
                 $updateAction->execute($deposit, $data, Auth::user());
                 $msg = "Deposit {$deposit->deposit_number} berhasil diperbarui.";
             } else {
@@ -393,7 +400,7 @@ class PosCustomerDeposits extends Component
     // ── Pelunasan Handlers ────────────────────────────────────────────────────
     public function openSettleModal(int $id): void
     {
-        $deposit = CustomerDeposit::with('customer', 'product')->findOrFail($id);
+        $deposit = CustomerDeposit::with('customer', 'product')->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())->findOrFail($id);
 
         if (!$deposit->isPending()) {
             Notification::make()->title('Perhatian')->body('Hanya deposit berstatus pending yang dapat dilunasi.')->warning()->send();
@@ -415,7 +422,7 @@ class PosCustomerDeposits extends Component
         if (!$this->settlingDepositId) return;
 
         try {
-            $deposit = CustomerDeposit::findOrFail($this->settlingDepositId);
+            $deposit = CustomerDeposit::query()->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())->findOrFail($this->settlingDepositId);
 
             // Automatically resolve default Kas account if not explicitly set
             $defaultKas = Account::where('classification', 'asset')
@@ -450,7 +457,7 @@ class PosCustomerDeposits extends Component
     public function cancelDeposit(int $id, CancelCustomerDeposit $cancelAction): void
     {
         try {
-            $deposit = CustomerDeposit::findOrFail($id);
+            $deposit = CustomerDeposit::query()->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())->findOrFail($id);
             $cancelAction->execute($deposit, 'Dibatalkan oleh kasir POS', Auth::user());
 
             $msg = "Deposit {$deposit->deposit_number} berhasil dibatalkan.";
@@ -465,6 +472,7 @@ class PosCustomerDeposits extends Component
     public function render()
     {
         $query = CustomerDeposit::with(['customer', 'product', 'account', 'user'])
+            ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())
             ->when($this->search, function ($q) {
                 $term = '%' . trim($this->search) . '%';
                 $q->where(function ($sub) use ($term) {

@@ -14,7 +14,7 @@ class SalesEmployeeDashboardWidgets extends Component
     public function mount(): void
     {
         $user = Auth::user();
-        $isOwner = $user && $user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
+        $isOwner = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
 
         if ($isOwner) {
             $firstEmp = Employee::where('is_active', true)
@@ -30,7 +30,12 @@ class SalesEmployeeDashboardWidgets extends Component
     public function render(GetSalesEmployeeDashboardData $action)
     {
         $currentUser = Auth::user();
-        $isOwner = $currentUser && $currentUser->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
+        $isOwner = $currentUser && $currentUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+
+        // Non-management users must never choose another employee through Livewire state.
+        if (!$isOwner) {
+            $this->selectedEmployeeId = $currentUser?->employee?->id;
+        }
 
         // Daftar karyawan untuk dipilih oleh Owner
         $employeesList = $isOwner

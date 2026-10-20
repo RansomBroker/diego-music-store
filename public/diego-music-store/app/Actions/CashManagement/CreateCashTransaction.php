@@ -3,6 +3,7 @@
 namespace App\Actions\CashManagement;
 
 use App\Models\CashTransaction;
+use App\Models\CashSession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -10,6 +11,21 @@ class CreateCashTransaction
 {
     public function execute(array $data): CashTransaction
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $branchId = (int) ($data['branch_id'] ?? 0);
+        abort_unless(in_array($branchId, $allowedBranchIds, true), 403);
+
+        if (!empty($data['cash_session_id'])) {
+            abort_unless(CashSession::query()
+                ->whereKey($data['cash_session_id'])
+                ->where('branch_id', $branchId)
+                ->exists(), 403);
+        }
+
         return DB::transaction(function () use ($data) {
             $transactionNo = $data['transaction_no'] ?? null;
             if (empty($transactionNo)) {

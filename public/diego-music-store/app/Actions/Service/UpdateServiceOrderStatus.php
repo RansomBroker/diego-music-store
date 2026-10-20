@@ -3,7 +3,9 @@
 namespace App\Actions\Service;
 
 use App\Models\ServiceOrder;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 
 class UpdateServiceOrderStatus
@@ -17,6 +19,18 @@ class UpdateServiceOrderStatus
      */
     public static function execute(ServiceOrder $serviceOrder, array $data): ServiceOrder
     {
+        $user = Auth::user();
+        abort_unless($user, 403);
+        abort_if($user->hasRole(['sales', 'Sales']), 403);
+        abort_unless(\App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->where('branches.id', $serviceOrder->branch_id)->exists(), 403);
+
+        if (isset($data['technician_id']) && $data['technician_id']) {
+            abort_unless(User::query()->whereKey($data['technician_id'])
+                ->whereHas('employee', fn ($q) => $q->where('branch_id', $serviceOrder->branch_id))
+                ->exists(), 403);
+        }
+
         DB::transaction(function () use ($serviceOrder, $data) {
             $updateData = [];
 

@@ -21,6 +21,11 @@ class PosReportsArSettlement extends Component
     public ?string $search = '';
     public int $perPage = 15;
 
+    public function boot(): void
+    {
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function updatingPerPage(): void
     {
         $this->resetPage();
@@ -79,18 +84,22 @@ class PosReportsArSettlement extends Component
 
     public function render()
     {
-        $branches = Branch::all();
-        $userBranchId = Auth::user()?->branches()->first()?->id;
-        $currentBranch = $this->selectedBranchId
-            ? Branch::find($this->selectedBranchId)
-            : ($userBranchId ? Branch::find($userBranchId) : Branch::first());
+        $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $authorizedBranchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless(in_array($authorizedBranchId, $allowedBranchIds, true), 403);
+        $this->selectedBranchId = $authorizedBranchId;
+        $currentBranch = Branch::findOrFail($authorizedBranchId);
 
         $selectedLogoUrl = !empty($currentBranch?->logo_path) ? Storage::url($currentBranch->logo_path) : null;
 
         $reportData = ReportHelper::getARSettlementReport(
             $this->dateFrom,
             $this->dateTo,
-            $this->selectedBranchId,
+            $authorizedBranchId,
             $this->search
         );
 

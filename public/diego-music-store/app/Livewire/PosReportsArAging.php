@@ -24,6 +24,11 @@ class PosReportsArAging extends Component
     public ?string $dateTo = '';
     public int $perPage = 15;
 
+    public function boot(): void
+    {
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function updatingPerPage(): void
     {
         $this->resetPage();
@@ -57,7 +62,16 @@ class PosReportsArAging extends Component
 
     public function showDetails(int $saleId): void
     {
-        $sale = Sale::with(['customer', 'branch', 'salesRep', 'items.variant.product'])->find($saleId);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $authorizedBranchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless(in_array($authorizedBranchId, $allowedBranchIds, true), 403);
+
+        $sale = Sale::with(['customer', 'branch', 'salesRep', 'items.variant.product'])
+            ->where('branch_id', $authorizedBranchId)
+            ->find($saleId);
         if (!$sale) {
             return;
         }
@@ -119,16 +133,20 @@ class PosReportsArAging extends Component
 
     public function render()
     {
-        $branches = Branch::all();
-        $userBranchId = Auth::user()?->branches()->first()?->id;
-        $currentBranch = $this->selectedBranchId
-            ? Branch::find($this->selectedBranchId)
-            : ($userBranchId ? Branch::find($userBranchId) : Branch::first());
+        $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $authorizedBranchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless(in_array($authorizedBranchId, $allowedBranchIds, true), 403);
+        $this->selectedBranchId = $authorizedBranchId;
+        $currentBranch = Branch::findOrFail($authorizedBranchId);
 
         $selectedLogoUrl = !empty($currentBranch?->logo_path) ? Storage::url($currentBranch->logo_path) : null;
 
         $reportData = ReportHelper::getARAgingReport(
-            $this->selectedBranchId,
+            $authorizedBranchId,
             $this->search,
             $this->selectedCustomerId,
             $this->agingGroupFilter,
