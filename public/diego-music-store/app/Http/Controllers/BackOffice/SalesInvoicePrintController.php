@@ -16,6 +16,12 @@ class SalesInvoicePrintController extends Controller
      */
     public function show(SalesInvoice $salesInvoice): View
     {
+        $user = auth()->user();
+        abort_unless($user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']), 403);
+
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless((int) $salesInvoice->branch_id === (int) $activeBranchId, 403);
+
         $salesInvoice->load([
             'customer',
             'branch',
