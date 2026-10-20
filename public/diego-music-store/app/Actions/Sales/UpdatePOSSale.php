@@ -24,7 +24,7 @@ class UpdatePOSSale
      */
     public function execute(Sale $sale, array $data): Sale
     {
-        abort_if(Auth::user()?->hasRole('sales'), 403);
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
         return DB::transaction(function () use ($sale, $data) {
             $items = $data['items'] ?? [];
             if (empty($items)) {
