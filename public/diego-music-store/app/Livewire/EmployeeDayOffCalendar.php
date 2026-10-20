@@ -11,6 +11,12 @@ use Livewire\Component;
 
 class EmployeeDayOffCalendar extends Component
 {
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public string $month = '';
     public ?string $selectedDate = null;
     public bool $showAddModal = false;
