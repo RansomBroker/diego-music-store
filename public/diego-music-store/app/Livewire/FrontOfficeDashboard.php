@@ -26,15 +26,16 @@ class FrontOfficeDashboard extends Component
             'opened_by'    => $activeSession->user?->name ?? (Auth::user()?->name ?? 'Kasir'),
         ] : null;
 
-        // Ambil logo cabang aktif untuk sidebar
-        $activeBranchId = session('pos_active_branch_id') ?: Auth::user()->branches()->first()?->id;
+        // Resolve only an active branch assigned to this user (owners may switch branches).
+        $activeBranchId = \\App\\Helpers\\BranchHelper::getActiveBranchId();
         $branchId       = $activeSession?->branch_id ?? $activeBranchId;
-        $branch         = $branchId ? Branch::find($branchId) : Branch::first();
+        $branch         = Branch::findOrFail($branchId);
         $selectedLogoUrl = ($branch && !empty($branch->logo_path) && trim($branch->logo_path) !== '')
             ? Storage::url($branch->logo_path)
             : null;
 
-        $isOwner = Auth::check() && Auth::user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
+        $isOwner = Auth::check() && Auth::user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $currentUserEmployee = Auth::user()?->employee;
 
         // Load presensi cabang hari ini (khusus karyawan operasional, kecualikan Owner)
         $todayDate = now()->format('Y-m-d');
@@ -45,10 +46,15 @@ class FrontOfficeDashboard extends Component
         ->whereDoesntHave('user.roles', function ($q) {
             $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
         })
-        ->when($branch, function ($q) use ($branch) {
+        ->when(!$isOwner, function ($q) {
+            $q->where('user_id', Auth::id());
+        })
+        ->when($branch, function ($q) use ($branch, $isOwner) {
             $q->where(function ($sub) use ($branch) {
-                $sub->where('branch_id', $branch->id)
-                    ->orWhereNull('branch_id');
+                $sub->where('branch_id', $branch->id);
+                if ($isOwner) {
+                    $sub->orWhereNull('branch_id');
+                }
             });
         })
         ->orderBy('name', 'asc')
@@ -71,7 +77,6 @@ class FrontOfficeDashboard extends Component
         }
 
         // Logged-in User Employee Data, Today Attendance, Commission & Progress Bar
-        $currentUserEmployee = Auth::user()?->employee;
         $currentUserTodayAttendance = null;
         $currentUserMonthlyCommission = 0.0;
         $currentUserMonthlySales = 0.0;
