@@ -40,7 +40,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/customer-deposits', App\Livewire\PosCustomerDeposits::class)->name('pos.customer-deposits');
     Route::get('/pos/daily-cash', App\Livewire\POSDailyCash::class)->name('pos.daily-cash');
     Route::get('/pos/customer-payments', App\Livewire\PosCustomerPayments::class)->name('pos.customer-payments');
-    Route::get('/pos/customers', App\Livewire\PosCustomers::class)->name('pos.customers');
+    Route::get('/pos/customers', App\Livewire\PosCustomers::class)->middleware('role:owner|super_admin|Owner|Super Admin|karyawan|Karyawan')->name('pos.customers');
     Route::get('/pos/attendances', App\Livewire\PosAttendances::class)->name('pos.attendances');
     Route::get('/pos/day-off-calendar', App\Livewire\EmployeeDayOffCalendar::class)->name('pos.day-off-calendar');
     Route::get('/pos/stock-opname-tasks', App\Livewire\StockOpnameTasks::class)->name('pos.stock-opname-tasks');
