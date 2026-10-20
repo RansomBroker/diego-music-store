@@ -58,7 +58,7 @@ class SalesInvoiceResource extends Resource
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+        if ($user && !$user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
             $userBranchIds = $user->branches()->pluck('branches.id')->toArray();
             return $query->whereIn('branch_id', $userBranchIds);
         }
