@@ -30,7 +30,7 @@ class SalesEmployeeDashboardWidgets extends Component
     public function render(GetSalesEmployeeDashboardData $action)
     {
         $currentUser = Auth::user();
-        $isOwner = $currentUser && $currentUser->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
+        $isOwner = $currentUser && $currentUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
 
         // Non-management users must never choose another employee through Livewire state.
         if (!$isOwner) {
