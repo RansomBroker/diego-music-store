@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\BranchHelper;
 use App\Models\Branch;
 use App\Models\CashSession;
 use App\Models\Employee;
@@ -27,7 +28,7 @@ class FrontOfficeDashboard extends Component
         ] : null;
 
         // Resolve only an active branch assigned to this user (owners may switch branches).
-        $activeBranchId = \\App\\Helpers\\BranchHelper::getActiveBranchId();
+        $activeBranchId = BranchHelper::getActiveBranchId();
         $branchId       = $activeSession?->branch_id ?? $activeBranchId;
         $branch         = Branch::findOrFail($branchId);
         $selectedLogoUrl = ($branch && !empty($branch->logo_path) && trim($branch->logo_path) !== '')
