@@ -29,6 +29,7 @@ Route::post('/pos/logout', function () {
 Route::middleware('auth.pos')->group(function () {
     // General Operasional POS (Kasir, Sales, Admin, Owner)
     Route::get('/pos/front-office', App\Livewire\FrontOfficeDashboard::class)->name('pos.front-office');
+    Route::get('/pos/catalog', App\Livewire\PosCatalog::class)->name('pos.catalog');
     Route::get('/pos', App\Livewire\POS::class)->name('pos');
     Route::get('/pos/receipt/{sale}', [App\Http\Controllers\POS\POSReceiptController::class, 'show'])->name('pos.receipt');
     Route::get('/pos/receipt-draft', [App\Http\Controllers\POS\POSReceiptController::class, 'showDraft'])->name('pos.receipt-draft');
@@ -69,8 +70,6 @@ Route::middleware('auth.pos')->group(function () {
         }
         return redirect()->back();
     })->name('pos.switch-branch');
-
-    // Individual payslip routes enforce employee ownership in their controllers.
 
     // Individual payslip routes enforce employee ownership in their controllers.
     Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
