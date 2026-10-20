@@ -6,6 +6,7 @@ use App\Helpers\BranchHelper;
 use App\Models\Branch;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -81,7 +82,7 @@ class PosCatalog extends Component
             'products' => $products,
             'categories' => $categories,
             'branch' => $branch,
-            'selectedLogoUrl' => $branch->logo_path ? \\Illuminate\\Support\\Facades\\Storage::url($branch->logo_path) : null,
+            'selectedLogoUrl' => $branch->logo_path ? Storage::url($branch->logo_path) : null,
         ])->layout('layouts.pos', ['title' => 'Katalog Produk']);
     }
 }
