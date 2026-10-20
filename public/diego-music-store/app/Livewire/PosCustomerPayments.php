@@ -264,7 +264,7 @@ class PosCustomerPayments extends Component
 
         $selectedItems = collect($this->items)->filter(function ($item) {
             return ($item['is_selected'] ?? false) && floatval($item['amount_paid'] ?? 0) > 0;
-        });
+        })->unique(fn ($item) => $item['sale_id'] ?? null);
 
         if ($selectedItems->isEmpty()) {
             $msg = 'Paling sedikit satu transaksi piutang harus dipilih dan diisi jumlah pembayaran yang lebih dari 0.';
