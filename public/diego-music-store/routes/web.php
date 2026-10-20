@@ -9,12 +9,15 @@ Route::get('/', function () {
 });
 
 Route::get('/backoffice/purchase-orders/{purchaseOrder}/print', [App\Http\Controllers\BackOffice\PurchaseOrderPrintController::class, 'show'])
+    ->middleware('auth')
     ->name('backoffice.purchase-orders.print');
 
 Route::get('/backoffice/inventory-mutations/{inventoryMutation}/print', [App\Http\Controllers\BackOffice\InventoryMutationPrintController::class, 'show'])
+    ->middleware('auth')
     ->name('backoffice.inventory-mutations.print');
 
 Route::get('/backoffice/sales-invoices/{salesInvoice}/print', [App\Http\Controllers\BackOffice\SalesInvoicePrintController::class, 'show'])
+    ->middleware('auth')
     ->name('backoffice.sales-invoices.print');
 
 // Custom POS Routes
