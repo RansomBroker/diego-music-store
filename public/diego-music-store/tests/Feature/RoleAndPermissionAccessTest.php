@@ -191,6 +191,13 @@ class RoleAndPermissionAccessTest extends TestCase
             '/pos/reports/ar-settlement',
             '/pos/reports/daily-cash',
             '/pos/reports/stock-prices',
+            '/pos/attendances',
+            '/pos/day-off-calendar',
+            '/pos/stock-opname-tasks',
+            '/pos/service-management',
+            '/pos/barcode-print',
+            '/pos/commissions',
+            '/pos/kpi-performance',
         ] as $path) {
             $this->actingAs($sales)->get($path)->assertStatus(403);
         }
