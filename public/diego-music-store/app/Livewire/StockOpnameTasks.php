@@ -23,6 +23,7 @@ class StockOpnameTasks extends Component
     public function mount(): void
     {
         abort_unless(auth()->check(), 403);
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
     }
 
     public function updatedSearch(): void
