@@ -34,8 +34,10 @@ class CreateSalesReturn
             $saleId = $data['sale_id'];
             $sale = Sale::query()->whereIn('branch_id', $allowedBranchIds)->findOrFail($saleId);
 
-            $cashSession = CashSession::query()->findOrFail($data['cash_session_id'] ?? null);
-            abort_unless((int) $cashSession->branch_id === (int) $sale->branch_id && $cashSession->status === 'open', 403);
+            if (!empty($data['cash_session_id'])) {
+                $cashSession = CashSession::query()->findOrFail($data['cash_session_id']);
+                abort_unless((int) $cashSession->branch_id === (int) $sale->branch_id && $cashSession->status === 'open', 403);
+            }
 
             if ($sale->status === 'cancelled') {
                 throw new \Exception('Tidak dapat melakukan retur pada transaksi yang sudah dibatalkan.');
