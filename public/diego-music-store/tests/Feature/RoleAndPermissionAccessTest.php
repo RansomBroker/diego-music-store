@@ -185,6 +185,10 @@ class RoleAndPermissionAccessTest extends TestCase
             '/pos/customer-deposits',
             '/pos/customer-payments',
             '/pos/reports/sales',
+            '/pos/reports/ar-aging',
+            '/pos/reports/ar-settlement',
+            '/pos/reports/daily-cash',
+            '/pos/reports/stock-prices',
         ] as $path) {
             $this->actingAs($sales)->get($path)->assertStatus(403);
         }
