@@ -27,7 +27,7 @@ trait WithDraftTransactions
 
     public function holdTransaction()
     {
-        abort_if(Auth::user()?->hasRole('sales'), 403);
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
         if (empty($this->cart) && !$this->selectedCustomerId) {
             Notification::make()
                 ->title('Keranjang Kosong')
