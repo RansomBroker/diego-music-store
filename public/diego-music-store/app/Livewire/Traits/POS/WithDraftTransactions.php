@@ -10,6 +10,19 @@ use Illuminate\Support\Facades\Auth;
 
 trait WithDraftTransactions
 {
+    private function resolveHeldTransactionBranchId(): int
+    {
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $branchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless(in_array($branchId, $allowedBranchIds, true), 403);
+        $this->selectedBranchId = $branchId;
+        return $branchId;
+    }
+
     public function getHeldTransactionsProperty()
     {
         return PosHeldTransaction::where('user_id', Auth::id())
@@ -48,8 +61,11 @@ trait WithDraftTransactions
 
     public function restoreHeldTransaction($holdId)
     {
-        abort_if(Auth::user()?->hasRole('sales'), 403);
-        $held = PosHeldTransaction::find($holdId);
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        $held = PosHeldTransaction::query()
+            ->where('user_id', Auth::id())
+            ->where('branch_id', $this->resolveHeldTransactionBranchId())
+            ->find($holdId);
         if (!$held) {
             Notification::make()
                 ->title('Transaksi Tidak Ditemukan')
@@ -86,7 +102,7 @@ trait WithDraftTransactions
 
     public function deleteHeldTransaction($holdId)
     {
-        abort_if(Auth::user()?->hasRole('sales'), 403);
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
         $held = PosHeldTransaction::find($holdId);
         if ($held) {
             $held->delete();
@@ -168,7 +184,11 @@ trait WithDraftTransactions
     {
         if (empty($this->cart) && !$this->selectedCustomerId) {
             if ($this->currentDraftId) {
-                PosHeldTransaction::where('id', $this->currentDraftId)->delete();
+                PosHeldTransaction::query()
+                    ->where('id', $this->currentDraftId)
+                    ->where('user_id', Auth::id())
+                    ->where('branch_id', $this->resolveHeldTransactionBranchId())
+                    ->delete();
                 $this->currentDraftId = null;
                 $this->lastSavedDraftHash = null;
             }
@@ -193,21 +213,32 @@ trait WithDraftTransactions
         }
         $this->lastSavedDraftHash = $currentStateHash;
 
-        PosHeldTransaction::updateOrCreate(
-            ['id' => $this->currentDraftId],
-            [
-                'branch_id' => $this->selectedBranchId,
-                'user_id' => Auth::id(),
-                'customer_id' => $this->selectedCustomerId,
-                'customer_name' => $this->selectedCustomerName,
-                'cart_data' => $this->cart,
-                'discount_amount' => $this->discountAmount,
-                'discount_type' => $this->discountType,
-                'discount_value' => $this->discountValue,
-                'use_points' => $this->usePoints,
-                'is_loyalty' => $this->isLoyaltyMember,
-                'pricing_tier_id' => $this->selectedPricingTierId,
-            ]
-        );
+        $branchId = $this->resolveHeldTransactionBranchId();
+        $held = PosHeldTransaction::query()
+            ->where('id', $this->currentDraftId)
+            ->where('user_id', Auth::id())
+            ->where('branch_id', $branchId)
+            ->first();
+
+        if (!$held) {
+            $held = new PosHeldTransaction();
+            $held->id = Str::uuid()->toString();
+            $this->currentDraftId = $held->id;
+        }
+
+        $held->fill([
+            'branch_id' => $branchId,
+            'user_id' => Auth::id(),
+            'customer_id' => $this->selectedCustomerId,
+            'customer_name' => $this->selectedCustomerName,
+            'cart_data' => $this->cart,
+            'discount_amount' => $this->discountAmount,
+            'discount_type' => $this->discountType,
+            'discount_value' => $this->discountValue,
+            'use_points' => $this->usePoints,
+            'is_loyalty' => $this->isLoyaltyMember,
+            'pricing_tier_id' => $this->selectedPricingTierId,
+        ]);
+        $held->save();
     }
 }
