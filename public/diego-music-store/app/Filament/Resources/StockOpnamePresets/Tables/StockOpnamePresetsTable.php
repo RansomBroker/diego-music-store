@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\StockOpnamePresets\Tables;
 
+use App\Models\StockOpnamePreset;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
@@ -25,9 +27,23 @@ class StockOpnamePresetsTable
                 TernaryFilter::make('is_active')->label('Status aktif'),
             ])
             ->actions([
-                EditAction::make(),
+                ViewAction::make()
+                    ->modalWidth('lg'),
+                EditAction::make()
+                    ->modalWidth('lg')
+                    ->mutateFormDataUsing(function (array $data, StockOpnamePreset $record): array {
+                        $user = auth()->user();
+                        $allowedRoles = ['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'];
+                        if (!$user || !$user->hasRole($allowedRoles)) {
+                            abort(403);
+                        }
+
+                        $data['branch_id'] = $record->branch_id;
+
+                        return $data;
+                    }),
                 DeleteAction::make()
-                    ->visible(fn ($record) => $record->assignments()->doesntExist()),
+                    ->visible(fn (StockOpnamePreset $record) => $record->assignments()->doesntExist()),
             ]);
     }
 }

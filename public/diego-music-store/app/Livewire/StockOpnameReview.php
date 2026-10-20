@@ -16,6 +16,8 @@ class StockOpnameReview extends Component
     public ?int $selectedPeriodId = null;
     public ?int $selectedAssignmentId = null;
     public string $reviewNotes = '';
+    public bool $showFinalizeModal = false;
+    public ?int $periodIdToFinalize = null;
 
     public function mount(): void
     {
@@ -30,6 +32,7 @@ class StockOpnameReview extends Component
         $this->selectedPeriodId = $period->id;
         $this->selectedAssignmentId = null;
         $this->reviewNotes = '';
+        $this->closeFinalizeModal();
     }
 
     public function selectAssignment(int $assignmentId): void
@@ -44,46 +47,7 @@ class StockOpnameReview extends Component
     {
         $assignment = $this->findReviewableAssignment($assignmentId);
 
-        if ($assignment->status !== StockOpnameAssignment::STATUS_SUBMITTED) {
-            throw ValidationException::withMessages([
-                'reviewNotes' => 'Hanya tugas yang sudah dikirim karyawan yang dapat disetujui.',
-            ]);
-        }
-
-        DB::transaction(function () use ($assignment): void {
-            $lockedPeriod = StockOpnamePeriod::query()
-                ->whereKey($assignment->stock_opname_period_id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if (!in_array($lockedPeriod->status, [
-                StockOpnamePeriod::STATUS_ACTIVE,
-                StockOpnamePeriod::STATUS_REVIEW,
-            ], true)) {
-                throw ValidationException::withMessages([
-                    'reviewNotes' => 'Periode tidak lagi menerima review.',
-                ]);
-            }
-
-            $lockedAssignment = StockOpnameAssignment::query()
-                ->whereKey($assignment->id)
-                ->where('stock_opname_period_id', $lockedPeriod->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if ($lockedAssignment->status !== StockOpnameAssignment::STATUS_SUBMITTED) {
-                throw ValidationException::withMessages([
-                    'reviewNotes' => 'Status tugas berubah. Muat ulang halaman sebelum melanjutkan.',
-                ]);
-            }
-
-            $lockedAssignment->update([
-                'status' => StockOpnameAssignment::STATUS_COMPLETED,
-                'reviewed_at' => now(),
-                'reviewed_by' => auth()->id(),
-                'review_notes' => trim($this->reviewNotes) !== '' ? trim($this->reviewNotes) : null,
-            ]);
-        });
+        app(\App\Actions\StockOpname\ApproveStockOpnameAssignment::class)->execute($assignment, $this->reviewNotes);
 
         $this->dispatchToast('success', 'Tugas disetujui', 'Hitungan lokasi disetujui dan menunggu finalisasi periode.');
         $this->selectedAssignmentId = null;
@@ -100,52 +64,32 @@ class StockOpnameReview extends Component
 
         $assignment = $this->findReviewableAssignment($assignmentId);
 
-        if ($assignment->status !== StockOpnameAssignment::STATUS_SUBMITTED) {
-            throw ValidationException::withMessages([
-                'reviewNotes' => 'Hanya tugas yang sudah dikirim karyawan yang dapat diminta revisi.',
-            ]);
-        }
-
-        DB::transaction(function () use ($assignment, $validated): void {
-            $period = StockOpnamePeriod::query()
-                ->whereKey($assignment->stock_opname_period_id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if ($period->status === StockOpnamePeriod::STATUS_COMPLETED || $period->status === StockOpnamePeriod::STATUS_CANCELLED) {
-                throw ValidationException::withMessages([
-                    'reviewNotes' => 'Periode sudah ditutup dan tidak menerima revisi.',
-                ]);
-            }
-
-            $locked = StockOpnameAssignment::query()
-                ->whereKey($assignment->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if ($locked->status !== StockOpnameAssignment::STATUS_SUBMITTED) {
-                throw ValidationException::withMessages([
-                    'reviewNotes' => 'Status tugas berubah. Muat ulang halaman sebelum melanjutkan.',
-                ]);
-            }
-
-            $locked->update([
-                'status' => StockOpnameAssignment::STATUS_NEEDS_REVISION,
-                'reviewed_at' => now(),
-                'reviewed_by' => auth()->id(),
-                'review_notes' => trim($validated['reviewNotes']),
-            ]);
-
-            $period->update(['status' => StockOpnamePeriod::STATUS_ACTIVE]);
-        });
+        app(\App\Actions\StockOpname\RequestStockOpnameRevision::class)->execute($assignment, $validated['reviewNotes']);
 
         $this->dispatchToast('warning', 'Revisi dikirim', 'Karyawan dapat memperbaiki hitungan berdasarkan catatan pemeriksa.');
         $this->selectedAssignmentId = null;
     }
 
-    public function finalizePeriod(int $periodId): void
+    public function openFinalizeModal(int $periodId): void
     {
-        $period = $this->findReviewablePeriod($periodId);
+        $this->periodIdToFinalize = $periodId;
+        $this->showFinalizeModal = true;
+    }
+
+    public function closeFinalizeModal(): void
+    {
+        $this->showFinalizeModal = false;
+        $this->periodIdToFinalize = null;
+    }
+
+    public function finalizePeriod(?int $periodId = null): void
+    {
+        $id = $periodId ?? $this->periodIdToFinalize ?? $this->selectedPeriodId;
+        if (!$id) {
+            return;
+        }
+
+        $period = $this->findReviewablePeriod($id);
 
         try {
             $opname = app(FinalizeStockOpnamePeriod::class)->execute($period);
@@ -155,8 +99,11 @@ class StockOpnameReview extends Component
                     $this->addError($field === 'period' ? 'reviewNotes' : $field, $message);
                 }
             }
+            $this->closeFinalizeModal();
             return;
         }
+
+        $this->closeFinalizeModal();
 
         $this->dispatchToast(
             'success',
@@ -164,7 +111,7 @@ class StockOpnameReview extends Component
             'Dokumen stok opname: ' . $opname->opname_number . '. Stok cabang dan jurnal telah diproses.'
         );
 
-        $this->selectedPeriodId = $periodId;
+        $this->selectedPeriodId = $id;
         $this->selectedAssignmentId = null;
         $this->reviewNotes = '';
     }

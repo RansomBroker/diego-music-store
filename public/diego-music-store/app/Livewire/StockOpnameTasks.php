@@ -232,11 +232,15 @@ class StockOpnameTasks extends Component
 
     private function findMyAssignment(int $assignmentId): StockOpnameAssignment
     {
-        return StockOpnameAssignment::query()
+        $assignment = StockOpnameAssignment::query()
             ->with(['period.branch', 'preset', 'stockOpname.items.productVariant.product'])
             ->whereKey($assignmentId)
             ->where('assigned_user_id', auth()->id())
-            ->firstOrFail();
+            ->first();
+
+        abort_unless($assignment, 404);
+
+        return $assignment;
     }
 
     private function activeAssignment(): ?StockOpnameAssignment

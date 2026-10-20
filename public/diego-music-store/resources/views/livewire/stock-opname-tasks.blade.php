@@ -5,22 +5,34 @@
         <x-pos.toast />
         <x-pos.navbar pageTitle="Tugas Stok Opname" backLabel="Dashboard" />
 
-        <div class="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6">
-            <div class="mx-auto w-full max-w-7xl space-y-6">
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6">
+            <div class="w-full space-y-6">
                 @if (!$activeAssignment)
-                    <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-widest text-primary dark:text-blue-400">Inventori / Opname</p>
-                            <h1 class="mt-1 text-2xl font-black text-slate-900 dark:text-white">Tugas Stok Opname Saya</h1>
+                            <nav class="text-xs font-semibold text-slate-400 dark:text-slate-500 mb-1.5" aria-label="Breadcrumb">
+                                <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                                    <li class="inline-flex items-center">
+                                        <a href="/pos/front-office" class="hover:text-primary dark:hover:text-blue-400 transition-colors">POS</a>
+                                    </li>
+                                    <li>
+                                        <div class="flex items-center">
+                                            <i class="ph ph-caret-right text-[10px] text-slate-350 dark:text-slate-650 mx-1"></i>
+                                            <span class="text-slate-650 dark:text-slate-300 font-bold">Tugas Stok Opname</span>
+                                        </div>
+                                    </li>
+                                </ol>
+                            </nav>
+                            <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Tugas Stok Opname Saya</h1>
                             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Pilih lokasi yang ditugaskan, hitung stok fisik, lalu kirim untuk diperiksa.</p>
                         </div>
-                        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800">
+                        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800 shadow-sm">
                             <span class="text-slate-500 dark:text-slate-400">Tugas ditampilkan:</span>
                             <strong class="ml-1 text-slate-900 dark:text-white">{{ $assignments->count() }}</strong>
                         </div>
-                    </header>
+                    </div>
 
-                    <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    <section class="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                         @forelse ($assignments as $assignment)
                             @php
                                 $isEditable = $assignment->period->status === \App\Models\StockOpnamePeriod::STATUS_ACTIVE
@@ -94,21 +106,37 @@
                         @endforelse
                     </section>
                 @else
-                    <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                            <button wire:click="backToTasks" class="mb-3 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline dark:text-blue-400">
-                                <i class="ph-bold ph-arrow-left"></i> Kembali ke tugas
-                            </button>
-                            <p class="text-xs font-bold uppercase tracking-widest text-primary dark:text-blue-400">{{ $activeAssignment->period->name }}</p>
-                            <h1 class="mt-1 text-2xl font-black text-slate-900 dark:text-white">Hitung: {{ $activeAssignment->preset->name }}</h1>
-                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Cari produk berdasarkan nama, SKU, barcode, atau kategori. Hitung semua produk yang terdaftar pada stok cabang untuk lokasi ini; masukkan 0 jika produk tidak ada di lokasi tersebut.</p>
+                            {{-- Top Action Row: Back Button & Periode Badge --}}
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <button type="button" wire:click="backToTasks"
+                                    class="inline-flex items-center justify-center gap-2 px-3 py-2 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 bg-white dark:bg-slate-800 hover:bg-primary/10 dark:hover:bg-blue-950/40 border border-slate-200 dark:border-slate-700 rounded-xl transition-all shadow-xs group flex-shrink-0 cursor-pointer active:scale-95"
+                                    title="Kembali ke Daftar Tugas">
+                                    <i class="ph-bold ph-arrow-left text-base group-hover:-translate-x-0.5 transition-transform"></i>
+                                    <span>Kembali ke Tugas</span>
+                                </button>
+
+                                <div class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-primary dark:text-blue-400 bg-primary/10 dark:bg-blue-950/40 border border-primary/20 shadow-xs">
+                                    <i class="ph-bold ph-calendar-blank text-sm"></i>
+                                    <span>{{ $activeAssignment->period->name }}</span>
+                                </div>
+                            </div>
+
+                            <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">
+                                Hitung: {{ $activeAssignment->preset->name }}
+                            </h1>
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                Cari produk berdasarkan nama, SKU, barcode, atau kategori. Hitung semua produk yang terdaftar pada stok cabang untuk lokasi ini; masukkan 0 jika produk tidak ada di lokasi tersebut.
+                            </p>
                         </div>
-                        <div class="flex gap-2">
-                            <x-pos.utility.button wire:click="submitTask" wire:loading.attr="disabled" class="!rounded-xl !px-4 !py-2">
-                                <i class="ph-bold ph-paper-plane-tilt mr-1"></i> Kirim untuk review
+
+                        <div class="flex items-center gap-2 shrink-0 sm:pt-1">
+                            <x-pos.utility.button wire:click="submitTask" wire:loading.attr="disabled" class="!rounded-xl !px-4 !py-2.5 shadow-sm">
+                                <i class="ph-bold ph-paper-plane-tilt mr-1.5"></i> Kirim untuk review
                             </x-pos.utility.button>
                         </div>
-                    </header>
+                    </div>
 
                     @error('search')
                         <div class="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">{{ $message }}</div>

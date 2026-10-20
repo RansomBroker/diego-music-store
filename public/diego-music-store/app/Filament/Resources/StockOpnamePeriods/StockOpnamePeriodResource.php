@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\StockOpnamePeriods;
 
-use App\Filament\Resources\StockOpnamePeriods\Pages\CreateStockOpnamePeriod;
-use App\Filament\Resources\StockOpnamePeriods\Pages\EditStockOpnamePeriod;
 use App\Filament\Resources\StockOpnamePeriods\Pages\ListStockOpnamePeriods;
 use App\Filament\Resources\StockOpnamePeriods\Schemas\StockOpnamePeriodForm;
 use App\Filament\Resources\StockOpnamePeriods\Tables\StockOpnamePeriodsTable;
@@ -42,8 +40,6 @@ class StockOpnamePeriodResource extends Resource
     {
         return [
             'index' => ListStockOpnamePeriods::route('/'),
-            'create' => CreateStockOpnamePeriod::route('/create'),
-            'edit' => EditStockOpnamePeriod::route('/{record}/edit'),
         ];
     }
 

@@ -41,6 +41,7 @@ class StockOpnamePeriodForm
                     ->searchable()
                     ->live()
                     ->disabled(fn ($record) => $record !== null)
+                    ->dehydrated()
                     ->rules(['exists:branches,id']),
 
                 DatePicker::make('period')
@@ -50,6 +51,7 @@ class StockOpnamePeriodForm
                     ->required()
                     ->native(false)
                     ->disabled(fn ($record) => $record !== null)
+                    ->dehydrated()
                     ->helperText('Tanggal akan dinormalisasi ke hari pertama pada bulan yang dipilih.'),
 
                 TextInput::make('name')
@@ -89,12 +91,15 @@ class StockOpnamePeriodForm
                         ->schema([
                             Select::make('stock_opname_preset_id')
                                 ->label('Lokasi')
-                                ->options(fn ($get) => StockOpnamePreset::query()
-                                    ->where('is_active', true)
-                                    ->when($get('../../branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
-                                    ->orderBy('name')
-                                    ->pluck('name', 'id')
-                                    ->all())
+                                ->options(function ($get) {
+                                    $branchId = $get('../../branch_id') ?: ($get('branch_id') ?: BranchHelper::getActiveBranchId());
+                                    return StockOpnamePreset::query()
+                                        ->where('is_active', true)
+                                        ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+                                        ->orderBy('name')
+                                        ->pluck('name', 'id')
+                                        ->all();
+                                })
                                 ->required()
                                 ->searchable()
                                 ->live(),

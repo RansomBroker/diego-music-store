@@ -5,13 +5,25 @@
         <x-pos.toast />
         <x-pos.navbar pageTitle="Review Stok Opname" backLabel="Dashboard" />
 
-        <div class="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6">
-            <div class="mx-auto w-full max-w-7xl space-y-6">
-                <header>
-                    <p class="text-xs font-bold uppercase tracking-widest text-primary dark:text-blue-400">Inventori / Kontrol</p>
-                    <h1 class="mt-1 text-2xl font-black text-slate-900 dark:text-white">Review Stok Opname</h1>
-                    <p class="mt-1 max-w-3xl text-sm text-slate-500 dark:text-slate-400">Periksa hitungan per lokasi, minta revisi jika perlu, lalu finalisasi periode setelah seluruh lokasi disetujui. Stok dan jurnal hanya diproses sekali pada finalisasi periode.</p>
-                </header>
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6">
+            <div class="w-full space-y-6">
+                <div>
+                    <nav class="text-xs font-semibold text-slate-400 dark:text-slate-500 mb-1.5" aria-label="Breadcrumb">
+                        <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                            <li class="inline-flex items-center">
+                                <a href="/pos/front-office" class="hover:text-primary dark:hover:text-blue-400 transition-colors">POS</a>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <i class="ph ph-caret-right text-[10px] text-slate-350 dark:text-slate-650 mx-1"></i>
+                                    <span class="text-slate-650 dark:text-slate-300 font-bold">Review Stok Opname</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+                    <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Review Stok Opname</h1>
+                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Periksa hitungan per lokasi, minta revisi jika perlu, lalu finalisasi periode setelah seluruh lokasi disetujui. Stok dan jurnal hanya diproses sekali pada finalisasi periode.</p>
+                </div>
 
                 @error('reviewNotes')
                     <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200">{{ $message }}</div>
@@ -62,7 +74,7 @@
                     <div class="space-y-4 xl:col-span-2">
                         @if ($selectedPeriod)
                             @php
-                                $canFinalize = $selectedPeriod->status === \App\Models\StockOpnamePeriod::STATUS_REVIEW
+                                $canFinalize = in_array($selectedPeriod->status, [\App\Models\StockOpnamePeriod::STATUS_ACTIVE, \App\Models\StockOpnamePeriod::STATUS_REVIEW], true)
                                     && $selectedPeriod->assignments->isNotEmpty()
                                     && $selectedPeriod->assignments->every(fn ($assignment) => $assignment->status === \App\Models\StockOpnameAssignment::STATUS_COMPLETED);
                                 $statusLabels = [
@@ -84,7 +96,7 @@
                                     @if ($selectedPeriod->status === \App\Models\StockOpnamePeriod::STATUS_COMPLETED)
                                         <div class="text-right"><span class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"><i class="ph-bold ph-check-circle"></i> Sudah difinalisasi</span>@if ($selectedPeriod->finalStockOpname)<p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Dokumen: <strong>{{ $selectedPeriod->finalStockOpname->opname_number }}</strong></p>@endif</div>
                                     @elseif ($canFinalize)
-                                        <x-pos.utility.button wire:click="finalizePeriod({{ $selectedPeriod->id }})" wire:confirm="Finalisasi akan mengubah stok cabang dan membuat jurnal penyesuaian. Pastikan semua lokasi sudah disetujui dan semua produk fisik sudah dihitung." wire:loading.attr="disabled" class="!rounded-xl !px-4 !py-2">
+                                        <x-pos.utility.button wire:click="openFinalizeModal({{ $selectedPeriod->id }})" wire:loading.attr="disabled" class="!rounded-xl !px-4 !py-2">
                                             <i class="ph-bold ph-lock-key mr-1"></i> Finalisasi periode
                                         </x-pos.utility.button>
                                     @endif
@@ -201,4 +213,74 @@
             </div>
         </div>
     </main>
+
+    {{-- Modal Finalisasi Periode Stok Opname (POS) --}}
+    <x-pos.modal
+        wire:model="showFinalizeModal"
+        title="Finalisasi Periode Stok Opname"
+        subtitle="Konfirmasi perubahan stok fisik dan pencatatan jurnal akuntansi"
+        icon="ph-lock-key"
+        maxWidth="lg"
+    >
+        @if ($selectedPeriod)
+            <div class="space-y-5 text-slate-700 dark:text-slate-200">
+                {{-- Summary Card --}}
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-2.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Periode:</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-100">{{ $selectedPeriod->name }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Cabang:</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-100">{{ $selectedPeriod->branch->name ?? 'Semua Cabang' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Total Lokasi Penugasan:</span>
+                        <span class="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
+                            <i class="ph-bold ph-check-circle"></i>
+                            {{ $selectedPeriod->assignments->count() }} Lokasi (Semua Disetujui)
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Warning / Notice Card --}}
+                <div class="rounded-2xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 p-4 text-xs text-amber-900 dark:text-amber-200 space-y-2">
+                    <div class="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+                        <i class="ph-bold ph-warning-circle text-base"></i>
+                        <span>Perhatian Sebelum Finalisasi:</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 text-amber-800/90 dark:text-amber-300/90 pl-1 leading-relaxed">
+                        <li>Hitungan fisik seluruh lokasi penugasan akan dijumlahkan per SKU/varian.</li>
+                        <li>Sistem akan membandingkannya dengan saldo stok sistem cabang saat ini.</li>
+                        <li>Mutasi penyesuaian stok dan jurnal akuntansi akan otomatis dicatat <strong>satu kali</strong>.</li>
+                        <li>Status periode akan berubah menjadi <strong>Selesai</strong> dan tidak dapat diubah kembali.</li>
+                    </ul>
+                </div>
+
+                {{-- Actions Footer --}}
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button
+                        type="button"
+                        wire:click="closeFinalizeModal"
+                        class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                    >
+                        Batal
+                    </button>
+
+                    <x-pos.utility.button
+                        wire:click="finalizePeriod"
+                        wire:loading.attr="disabled"
+                        class="!rounded-xl !px-5 !py-2.5 !bg-primary hover:!bg-primary/90 text-xs font-bold"
+                    >
+                        <span wire:loading.remove wire:target="finalizePeriod">
+                            <i class="ph-bold ph-lock-key mr-1.5"></i> Ya, Finalisasi Sekarang
+                        </span>
+                        <span wire:loading wire:target="finalizePeriod" class="inline-flex items-center gap-2">
+                            <i class="ph ph-spinner animate-spin"></i> Memproses Finalisasi...
+                        </span>
+                    </x-pos.utility.button>
+                </div>
+            </div>
+        @endif
+    </x-pos.modal>
 </div>

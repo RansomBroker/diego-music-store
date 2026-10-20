@@ -82,7 +82,7 @@ class StockOpnameTasksTest extends TestCase
             'hpp' => 2000000,
         ]);
 
-        Livewire::actingAs($employeeUser)
+        $test = Livewire::actingAs($employeeUser)
             ->test(StockOpnameTasks::class)
             ->call('startTask', $assignment->id)
             ->assertSet('activeAssignmentId', $assignment->id)
@@ -91,14 +91,16 @@ class StockOpnameTasksTest extends TestCase
             ->call('chooseProduct', $variant->id)
             ->set('selectedPhysicalQty', '8')
             ->call('saveCount')
-            ->assertHasNoErrors()
-            ->assertDatabaseHas('stock_opname_items', [
-                'product_variant_id' => $variant->id,
-                'system_qty' => 10,
-                'physical_qty' => 8,
-                'difference' => -2,
-            ])
-            ->call('submitTask')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('stock_opname_items', [
+            'product_variant_id' => $variant->id,
+            'system_qty' => 10,
+            'physical_qty' => 8,
+            'difference' => -2,
+        ]);
+
+        $test->call('submitTask')
             ->assertHasNoErrors();
 
         $this->assertSame(10, (int) $branchStock->fresh()->stock);

@@ -42,11 +42,15 @@ class StockOpnamePresetForm
                 ->placeholder('Contoh: Lantai 1')
                 ->required()
                 ->maxLength(100)
-                ->rules([
-                    fn ($record) => Rule::unique('stock_opname_presets', 'name')
-                        ->where(fn ($query) => $query->where('branch_id', request()->input('data.branch_id', $record?->branch_id)))
-                        ->ignore($record?->id),
-                ]),
+                ->unique(
+                    \App\Models\StockOpnamePreset::class,
+                    'name',
+                    ignoreRecord: true,
+                    modifyRuleUsing: fn ($rule, $get, $record) => $rule->where(
+                        'branch_id',
+                        $get('branch_id') ?: ($record?->branch_id ?: BranchHelper::getActiveBranchId())
+                    )
+                ),
 
             Textarea::make('description')
                 ->label('Keterangan')

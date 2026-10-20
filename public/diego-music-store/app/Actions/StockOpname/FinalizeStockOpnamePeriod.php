@@ -21,9 +21,9 @@ class FinalizeStockOpnamePeriod
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($lockedPeriod->status !== StockOpnamePeriod::STATUS_REVIEW || $lockedPeriod->final_stock_opname_id) {
+            if (!in_array($lockedPeriod->status, [StockOpnamePeriod::STATUS_ACTIVE, StockOpnamePeriod::STATUS_REVIEW], true) || $lockedPeriod->final_stock_opname_id) {
                 throw ValidationException::withMessages([
-                    'period' => 'Periode harus berada pada status review sebelum finalisasi.',
+                    'period' => 'Periode harus berada pada status aktif atau review sebelum finalisasi.',
                 ]);
             }
 

@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\StockOpnamePresets;
 
-use App\Filament\Resources\StockOpnamePresets\Pages\CreateStockOpnamePreset;
-use App\Filament\Resources\StockOpnamePresets\Pages\EditStockOpnamePreset;
 use App\Filament\Resources\StockOpnamePresets\Pages\ListStockOpnamePresets;
 use App\Filament\Resources\StockOpnamePresets\Schemas\StockOpnamePresetForm;
 use App\Filament\Resources\StockOpnamePresets\Tables\StockOpnamePresetsTable;
@@ -42,8 +40,6 @@ class StockOpnamePresetResource extends Resource
     {
         return [
             'index' => ListStockOpnamePresets::route('/'),
-            'create' => CreateStockOpnamePreset::route('/create'),
-            'edit' => EditStockOpnamePreset::route('/{record}/edit'),
         ];
     }
 
