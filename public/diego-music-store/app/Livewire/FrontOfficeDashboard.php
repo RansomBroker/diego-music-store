@@ -51,7 +51,7 @@ class FrontOfficeDashboard extends Component
             $q->where('user_id', Auth::id());
         })
         ->when($branch, function ($q) use ($branch, $isOwner) {
-            $q->where(function ($sub) use ($branch) {
+            $q->where(function ($sub) use ($branch, $isOwner) {
                 $sub->where('branch_id', $branch->id);
                 if ($isOwner) {
                     $sub->orWhereNull('branch_id');
