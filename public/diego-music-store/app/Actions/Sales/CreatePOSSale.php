@@ -23,7 +23,7 @@ class CreatePOSSale
      */
     public function execute(array $data): Sale
     {
-        abort_if(Auth::user()?->hasRole('sales'), 403);
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
         return DB::transaction(function () use ($data) {
             $items = $data['items'] ?? [];
             if (empty($items)) {
