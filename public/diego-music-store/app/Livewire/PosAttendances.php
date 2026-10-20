@@ -120,7 +120,7 @@ class PosAttendances extends Component
 
             $actionClass->execute(
                 $employee,
-                $this->filterBranchId ?: $employee->branch_id,
+                $employee->branch_id,
                 $this->notes,
                 $this->userLatitude,
                 $this->userLongitude,
