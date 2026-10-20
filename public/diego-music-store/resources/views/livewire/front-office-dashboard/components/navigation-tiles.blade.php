@@ -1,4 +1,5 @@
 <!-- Navigation Tiles (Collapsible / Hidden for Owner by default) -->
+@php($isSalesUser = auth()->check() && auth()->user()->hasRole(['sales', 'Sales']))
 <div x-data="{ openNav: {{ $isOwnerUser ? 'false' : 'true' }} }" class="space-y-3">
     @if ($isOwnerUser)
         <div class="flex items-center justify-between">
@@ -10,7 +11,17 @@
     @endif
 
     <div x-show="openNav" x-collapse class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <!-- POS Kasir -->
+        @if ($isSalesUser)
+            <a href="{{ route('pos.catalog') }}" class="group bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-700 hover:border-primary dark:hover:border-blue-500 shadow-sm hover:shadow-lg transition-all flex flex-col items-center gap-3 text-center">
+                <div class="w-12 h-12 rounded-2xl bg-primary/10 dark:bg-blue-950/40 text-primary dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i class="ph-fill ph-magnifying-glass text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-slate-800 dark:text-slate-100 text-sm">Katalog Produk</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Cari produk, harga, dan stok cabang</p>
+                </div>
+            </a>
+        @else
         <a href="{{ route('pos') }}" class="group bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-700 hover:border-primary dark:hover:border-blue-500 shadow-sm hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col items-center gap-3 text-center">
             <div class="w-12 h-12 rounded-2xl bg-primary/10 dark:bg-blue-950/40 text-primary dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="ph-fill ph-shopping-cart text-2xl"></i>
@@ -75,5 +86,6 @@
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Panel admin</p>
             </div>
         </a>
+        @endif
     </div>
 </div>
