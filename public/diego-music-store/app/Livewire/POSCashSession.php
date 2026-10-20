@@ -194,7 +194,7 @@ class POSCashSession extends Component
         }
 
         // Check if user has supervisor authority (owner or admin role)
-        if (!$supervisor->hasAnyRole(['owner', 'admin'])) {
+        if (!$supervisor->hasAnyRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
             $this->addError('supervisorEmail', 'User ini tidak memiliki wewenang supervisor/admin.');
             return;
         }
