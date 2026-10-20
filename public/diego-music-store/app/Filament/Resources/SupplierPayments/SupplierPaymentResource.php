@@ -17,52 +17,25 @@ use Filament\Tables\Table;
 class SupplierPaymentResource extends Resource
 {
     protected static ?string $model = SupplierPayment::class;
-
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
-
     protected static ?string $recordTitleAttribute = 'payment_no';
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'Pembelian';
-    }
-
-    public static function getLabel(): ?string
-    {
-        return 'Pelunasan Hutang';
-    }
-
-    public static function getPluralLabel(): ?string
-    {
-        return 'Pelunasan Hutang';
-    }
-
-    public static function form(Schema $schema): Schema
-    {
-        return SupplierPaymentForm::configure($schema);
-    }
-
-    public static function table(Table $table): Table
-    {
-        return SupplierPaymentsTable::configure($table);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
+    public static function getNavigationGroup(): ?string { return 'Pembelian'; }
+    public static function getLabel(): ?string { return 'Pelunasan Hutang'; }
+    public static function getPluralLabel(): ?string { return 'Pelunasan Hutang'; }
+    public static function form(Schema $schema): Schema { return SupplierPaymentForm::configure($schema); }
+    public static function table(Table $table): Table { return SupplierPaymentsTable::configure($table); }
+    public static function getRelations(): array { return []; }
     public static function getPages(): array
     {
         return [
             'index' => ListSupplierPayments::route('/'),
+            'create' => CreateSupplierPayment::route('/create'),
+            'edit' => EditSupplierPayment::route('/{record}/edit'),
         ];
     }
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return parent::getEloquentQuery()
-            ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId());
+        return parent::getEloquentQuery()->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId());
     }
 }
