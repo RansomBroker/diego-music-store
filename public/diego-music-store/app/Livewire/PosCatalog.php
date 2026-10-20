@@ -81,6 +81,7 @@ class PosCatalog extends Component
             'products' => $products,
             'categories' => $categories,
             'branch' => $branch,
+            'selectedLogoUrl' => $branch->logo_path ? \\Illuminate\\Support\\Facades\\Storage::url($branch->logo_path) : null,
         ])->layout('layouts.pos', ['title' => 'Katalog Produk']);
     }
 }
