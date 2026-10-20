@@ -60,4 +60,9 @@ class SupplierPaymentResource extends Resource
             'index' => ListSupplierPayments::route('/'),
         ];
     }
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId());
+    }
 }
