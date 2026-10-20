@@ -117,15 +117,21 @@ class PosReportsSales extends Component
     public function render()
     {
         $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
-        $activeBranchId = $this->selectedBranchId ?: \App\Helpers\BranchHelper::getActiveBranchId();
-        $currentBranch = Branch::find($activeBranchId);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $activeBranchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless(in_array($activeBranchId, $allowedBranchIds, true), 403);
+        $this->selectedBranchId = $activeBranchId;
+        $currentBranch = Branch::findOrFail($activeBranchId);
 
         $selectedLogoUrl = !empty($currentBranch?->logo_path) ? Storage::url($currentBranch->logo_path) : null;
 
         $filters = [
             'dateFrom'        => $this->dateFrom,
             'dateTo'          => $this->dateTo,
-            'branchId'        => $this->selectedBranchId,
+            'branchId'        => $activeBranchId,
             'customerId'      => $this->selectedCustomerId,
             'paymentMethod'   => $this->selectedPaymentMethod,
             'salesRepId'      => $this->selectedSalesRepId,
