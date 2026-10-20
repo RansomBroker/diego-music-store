@@ -9,6 +9,8 @@ class POSBarcodePrintController extends Controller
 {
     public function show(Request $request)
     {
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+
         $payload = null;
 
         if ($request->filled('token')) {
