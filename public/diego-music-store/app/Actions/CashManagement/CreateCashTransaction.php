@@ -12,13 +12,17 @@ class CreateCashTransaction
     public function execute(array $data): CashTransaction
     {
         abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
-        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
-        abort_unless((int) ($data['branch_id'] ?? 0) === (int) $activeBranchId, 403);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $branchId = (int) ($data['branch_id'] ?? 0);
+        abort_unless(in_array($branchId, $allowedBranchIds, true), 403);
 
         if (!empty($data['cash_session_id'])) {
             abort_unless(CashSession::query()
                 ->whereKey($data['cash_session_id'])
-                ->where('branch_id', $activeBranchId)
+                ->where('branch_id', $branchId)
                 ->exists(), 403);
         }
 
