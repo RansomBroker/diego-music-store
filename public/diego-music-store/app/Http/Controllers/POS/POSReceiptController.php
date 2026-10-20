@@ -22,6 +22,8 @@ class POSReceiptController extends Controller
         // Sales role is read-only and must not access transaction receipts by ID.
         abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
 
+        abort_unless((int) $sale->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
+
         // Load relations
         $sale->load(['branch', 'customer', 'salesRep', 'items.variant.product']);
 
@@ -47,7 +49,11 @@ class POSReceiptController extends Controller
             abort(400, 'Invalid data.');
         }
 
-        $branch = \App\Models\Branch::find($data['branch_id']);
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless((int) ($data['branch_id'] ?? 0) === (int) $activeBranchId, 403);
+        abort_unless(isset($data['cart']) && is_array($data['cart']), 400, 'Invalid cart data.');
+
+        $branch = \App\Models\Branch::findOrFail($activeBranchId);
         $customerName = $data['customer_name'] ?? 'Umum / Walk-in';
         
         $items = [];
