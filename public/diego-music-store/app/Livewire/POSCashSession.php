@@ -47,6 +47,11 @@ class POSCashSession extends Component
     public string $supervisorAction = 'close'; // 'close' or 'reopen'
     public ?int $sessionToReopenId = null;
 
+    public function boot(): void
+    {
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount()
     {
         $this->branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
