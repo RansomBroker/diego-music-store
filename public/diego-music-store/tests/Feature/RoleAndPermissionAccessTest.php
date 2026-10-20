@@ -181,6 +181,8 @@ class RoleAndPermissionAccessTest extends TestCase
 
         foreach ([
             '/pos/transactions',
+            '/pos/customers',
+            '/pos/session',
             '/pos/daily-cash',
             '/pos/customer-deposits',
             '/pos/customer-payments',
