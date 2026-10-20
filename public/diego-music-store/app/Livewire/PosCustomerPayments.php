@@ -274,7 +274,7 @@ class PosCustomerPayments extends Component
         }
 
         try {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($selectedItems) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($selectedItems, $activeBranchId) {
                 $totalPaid = 0;
                 foreach ($selectedItems as $item) {
                     $sale = \App\Models\Sale::query()
