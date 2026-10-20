@@ -24,6 +24,12 @@ class PosCommissions extends Component
 {
     use WithPagination;
 
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     // ── Filter State ─────────────────────────────────────────────────────
     public ?int $filterBranchId = null;
     public string $filterMonth = '';
