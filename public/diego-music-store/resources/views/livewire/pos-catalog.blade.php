@@ -1,7 +1,7 @@
 <div class="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900">
     <x-pos.toast />
 
-    <x-pos-page::sidebar />
+    <x-pos-page::sidebar :selectedLogoUrl="$selectedLogoUrl" />
 
     <main class="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
         <x-pos.navbar pageTitle="Katalog Produk" backLabel="Dashboard" />
