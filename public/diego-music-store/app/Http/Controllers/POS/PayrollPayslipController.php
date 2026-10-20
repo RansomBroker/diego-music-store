@@ -20,6 +20,9 @@ class PayrollPayslipController extends Controller
         $user = Auth::user();
         $isManagement = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
         abort_unless($isManagement || ($user?->employee?->id && (int) $user->employee->id === (int) $item->employee_id), 403);
+        if ($isManagement) {
+            abort_unless((int) $item->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
+        }
 
         return view('pdf.payslip-pdf', [
             'item' => $item,
