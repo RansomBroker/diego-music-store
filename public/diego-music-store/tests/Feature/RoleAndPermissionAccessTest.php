@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Branch;
 use App\Models\User;
 use App\Actions\Sales\CreatePOSSale;
+use App\Actions\CashManagement\CreateCashTransaction;
 use App\Helpers\BranchHelper;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Database\Seeders\RoleAndPermissionSeeder;
@@ -224,6 +225,43 @@ class RoleAndPermissionAccessTest extends TestCase
         $this->expectException(HttpException::class);
 
         app(CreatePOSSale::class)->execute([]);
+    }
+
+    public function test_regular_user_cannot_create_sale_in_unassigned_branch_via_action(): void
+    {
+        $otherBranch = Branch::create([
+            'name' => 'Cabang Tidak Ditugaskan',
+            'is_active' => true,
+        ]);
+
+        $karyawan = User::factory()->create(['is_active' => true]);
+        $karyawan->assignRole('karyawan');
+        $karyawan->branches()->attach($this->branch->id);
+        $this->actingAs($karyawan);
+        $this->expectException(HttpException::class);
+
+        app(CreatePOSSale::class)->execute([
+            'branch_id' => $otherBranch->id,
+            'items' => [],
+        ]);
+    }
+
+    public function test_regular_user_cannot_create_cash_transaction_in_unassigned_branch_via_action(): void
+    {
+        $otherBranch = Branch::create([
+            'name' => 'Cabang Kas Tidak Ditugaskan',
+            'is_active' => true,
+        ]);
+
+        $karyawan = User::factory()->create(['is_active' => true]);
+        $karyawan->assignRole('karyawan');
+        $karyawan->branches()->attach($this->branch->id);
+        $this->actingAs($karyawan);
+        $this->expectException(HttpException::class);
+
+        app(CreateCashTransaction::class)->execute([
+            'branch_id' => $otherBranch->id,
+        ]);
     }
 
     public function test_seeder_does_not_recreate_retired_admin_role(): void
