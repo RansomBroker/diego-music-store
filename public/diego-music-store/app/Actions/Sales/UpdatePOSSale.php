@@ -25,6 +25,11 @@ class UpdatePOSSale
     public function execute(Sale $sale, array $data): Sale
     {
         abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(Auth::check(), 403);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        abort_unless(in_array((int) $sale->branch_id, $allowedBranchIds, true), 403);
+
         return DB::transaction(function () use ($sale, $data) {
             $items = $data['items'] ?? [];
             if (empty($items)) {
