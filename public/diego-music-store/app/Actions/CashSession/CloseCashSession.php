@@ -3,7 +3,6 @@
 namespace App\Actions\CashSession;
 
 use App\Models\CashSession;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
