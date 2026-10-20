@@ -20,7 +20,7 @@ trait WithPaymentHandling
 {
     public function openPayment()
     {
-        abort_if(Auth::user()?->hasRole('sales'), 403);
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
         if (empty($this->cart)) {
             Notification::make()
                 ->title('Keranjang Kosong')
@@ -41,7 +41,7 @@ trait WithPaymentHandling
     #[On('execute-checkout')]
     public function executeCheckout(array $paymentData, bool $sendWhatsApp = false)
     {
-        abort_if(Auth::user()?->hasRole('sales'), 403);
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
         $selectedPaymentMethods = $paymentData['selectedPaymentMethods'] ?? ['cash'];
         $paymentAmounts = $paymentData['paymentAmounts'] ?? [];
         $amountCash = $paymentData['amountCash'] ?? 0;
