@@ -26,7 +26,7 @@ trait WithDraftTransactions
     public function getHeldTransactionsProperty()
     {
         return PosHeldTransaction::where('user_id', Auth::id())
-            ->where('branch_id', $this->selectedBranchId)
+            ->where('branch_id', $this->resolveHeldTransactionBranchId())
             ->whereNotNull('cart_data')
             ->orderBy('updated_at', 'desc')
             ->get();
@@ -142,6 +142,7 @@ trait WithDraftTransactions
 
     public function printDraft($format = 'bill')
     {
+        $this->resolveHeldTransactionBranchId();
         if (empty($this->cart)) {
             Notification::make()
                 ->title('Keranjang Kosong')
