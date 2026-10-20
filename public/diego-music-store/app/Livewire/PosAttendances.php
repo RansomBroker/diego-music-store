@@ -22,6 +22,12 @@ class PosAttendances extends Component
 {
     use WithPagination, WithFileUploads;
 
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     // ── Tab State ────────────────────────────────────────────────────────
     public string $activeTab = 'attendances'; // 'attendances' or 'backdate_requests'
 
@@ -114,7 +120,7 @@ class PosAttendances extends Component
 
             $actionClass->execute(
                 $employee,
-                $this->filterBranchId ?: $employee->branch_id,
+                $employee->branch_id,
                 $this->notes,
                 $this->userLatitude,
                 $this->userLongitude,
@@ -197,6 +203,18 @@ class PosAttendances extends Component
 
     public function saveRecord(RecordAttendance $actionClass): void
     {
+        abort_unless($this->isManagementUser(), 403);
+
+        $user = auth()->user();
+        $isManagement = $this->isManagementUser();
+        $currentEmployee = $user?->employee;
+
+        abort_unless($isManagement || $currentEmployee, 403);
+
+        if (!$isManagement) {
+            $this->selectedEmployeeId = $currentEmployee->id;
+        }
+
         $this->validate([
             'selectedEmployeeId' => 'required|exists:employees,id',
             'attendanceDate' => 'required|date',
@@ -204,10 +222,19 @@ class PosAttendances extends Component
         ]);
 
         try {
-            $employee = Employee::findOrFail($this->selectedEmployeeId);
+            $employeeQuery = Employee::query();
+            if (!$isManagement) {
+                $employeeQuery->whereKey($currentEmployee->id);
+            }
+            $employee = $employeeQuery->findOrFail($this->selectedEmployeeId);
+
+            $branchId = $isManagement
+                ? ($this->filterBranchId ?: $employee->branch_id)
+                : $employee->branch_id;
+            abort_unless($branchId && (int) $branchId === (int) $employee->branch_id, 403);
 
             $actionClass->execute($employee, [
-                'branch_id' => $this->filterBranchId ?: $employee->branch_id,
+                'branch_id' => $branchId,
                 'date' => $this->attendanceDate,
                 'status' => $this->status,
                 'notes' => $this->notes,
@@ -242,10 +269,10 @@ class PosAttendances extends Component
     public function submitBackdateRequest(SubmitBackdateAttendanceRequest $actionClass): void
     {
         try {
-            $employee = auth()->user()?->employee ?: Employee::find($this->backdateEmployeeId);
+            $employee = auth()->user()?->employee;
 
-            if (!$employee) {
-                throw new \Exception('Data karyawan tidak ditemukan.');
+            if (!$employee || !$employee->is_active) {
+                throw new \Exception('Akun ini tidak terhubung dengan profil karyawan aktif.');
             }
 
             $photoPath = null;
@@ -254,7 +281,7 @@ class PosAttendances extends Component
             }
 
             $actionClass->execute($employee, [
-                'branch_id'        => $this->filterBranchId ?: $employee->branch_id,
+                'branch_id'        => $employee->branch_id,
                 'requested_date'   => $this->backdateDate,
                 'clock_in'         => $this->backdateClockIn,
                 'clock_out'        => $this->backdateClockOut,
@@ -279,10 +306,7 @@ class PosAttendances extends Component
     public function processBackdateApproval(int $requestId, string $approvalAction, ProcessBackdateAttendanceApproval $actionClass): void
     {
         try {
-            $isOwner = auth()->check() && auth()->user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
-            if (!$isOwner) {
-                throw new \Exception('Hanya Owner / Admin yang berhak menyetujui atau menolak pengajuan presensi susulan.');
-            }
+            abort_unless($this->isManagementUser(), 403, 'Hanya Owner yang berhak menyetujui atau menolak pengajuan presensi susulan.');
 
             $request = AttendanceBackdateRequest::findOrFail($requestId);
             $actionClass->execute($request, $approvalAction, auth()->user(), $this->adminNotes);
@@ -302,17 +326,30 @@ class PosAttendances extends Component
         }
     }
 
+    private function isManagementUser(): bool
+    {
+        return auth()->check()
+            && auth()->user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+    }
+
     public function render()
     {
         $yearMonth = explode('-', $this->filterMonth ?: now()->format('Y-m'));
         $year = (int) ($yearMonth[0] ?? now()->year);
         $month = (int) ($yearMonth[1] ?? now()->month);
 
+        $isOwnerUser = $this->isManagementUser();
+        $currentEmployeeId = auth()->user()?->employee?->id;
+
         $query = EmployeeAttendance::with(['employee', 'branch'])
             ->whereYear('date', $year)
             ->whereMonth('date', $month);
 
-        if ($this->filterBranchId) {
+        if (!$isOwnerUser) {
+            $query->where('employee_id', $currentEmployeeId ?? 0);
+        }
+
+        if ($isOwnerUser && $this->filterBranchId) {
             $query->where('branch_id', $this->filterBranchId);
         }
 
@@ -328,21 +365,27 @@ class PosAttendances extends Component
             ->orderBy('id', 'desc')
             ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
-        $employees = Employee::where('is_active', true)->get();
-        $branches  = Branch::where('is_active', true)->get();
+        $employees = $isOwnerUser
+            ? Employee::where('is_active', true)->get()
+            : Employee::query()->whereKey($currentEmployeeId ?? 0)->where('is_active', true)->get();
+        $branches = $isOwnerUser
+            ? Branch::where('is_active', true)->get()
+            : auth()->user()->branches()->where('branches.is_active', true)->get();
 
-        $pendingBackdateRequests = AttendanceBackdateRequest::with(['employee', 'branch'])
-            ->where('status', 'pending')
-            ->orderBy('requested_date', 'desc')
-            ->get();
+        $pendingQuery = AttendanceBackdateRequest::with(['employee', 'branch'])
+            ->where('status', 'pending');
+        if (!$isOwnerUser) {
+            $pendingQuery->where('employee_id', $currentEmployeeId ?? 0);
+        }
+        $pendingBackdateRequests = $pendingQuery->orderBy('requested_date', 'desc')->get();
 
-        $activeBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
-        $branch = $activeBranchId ? Branch::find($activeBranchId) : Branch::first();
+        $activeBranchId = $isOwnerUser
+            ? (session('pos_active_branch_id') ?: auth()->user()?->branches()->where('branches.is_active', true)->value('branches.id'))
+            : auth()->user()?->employee?->branch_id;
+        $branch = $activeBranchId ? Branch::where('is_active', true)->find($activeBranchId) : null;
         $selectedLogoUrl = ($branch && !empty($branch->logo_path))
             ? Storage::url($branch->logo_path)
             : null;
-
-        $isOwnerUser = auth()->check() && auth()->user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
 
         return view('livewire.pos-attendances', [
             'attendances'             => $attendances,

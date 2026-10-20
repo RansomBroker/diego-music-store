@@ -10,6 +10,7 @@ use App\Models\StockMovement;
 use App\Models\JournalEntry;
 use App\Models\JournalItem;
 use App\Models\Account;
+use App\Models\CashSession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,13 +24,24 @@ class CreatePOSSale
      */
     public function execute(array $data): Sale
     {
-        return DB::transaction(function () use ($data) {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(Auth::check(), 403);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $branchId = (int) ($data['branch_id'] ?? 0);
+        abort_unless(in_array($branchId, $allowedBranchIds, true), 403);
+        if (!empty($data['cash_session_id'])) {
+            abort_unless(CashSession::query()->whereKey($data['cash_session_id'])
+                ->where('branch_id', $branchId)->where('status', 'open')->exists(), 403);
+        }
+
+        return DB::transaction(function () use ($data, $branchId) {
             $items = $data['items'] ?? [];
             if (empty($items)) {
                 throw new \Exception('Keranjang belanja kosong.');
             }
 
-            $branchId = $data['branch_id'];
+            // Branch was validated against the authenticated user's allowed branches above.
             $salesRepId = $data['sales_rep_id'] ?? Auth::id();
             $customerId = $data['customer_id'] ?? null;
             $paymentMethod = $data['payment_method'] ?? 'cash';

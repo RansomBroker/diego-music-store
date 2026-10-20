@@ -24,6 +24,12 @@ class PosCommissions extends Component
 {
     use WithPagination;
 
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     // ── Filter State ─────────────────────────────────────────────────────
     public ?int $filterBranchId = null;
     public string $filterMonth = '';
@@ -79,6 +85,7 @@ class PosCommissions extends Component
 
     public function openSchemeModal(?int $id = null): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $this->resetSchemeForm();
         if ($id) {
             $scheme = CommissionScheme::with('employees')->findOrFail($id);
@@ -115,6 +122,7 @@ class PosCommissions extends Component
 
     public function saveScheme(): void
     {
+        abort_unless($this->isManagementUser(), 403);
         if (is_string($this->rate)) {
             $cleaned = preg_replace('/[^\d.]/', '', str_replace(',', '.', $this->rate));
             $this->rate = $cleaned !== '' ? (float) $cleaned : 0;
@@ -186,6 +194,7 @@ class PosCommissions extends Component
 
     public function toggleSchemeStatus(int $id): void
     {
+        abort_unless($this->isManagementUser(), 403);
         try {
             $scheme = CommissionScheme::findOrFail($id);
             $scheme->is_active = !$scheme->is_active;
@@ -208,6 +217,7 @@ class PosCommissions extends Component
 
     public function deleteScheme(int $id): void
     {
+        abort_unless($this->isManagementUser(), 403);
         try {
             $scheme = CommissionScheme::findOrFail($id);
             $schemeName = $scheme->name;
@@ -229,6 +239,7 @@ class PosCommissions extends Component
 
     public function approveEmployeeRecap(int $employeeId): void
     {
+        abort_unless($this->isManagementUser(), 403);
         try {
             $action = app(ApproveCommissionRecap::class);
             $count = $action->execute($employeeId, $this->filterMonth ?: now()->format('Y-m'));
@@ -259,6 +270,7 @@ class PosCommissions extends Component
     // ── Group Commission Handlers ────────────────────────────────────────
     public function openGroupModal(?int $id = null): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $this->resetGroupForm();
         if ($id) {
             $group = CommissionGroup::with('members')->findOrFail($id);
@@ -305,6 +317,7 @@ class PosCommissions extends Component
 
     public function saveGroup(): void
     {
+        abort_unless($this->isManagementUser(), 403);
         if (is_string($this->groupRate)) {
             $cleaned = preg_replace('/[^\d.]/', '', str_replace(',', '.', $this->groupRate));
             $this->groupRate = $cleaned !== '' ? (float) $cleaned : 0;
@@ -373,6 +386,7 @@ class PosCommissions extends Component
 
     public function deleteGroup(int $id): void
     {
+        abort_unless($this->isManagementUser(), 403);
         try {
             CommissionGroup::findOrFail($id)->delete();
             Notification::make()->title('Grup Komisi Dihapus')->success()->send();
@@ -392,6 +406,7 @@ class PosCommissions extends Component
 
     public function openGroupDetailModal(int $groupId): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $group = CommissionGroup::with(['leader', 'members.employee'])->findOrFail($groupId);
         $yearMonth = explode('-', $this->filterMonth ?: now()->format('Y-m'));
         $year = (int) ($yearMonth[0] ?? now()->year);
@@ -404,6 +419,7 @@ class PosCommissions extends Component
 
     public function claimGroupCommission(int $groupId): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $group = CommissionGroup::with(['leader', 'members.employee'])->findOrFail($groupId);
         $yearMonth = explode('-', $this->filterMonth ?: now()->format('Y-m'));
         $year = (int) ($yearMonth[0] ?? now()->year);
@@ -432,6 +448,7 @@ class PosCommissions extends Component
 
     public function exportCsv()
     {
+        abort_unless($this->isManagementUser(), 403);
         $yearMonth = explode('-', $this->filterMonth ?: now()->format('Y-m'));
         $year = (int) ($yearMonth[0] ?? now()->year);
         $month = (int) ($yearMonth[1] ?? now()->month);
@@ -482,11 +499,21 @@ class PosCommissions extends Component
         return response()->stream($callback, 200, $headers);
     }
 
+    private function isManagementUser(): bool
+    {
+        return auth()->check()
+            && auth()->user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+    }
+
     public function render()
     {
-        // Logo cabang untuk sidebar
-        $branchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
-        $branch = $branchId ? Branch::find($branchId) : Branch::first();
+        $isManagement = $this->isManagementUser();
+        $currentEmployee = auth()->user()?->employee;
+        // Logo cabang harus berasal dari cabang yang diizinkan, tanpa fallback global.
+        $branchId = $isManagement
+            ? (session('pos_active_branch_id') ?: auth()->user()?->branches()->where('branches.is_active', true)->value('branches.id'))
+            : ($currentEmployee?->branch_id ?: auth()->user()?->branches()->where('branches.is_active', true)->value('branches.id'));
+        $branch = $branchId ? Branch::where('is_active', true)->find($branchId) : null;
         $selectedLogoUrl = ($branch && !empty($branch->logo_path) && trim($branch->logo_path) !== '')
             ? Storage::url($branch->logo_path)
             : null;
@@ -495,15 +522,19 @@ class PosCommissions extends Component
         $year = (int) ($yearMonth[0] ?? now()->year);
         $month = (int) ($yearMonth[1] ?? now()->month);
 
-        $branches = Branch::where('is_active', true)->get();
+        $branches = $isManagement
+            ? Branch::where('is_active', true)->get()
+            : BranchHelper::getAllowedBranchesQuery()->get();
         $products = Product::where('is_active', true)->orderBy('name', 'asc')->get();
         $categories = SaleCategory::orderBy('name', 'asc')->get();
 
-        // Staf karyawan
+        // Management can review all staff; regular users only see their own recap.
         $employeesQuery = Employee::with(['user', 'branch'])
             ->where('is_active', true);
 
-        if ($this->filterBranchId) {
+        if (!$isManagement) {
+            $employeesQuery->whereKey($currentEmployee?->id ?? 0);
+        } elseif ($this->filterBranchId) {
             $employeesQuery->where('branch_id', $this->filterBranchId);
         }
 
@@ -550,45 +581,51 @@ class PosCommissions extends Component
                     ->orWhereNull('branch_id');
             });
         }
-        $schemes = $schemesQuery->orderBy('id', 'desc')->get();
+        $schemes = $isManagement
+            ? $schemesQuery->orderBy('id', 'desc')->get()
+            : collect();
 
         // 3. Log Transaksi Komisi
         $logsQuery = SalesCommissionLog::with(['employee', 'sale', 'commissionScheme'])
             ->whereYear('date', $year)
             ->whereMonth('date', $month);
 
-        if ($this->filterBranchId) {
-            $logsQuery->whereHas('employee', function ($q) {
-                $q->where('branch_id', $this->filterBranchId);
-            });
-        }
+        if (!$isManagement) {
+            $logsQuery->where('employee_id', $currentEmployee?->id ?? 0);
+        } else {
+            if ($this->filterBranchId) {
+                $logsQuery->whereHas('employee', function ($q) {
+                    $q->where('branch_id', $this->filterBranchId);
+                });
+            }
 
-        if ($this->selectedEmployeeId) {
-            $logsQuery->where('employee_id', $this->selectedEmployeeId);
+            if ($this->selectedEmployeeId) {
+                $logsQuery->where('employee_id', $this->selectedEmployeeId);
+            }
         }
 
         $logs = $logsQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         // Untracked / unavailable employee IDs for scheme assignment (1-on-1 constraint)
-        $assignedIds = \Illuminate\Support\Facades\DB::table('commission_scheme_employee')
+        $assignedIds = $isManagement ? \Illuminate\Support\Facades\DB::table('commission_scheme_employee')
             ->when($this->editingSchemeId, function ($q) {
                 $q->where('commission_scheme_id', '!=', $this->editingSchemeId);
             })
             ->pluck('employee_id')
-            ->toArray();
+            ->toArray() : [];
 
-        $legacyAssignedIds = CommissionScheme::whereNotNull('employee_id')
+        $legacyAssignedIds = $isManagement ? CommissionScheme::whereNotNull('employee_id')
             ->when($this->editingSchemeId, function ($q) {
                 $q->where('id', '!=', $this->editingSchemeId);
             })
             ->pluck('employee_id')
-            ->toArray();
+            ->toArray() : [];
 
         $unavailableEmployeeIds = array_unique(array_merge($assignedIds, $legacyAssignedIds));
 
         // 4. Komisi Grup & Evaluasi Real-time
         $evaluatedGroups = [];
-        if ($this->activeTab === 'groups') {
+        if ($isManagement && $this->activeTab === 'groups') {
             $evaluator = new EvaluateGroupCommission();
             $groupsQuery = CommissionGroup::with(['leader', 'members.employee'])
                 ->where('is_active', true);

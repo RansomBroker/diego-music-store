@@ -26,6 +26,12 @@ use Spatie\Permission\Models\Role;
 
 class UserPrivileges extends Page implements HasActions, HasForms, HasTable
 {
+    public function boot(): void
+    {
+        // Only the primary owner may change global role permissions.
+        abort_unless(auth()->user()?->hasRole(['owner', 'Owner']), 403);
+    }
+
     use InteractsWithActions;
     use InteractsWithForms;
     use InteractsWithTable;
@@ -108,6 +114,7 @@ class UserPrivileges extends Page implements HasActions, HasForms, HasTable
             ])
             ->actions([
                 Action::make('editPermissions')
+                    ->visible(fn (Role $record): bool => ! in_array(strtolower($record->name), ['owner', 'super_admin', 'super admin'], true))
                     ->label('Atur Hak Akses')
                     ->icon('heroicon-o-adjustments-horizontal')
                     ->color('primary')
@@ -177,7 +184,7 @@ class UserPrivileges extends Page implements HasActions, HasForms, HasTable
                     }),
 
                 DeleteAction::make()
-                    ->visible(fn (Role $record) => $record->name !== 'Super Admin'),
+                    ->visible(fn (Role $record): bool => ! in_array(strtolower($record->name), ['owner', 'super_admin', 'super admin'], true)),
             ]);
     }
 
@@ -195,7 +202,8 @@ class UserPrivileges extends Page implements HasActions, HasForms, HasTable
                         ->label('Nama Role')
                         ->placeholder('Misal: Kasir Utama, Manager Toko, Admin Gudang')
                         ->required()
-                        ->unique('roles', 'name'),
+                        ->unique('roles', 'name')
+                        ->rules(['not_in:owner,Owner,OWNER,super_admin,Super Admin,super admin,Super_Admin,admin,Admin,ADMIN']),
                 ])
                 ->action(function (array $data): void {
                     $action = new CreateRole();

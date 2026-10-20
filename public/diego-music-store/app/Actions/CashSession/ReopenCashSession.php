@@ -3,6 +3,7 @@
 namespace App\Actions\CashSession;
 
 use App\Models\CashSession;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -17,6 +18,12 @@ class ReopenCashSession
      */
     public function execute(CashSession $session): CashSession
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(Auth::check(), 403);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        abort_unless(in_array((int) $session->branch_id, $allowedBranchIds, true), 403);
+
         if ($session->status !== 'closed') {
             throw new InvalidArgumentException('Hanya sesi tutup (closed) yang dapat dibuka kembali.');
         }

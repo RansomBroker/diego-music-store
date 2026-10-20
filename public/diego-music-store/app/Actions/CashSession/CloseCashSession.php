@@ -19,6 +19,15 @@ class CloseCashSession
      */
     public function execute(CashSession $session, array $data): CashSession
     {
+        $user = Auth::user();
+        abort_unless($user, 403);
+        abort_if($user->hasRole(['sales', 'Sales']), 403);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        abort_unless(in_array((int) $session->branch_id, $allowedBranchIds, true), 403);
+        $isManagement = $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        abort_unless($isManagement || (int) $session->user_id === (int) $user->id, 403);
+
         if ($session->status !== 'open') {
             throw new InvalidArgumentException('Hanya sesi aktif (open) yang dapat ditutup.');
         }
@@ -26,7 +35,8 @@ class CloseCashSession
         return DB::transaction(function () use ($session, $data) {
             $actualCash = intval($data['actual_cash'] ?? 0);
             $notes = $data['notes'] ?? null;
-            $closedBy = $data['closed_by_user_id'] ?? Auth::id();
+            // Do not trust a caller-supplied user ID for the audit field.
+            $closedBy = Auth::id();
 
             if (!$closedBy) {
                 throw new InvalidArgumentException('User ID yang melakukan penutupan wajib ditentukan.');

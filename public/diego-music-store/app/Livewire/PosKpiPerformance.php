@@ -17,6 +17,12 @@ class PosKpiPerformance extends Component
 {
     use WithPagination;
 
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public string $activeTab = 'recap'; // 'recap', 'dashboard', 'templates'
     public string $filterMonth = '';
     public string $filterBranchId = '';
@@ -71,6 +77,8 @@ class PosKpiPerformance extends Component
     // ── Realtime Recalculate All Employees ───────────────────────────────
     public function recalculateAllKpi(): void
     {
+        abort_unless($this->isManagementUser(), 403);
+
         $action = app(CalculateEmployeeKpi::class);
         $employees = Employee::where('is_active', true)->get();
 
@@ -95,6 +103,7 @@ class PosKpiPerformance extends Component
     // ── Template Modal Handlers ──────────────────────────────────────────
     public function openTemplateModal(?int $templateId = null): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $this->resetValidation();
 
         if ($templateId) {
@@ -145,6 +154,8 @@ class PosKpiPerformance extends Component
 
     public function saveTemplate(): void
     {
+        abort_unless($this->isManagementUser(), 403);
+
         $this->maxBonusAmount = $this->parseCurrencyValue($this->maxBonusAmount);
         $this->targetSalesAmount = $this->parseCurrencyValue($this->targetSalesAmount);
         $this->targetAtvAmount = $this->parseCurrencyValue($this->targetAtvAmount);
@@ -200,13 +211,24 @@ class PosKpiPerformance extends Component
         ]);
     }
 
+    private function isManagementUser(): bool
+    {
+        return auth()->check()
+            && auth()->user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+    }
+
     public function render()
     {
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
-        $employees = Employee::where('is_active', true)->orderBy('name')->get();
+        $isManagement = $this->isManagementUser();
+        $currentEmp = auth()->user()?->employee;
+        $branches = $isManagement
+            ? Branch::where('is_active', true)->orderBy('name')->get()
+            : BranchHelper::getAllowedBranchesQuery()->get();
+        $employees = $isManagement
+            ? Employee::where('is_active', true)->orderBy('name')->get()
+            : Employee::query()->whereKey($currentEmp?->id ?? 0)->where('is_active', true)->get();
 
         // 1. Current logged in employee evaluation data for Dashboard Tab
-        $currentEmp = auth()->user()?->employee;
         $myEvaluation = null;
         if ($currentEmp) {
             $myEvaluation = app(CalculateEmployeeKpi::class)->execute($currentEmp, $this->filterMonth);
@@ -217,16 +239,18 @@ class PosKpiPerformance extends Component
             ->where('period', $this->filterMonth)
             ->orderBy('final_kpi_score', 'desc');
 
-        if (!empty($this->filterBranchId)) {
+        if (!$isManagement) {
+            $evaluationsQuery->where('employee_id', $currentEmp?->id ?? 0);
+        } elseif (!empty($this->filterBranchId)) {
             $evaluationsQuery->where('branch_id', $this->filterBranchId);
         }
 
         $evaluations = $evaluationsQuery->paginate($this->perPage > 0 ? $this->perPage : 999999);
 
         // 3. Templates list query for Tab 3
-        $templates = KpiTemplate::with('employee')
-            ->orderBy('id', 'desc')
-            ->get();
+        $templates = $isManagement
+            ? KpiTemplate::with('employee')->orderBy('id', 'desc')->get()
+            : collect();
 
         // Active logo URL for POS layout
         $activeBranchId = BranchHelper::getActiveBranchId();

@@ -12,6 +12,12 @@ use Filament\Notifications\Notification;
 
 class PosBarcodePrint extends Component
 {
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     // Modal & Product Selection Properties
     public bool $showProductModal = false;
     public string $modalSearch = '';

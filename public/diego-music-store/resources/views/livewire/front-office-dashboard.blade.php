@@ -20,7 +20,7 @@
             <div class="w-full space-y-6">
 
                 @php
-                    $isOwnerUser = auth()->check() && auth()->user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
+                    $isOwnerUser = auth()->check() && auth()->user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
                 @endphp
 
                 <!-- 1. Card Status User Login & Presensi -->

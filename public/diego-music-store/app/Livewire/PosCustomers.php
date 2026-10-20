@@ -19,6 +19,12 @@ class PosCustomers extends Component
 {
     use WithPagination;
 
+    public function boot(): void
+    {
+        // Sales staff may browse the read-only product catalog, not customer records or messaging tools.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     // ── State Tabel & Pencarian ──────────────────────────────────────────
     public string $search = '';
     public string $sortField = 'name';

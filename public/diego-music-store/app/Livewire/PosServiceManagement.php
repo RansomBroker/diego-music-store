@@ -15,6 +15,25 @@ class PosServiceManagement extends Component
 {
     use WithPagination;
 
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
+    private function resolveAuthorizedBranchId(): int
+    {
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $branchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless(in_array($branchId, $allowedBranchIds, true), 403);
+        $this->selectedBranchId = $branchId;
+        return $branchId;
+    }
+
     public ?int $selectedBranchId = null;
     public ?string $selectedStatus = null;
     public ?int $selectedTechnicianId = null;
@@ -73,7 +92,7 @@ class PosServiceManagement extends Component
 
     public function openEditModal(int $orderId)
     {
-        $order = ServiceOrder::findOrFail($orderId);
+        $order = ServiceOrder::query()->where('branch_id', $this->resolveAuthorizedBranchId())->findOrFail($orderId);
         $this->editingOrderId = $order->id;
         $this->editStatus = $order->status;
         $this->editTechnicianId = $order->technician_id;
@@ -111,7 +130,7 @@ class PosServiceManagement extends Component
             return;
         }
 
-        $order = ServiceOrder::findOrFail($this->editingOrderId);
+        $order = ServiceOrder::query()->where('branch_id', $this->resolveAuthorizedBranchId())->findOrFail($this->editingOrderId);
 
         // Sanitize charges
         $cleanCharges = [];
@@ -145,13 +164,14 @@ class PosServiceManagement extends Component
     public function render()
     {
         $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
-        $activeBranchId = $this->selectedBranchId ?: \App\Helpers\BranchHelper::getActiveBranchId();
-        $currentBranch = Branch::find($activeBranchId);
+        $activeBranchId = $this->resolveAuthorizedBranchId();
+        $currentBranch = Branch::findOrFail($activeBranchId);
 
         $selectedLogoUrl = !empty($currentBranch?->logo_path) ? Storage::url($currentBranch->logo_path) : null;
 
         // Fetch technicians
-        $technicians = User::whereHas('roles', fn($q) => $q->whereIn('name', ['technician', 'sales', 'cashier', 'owner', 'admin']))
+        $technicians = User::whereHas('roles', fn($q) => $q->whereIn('name', ['technician', 'Technician', 'sales', 'Sales', 'cashier', 'Cashier', 'owner', 'Owner', 'super_admin', 'Super Admin']))
+            ->whereHas('employee', fn ($q) => $q->where('branch_id', $activeBranchId))
             ->orderBy('name')
             ->get();
 
@@ -187,11 +207,11 @@ class PosServiceManagement extends Component
 
         // Status Summary counts
         $statusCounts = [
-            'all'           => ServiceOrder::count(),
-            'received'      => ServiceOrder::where('status', 'received')->count(),
-            'in_progress'   => ServiceOrder::whereIn('status', ['diagnosing', 'in_progress', 'waiting_parts'])->count(),
-            'completed'     => ServiceOrder::where('status', 'completed')->count(),
-            'picked_up'     => ServiceOrder::where('status', 'picked_up')->count(),
+            'all'           => ServiceOrder::where('branch_id', $activeBranchId)->count(),
+            'received'      => ServiceOrder::where('branch_id', $activeBranchId)->where('status', 'received')->count(),
+            'in_progress'   => ServiceOrder::where('branch_id', $activeBranchId)->whereIn('status', ['diagnosing', 'in_progress', 'waiting_parts'])->count(),
+            'completed'     => ServiceOrder::where('branch_id', $activeBranchId)->where('status', 'completed')->count(),
+            'picked_up'     => ServiceOrder::where('branch_id', $activeBranchId)->where('status', 'picked_up')->count(),
         ];
 
         return view('livewire.pos-service-management', [

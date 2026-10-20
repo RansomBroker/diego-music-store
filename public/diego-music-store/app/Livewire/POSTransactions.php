@@ -56,8 +56,37 @@ class POSTransactions extends Component
         'toDate' => ['except' => ''],
     ];
 
+    /**
+     * Enforce this restriction on initial page loads and every Livewire request.
+     */
+    public function boot(): void
+    {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
+    private function resolveAuthorizedBranchId(): int
+    {
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
+            ->pluck('branches.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $branchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+
+        abort_unless(in_array($branchId, $allowedBranchIds, true), 403);
+        $this->selectedBranchId = $branchId;
+
+        return $branchId;
+    }
+
     public function mount(): void
     {
+        // Sales is read-only and must not browse or mutate transaction/cash records.
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         // Default date range is today
         $this->fromDate = now()->format('Y-m-d');
         $this->toDate = now()->format('Y-m-d');
@@ -143,6 +172,7 @@ class POSTransactions extends Component
     public function showDetails(int $saleId): void
     {
         $this->selectedSale = Sale::with(['items.variant.product', 'customer', 'salesRep', 'branch'])
+            ->where('branch_id', $this->resolveAuthorizedBranchId())
             ->findOrFail($saleId);
         $this->showDetailsModal = true;
     }
@@ -155,12 +185,15 @@ class POSTransactions extends Component
 
     public function printReceipt(int $saleId): void
     {
+        Sale::query()->where('branch_id', $this->resolveAuthorizedBranchId())->findOrFail($saleId);
         $this->dispatch('print-receipt', saleId: $saleId);
     }
 
     public function startReturn(int $saleId): void
     {
-        $sale = Sale::with(['items.variant.product'])->findOrFail($saleId);
+        $sale = Sale::with(['items.variant.product'])
+            ->where('branch_id', $this->resolveAuthorizedBranchId())
+            ->findOrFail($saleId);
 
         if ($sale->status === 'cancelled') {
             Notification::make()
@@ -231,6 +264,8 @@ class POSTransactions extends Component
             return;
         }
 
+        $sale = Sale::query()->where('branch_id', $activeBranchId)->findOrFail($this->returnSale?->id);
+
         $returnPayload = [];
         foreach ($this->returnItems as $itemId => $item) {
             $qty = intval($item['qty'] ?? 0);
@@ -271,7 +306,7 @@ class POSTransactions extends Component
         try {
             $action = new \App\Actions\Sales\CreateSalesReturn();
             $action->execute([
-                'sale_id' => $this->returnSale->id,
+                'sale_id' => $sale->id,
                 'cash_session_id' => $activeSession->id,
                 'reason' => $this->returnReason,
                 'status' => 'posted',
@@ -302,7 +337,7 @@ class POSTransactions extends Component
 
     public function openSettlementModal(int $saleId): void
     {
-        $sale = Sale::with('customer')->findOrFail($saleId);
+        $sale = Sale::with('customer')->where('branch_id', $this->resolveAuthorizedBranchId())->findOrFail($saleId);
         $this->settlementSale = $sale;
         $this->settlementDate = now()->format('Y-m-d');
         $this->settlementCustomerId = $sale->customer_id;
@@ -342,9 +377,11 @@ class POSTransactions extends Component
 
         try {
             \Illuminate\Support\Facades\DB::transaction(function () {
-                $sale = $this->settlementSale;
-                $paid = floatval($this->settlementAmount);
-                $currentPiutang = $sale->getPiutangAmount();
+                $branchId = $this->resolveAuthorizedBranchId();
+                $sale = Sale::query()->where('branch_id', $branchId)->findOrFail($this->settlementSale?->id);
+                $currentPiutang = max(0, (float) $sale->getPiutangAmount());
+                $paid = min(max(0, (float) $this->settlementAmount), $currentPiutang);
+                abort_unless($paid > 0, 422, 'Nominal pelunasan tidak valid.');
                 
                 $refText = $this->settlementReference ? " | Ref: {$this->settlementReference}" : '';
                 $methodLabel = strtoupper($this->settlementPaymentMethod);
@@ -432,15 +469,15 @@ class POSTransactions extends Component
 
     public function render()
     {
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
-
-        $userBranchId = Auth::user()->branches()->first()?->id;
-        $activeBranch = $userBranchId ? Branch::find($userBranchId) : null;
+        $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
+        $branchId = $this->resolveAuthorizedBranchId();
+        $activeBranch = Branch::findOrFail($branchId);
         $selectedLogoUrl = ($activeBranch && !empty($activeBranch->logo_path))
             ? \Illuminate\Support\Facades\Storage::url($activeBranch->logo_path)
             : null;
 
         $sales = Sale::with(['customer', 'salesRep', 'branch'])
+            ->where('branch_id', $branchId)
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('invoice_number', 'like', "%{$this->search}%")
@@ -451,9 +488,6 @@ class POSTransactions extends Component
                           $u->where('name', 'like', "%{$this->search}%");
                       });
                 });
-            })
-            ->when($this->selectedBranchId, function ($query) {
-                $query->where('branch_id', $this->selectedBranchId);
             })
             ->when($this->selectedStatus !== 'all', function ($query) {
                 $query->where('status', $this->selectedStatus);
@@ -479,7 +513,9 @@ class POSTransactions extends Component
             ->orderBy('code')
             ->get();
 
-        $customers = \App\Models\Customer::orderBy('name')->get();
+        $customers = \App\Models\Customer::query()
+            ->whereIn('id', Sale::query()->where('branch_id', $branchId)->whereNotNull('customer_id')->distinct()->pluck('customer_id'))
+            ->orderBy('name')->get();
         $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get();
 
         return view('livewire.pos-transactions', [

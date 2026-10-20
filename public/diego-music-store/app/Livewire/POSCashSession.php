@@ -47,6 +47,11 @@ class POSCashSession extends Component
     public string $supervisorAction = 'close'; // 'close' or 'reopen'
     public ?int $sessionToReopenId = null;
 
+    public function boot(): void
+    {
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount()
     {
         $this->branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
@@ -189,7 +194,7 @@ class POSCashSession extends Component
         }
 
         // Check if user has supervisor authority (owner or admin role)
-        if (!$supervisor->hasAnyRole(['owner', 'admin'])) {
+        if (!$supervisor->hasAnyRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
             $this->addError('supervisorEmail', 'User ini tidak memiliki wewenang supervisor/admin.');
             return;
         }
@@ -204,7 +209,9 @@ class POSCashSession extends Component
 
     public function requestReopenSession(int $sessionId)
     {
-        $session = CashSession::find($sessionId);
+        $session = CashSession::query()
+            ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())
+            ->find($sessionId);
         if (!$session) {
             return;
         }
@@ -245,7 +252,9 @@ class POSCashSession extends Component
     protected function reopenSession()
     {
         try {
-            $session = CashSession::findOrFail($this->sessionToReopenId);
+            $session = CashSession::query()
+                ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())
+                ->findOrFail($this->sessionToReopenId);
             
             app(ReopenCashSession::class)->execute($session);
 
@@ -275,12 +284,9 @@ class POSCashSession extends Component
     protected function closeSession($supervisorId = null)
     {
         try {
-            $closedBy = $supervisorId ?? Auth::id();
-
             $sessionToPrint = app(CloseCashSession::class)->execute($this->activeSession, [
                 'actual_cash' => $this->actualCash,
                 'notes' => $this->closingNotes,
-                'closed_by_user_id' => $closedBy,
             ]);
 
             Notification::make()
@@ -311,10 +317,16 @@ class POSCashSession extends Component
 
     public function showTransactions(int $sessionId): void
     {
-        $this->selectedSessionId = $sessionId;
+        $session = CashSession::query()
+            ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())
+            ->findOrFail($sessionId);
+        $user = Auth::user();
+        $isManagement = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        abort_unless($isManagement || (int) $session->user_id === (int) Auth::id(), 403);
+        $this->selectedSessionId = $session->id;
 
-        // Load sales from the session
-        $sales = \App\Models\Sale::where('cash_session_id', $sessionId)
+        // Load sales from the authorized session
+        $sales = \App\Models\Sale::where('cash_session_id', $session->id)
             ->with('customer')
             ->orderBy('created_at', 'desc')
             ->get();

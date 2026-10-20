@@ -56,8 +56,18 @@ class PosReportsSales extends Component
         }
     }
 
+    /**
+     * Enforce this restriction on initial page loads and every Livewire request.
+     */
+    public function boot(): void
+    {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount()
     {
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+
         $this->dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->dateTo = Carbon::now()->format('Y-m-d');
         if (!$this->selectedBranchId) {
@@ -107,15 +117,21 @@ class PosReportsSales extends Component
     public function render()
     {
         $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
-        $activeBranchId = $this->selectedBranchId ?: \App\Helpers\BranchHelper::getActiveBranchId();
-        $currentBranch = Branch::find($activeBranchId);
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
+        $activeBranchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
+            ? $requestedBranchId
+            : \App\Helpers\BranchHelper::getActiveBranchId();
+        abort_unless(in_array($activeBranchId, $allowedBranchIds, true), 403);
+        $this->selectedBranchId = $activeBranchId;
+        $currentBranch = Branch::findOrFail($activeBranchId);
 
         $selectedLogoUrl = !empty($currentBranch?->logo_path) ? Storage::url($currentBranch->logo_path) : null;
 
         $filters = [
             'dateFrom'        => $this->dateFrom,
             'dateTo'          => $this->dateTo,
-            'branchId'        => $this->selectedBranchId,
+            'branchId'        => $activeBranchId,
             'customerId'      => $this->selectedCustomerId,
             'paymentMethod'   => $this->selectedPaymentMethod,
             'salesRepId'      => $this->selectedSalesRepId,

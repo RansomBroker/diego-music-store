@@ -17,6 +17,11 @@ class JournalEntryResource extends Resource
 {
     protected static ?string $model = JournalEntry::class;
 
+    public static function getEloquentQuery(): \\Illuminate\\Database\\Eloquent\\Builder
+    {
+        return parent::getEloquentQuery()->where('branch_id', \\App\\Helpers\\BranchHelper::getActiveBranchId());
+    }
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
     protected static ?string $recordTitleAttribute = 'entry_no';

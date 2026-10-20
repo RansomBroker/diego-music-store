@@ -20,6 +20,12 @@ class StockOpnameTasks extends Component
     public string $selectedPhysicalQty = '0';
     public bool $showCountModal = false;
 
+    public function boot(): void
+    {
+        // Sales staff have read-only access to the product catalog only.
+        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount(): void
     {
         abort_unless(auth()->check(), 403);

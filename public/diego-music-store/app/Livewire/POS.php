@@ -93,6 +93,12 @@ class POS extends Component
     public $invoiceDate = '';
     public $activeSessionInfo = [];
 
+    public function boot(): void
+    {
+        // Sales staff use the dedicated read-only catalog instead of the transactional POS.
+        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+    }
+
     public function mount()
     {
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();

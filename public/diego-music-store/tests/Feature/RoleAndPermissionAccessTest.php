@@ -4,6 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\User;
+use App\Actions\Sales\CreatePOSSale;
+use App\Actions\CashManagement\CreateCashTransaction;
+use App\Helpers\BranchHelper;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,7 +34,7 @@ class RoleAndPermissionAccessTest extends TestCase
         ]);
     }
 
-    public function test_owner_and_admin_can_access_backoffice_panel(): void
+    public function test_owner_can_access_backoffice_panel_and_legacy_admin_cannot(): void
     {
         $owner = User::factory()->create(['is_active' => true]);
         $owner->assignRole('owner');
@@ -39,11 +43,39 @@ class RoleAndPermissionAccessTest extends TestCase
         $panel = Filament::getPanel('backoffice');
         $this->assertTrue($owner->canAccessPanel($panel));
 
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $admin = User::factory()->create(['is_active' => true]);
-        $admin->assignRole('admin');
-        $admin->branches()->attach($this->branch->id);
+        $admin->assignRole($adminRole);
 
-        $this->assertTrue($admin->canAccessPanel($panel));
+        $this->assertFalse($admin->canAccessPanel($panel));
+    }
+
+    public function test_regular_user_without_branch_is_denied_instead_of_falling_back(): void
+    {
+        $user = User::factory()->create(['is_active' => true]);
+        $user->assignRole('karyawan');
+
+        $this->actingAs($user);
+        $this->expectException(HttpException::class);
+
+        BranchHelper::getActiveBranchId();
+    }
+
+    public function test_regular_user_cannot_switch_active_branch_to_unassigned_branch(): void
+    {
+        $otherBranch = Branch::create([
+            'name' => 'Cabang Lain',
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create(['is_active' => true]);
+        $user->assignRole('karyawan');
+        $user->branches()->attach($this->branch->id);
+
+        session(['pos_active_branch_id' => $otherBranch->id]);
+        $this->actingAs($user);
+
+        $this->assertSame($this->branch->id, BranchHelper::getActiveBranchId());
     }
 
     public function test_karyawan_and_sales_cannot_access_backoffice_panel(): void
@@ -68,7 +100,7 @@ class RoleAndPermissionAccessTest extends TestCase
         $panel = Filament::getPanel('backoffice');
 
         $inactiveAdmin = User::factory()->create(['is_active' => false]);
-        $inactiveAdmin->assignRole('admin');
+        $inactiveAdmin->assignRole(Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']));
         $inactiveAdmin->branches()->attach($this->branch->id);
 
         $this->assertFalse($inactiveAdmin->canAccessPanel($panel));
@@ -113,7 +145,17 @@ class RoleAndPermissionAccessTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_admin_and_owner_can_access_sensitive_pos_routes(): void
+    public function test_super_admin_cannot_manage_global_role_privileges(): void
+    {
+        $superAdminRole = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $superAdmin = User::factory()->create(['is_active' => true]);
+        $superAdmin->assignRole($superAdminRole);
+        $superAdmin->branches()->attach($this->branch->id);
+
+        $this->actingAs($superAdmin)->get('/backoffice/user-privileges')->assertForbidden();
+    }
+
+    public function test_owner_can_access_sensitive_pos_routes(): void
     {
         $owner = User::factory()->create(['is_active' => true]);
         $owner->assignRole('owner');
@@ -130,6 +172,104 @@ class RoleAndPermissionAccessTest extends TestCase
 
         $response = $this->actingAs($owner)->get('/pos/branches');
         $response->assertStatus(200);
+    }
+
+    public function test_sales_can_view_read_only_catalog_but_cannot_open_transactional_pos(): void
+    {
+        $sales = User::factory()->create(['is_active' => true]);
+        $sales->assignRole('sales');
+        $sales->branches()->attach($this->branch->id);
+
+        $this->actingAs($sales)->get('/pos/catalog')->assertStatus(200);
+        $this->actingAs($sales)->get('/pos')->assertStatus(403);
+    }
+
+    public function test_sales_role_cannot_access_transaction_cash_and_payment_pages(): void
+    {
+        $sales = User::factory()->create(['is_active' => true]);
+        $sales->assignRole('sales');
+        $sales->branches()->attach($this->branch->id);
+
+        foreach ([
+            '/pos/transactions',
+            '/pos/receipt-draft',
+            '/pos/barcode-print/sheet',
+            '/pos/customers',
+            '/pos/session',
+            '/pos/daily-cash',
+            '/pos/customer-deposits',
+            '/pos/customer-payments',
+            '/pos/reports/sales',
+            '/pos/reports/ar-aging',
+            '/pos/reports/ar-settlement',
+            '/pos/reports/daily-cash',
+            '/pos/reports/stock-prices',
+            '/pos/attendances',
+            '/pos/day-off-calendar',
+            '/pos/stock-opname-tasks',
+            '/pos/service-management',
+            '/pos/barcode-print',
+            '/pos/commissions',
+            '/pos/kpi-performance',
+        ] as $path) {
+            $this->actingAs($sales)->get($path)->assertStatus(403);
+        }
+    }
+
+    public function test_sales_role_cannot_create_pos_sale_even_by_calling_action_directly(): void
+    {
+        $sales = User::factory()->create(['is_active' => true]);
+        $sales->assignRole('sales');
+
+        $this->actingAs($sales);
+        $this->expectException(HttpException::class);
+
+        app(CreatePOSSale::class)->execute([]);
+    }
+
+    public function test_regular_user_cannot_create_sale_in_unassigned_branch_via_action(): void
+    {
+        $otherBranch = Branch::create([
+            'name' => 'Cabang Tidak Ditugaskan',
+            'is_active' => true,
+        ]);
+
+        $karyawan = User::factory()->create(['is_active' => true]);
+        $karyawan->assignRole('karyawan');
+        $karyawan->branches()->attach($this->branch->id);
+        $this->actingAs($karyawan);
+        $this->expectException(HttpException::class);
+
+        app(CreatePOSSale::class)->execute([
+            'branch_id' => $otherBranch->id,
+            'items' => [],
+        ]);
+    }
+
+    public function test_regular_user_cannot_create_cash_transaction_in_unassigned_branch_via_action(): void
+    {
+        $otherBranch = Branch::create([
+            'name' => 'Cabang Kas Tidak Ditugaskan',
+            'is_active' => true,
+        ]);
+
+        $karyawan = User::factory()->create(['is_active' => true]);
+        $karyawan->assignRole('karyawan');
+        $karyawan->branches()->attach($this->branch->id);
+        $this->actingAs($karyawan);
+        $this->expectException(HttpException::class);
+
+        app(CreateCashTransaction::class)->execute([
+            'branch_id' => $otherBranch->id,
+        ]);
+    }
+
+    public function test_seeder_does_not_recreate_retired_admin_role(): void
+    {
+        $this->assertDatabaseMissing('roles', [
+            'name' => 'admin',
+            'guard_name' => 'web',
+        ]);
     }
 
     public function test_seeder_assigns_correct_default_permissions_to_roles(): void
@@ -152,14 +292,14 @@ class RoleAndPermissionAccessTest extends TestCase
 
     public function test_user_privileges_page_form_populates_checked_permissions(): void
     {
-        $admin = User::factory()->create(['is_active' => true]);
-        $admin->assignRole('admin');
-        $admin->branches()->attach($this->branch->id);
+        $owner = User::factory()->create(['is_active' => true]);
+        $owner->assignRole('owner');
+        $owner->branches()->attach($this->branch->id);
 
         $karyawanRole = Role::findByName('karyawan');
         $this->assertTrue($karyawanRole->hasPermissionTo('pos.access'));
 
-        \Livewire\Livewire::actingAs($admin)
+        \Livewire\Livewire::actingAs($owner)
             ->test(\App\Filament\Pages\UserPrivileges::class)
             ->mountTableAction('editPermissions', $karyawanRole)
             ->assertTableActionDataSet(function (array $data): bool {

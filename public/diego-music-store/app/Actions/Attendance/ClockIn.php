@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 
@@ -33,6 +34,17 @@ class ClockIn
         ?float $longitude = null,
         ?string $photoPath = null
     ): EmployeeAttendance {
+        $user = Auth::user();
+        abort_unless($user, 403);
+        $isManagement = $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        if (!$isManagement) {
+            abort_unless($user->employee && (int) $user->employee->id === (int) $employee->id, 403);
+            abort_unless($employee->branch_id && (!$branchId || (int) $branchId === (int) $employee->branch_id), 403);
+        }
+        $targetBranchId = $branchId ?: $employee->branch_id;
+        $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        abort_unless($targetBranchId && in_array((int) $targetBranchId, $allowedBranchIds, true), 403);
+
         return DB::transaction(function () use ($employee, $branchId, $notes, $latitude, $longitude, $photoPath) {
             $today = now()->format('Y-m-d');
             $clockInTime = now();
