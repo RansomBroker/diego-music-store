@@ -3,6 +3,7 @@
 namespace App\Actions\CashManagement;
 
 use App\Models\CashTransaction;
+use App\Models\CashSession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,10 @@ class UpdateCashTransaction
         $targetBranchId = (int) ($data['branch_id'] ?? $cashTransaction->branch_id);
         abort_unless(in_array((int) $cashTransaction->branch_id, $allowedBranchIds, true)
             && in_array($targetBranchId, $allowedBranchIds, true), 403);
+        if ($cashTransaction->cash_session_id) {
+            abort_unless(CashSession::query()->whereKey($cashTransaction->cash_session_id)
+                ->where('branch_id', $targetBranchId)->exists(), 403);
+        }
 
         if ($cashTransaction->status !== 'draft') {
             throw ValidationException::withMessages([
