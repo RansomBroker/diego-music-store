@@ -36,9 +36,16 @@ class BackofficePanelProvider extends PanelProvider
                 'primary' => Color::Blue,
             ])
             ->brandName(function () {
-                $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
-                $branch = \App\Models\Branch::find($branchId);
-                return $branch ? ($branch->store_name ?: "Diego Music Store ({$branch->name})") : 'Diego Music Store';
+                if (! auth()->check()) {
+                    return 'Diego Music Store';
+                }
+                try {
+                    $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+                    $branch = \App\Models\Branch::find($branchId);
+                    return $branch ? ($branch->store_name ?: "Diego Music Store ({$branch->name})") : 'Diego Music Store';
+                } catch (\Throwable $e) {
+                    return 'Diego Music Store';
+                }
             })
             ->brandLogo(fn () => view('filament.components.brand-logo'))
             ->brandLogoHeight('auto')

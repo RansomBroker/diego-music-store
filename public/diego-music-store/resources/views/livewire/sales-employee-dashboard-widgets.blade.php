@@ -11,13 +11,14 @@
         <!-- GRID ROW 1: Target Bulanan (1), Target Harian (2), Komisi (3), Unlock Tier (4) -->
         @include('livewire.sales-employee-dashboard-widgets.components.kpi-cards')
 
-        <!-- GRID ROW 2: Leaderboard (5) & Produk Fokus Bulan Ini (6) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- GRID ROW 2: Leaderboard (5) & Produk Fokus / Komisi (6) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             <div class="lg:col-span-6">
                 @include('livewire.sales-employee-dashboard-widgets.components.leaderboard')
             </div>
-            <div class="lg:col-span-6">
+            <div class="lg:col-span-6 space-y-6">
                 @include('livewire.sales-employee-dashboard-widgets.components.focus-products')
+                @include('livewire.sales-employee-dashboard-widgets.components.store-focus-products')
             </div>
         </div>
 

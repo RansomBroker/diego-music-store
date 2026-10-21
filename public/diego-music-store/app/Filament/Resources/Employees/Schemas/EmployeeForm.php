@@ -81,7 +81,8 @@ class EmployeeForm
                             ->prefix('Rp')
                             ->default(0)
                             ->required()
-                            ->label('Gaji Pokok'),
+                            ->label('Gaji Pokok')
+                            ->visible(fn () => auth()->check() && (auth()->user()->can('hr.view_salary') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                         Toggle::make('is_active')
                             ->label('Status Karyawan Aktif')

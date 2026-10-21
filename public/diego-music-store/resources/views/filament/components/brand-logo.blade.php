@@ -1,7 +1,17 @@
 @php
     $isAuthPage = request()->routeIs('filament.backoffice.auth.*') || request()->is('backoffice/login*') || ! auth()->check();
-    $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
-    $branch = \App\Models\Branch::find($branchId);
+    $branch = null;
+    if (auth()->check()) {
+        try {
+            $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+            $branch = \App\Models\Branch::find($branchId);
+        } catch (\Throwable $e) {
+            $branch = null;
+        }
+    }
+    if (!$branch) {
+        $branch = \App\Models\Branch::first();
+    }
     $storeName = $branch ? ($branch->store_name ?: "Diego Music Store ({$branch->name})") : 'Diego Music Store';
     $logoUrl = ($branch && !empty($branch->logo_path)) ? \Illuminate\Support\Facades\Storage::url($branch->logo_path) : asset('images/logo.png');
 @endphp

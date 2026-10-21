@@ -32,6 +32,12 @@ class EndingInventoryReport extends Page implements HasForms
 
     protected string $view = 'filament.pages.reports.ending-inventory-report';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+        return (bool) ($user && ($user->can('reports.inventory') || $user->hasRole(['owner', 'super_admin'])));
+    }
+
     public ?array $data = [];
 
     public bool $showDetailModal = false;

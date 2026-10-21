@@ -32,12 +32,15 @@ class TrialBalanceReportTest extends TestCase
             'is_active'   => true,
         ]);
 
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+
         $this->user = User::factory()->create([
             'name'      => 'Admin Neraca Saldo',
             'username'  => 'adminneraca',
             'email'     => 'neraca@diegomusic.com',
             'is_active' => true,
         ]);
+        $this->user->assignRole('owner');
 
         $this->user->branches()->attach($this->branch->id);
 

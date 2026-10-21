@@ -66,19 +66,33 @@
         </div>
     </div>
 
+    @php
+        $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+    @endphp
+
     <!-- Summary -->
     <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px; font-size: 9pt;">
         <tr>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Total SKU / Varian</td>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">{{ number_format($reportData['total_variants'] ?? 0, 0, ',', '.') }} SKU ({{ number_format($reportData['total_physical_qty'] ?? 0, 0, ',', '.') }} pcs)</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Grand Total Nilai HPP</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['grand_total_valuation'] ?? 0, 0, ',', '.') }}</td>
+            @if ($canViewCost)
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Grand Total Nilai HPP</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['grand_total_valuation'] ?? 0, 0, ',', '.') }}</td>
+            @else
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6; width: 25%;">Potensi Nilai Jual</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['grand_total_retail_value'] ?? 0, 0, ',', '.') }}</td>
+            @endif
         </tr>
         <tr>
             <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">Status Stok Kritis</td>
             <td style="border: 1px solid #000; padding: 5px;" class=" text-right">{{ number_format($reportData['total_out_of_stock_count'] ?? 0, 0, ',', '.') }} Habis | {{ number_format($reportData['total_low_stock_count'] ?? 0, 0, ',', '.') }} Rendah</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">Potensi Nilai Jual</td>
-            <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['grand_total_retail_value'] ?? 0, 0, ',', '.') }}</td>
+            @if ($canViewCost)
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold; background: #f3f4f6;">Potensi Nilai Jual</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight: bold;" class=" text-right">Rp {{ number_format($reportData['grand_total_retail_value'] ?? 0, 0, ',', '.') }}</td>
+            @else
+                <td style="border: 1px solid #000; padding: 5px; background: #f3f4f6;"></td>
+                <td style="border: 1px solid #000; padding: 5px;"></td>
+            @endif
         </tr>
     </table>
 
@@ -95,13 +109,17 @@
                 <th style="width: 45px;" class="text-center">MIN</th>
                 <th style="width: 45px;" class="text-center">SATUAN</th>
                 <th style="width: 70px;" class="text-center">STATUS</th>
-                <th style="width: 85px;" class="text-right">
-                    <div style="padding-bottom: 2px;">HARGA BELI</div>
-                    <div style="padding-top: 2px; border-top: 1px solid #aaa;">HARGA BELI (HPP)</div>
-                </th>
+                @if ($canViewCost)
+                    <th style="width: 85px;" class="text-right">
+                        <div style="padding-bottom: 2px;">HARGA BELI</div>
+                        <div style="padding-top: 2px; border-top: 1px solid #aaa;">HARGA BELI (HPP)</div>
+                    </th>
+                @endif
                 <th style="width: 75px;" class="text-right">HARGA JUAL</th>
                 <th style="width: 75px;" class="text-right">HARGA NETTO</th>
-                <th style="width: 90px;" class="text-right">NILAI HPP</th>
+                @if ($canViewCost)
+                    <th style="width: 90px;" class="text-right">NILAI HPP</th>
+                @endif
                 <th style="width: 90px;" class="text-right">NILAI JUAL</th>
             </tr>
         </thead>
@@ -117,18 +135,22 @@
                     <td class="text-center ">{{ number_format($row['min_stock'], 0, ',', '.') }}</td>
                     <td class="text-center">{{ $row['unit'] }}</td>
                     <td class="text-center font-bold" style="font-size: 7.5pt;">{{ $row['status_label'] }}</td>
-                    <td class="text-right">
-                        <div style="padding-bottom: 2px;">Rp {{ number_format($row['cost_price'], 0, ',', '.') }}</div>
-                        <div style="padding-top: 2px; border-top: 1px solid #e5e7eb;">Rp {{ number_format($row['hpp'], 0, ',', '.') }}</div>
-                    </td>
+                    @if ($canViewCost)
+                        <td class="text-right">
+                            <div style="padding-bottom: 2px;">Rp {{ number_format($row['cost_price'], 0, ',', '.') }}</div>
+                            <div style="padding-top: 2px; border-top: 1px solid #e5e7eb;">Rp {{ number_format($row['hpp'], 0, ',', '.') }}</div>
+                        </td>
+                    @endif
                     <td class="text-right ">Rp {{ number_format($row['retail_price'], 0, ',', '.') }}</td>
                     <td class="text-right ">Rp {{ number_format($row['net_retail_price'], 0, ',', '.') }}</td>
-                    <td class="text-right  font-bold">Rp {{ number_format($row['valuation'], 0, ',', '.') }}</td>
+                    @if ($canViewCost)
+                        <td class="text-right  font-bold">Rp {{ number_format($row['valuation'], 0, ',', '.') }}</td>
+                    @endif
                     <td class="text-right  font-bold">Rp {{ number_format($row['retail_value'], 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="14" class="text-center" style="padding: 15px; font-style: italic;">Belum ada data stok produk ditemukan.</td>
+                    <td colspan="{{ $canViewCost ? 14 : 12 }}" class="text-center" style="padding: 15px; font-style: italic;">Belum ada data stok produk ditemukan.</td>
                 </tr>
             @endforelse
         </tbody>

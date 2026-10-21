@@ -49,7 +49,8 @@ class EmployeesTable
                 TextColumn::make('basic_salary')
                     ->money('IDR', locale: 'id_ID')
                     ->sortable()
-                    ->label('Gaji Pokok'),
+                    ->label('Gaji Pokok')
+                    ->visible(fn () => auth()->check() && (auth()->user()->can('hr.view_salary') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                 IconColumn::make('is_active')
                     ->boolean()

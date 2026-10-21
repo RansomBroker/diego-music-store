@@ -1,5 +1,8 @@
 <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-left text-sm text-gray-500 dark:text-gray-400">
+        @php
+            $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+        @endphp
         <thead class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-700 dark:text-gray-300">
             <tr>
                 <th scope="col" class="px-6 py-3">Waktu</th>
@@ -7,9 +10,11 @@
                 <th scope="col" class="px-6 py-3">Cabang</th>
                 <th scope="col" class="px-6 py-3">Tipe</th>
                 <th scope="col" class="px-6 py-3 text-right">Qty</th>
+                @if($canViewCost)
                 <th scope="col" class="px-6 py-3 text-right">Harga Satuan</th>
                 <th scope="col" class="px-6 py-3 text-right">HPP Berjalan</th>
                 <th scope="col" class="px-6 py-3 text-right">Total Nilai</th>
+                @endif
                 <th scope="col" class="px-6 py-3">Dokumen Referensi</th>
             </tr>
         </thead>
@@ -39,6 +44,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-right font-bold {{ $movement->type === 'in' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
                         {{ $movement->type === 'in' ? '+' : '-' }}{{ number_format($movement->quantity) }}
                     </td>
+                    @if($canViewCost)
                     <td class="px-6 py-4 whitespace-nowrap text-right text-gray-900 dark:text-white">
                         Rp {{ number_format($movement->unit_cost, 0, ',', '.') }}
                     </td>
@@ -48,6 +54,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-right text-gray-900 dark:text-white">
                         Rp {{ number_format($movement->quantity * $movement->unit_cost, 0, ',', '.') }}
                     </td>
+                    @endif
                     <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-700 dark:text-gray-300">
                         {{ $movement->reference_label }}
                     </td>

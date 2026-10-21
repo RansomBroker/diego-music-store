@@ -22,6 +22,11 @@ class DatabaseBackup extends Page
 
     protected string $view = 'filament.pages.settings.database-backup';
 
+    public static function canAccess(): bool
+    {
+        return (bool) auth()->user()?->hasRole(['owner', 'Owner', 'super_admin', 'Super Admin']);
+    }
+
     /**
      * @var array<int, array{name: string, path: string, size: string, raw_size: int, date: string, raw_date: int}>
      */

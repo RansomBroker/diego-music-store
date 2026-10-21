@@ -90,17 +90,6 @@
                                 <span>Komisi: <strong class=" text-slate-900 dark:text-slate-100">Rp {{ number_format($currentUserMonthlyCommission, 0, ',', '.') }}</strong></span>
                             </a>
                         </div>
-
-                        <!-- Progress Bar Capaian Target Omset Sales -->
-                        <div class="pt-2 space-y-1">
-                            <div class="flex items-center justify-between text-[10px] font-extrabold text-slate-500 dark:text-slate-400">
-                                <span>Target Omset: <strong class=" text-slate-800 dark:text-slate-200">Rp {{ number_format($currentUserMonthlySales, 0, ',', '.') }} / Rp {{ number_format($currentUserTargetSales, 0, ',', '.') }}</strong></span>
-                                <span class="px-1.5 py-0.2 bg-primary/10 text-primary dark:bg-blue-950/60 dark:text-blue-300 rounded-full font-black">{{ $currentUserProgressPercent }}%</span>
-                            </div>
-                            <div class="w-full h-2 bg-slate-100 dark:bg-slate-700/80 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-500" style="width: {{ $currentUserProgressPercent }}%;"></div>
-                            </div>
-                        </div>
                     @endif
                 </div>
 

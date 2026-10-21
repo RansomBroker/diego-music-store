@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     @php
         $data = $this->report_data;
+        $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
     @endphp
 
     {{-- Filter Form (Native Filament Section) --}}
@@ -9,7 +10,7 @@
     </div>
 
     {{-- KPI Summary Cards (Monochrome High Contrast) --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 {{ $canViewCost ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-4">
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Transaksi Mutasi</span>
             <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
@@ -34,6 +35,7 @@
             <span class="text-xs text-gray-400">Penjualan / Outflow / Opname (-)</span>
         </div>
 
+        @if($canViewCost)
         <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
             <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Grand Total Valuasi Mutasi</span>
             <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
@@ -43,6 +45,7 @@
                 Net Qty: <strong>{{ $data['total_net_qty'] > 0 ? '+' : '' }}{{ number_format($data['total_net_qty'], 0, ',', '.') }} Unit</strong>
             </span>
         </div>
+        @endif
     </div>
 
     {{-- Main Stock Movement Section --}}
@@ -75,8 +78,10 @@
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Qty Keluar (-)</th>
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Net Mutasi Qty</th>
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Satuan</th>
+                            @if($canViewCost)
                             <th class="py-2.5 px-4 whitespace-nowrap text-right">Harga Beli (HPP)</th>
                             <th class="py-2.5 px-4 whitespace-nowrap text-right">Total Valuasi Mutasi</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -91,12 +96,14 @@
                                     {{ $row['net_qty'] > 0 ? '+' : '' }}{{ number_format($row['net_qty'], 0, ',', '.') }}
                                 </td>
                                 <td class="py-2.5 px-4 text-center text-xs text-gray-500 whitespace-nowrap">{{ $row['unit'] }}</td>
+                                @if($canViewCost)
                                 <td class="py-2.5 px-4 text-right  text-xs text-gray-500 whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($row['hpp']) }}</td>
                                 <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($row['total_value']) }}</td>
+                                @endif
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="py-6 text-center text-gray-400 text-xs">Tidak ada data mutasi barang pada periode ini.</td>
+                                <td colspan="{{ $canViewCost ? 9 : 7 }}" class="py-6 text-center text-gray-400 text-xs">Tidak ada data mutasi barang pada periode ini.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -114,8 +121,10 @@
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Tipe</th>
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Qty Mutasi</th>
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Satuan</th>
+                            @if($canViewCost)
                             <th class="py-2.5 px-4 whitespace-nowrap text-right">Harga Beli (HPP)</th>
                             <th class="py-2.5 px-4 whitespace-nowrap text-right">Total Valuasi</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -135,12 +144,14 @@
                                     {{ $row['type'] === 'IN' ? '+' : '-' }}{{ number_format($row['quantity'], 0, ',', '.') }}
                                 </td>
                                 <td class="py-2.5 px-4 text-center text-xs text-gray-500 whitespace-nowrap">{{ $row['unit'] }}</td>
+                                @if($canViewCost)
                                 <td class="py-2.5 px-4 text-right  text-xs text-gray-500 whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($row['hpp']) }}</td>
                                 <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">{{ \App\Helpers\FinancialReportHelper::formatRupiah($row['total_value']) }}</td>
+                                @endif
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="py-6 text-center text-gray-400 text-xs">Tidak ada transaksi mutasi barang pada periode ini.</td>
+                                <td colspan="{{ $canViewCost ? 10 : 8 }}" class="py-6 text-center text-gray-400 text-xs">Tidak ada transaksi mutasi barang pada periode ini.</td>
                             </tr>
                         @endforelse
                     </tbody>

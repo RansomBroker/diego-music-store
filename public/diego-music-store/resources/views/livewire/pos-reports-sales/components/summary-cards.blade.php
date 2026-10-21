@@ -1,5 +1,9 @@
+@php
+    $canViewProfit = auth()->check() && (auth()->user()->can('sales.view_profit') || auth()->user()->hasRole(['owner', 'super_admin']));
+@endphp
+
 <!-- Sales KPI Summary Cards -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="grid grid-cols-2 {{ $canViewProfit ? 'md:grid-cols-4' : 'md:grid-cols-2' }} gap-4">
     <!-- Card 1: Total Omzet Penjualan -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
         <span class="text-sm font-semibold text-slate-400 uppercase">Total Omzet Penjualan</span>
@@ -11,27 +15,29 @@
         </span>
     </div>
 
-    <!-- Card 2: Total HPP Barang -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-        <span class="text-sm font-semibold text-slate-400 uppercase">Total HPP Barang</span>
-        <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">
-            Rp {{ number_format($summaryData['total_cogs'] ?? 0, 0, ',', '.') }}
+    @if ($canViewProfit)
+        <!-- Card 2: Total HPP Barang -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <span class="text-sm font-semibold text-slate-400 uppercase">Total HPP Barang</span>
+            <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">
+                Rp {{ number_format($summaryData['total_cogs'] ?? 0, 0, ',', '.') }}
+            </div>
+            <span class="text-[11px] text-slate-500 font-medium mt-1 block">
+                Harga Pokok Penjualan
+            </span>
         </div>
-        <span class="text-[11px] text-slate-500 font-medium mt-1 block">
-            Harga Pokok Penjualan
-        </span>
-    </div>
 
-    <!-- Card 3: Laba Kotor (Gross Profit) -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-        <span class="text-sm font-semibold text-slate-400 uppercase">Laba Kotor (Gross Profit)</span>
-        <div class="text-xl font-black text-primary dark:text-blue-400 mt-1">
-            Rp {{ number_format($summaryData['gross_profit'] ?? 0, 0, ',', '.') }}
+        <!-- Card 3: Laba Kotor (Gross Profit) -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <span class="text-sm font-semibold text-slate-400 uppercase">Laba Kotor (Gross Profit)</span>
+            <div class="text-xl font-black text-primary dark:text-blue-400 mt-1">
+                Rp {{ number_format($summaryData['gross_profit'] ?? 0, 0, ',', '.') }}
+            </div>
+            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">
+                Margin: {{ $summaryData['profit_margin'] ?? 0 }}%
+            </span>
         </div>
-        <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">
-            Margin: {{ $summaryData['profit_margin'] ?? 0 }}%
-        </span>
-    </div>
+    @endif
 
     <!-- Card 4: Diskon & Pajak -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">

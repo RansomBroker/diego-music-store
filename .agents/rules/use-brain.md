@@ -1,6 +1,5 @@
 ---
 trigger: always_on
-glob: "**/*"
 description: Enforce checking and maintaining the Project Registry (Brain)
 ---
 

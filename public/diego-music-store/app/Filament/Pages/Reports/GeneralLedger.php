@@ -31,6 +31,12 @@ class GeneralLedger extends Page implements HasForms
 
     protected string $view = 'filament.pages.reports.general-ledger';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+        return (bool) ($user && ($user->can('reports.accounting') || $user->hasRole(['owner', 'super_admin'])));
+    }
+
     public ?array $data = [];
 
     public function mount(): void

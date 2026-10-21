@@ -24,7 +24,9 @@
             @include('livewire.pos-branch-performance.components.kpi-summary')
 
             <!-- Breakdown Laba Rugi Multi-Step Cabang -->
-            @include('livewire.pos-branch-performance.components.profit-loss-breakdown')
+            @if (auth()->check() && (auth()->user()->can('sales.view_profit') || auth()->user()->hasRole(['owner', 'super_admin'])))
+                @include('livewire.pos-branch-performance.components.profit-loss-breakdown')
+            @endif
 
             <!-- Tabel Perbandingan Performa Seluruh Cabang (Entitas Bisnis Konsolidasi) -->
             @include('livewire.pos-branch-performance.components.branch-comparison-table')

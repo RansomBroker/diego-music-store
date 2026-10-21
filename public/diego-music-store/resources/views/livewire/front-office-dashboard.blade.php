@@ -26,8 +26,10 @@
                 <!-- 1. Card Status User Login & Presensi -->
                 @include('livewire.front-office-dashboard.components.user-status-card')
 
-                <!-- 2. Quick Navigation Tiles -->
-                @include('livewire.front-office-dashboard.components.navigation-tiles')
+                <!-- 2. Quick Navigation Tiles (Khusus Owner) -->
+                @if ($isOwnerUser)
+                    @include('livewire.front-office-dashboard.components.navigation-tiles')
+                @endif
 
                 <!-- 3. Executive Owner Dashboard Widgets Section -->
                 <livewire:owner-dashboard-widgets />

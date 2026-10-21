@@ -33,12 +33,15 @@ class StockMovementReportTest extends TestCase
             'is_active'   => true,
         ]);
 
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+
         $this->user = User::factory()->create([
             'name'      => 'Admin Logistik',
             'username'  => 'adminlogistik',
             'email'     => 'logistik@diegomusic.com',
             'is_active' => true,
         ]);
+        $this->user->assignRole('owner');
 
         $this->user->branches()->attach($this->branch->id);
     }

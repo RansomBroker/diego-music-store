@@ -1,26 +1,32 @@
+@php
+    $canViewProfit = auth()->check() && (auth()->user()->can('sales.view_profit') || auth()->user()->hasRole(['owner', 'super_admin']));
+@endphp
+
 <!-- ========================================================================= -->
 <!-- TAB 1: LAPORAN PENJUALAN (SALES REPORT)                                    -->
 <!-- ========================================================================= -->
 <div class="space-y-6">
     <!-- KPI Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 {{ $canViewProfit ? 'md:grid-cols-4' : 'md:grid-cols-2' }} gap-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
             <span class="text-xs font-semibold text-slate-400 uppercase">Total Omzet Penjualan</span>
             <div class="text-xl font-black text-slate-900 dark:text-white mt-1">Rp {{ number_format($reportData['grand_total'] ?? 0, 0, ',', '.') }}</div>
             <span class="text-[11px] text-slate-500 font-medium mt-1 block">{{ $reportData['total_transactions'] ?? 0 }} Transaksi Selesai</span>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-            <span class="text-xs font-semibold text-slate-400 uppercase">Total HPP Barang</span>
-            <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">Rp {{ number_format($reportData['total_cogs'] ?? 0, 0, ',', '.') }}</div>
-            <span class="text-[11px] text-slate-500 font-medium mt-1 block">Harga Pokok Penjualan</span>
-        </div>
+        @if ($canViewProfit)
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+                <span class="text-xs font-semibold text-slate-400 uppercase">Total HPP Barang</span>
+                <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">Rp {{ number_format($reportData['total_cogs'] ?? 0, 0, ',', '.') }}</div>
+                <span class="text-[11px] text-slate-500 font-medium mt-1 block">Harga Pokok Penjualan</span>
+            </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-            <span class="text-xs font-semibold text-slate-400 uppercase">Laba Kotor (Gross Profit)</span>
-            <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">Rp {{ number_format($reportData['gross_profit'] ?? 0, 0, ',', '.') }}</div>
-            <span class="text-[11px] text-emerald-500 font-bold mt-1 block">Margin: {{ $reportData['profit_margin'] ?? 0 }}%</span>
-        </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+                <span class="text-xs font-semibold text-slate-400 uppercase">Laba Kotor (Gross Profit)</span>
+                <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">Rp {{ number_format($reportData['gross_profit'] ?? 0, 0, ',', '.') }}</div>
+                <span class="text-[11px] text-emerald-500 font-bold mt-1 block">Margin: {{ $reportData['profit_margin'] ?? 0 }}%</span>
+            </div>
+        @endif
 
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
             <span class="text-xs font-semibold text-slate-400 uppercase">Diskon & Pajak</span>
@@ -46,8 +52,10 @@
                         <x-pos.table.th>Kategori</x-pos.table.th>
                         <x-pos.table.th>Metode Bayar</x-pos.table.th>
                         <x-pos.table.th class="text-right">Grand Total</x-pos.table.th>
-                        <x-pos.table.th class="text-right">Est. HPP</x-pos.table.th>
-                        <x-pos.table.th class="text-right">Laba Kotor</x-pos.table.th>
+                        @if ($canViewProfit)
+                            <x-pos.table.th class="text-right">Est. HPP</x-pos.table.th>
+                            <x-pos.table.th class="text-right">Laba Kotor</x-pos.table.th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
@@ -70,11 +78,13 @@
                             <x-pos.table.td class="text-xs"><span class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-bold">{{ $sale->sale_category ?: 'Store' }}</span></x-pos.table.td>
                             <x-pos.table.td class="text-xs uppercase font-bold text-slate-600 dark:text-slate-300">{{ $sale->payment_method }}</x-pos.table.td>
                             <x-pos.table.td class="text-right font-bold text-xs text-slate-900 dark:text-white">Rp {{ number_format($sale->grand_total, 0, ',', '.') }}</x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold text-xs text-rose-600 dark:text-rose-400">Rp {{ number_format($saleCOGS, 0, ',', '.') }}</x-pos.table.td>
-                            <x-pos.table.td class="text-right font-bold text-xs text-emerald-600 dark:text-emerald-400">Rp {{ number_format($profit, 0, ',', '.') }}</x-pos.table.td>
+                            @if ($canViewProfit)
+                                <x-pos.table.td class="text-right font-semibold text-xs text-rose-600 dark:text-rose-400">Rp {{ number_format($saleCOGS, 0, ',', '.') }}</x-pos.table.td>
+                                <x-pos.table.td class="text-right font-bold text-xs text-emerald-600 dark:text-emerald-400">Rp {{ number_format($profit, 0, ',', '.') }}</x-pos.table.td>
+                            @endif
                         </x-pos.table.tr>
                     @empty
-                        <x-pos.table.empty colspan="8" icon="ph-receipt" message="Belum ada data transaksi penjualan pada periode ini." />
+                        <x-pos.table.empty colspan="{{ $canViewProfit ? 8 : 6 }}" icon="ph-receipt" message="Belum ada data transaksi penjualan pada periode ini." />
                     @endforelse
                 </tbody>
             </x-pos.table>

@@ -13,6 +13,20 @@ class FrontOfficeDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected Branch $branch;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->branch = Branch::firstOrCreate(['name' => 'Cabang Test'], [
+            'code' => 'CBG-DASH-01',
+            'address' => 'Jl. Test',
+            'phone' => '123',
+            'is_active' => true,
+        ]);
+    }
+
     public function test_it_redirects_unauthenticated_user_accessing_front_office_to_login(): void
     {
         $response = $this->get(route('pos.front-office'));
@@ -23,6 +37,7 @@ class FrontOfficeDashboardTest extends TestCase
     public function test_it_renders_session_inactive_when_no_active_session(): void
     {
         $user = User::factory()->create();
+        $user->branches()->attach($this->branch->id);
 
         $response = $this->actingAs($user)->get(route('pos.front-office'));
 
@@ -36,17 +51,9 @@ class FrontOfficeDashboardTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole('owner');
 
-        $branch = Branch::create([
-            'name' => 'Cabang Test',
-            'code' => 'CBG-DASH-01',
-            'address' => 'Jl. Test',
-            'phone' => '123',
-            'is_active' => true,
-        ]);
-
         CashSession::create([
             'user_id' => $user->id,
-            'branch_id' => $branch->id,
+            'branch_id' => $this->branch->id,
             'opened_at' => now(),
             'opening_cash' => 100000,
             'status' => 'open',
@@ -80,11 +87,40 @@ class FrontOfficeDashboardTest extends TestCase
         Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
         $user = User::factory()->create();
         $user->assignRole('karyawan');
+        $user->branches()->attach($this->branch->id);
 
         $response = $this->actingAs($user)->get(route('pos.front-office'));
 
         $response->assertStatus(200);
         $response->assertSee('Clock In (Masuk)');
         $response->assertSee('Komisi:');
+    }
+
+    public function test_it_hides_shortcut_navigation_menu_for_non_owner(): void
+    {
+        Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
+        $karyawanUser = User::factory()->create();
+        $karyawanUser->assignRole('karyawan');
+        $karyawanUser->branches()->attach($this->branch->id);
+
+        $response = $this->actingAs($karyawanUser)->get(route('pos.front-office'));
+
+        $response->assertStatus(200);
+        // Non-owner must NOT see the quick navigation shortcut tiles
+        $response->assertDontSee('Pintasan Menu POS');
+        $response->assertDontSee('Buka halaman kasir');
+        $response->assertDontSee('pantau tugas');
+        $response->assertDontSee('Panel admin');
+
+        // Owner CAN see the quick navigation shortcut menu
+        Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $ownerUser = User::factory()->create();
+        $ownerUser->assignRole('owner');
+
+        $ownerResponse = $this->actingAs($ownerUser)->get(route('pos.front-office'));
+        $ownerResponse->assertStatus(200);
+        $ownerResponse->assertSee('Pintasan Menu POS');
+        $ownerResponse->assertSee('Buka halaman kasir');
+        $ownerResponse->assertSee('pantau tugas');
     }
 }

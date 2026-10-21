@@ -6,6 +6,7 @@ use App\Helpers\SalesEmployeeDashboardHelper;
 use App\Models\CommissionScheme;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\FocusProduct;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SalesCommissionLog;
@@ -134,8 +135,11 @@ class GetSalesEmployeeDashboardData
         // 5. Leaderboard Top 3 Sales
         $leaderboard = $this->getTopSalesLeaderboard($startOfMonth, $endOfMonth);
 
-        // 6. Produk Fokus Bulan Ini
+        // 6. Produk Berinsentif Komisi (Skema Komisi Khusus Produk/Kategori)
         $focusProducts = $this->getFocusProducts($branchId, $employeeId);
+
+        // 6b. Produk Fokus Toko (Master Fitur Produk Fokus Back Office)
+        $storeFocusProducts = $this->getStoreFocusProducts($branchId);
 
         // 7. Grafik Performa Sales (1 Tahun / 12 Bulan)
         $yearlyPerformanceChart = $this->getYearlySalesPerformance($userId, $employeeId);
@@ -159,6 +163,8 @@ class GetSalesEmployeeDashboardData
             'tierInfo'               => $tierInfo,
             'leaderboard'            => $leaderboard,
             'focusProducts'          => $focusProducts,
+            'commissionProducts'     => $focusProducts,
+            'storeFocusProducts'     => $storeFocusProducts,
             'yearlyPerformanceChart' => $yearlyPerformanceChart,
             'attendanceInfo'         => $attendanceInfo,
         ];
@@ -315,6 +321,71 @@ class GetSalesEmployeeDashboardData
         }
 
         return $focusList;
+    }
+
+    /**
+     * 6b. Produk Fokus Toko dari fitur Back Office (App\Models\FocusProduct).
+     * Difilter berdasarkan cabang aktif dan status ACTIVE.
+     */
+    private function getStoreFocusProducts(?int $branchId = null): array
+    {
+        $query = FocusProduct::with([
+            'productVariant.product',
+            'productVariant.branchStocks' => function ($q) use ($branchId) {
+                if ($branchId) {
+                    $q->where('branch_id', $branchId);
+                }
+            },
+            'rule',
+        ])
+        ->where('status', 'ACTIVE');
+
+        if ($branchId) {
+            $query->where(function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId)
+                  ->orWhereNull('branch_id');
+            });
+        }
+
+        $items = $query->latest('focused_at')->take(8)->get();
+
+        $result = [];
+        foreach ($items as $fp) {
+            $variant = $fp->productVariant;
+            $product = $variant?->product;
+            if (!$variant || !$product) {
+                continue;
+            }
+
+            $currentStock = $branchId
+                ? ($variant->branchStocks->where('branch_id', $branchId)->first()?->stock ?? 0)
+                : ($variant->branchStocks->sum('stock') ?? 0);
+
+            $badgeLabel = match (strtoupper($fp->source ?? 'MANUAL')) {
+                'MANUAL'         => 'Prioritas Toko',
+                'RECOMMENDATION' => 'Rekomendasi AI',
+                'AUTOMATION'     => $fp->rule?->rule_name ?? 'Rule Sistem',
+                default          => 'Produk Fokus',
+            };
+
+            $result[] = [
+                'id'           => $fp->id,
+                'focus_number' => $fp->focus_number,
+                'product_id'   => $product->id,
+                'name'         => $product->name . ($variant->name ? " ({$variant->name})" : ''),
+                'sku'          => $variant->sku ?: '-',
+                'barcode'      => $variant->barcode ?: null,
+                'category'     => $product->category ?: 'Produk Fokus',
+                'price'        => (float) $variant->price,
+                'stock'        => (int) $currentStock,
+                'reason'       => $fp->reason && $fp->reason !== '-' ? $fp->reason : null,
+                'badge'        => $badgeLabel,
+                'source'       => $fp->source,
+                'active_from'  => $fp->active_from ? Carbon::parse($fp->active_from)->format('d M Y') : null,
+            ];
+        }
+
+        return $result;
     }
 
     /**

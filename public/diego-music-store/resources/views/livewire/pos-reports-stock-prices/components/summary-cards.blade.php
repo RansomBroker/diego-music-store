@@ -1,5 +1,9 @@
+@php
+    $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+@endphp
+
 <!-- KPI Summary Cards -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="grid grid-cols-2 {{ $canViewCost ? 'md:grid-cols-4' : 'md:grid-cols-3' }} gap-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
         <span class="text-xs font-semibold text-slate-400 uppercase">Total SKU / Varian</span>
         <div class="text-xl font-black text-slate-900 dark:text-white mt-1 ">
@@ -16,13 +20,15 @@
         <span class="text-[11px] text-amber-500 font-bold mt-1 block">{{ number_format($reportData['total_low_stock_count'] ?? 0, 0, ',', '.') }} Stok Rendah</span>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-        <span class="text-xs font-semibold text-slate-400 uppercase">Total Nilai Aset (HPP)</span>
-        <div class="text-xl font-black text-blue-600 dark:text-blue-400 mt-1 ">
-            Rp {{ number_format($reportData['grand_total_valuation'] ?? 0, 0, ',', '.') }}
+    @if ($canViewCost)
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <span class="text-xs font-semibold text-slate-400 uppercase">Total Nilai Aset (HPP)</span>
+            <div class="text-xl font-black text-blue-600 dark:text-blue-400 mt-1 ">
+                Rp {{ number_format($reportData['grand_total_valuation'] ?? 0, 0, ',', '.') }}
+            </div>
+            <span class="text-[11px] text-slate-500 font-medium mt-1 block">HPP Inventory Valuation</span>
         </div>
-        <span class="text-[11px] text-slate-500 font-medium mt-1 block">HPP Inventory Valuation</span>
-    </div>
+    @endif
 
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
         <span class="text-xs font-semibold text-slate-400 uppercase">Potensi Nilai Jual</span>

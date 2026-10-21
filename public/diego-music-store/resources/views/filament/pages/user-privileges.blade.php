@@ -6,9 +6,9 @@
                 <x-heroicon-o-shield-check class="w-6 h-6" />
             </div>
             <div>
-                <h4 class="font-semibold text-blue-900 dark:text-blue-200 text-sm">Informasi Manajemen Hak Akses User</h4>
+                <h4 class="font-semibold text-blue-900 dark:text-blue-200 text-sm">Manajemen Hak Akses & Peran Pengguna (RBAC ERP)</h4>
                 <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                    Tabel di bawah ini menggunakan antarmuka resmi <strong>Filament Table Builder</strong>. Klik tombol <strong>"Atur Hak Akses"</strong> pada baris peran untuk membuka modal pengaturan hak akses.
+                    Kelola peran (roles) dan hak akses (permissions) seluruh modul ERP Diego Music Store. Gunakan tombol <strong>"Atur Hak Akses"</strong> untuk mengaktifkan modul dengan tombol <em>Pilih Semua / Batal Semua</em> per-kategori, atau <strong>"Duplikasi"</strong> untuk menyalin konfigurasi peran.
                 </p>
             </div>
         </div>

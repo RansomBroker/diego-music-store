@@ -31,7 +31,9 @@ class PurchaseReturnReportTest extends TestCase
 
         $this->branch = Branch::create(['name' => 'Cabang Laporan', 'store_name' => 'Diego Store']);
         $this->supplier = Supplier::create(['name' => 'PT Supplier Laporan', 'phone' => '08123456789']);
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
         $this->user = User::factory()->create();
+        $this->user->assignRole('owner');
         $this->user->branches()->attach($this->branch->id);
         $this->actingAs($this->user);
     }

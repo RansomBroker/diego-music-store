@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     @php
         $data = $this->report_data;
+        $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
     @endphp
 
     {{-- Filter Form (Native Filament Section) --}}
@@ -9,7 +10,7 @@
     </div>
 
     {{-- KPI Summary Cards (Monochrome High Contrast) --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 {{ $canViewCost ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-4">
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Sesi Stok Opname</span>
             <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
@@ -34,6 +35,7 @@
             <span class="text-xs text-gray-400">Physical vs System Variance</span>
         </div>
 
+        @if($canViewCost)
         <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
             <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Grand Total Stock Adjustment</span>
             <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
@@ -41,6 +43,7 @@
             </div>
             <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Valuasi Penyesuaian HPP</span>
         </div>
+        @endif
     </div>
 
     {{-- Main Stock Opname Section --}}
@@ -77,7 +80,9 @@
                                 <div class="flex items-center gap-4 text-gray-700 dark:text-gray-300">
                                     <span>Cabang: <strong>{{ $op['branch_name'] }}</strong></span>
                                     <span>Item Di-audit: <strong>{{ number_format($op['items_count'], 0, ',', '.') }} SKU</strong></span>
+                                    @if($canViewCost)
                                     <span>Adjustment: <strong class=" text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($op['session_adjustment_value']) }}</strong></span>
+                                    @endif
                                 </div>
                             </div>
 
@@ -90,8 +95,10 @@
                                         <th class="py-2 px-6 text-center w-24">Qty Fisik</th>
                                         <th class="py-2 px-6 text-center w-24">Selisih</th>
                                         <th class="py-2 px-6 text-center w-36">Status Audit</th>
+                                        @if($canViewCost)
                                         <th class="py-2 px-6 text-right w-32">Harga Beli/HPP</th>
                                         <th class="py-2 px-6 text-right w-36">Nilai Adjustment</th>
+                                        @endif
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-xs">
@@ -109,8 +116,10 @@
                                                     {{ $item['item_status_label'] }}
                                                 </x-filament::badge>
                                             </td>
+                                            @if($canViewCost)
                                             <td class="py-2 px-6 text-right  text-gray-500">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['cost_price']) }}</td>
                                             <td class="py-2 px-6 text-right  font-extrabold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['adjustment_value']) }}</td>
+                                            @endif
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -135,7 +144,9 @@
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Qty Sistem</th>
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Qty Fisik</th>
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Selisih Qty</th>
+                            @if($canViewCost)
                             <th class="py-2.5 px-4 whitespace-nowrap text-right">Nilai Adjustments</th>
+                            @endif
                             <th class="py-2.5 px-4 whitespace-nowrap">Catatan</th>
                             <th class="py-2.5 px-4 whitespace-nowrap text-center">Aksi</th>
                         </tr>
@@ -169,9 +180,11 @@
                                 <td class="py-2.5 px-4 text-center  text-xs font-extrabold whitespace-nowrap {{ $op['session_diff_qty'] < 0 ? 'text-rose-600 dark:text-rose-400' : ($op['session_diff_qty'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white') }}">
                                     {{ $op['session_diff_qty'] > 0 ? '+' : '' }}{{ number_format($op['session_diff_qty'], 0, ',', '.') }}
                                 </td>
+                                @if($canViewCost)
                                 <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ \App\Helpers\FinancialReportHelper::formatRupiah($op['session_adjustment_value']) }}
                                 </td>
+                                @endif
                                 <td class="py-2.5 px-4 text-xs text-gray-500 truncate max-w-xs">
                                     {{ $op['notes'] }}
                                 </td>
@@ -183,7 +196,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="py-6 text-center text-gray-400 text-xs">
+                                <td colspan="{{ $canViewCost ? 11 : 10 }}" class="py-6 text-center text-gray-400 text-xs">
                                     Tidak ada data stok opname yang sesuai dengan filter.
                                 </td>
                             </tr>
@@ -233,8 +246,10 @@
                                 <th class="py-2 px-4 text-center">Fisik</th>
                                 <th class="py-2 px-4 text-center">Selisih</th>
                                 <th class="py-2 px-4 text-center">Status Audit</th>
+                                @if($canViewCost)
                                 <th class="py-2 px-4 text-right">Harga Beli/HPP</th>
                                 <th class="py-2 px-4 text-right">Nilai Adjustment</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -252,8 +267,10 @@
                                             {{ $item['item_status_label'] }}
                                         </x-filament::badge>
                                     </td>
+                                    @if($canViewCost)
                                     <td class="py-2 px-4 text-right  text-gray-500">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['cost_price']) }}</td>
                                     <td class="py-2 px-4 text-right  font-extrabold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['adjustment_value']) }}</td>
+                                    @endif
                                 </tr>
                             @endforeach
                         </tbody>

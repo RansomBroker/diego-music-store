@@ -1,3 +1,7 @@
+@php
+    $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+@endphp
+
 <!-- Table List -->
 <x-pos.table.container>
         <x-pos.table>
@@ -12,13 +16,17 @@
                     <x-pos.table.th class="text-center">Status Stok</x-pos.table.th>
                     <x-pos.table.th class="text-center">Diskon</x-pos.table.th>
                     <x-pos.table.th class="text-center">PPN</x-pos.table.th>
-                    <x-pos.table.th class="text-right">
-                        <div class="pb-1 text-slate-700 dark:text-slate-200">Harga Beli</div>
-                        <div class="pt-1 border-t border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">Harga Beli (HPP)</div>
-                    </x-pos.table.th>
+                    @if ($canViewCost)
+                        <x-pos.table.th class="text-right">
+                            <div class="pb-1 text-slate-700 dark:text-slate-200">Harga Beli</div>
+                            <div class="pt-1 border-t border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">Harga Beli (HPP)</div>
+                        </x-pos.table.th>
+                    @endif
                     <x-pos.table.th class="text-right">Harga Jual</x-pos.table.th>
                     <x-pos.table.th class="text-right">Harga Jual (Netto)</x-pos.table.th>
-                    <x-pos.table.th class="text-right">Total Nilai HPP</x-pos.table.th>
+                    @if ($canViewCost)
+                        <x-pos.table.th class="text-right">Total Nilai HPP</x-pos.table.th>
+                    @endif
                     <x-pos.table.th class="text-right">Total Nilai Jual</x-pos.table.th>
                 </tr>
             </thead>
@@ -82,14 +90,16 @@
                             {{ $row['tax'] }}
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-right text-xs whitespace-nowrap">
-                            <div class="pb-1 font-semibold text-rose-600 dark:text-rose-400">
-                                Rp {{ number_format($row['cost_price'], 0, ',', '.') }}
-                            </div>
-                            <div class="pt-1 border-t border-slate-200 dark:border-slate-800 font-semibold text-rose-600 dark:text-rose-400">
-                                Rp {{ number_format($row['hpp'], 0, ',', '.') }}
-                            </div>
-                        </x-pos.table.td>
+                        @if ($canViewCost)
+                            <x-pos.table.td class="text-right text-xs whitespace-nowrap">
+                                <div class="pb-1 font-semibold text-rose-600 dark:text-rose-400">
+                                    Rp {{ number_format($row['cost_price'], 0, ',', '.') }}
+                                </div>
+                                <div class="pt-1 border-t border-slate-200 dark:border-slate-800 font-semibold text-rose-600 dark:text-rose-400">
+                                    Rp {{ number_format($row['hpp'], 0, ',', '.') }}
+                                </div>
+                            </x-pos.table.td>
+                        @endif
 
                         <x-pos.table.td class="text-right  text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
                             Rp {{ number_format($row['retail_price'], 0, ',', '.') }}
@@ -99,16 +109,18 @@
                             Rp {{ number_format($row['net_retail_price'], 0, ',', '.') }}
                         </x-pos.table.td>
 
-                        <x-pos.table.td class="text-right  font-extrabold text-xs text-blue-600 dark:text-blue-400">
-                            Rp {{ number_format($row['valuation'], 0, ',', '.') }}
-                        </x-pos.table.td>
+                        @if ($canViewCost)
+                            <x-pos.table.td class="text-right  font-extrabold text-xs text-blue-600 dark:text-blue-400">
+                                Rp {{ number_format($row['valuation'], 0, ',', '.') }}
+                            </x-pos.table.td>
+                        @endif
 
                         <x-pos.table.td class="text-right  font-extrabold text-xs text-purple-600 dark:text-purple-400">
                             Rp {{ number_format($row['retail_value'], 0, ',', '.') }}
                         </x-pos.table.td>
                     </x-pos.table.tr>
                 @empty
-                    <x-pos.table.empty colspan="14" icon="ph-package" message="Belum ada data stok produk ditemukan." />
+                    <x-pos.table.empty colspan="{{ $canViewCost ? 14 : 12 }}" icon="ph-package" message="Belum ada data stok produk ditemukan." />
                 @endforelse
             </tbody>
         </x-pos.table>

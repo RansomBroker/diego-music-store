@@ -32,6 +32,12 @@ class AccountsPayableReport extends Page implements HasForms
 
     protected string $view = 'filament.pages.reports.accounts-payable-report';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+        return (bool) ($user && ($user->can('reports.purchases') || $user->hasRole(['owner', 'super_admin'])));
+    }
+
     public ?array $data = [];
 
     public function mount(): void

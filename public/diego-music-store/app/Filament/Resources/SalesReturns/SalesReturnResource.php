@@ -53,9 +53,9 @@ class SalesReturnResource extends Resource
         ];
     }
 
-    public static function getEloquentQuery(): \\Illuminate\\Database\\Eloquent\\Builder
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
         return parent::getEloquentQuery()
-            ->where('branch_id', \\App\\Helpers\\BranchHelper::getActiveBranchId());
+            ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId());
     }
 }

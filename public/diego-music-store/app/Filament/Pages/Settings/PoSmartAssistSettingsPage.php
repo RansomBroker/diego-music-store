@@ -28,6 +28,12 @@ class PoSmartAssistSettingsPage extends Page implements HasForms
 
     protected string $view = 'filament.pages.settings.po-smart-assist-settings';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+        return (bool) ($user && ($user->can('utility.store') || $user->hasRole(['owner', 'Owner', 'super_admin', 'Super Admin'])));
+    }
+
     public ?array $data = [];
 
     public function mount(): void

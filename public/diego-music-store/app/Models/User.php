@@ -80,7 +80,33 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'backoffice') {
-            return (bool) ($this->is_active && $this->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']));
+            if (! $this->is_active) {
+                return false;
+            }
+
+            if ($this->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+                return true;
+            }
+
+            // Regular frontoffice POS roles cannot access backoffice panel
+            $posOnlyRoles = ['karyawan', 'sales', 'Karyawan', 'Sales'];
+            $userRoleNames = $this->roles->pluck('name')->toArray();
+
+            if (! empty($userRoleNames) && empty(array_diff($userRoleNames, $posOnlyRoles))) {
+                return false;
+            }
+
+            // Check if user has non-POS permissions (backoffice permissions)
+            $frontOfficeOnlyPermissions = [
+                'pos.access', 'pos.discount', 'pos.hold', 'pos.void',
+                'cash.session', 'daily_cash.view', 'daily_cash.manage',
+                'master.customers', 'utility.receipt', 'utility.barcode',
+            ];
+
+            $userPermissions = $this->getAllPermissions()->pluck('name')->toArray();
+            $backofficePerms = array_diff($userPermissions, $frontOfficeOnlyPermissions);
+
+            return ! empty($backofficePerms);
         }
 
         return false;

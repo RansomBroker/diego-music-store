@@ -33,6 +33,12 @@ class MonthlyClosingPage extends Page implements HasForms
 
     protected string $view = 'filament.pages.accounting.monthly-closing-page';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+        return (bool) ($user && ($user->can('accounting.closing') || $user->hasRole(['owner', 'Owner', 'super_admin', 'Super Admin'])));
+    }
+
     public ?array $data = [];
 
     // Modal state properties

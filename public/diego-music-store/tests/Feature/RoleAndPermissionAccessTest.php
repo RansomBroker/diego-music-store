@@ -307,4 +307,34 @@ class RoleAndPermissionAccessTest extends TestCase
                     && data_get($data, 'permissions.utility.privileges') === false;
             });
     }
+
+    public function test_custom_role_with_backoffice_permissions_can_access_backoffice_panel(): void
+    {
+        $panel = Filament::getPanel('backoffice');
+
+        $gudangRole = Role::create(['name' => 'gudang', 'guard_name' => 'web']);
+        $gudangRole->givePermissionTo('inventory.products');
+
+        $staffGudang = User::factory()->create(['is_active' => true]);
+        $staffGudang->assignRole($gudangRole);
+        $staffGudang->branches()->attach($this->branch->id);
+
+        $this->assertTrue($staffGudang->canAccessPanel($panel));
+    }
+
+    public function test_unauthenticated_guest_can_access_backoffice_login_page_without_403(): void
+    {
+        $response = $this->get('/backoffice/login');
+
+        $response->assertStatus(200);
+        $response->assertSee('Diego Music Backoffice');
+    }
+
+    public function test_unauthenticated_guest_accessing_backoffice_is_redirected_to_backoffice_login(): void
+    {
+        $response = $this->get('/backoffice');
+
+        $response->assertStatus(302);
+        $response->assertRedirect('/backoffice/login');
+    }
 }

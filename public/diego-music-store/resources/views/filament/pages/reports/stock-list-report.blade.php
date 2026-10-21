@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     @php
         $data = $this->report_data;
+        $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
     @endphp
 
     {{-- Filter Form (Native Filament Section) --}}
@@ -9,7 +10,7 @@
     </div>
 
     {{-- KPI Summary Cards (Monochrome High Contrast) --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 {{ $canViewCost ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-4">
         <div class="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Variasi Produk</span>
             <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
@@ -34,13 +35,15 @@
             <span class="text-xs text-gray-400">Memerlukan Restok / PO</span>
         </div>
 
-        <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
-            <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Grand Total Nilai Aset Stok</span>
-            <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
-                {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_valuation']) }}
+        @if ($canViewCost)
+            <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
+                <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Grand Total Nilai Aset Stok</span>
+                <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
+                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_valuation']) }}
+                </div>
+                <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Valuasi HPP Persediaan</span>
             </div>
-            <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Valuasi HPP Persediaan</span>
-        </div>
+        @endif
     </div>
 
     {{-- Main Stock List Section --}}
@@ -73,13 +76,17 @@
                         <th class="py-2.5 px-4 whitespace-nowrap text-center">Status</th>
                         <th class="py-2.5 px-4 whitespace-nowrap text-center">Diskon</th>
                         <th class="py-2.5 px-4 whitespace-nowrap text-center">PPN</th>
-                        <th class="py-2.5 px-4 whitespace-nowrap text-right">
-                            <div class="pb-1 text-gray-700 dark:text-gray-300">Harga Beli</div>
-                            <div class="pt-1 border-t border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">Harga Beli (HPP)</div>
-                        </th>
+                        @if ($canViewCost)
+                            <th class="py-2.5 px-4 whitespace-nowrap text-right">
+                                <div class="pb-1 text-gray-700 dark:text-gray-300">Harga Beli</div>
+                                <div class="pt-1 border-t border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">Harga Beli (HPP)</div>
+                            </th>
+                        @endif
                         <th class="py-2.5 px-4 whitespace-nowrap text-right">Harga Jual</th>
                         <th class="py-2.5 px-4 whitespace-nowrap text-right">Harga Jual (Netto)</th>
-                        <th class="py-2.5 px-4 whitespace-nowrap text-right">Nilai Aset (HPP)</th>
+                        @if ($canViewCost)
+                            <th class="py-2.5 px-4 whitespace-nowrap text-right">Nilai Aset (HPP)</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -118,27 +125,31 @@
                             <td class="py-2.5 px-4 text-center  text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                 {{ $row['tax'] }}
                             </td>
-                            <td class="py-2.5 px-4 text-right text-xs whitespace-nowrap">
-                                <div class="pb-1 font-semibold text-gray-800 dark:text-gray-200">
-                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['cost_price']) }}
-                                </div>
-                                <div class="pt-1 border-t border-gray-200 dark:border-gray-700 font-semibold text-gray-800 dark:text-gray-200">
-                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['hpp']) }}
-                                </div>
-                            </td>
+                            @if ($canViewCost)
+                                <td class="py-2.5 px-4 text-right text-xs whitespace-nowrap">
+                                    <div class="pb-1 font-semibold text-gray-800 dark:text-gray-200">
+                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['cost_price']) }}
+                                    </div>
+                                    <div class="pt-1 border-t border-gray-200 dark:border-gray-700 font-semibold text-gray-800 dark:text-gray-200">
+                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['hpp']) }}
+                                    </div>
+                                </td>
+                            @endif
                             <td class="py-2.5 px-4 text-right  text-xs text-gray-900 dark:text-white whitespace-nowrap">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['retail_price']) }}
                             </td>
                             <td class="py-2.5 px-4 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                                 {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['net_retail_price']) }}
                             </td>
-                            <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
-                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['valuation']) }}
-                            </td>
+                            @if ($canViewCost)
+                                <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
+                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($row['valuation']) }}
+                                </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="13" class="py-6 text-center text-gray-400 text-xs">
+                            <td colspan="{{ $canViewCost ? 13 : 11 }}" class="py-6 text-center text-gray-400 text-xs">
                                 Tidak ada data stok barang yang sesuai dengan filter.
                             </td>
                         </tr>

@@ -58,7 +58,7 @@ class UpdateProduct
                 foreach ($data['variants'] as $variantData) {
                     if (!empty($variantData['id'])) {
                         $variant = ProductVariant::find($variantData['id']);
-                        $variant->update([
+                        $variantUpdateData = [
                             'sku' => $variantData['sku'] ?? null,
                             'barcode' => $variantData['barcode'] ?? null,
                             'name' => $variantData['name'],
@@ -67,10 +67,15 @@ class UpdateProduct
                             'discount_type' => $variantData['discount_type'] ?? 'fixed',
                             'tax_value' => $variantData['tax_value'] ?? 0,
                             'tax_type' => $variantData['tax_type'] ?? 'percent',
-                            'cost_price' => $variantData['cost_price'] ?? 0,
-                            'hpp' => $variantData['hpp'] ?? ($variantData['cost_price'] ?? 0),
                             'is_active' => true,
-                        ]);
+                        ];
+                        if (array_key_exists('cost_price', $variantData)) {
+                            $variantUpdateData['cost_price'] = $variantData['cost_price'] ?? 0;
+                        }
+                        if (array_key_exists('hpp', $variantData)) {
+                            $variantUpdateData['hpp'] = $variantData['hpp'] ?? ($variantData['cost_price'] ?? 0);
+                        }
+                        $variant->update($variantUpdateData);
                     } else {
                         $variant = ProductVariant::create([
                             'product_id' => $product->id,
@@ -156,7 +161,7 @@ class UpdateProduct
                         'is_active' => true,
                     ]);
                 } else {
-                    $variant->update([
+                    $singleUpdateData = [
                         'sku' => $data['sku'] ?? null,
                         'barcode' => $data['barcode'] ?? null,
                         'name' => null, // ensure it's default
@@ -165,10 +170,15 @@ class UpdateProduct
                         'discount_type' => $data['discount_type'] ?? 'fixed',
                         'tax_value' => $data['tax_value'] ?? 0,
                         'tax_type' => $data['tax_type'] ?? 'percent',
-                        'cost_price' => $data['cost_price'] ?? 0,
-                        'hpp' => $data['hpp'] ?? ($data['cost_price'] ?? 0),
                         'is_active' => true,
-                    ]);
+                    ];
+                    if (array_key_exists('cost_price', $data)) {
+                        $singleUpdateData['cost_price'] = $data['cost_price'] ?? 0;
+                    }
+                    if (array_key_exists('hpp', $data)) {
+                        $singleUpdateData['hpp'] = $data['hpp'] ?? ($data['cost_price'] ?? 0);
+                    }
+                    $variant->update($singleUpdateData);
                 }
 
                 // Sync Tier Prices

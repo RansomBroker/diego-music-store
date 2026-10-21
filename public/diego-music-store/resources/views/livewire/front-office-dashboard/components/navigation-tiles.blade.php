@@ -1,16 +1,15 @@
-<!-- Navigation Tiles (Collapsible / Hidden for Owner by default) -->
+<!-- Navigation Tiles (Khusus Owner / Collapsible) -->
+@if ($isOwnerUser)
 @php($isSalesUser = auth()->check() && auth()->user()->hasRole(['sales', 'Sales']))
-<div x-data="{ openNav: {{ $isOwnerUser ? 'false' : 'true' }} }" class="space-y-3">
-    @if ($isOwnerUser)
-        <div class="flex items-center justify-between">
-            <button @click="openNav = !openNav" type="button" class="text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
-                <i class="ph-bold" :class="openNav ? 'ph-caret-up' : 'ph-caret-down'"></i>
-                <span x-text="openNav ? 'Sembunyikan Navigasi Menu Staff' : 'Tampilkan Navigasi Menu Staff (Kasir, Sesi, Karyawan, Backoffice)'"></span>
-            </button>
-        </div>
-    @endif
+<div x-data="{ openNav: false }" class="space-y-3">
+    <div class="flex items-center justify-between">
+        <button @click="openNav = !openNav" type="button" class="text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+            <i class="ph-bold" :class="openNav ? 'ph-caret-up' : 'ph-caret-down'"></i>
+            <span x-text="openNav ? 'Sembunyikan Pintasan Menu POS' : 'Tampilkan Pintasan Menu POS (Kasir, Sesi, Performa, Karyawan, Backoffice)'"></span>
+        </button>
+    </div>
 
-    <div x-show="openNav" x-collapse class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div x-show="openNav" x-collapse class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         @if ($isSalesUser)
             <a href="{{ route('pos.catalog') }}" class="group bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-700 hover:border-primary dark:hover:border-blue-500 shadow-sm hover:shadow-lg transition-all flex flex-col items-center gap-3 text-center">
                 <div class="w-12 h-12 rounded-2xl bg-primary/10 dark:bg-blue-950/40 text-primary dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -89,3 +88,4 @@
         @endif
     </div>
 </div>
+@endif

@@ -149,9 +149,13 @@ class ProductForm
                                         ->content(fn () => view('backoffice.products.variant-table-header', [
                                             'pricingTiers' => $pricingTiers,
                                         ]))
-                                        ->extraAttributes([
-                                            'style' => 'min-width: ' . (1490 + (140 * count($pricingTiers)) + 56) . 'px;'
-                                        ]),
+                                        ->extraAttributes(function () use ($pricingTiers) {
+                                            $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+                                            $baseWidth = $canViewCost ? 1490 : 1100;
+                                            return [
+                                                'style' => 'min-width: ' . ($baseWidth + (140 * count($pricingTiers)) + 56) . 'px;'
+                                            ];
+                                        }),
 
                                     Repeater::make('variants')
                                         ->hiddenLabel()
@@ -183,7 +187,7 @@ class ProductForm
 
                                                 TextInput::make('cost_price')
                                                     ->numeric()
-                                                    ->required()
+                                                    ->required(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin'])))
                                                     ->prefix('Rp')
                                                     ->reactive()
                                                     ->afterStateUpdated(function ($get, $set) use ($pricingTiers) {
@@ -196,7 +200,8 @@ class ProductForm
                                                         }
                                                     })
                                                     ->hiddenLabel()
-                                                    ->placeholder('Harga Beli'),
+                                                    ->placeholder('Harga Beli')
+                                                    ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                                 TextInput::make('estimated_shipping')
                                                     ->numeric()
@@ -205,14 +210,16 @@ class ProductForm
                                                     ->dehydrated(false)
                                                     ->default(0)
                                                     ->hiddenLabel()
-                                                    ->placeholder('Ongkir'),
+                                                    ->placeholder('Ongkir')
+                                                    ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                                 TextInput::make('hpp')
                                                     ->numeric()
                                                     ->prefix('Rp')
                                                     ->readOnly()
                                                     ->hiddenLabel()
-                                                    ->placeholder('HPP'),
+                                                    ->placeholder('HPP')
+                                                    ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                                 TextInput::make('discount_value')
                                                     ->numeric()
@@ -289,9 +296,9 @@ class ProductForm
                                             ->prefix('Rp')
                                             ->label('Harga Jual Dasar'),
 
-                                        TextInput::make('cost_price')
+                                         TextInput::make('cost_price')
                                             ->numeric()
-                                            ->required(fn ($get): bool => ! $get('has_variants'))
+                                            ->required(fn ($get): bool => ! $get('has_variants') && auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin'])))
                                             ->prefix('Rp')
                                             ->reactive()
                                             ->afterStateUpdated(function ($get, $set) use ($pricingTiers) {
@@ -303,7 +310,8 @@ class ProductForm
                                                     }
                                                 }
                                             })
-                                            ->label('Harga Beli Dasar'),
+                                            ->label('Harga Beli Dasar')
+                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                         TextInput::make('estimated_shipping')
                                             ->numeric()
@@ -311,13 +319,15 @@ class ProductForm
                                             ->readOnly()
                                             ->dehydrated(false)
                                             ->default(0)
-                                            ->label('Estimasi Ongkir per Unit'),
+                                            ->label('Estimasi Ongkir per Unit')
+                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                         TextInput::make('hpp')
                                             ->numeric()
                                             ->prefix('Rp')
                                             ->readOnly()
-                                            ->label('HPP Awal setelah Ongkir'),
+                                            ->label('HPP Awal setelah Ongkir')
+                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                         TextInput::make('discount_value')
                                             ->numeric()
@@ -387,12 +397,14 @@ class ProductForm
                                         TextInput::make('cost_price')
                                             ->numeric()
                                             ->prefix('Rp')
-                                            ->label('Biaya/Modal Jasa'),
+                                            ->label('Biaya/Modal Jasa')
+                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                         TextInput::make('hpp')
                                             ->numeric()
                                             ->prefix('Rp')
-                                            ->label('HPP Jasa'),
+                                            ->label('HPP Jasa')
+                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                         TextInput::make('discount_value')
                                             ->numeric()
@@ -457,12 +469,14 @@ class ProductForm
                                         TextInput::make('cost_price')
                                             ->numeric()
                                             ->prefix('Rp')
-                                            ->label('Harga Beli Dasar Paket'),
+                                            ->label('Harga Beli Dasar Paket')
+                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                         TextInput::make('hpp')
                                             ->numeric()
                                             ->prefix('Rp')
-                                            ->label('HPP Awal Paket'),
+                                            ->label('HPP Awal Paket')
+                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
 
                                         TextInput::make('discount_value')
                                             ->numeric()

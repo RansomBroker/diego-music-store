@@ -17,34 +17,14 @@ class RoleAndPermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // 1. Define all system permissions
-        $permissions = [
-            // POS & Penjualan
-            'pos.access',
-            'pos.discount',
-            'pos.hold',
-            'pos.void',
-
-            // Kas & Keuangan
-            'cash.session',
-            'daily_cash.view',
-            'daily_cash.manage',
-            'supplier_payments.manage',
-
-            // Data Master
-            'master.customers',
-            'master.users',
-            'master.units',
-            'master.categories',
-            'master.payment_methods',
-
-            // Utility & Pengaturan
-            'utility.privileges',
-            'utility.store',
-            'utility.receipt',
-            'utility.barcode',
-            'utility.backup',
-        ];
+        // 1. Define all system permissions from config('permissions.modules')
+        $permissions = [];
+        $modules = config('permissions.modules', \App\Filament\Pages\UserPrivileges::getPermissionsGrouped());
+        foreach ($modules as $group => $items) {
+            foreach ($items as $name => $label) {
+                $permissions[] = $name;
+            }
+        }
 
         foreach ($permissions as $perm) {
             Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);

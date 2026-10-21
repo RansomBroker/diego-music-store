@@ -16,17 +16,29 @@
         </x-pos.utility.button>
     </div>
 
+@php
+    $canViewProfit = auth()->check() && (auth()->user()->can('sales.view_profit') || auth()->user()->hasRole(['owner', 'super_admin']));
+    $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+    $colsCount = 3 + ($canViewProfit ? 3 : 0) + ($canViewCost ? 1 : 0);
+@endphp
+
     <x-pos.table.container>
         <x-pos.table>
             <thead>
                 <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     <x-pos.table.th>Nama Cabang / Store</x-pos.table.th>
                     <x-pos.table.th class="text-right">Omset Penjualan</x-pos.table.th>
-                    <x-pos.table.th class="text-right">HPP (COGS)</x-pos.table.th>
-                    <x-pos.table.th class="text-right">Laba Kotor</x-pos.table.th>
-                    <x-pos.table.th class="text-right">Nilai Stok</x-pos.table.th>
+                    @if ($canViewProfit)
+                        <x-pos.table.th class="text-right">HPP (COGS)</x-pos.table.th>
+                        <x-pos.table.th class="text-right">Laba Kotor</x-pos.table.th>
+                    @endif
+                    @if ($canViewCost)
+                        <x-pos.table.th class="text-right">Nilai Stok</x-pos.table.th>
+                    @endif
                     <x-pos.table.th class="text-right">Piutang AR</x-pos.table.th>
-                    <x-pos.table.th class="text-right">Laba Bersih</x-pos.table.th>
+                    @if ($canViewProfit)
+                        <x-pos.table.th class="text-right">Laba Bersih</x-pos.table.th>
+                    @endif
                     <x-pos.table.th class="text-center">Aksi</x-pos.table.th>
                 </tr>
             </thead>
@@ -40,22 +52,28 @@
                         <x-pos.table.td class="text-right font-black text-slate-900 dark:text-slate-100">
                             Rp {{ number_format($bc['revenue'], 0, ',', '.') }}
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-bold text-rose-600 dark:text-rose-400">
-                            Rp {{ number_format($bc['cogs'], 0, ',', '.') }}
-                        </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-bold text-slate-800 dark:text-slate-200">
-                            Rp {{ number_format($bc['gross_profit'], 0, ',', '.') }}
-                        </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-bold text-emerald-600 dark:text-emerald-400">
-                            Rp {{ number_format($bc['stock_value'], 0, ',', '.') }}
-                            <div class="text-[10px] text-slate-400 font-normal">({{ number_format($bc['stock_items']) }} item)</div>
-                        </x-pos.table.td>
+                        @if ($canViewProfit)
+                            <x-pos.table.td class="text-right font-bold text-rose-600 dark:text-rose-400">
+                                Rp {{ number_format($bc['cogs'], 0, ',', '.') }}
+                            </x-pos.table.td>
+                            <x-pos.table.td class="text-right font-bold text-slate-800 dark:text-slate-200">
+                                Rp {{ number_format($bc['gross_profit'], 0, ',', '.') }}
+                            </x-pos.table.td>
+                        @endif
+                        @if ($canViewCost)
+                            <x-pos.table.td class="text-right font-bold text-emerald-600 dark:text-emerald-400">
+                                Rp {{ number_format($bc['stock_value'], 0, ',', '.') }}
+                                <div class="text-[10px] text-slate-400 font-normal">({{ number_format($bc['stock_items']) }} item)</div>
+                            </x-pos.table.td>
+                        @endif
                         <x-pos.table.td class="text-right font-bold text-purple-600 dark:text-purple-400">
                             Rp {{ number_format($bc['ar_unpaid'], 0, ',', '.') }}
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black {{ $bc['net_income'] >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
-                            Rp {{ number_format($bc['net_income'], 0, ',', '.') }}
-                        </x-pos.table.td>
+                        @if ($canViewProfit)
+                            <x-pos.table.td class="text-right font-black {{ $bc['net_income'] >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                                Rp {{ number_format($bc['net_income'], 0, ',', '.') }}
+                            </x-pos.table.td>
+                        @endif
                         <x-pos.table.td class="text-center">
                             <x-pos.utility.button href="{{ route('pos.switch-branch', $bc['id']) }}" variant="primary" size="xs">
                                 Pilih Cabang
@@ -63,7 +81,7 @@
                         </x-pos.table.td>
                     </x-pos.table.tr>
                 @empty
-                    <x-pos.table.empty colspan="8" icon="ph-buildings" message="Belum ada data cabang." />
+                    <x-pos.table.empty colspan="{{ $colsCount }}" icon="ph-buildings" message="Belum ada data cabang." />
                 @endforelse
             </tbody>
         </x-pos.table>

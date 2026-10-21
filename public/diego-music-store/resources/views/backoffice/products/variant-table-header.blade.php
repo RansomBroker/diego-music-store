@@ -3,10 +3,14 @@
 ])
 
 @php
+    $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+
     // Column widths in rem (First column is 13.75rem = 220px)
-    $cols = "13.75rem 10rem 10rem 8.75rem 8.75rem 6.875rem 8.75rem 8.75rem 8.75rem " . str_repeat('8.75rem ', count($pricingTiers));
-    // 1210px + 140px (discount) + 140px (tax) = 1490px
-    $minWidth = 1490 + (140 * count($pricingTiers)) + 56;
+    $costCols = $canViewCost ? "8.75rem 6.875rem 8.75rem " : "";
+    $cols = "13.75rem 10rem 10rem 8.75rem " . $costCols . "8.75rem 8.75rem " . str_repeat('8.75rem ', count($pricingTiers));
+    // 1210px + 140px (discount) + 140px (tax) = 1490px (or 1100px without cost cols)
+    $baseWidth = $canViewCost ? 1490 : 1100;
+    $minWidth = $baseWidth + (140 * count($pricingTiers)) + 56;
 @endphp
 
 <style>
@@ -149,9 +153,11 @@
     <div data-frozen-header style="position: relative; z-index: 25; will-change: transform;">SKU</div>
     <div data-frozen-header style="position: relative; z-index: 25; will-change: transform;">Barcode</div>
     <div>Harga Jual</div>
+    @if($canViewCost)
     <div>Harga Beli</div>
     <div>Est. Ongkir</div>
     <div>HPP</div>
+    @endif
     <div>Diskon</div>
     <div>PPN</div>
     @foreach($pricingTiers as $tier)
