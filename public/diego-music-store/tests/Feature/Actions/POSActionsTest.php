@@ -45,6 +45,7 @@ class POSActionsTest extends TestCase
             'phone' => '123',
             'is_active' => true,
         ]);
+        $user->branches()->attach($branch->id);
 
         $customer = Customer::create([
             'name' => 'Budi',
@@ -190,6 +191,7 @@ class POSActionsTest extends TestCase
             'phone' => '123',
             'is_active' => true,
         ]);
+        $user->branches()->attach($branch->id);
 
         $product = Product::create([
             'name' => 'Gitar Akustik Yamaha 2',

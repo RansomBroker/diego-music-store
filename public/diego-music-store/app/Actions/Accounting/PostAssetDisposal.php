@@ -39,21 +39,16 @@ class PostAssetDisposal
             $disposalAmount = $isSale ? (float) $disposal->disposal_amount : 0.0;
             $gainLoss = $disposalAmount - $bookValue;
 
-            // Find GL accounts
-            $assetAccount = Account::where('code', 'LIKE', '12%')->where('is_header', false)->first();
+            // Find GL accounts using AccountHelper
+            $resolveAccount = function($code, $defaultName, $classification) {
+                return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);
+            };
 
-            $accumAccount = Account::where('code', 'LIKE', '129%')->orWhere('name', 'LIKE', '%Akumulasi%')->first()
-                ?? $assetAccount;
-
-            $cashAccount = $disposal->account
-                ?? Account::where('code', 'LIKE', '11%')->where('is_header', false)->first()
-                ?? $assetAccount;
-
-            $gainLossAccount = Account::where('name', 'LIKE', '%Laba%Rugi%Aset%')
-                ->orWhere('name', 'LIKE', '%Penjualan%Aset%')
-                ->first()
-                ?? Account::where('classification', 'Revenue')->where('is_header', false)->first()
-                ?? $assetAccount;
+            $assetAccountId = $resolveAccount('121101001', 'ASET TETAP - PERALATAN', 'Asset');
+            $accumAccountId = $resolveAccount('129101001', 'AKUMULASI PENYUSUTAN ASET', 'Asset');
+            $cashAccountId = $disposal->account_id ?: $resolveAccount('111101001', 'KAS', 'Asset');
+            $gainAccountId = $resolveAccount('711201001', 'LABA PENJUALAN ASET TETAP', 'Revenue');
+            $lossAccountId = $resolveAccount('811201001', 'RUGI PELEPASAN/PENGHAPUSAN ASET TETAP', 'Expense');
 
             // Create Journal Entry
             $journal = JournalEntry::create([
@@ -68,7 +63,7 @@ class PostAssetDisposal
             if ($accum > 0) {
                 JournalItem::create([
                     'journal_entry_id' => $journal->id,
-                    'account_id'       => $accumAccount?->id,
+                    'account_id'       => $accumAccountId,
                     'debit'            => $accum,
                     'credit'           => 0,
                     'notes'             => "Eliminasi Akumulasi Penyusutan {$asset->name}",
@@ -80,7 +75,7 @@ class PostAssetDisposal
                 if ($disposalAmount > 0) {
                     JournalItem::create([
                         'journal_entry_id' => $journal->id,
-                        'account_id'       => $cashAccount?->id,
+                        'account_id'       => $cashAccountId,
                         'debit'            => $disposalAmount,
                         'credit'           => 0,
                         'notes'             => "Penerimaan Hasil Penjualan Aset {$asset->name}",
@@ -90,7 +85,7 @@ class PostAssetDisposal
                 // 3. Credit Fixed Asset Cost
                 JournalItem::create([
                     'journal_entry_id' => $journal->id,
-                    'account_id'       => $assetAccount?->id,
+                    'account_id'       => $assetAccountId,
                     'debit'            => 0,
                     'credit'           => $cost,
                     'notes'             => "Eliminasi Harga Perolehan Aset {$asset->name}",
@@ -98,19 +93,19 @@ class PostAssetDisposal
 
                 // 4. Gain or Loss Entry
                 if ($gainLoss > 0) {
-                    // Credit Gain
+                    // Credit Gain (Pendapatan Lain-lain)
                     JournalItem::create([
                         'journal_entry_id' => $journal->id,
-                        'account_id'       => $gainLossAccount?->id,
+                        'account_id'       => $gainAccountId,
                         'debit'            => 0,
                         'credit'           => $gainLoss,
                         'notes'             => "Laba Penjualan Aset {$asset->name}",
                     ]);
                 } elseif ($gainLoss < 0) {
-                    // Debit Loss
+                    // Debit Loss (Beban Lain-lain)
                     JournalItem::create([
                         'journal_entry_id' => $journal->id,
-                        'account_id'       => $gainLossAccount?->id,
+                        'account_id'       => $lossAccountId,
                         'debit'            => abs($gainLoss),
                         'credit'           => 0,
                         'notes'             => "Rugi Penjualan Aset {$asset->name}",
@@ -122,7 +117,7 @@ class PostAssetDisposal
                 if ($bookValue > 0) {
                     JournalItem::create([
                         'journal_entry_id' => $journal->id,
-                        'account_id'       => $gainLossAccount?->id,
+                        'account_id'       => $lossAccountId,
                         'debit'            => $bookValue,
                         'credit'           => 0,
                         'notes'             => "Beban Penghapusan Aset {$asset->name}",
@@ -132,7 +127,7 @@ class PostAssetDisposal
                 // Credit Fixed Asset Cost
                 JournalItem::create([
                     'journal_entry_id' => $journal->id,
-                    'account_id'       => $assetAccount?->id,
+                    'account_id'       => $assetAccountId,
                     'debit'            => 0,
                     'credit'           => $cost,
                     'notes'             => "Eliminasi Harga Perolehan Aset {$asset->name}",

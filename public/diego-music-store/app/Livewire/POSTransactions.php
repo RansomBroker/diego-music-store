@@ -379,70 +379,15 @@ class POSTransactions extends Component
             \Illuminate\Support\Facades\DB::transaction(function () {
                 $branchId = $this->resolveAuthorizedBranchId();
                 $sale = Sale::query()->where('branch_id', $branchId)->findOrFail($this->settlementSale?->id);
-                $currentPiutang = max(0, (float) $sale->getPiutangAmount());
-                $paid = min(max(0, (float) $this->settlementAmount), $currentPiutang);
-                abort_unless($paid > 0, 422, 'Nominal pelunasan tidak valid.');
-                
-                $refText = $this->settlementReference ? " | Ref: {$this->settlementReference}" : '';
-                $methodLabel = strtoupper($this->settlementPaymentMethod);
-                $isFullyPaid = ($paid >= $currentPiutang);
 
-                // Post Journal Entry for settlement
-                $journalEntry = \App\Models\JournalEntry::create([
-                    'branch_id' => $sale->branch_id,
-                    'date' => $this->settlementDate ?: now()->toDateString(),
-                    'reference_type' => 'Sales',
-                    'reference_id' => $sale->id,
-                    'description' => "Pelunasan Piutang Inv #{$sale->invoice_number}",
-                    'status' => 'posted',
-                    'created_by' => \Illuminate\Support\Facades\Auth::id(),
+                app(\App\Actions\Sales\SettleCustomerReceivable::class)->execute($sale, [
+                    'amount' => (float) $this->settlementAmount,
+                    'account_id' => (int) $this->settlementAccountId,
+                    'payment_method' => (string) $this->settlementPaymentMethod,
+                    'payment_date' => $this->settlementDate ?: now()->toDateString(),
+                    'payment_reference' => $this->settlementReference,
+                    'user_id' => \Illuminate\Support\Facades\Auth::id(),
                 ]);
-
-                // Debit chosen Kas/Bank account
-                if ($this->settlementAccountId) {
-                    \App\Models\JournalItem::create([
-                        'journal_entry_id' => $journalEntry->id,
-                        'account_id' => $this->settlementAccountId,
-                        'debit' => $paid,
-                        'credit' => 0,
-                        'notes' => "Penerimaan Pelunasan - Inv #{$sale->invoice_number}",
-                    ]);
-                }
-
-                // Credit Piutang Dagang (111301001)
-                $piutangAccount = \App\Helpers\AccountHelper::findByCode('111301001') ?? \App\Models\Account::where('code', '1-1200')->first();
-                if ($piutangAccount) {
-                    \App\Models\JournalItem::create([
-                        'journal_entry_id' => $journalEntry->id,
-                        'account_id' => $piutangAccount->id,
-                        'debit' => 0,
-                        'credit' => $paid,
-                        'notes' => "Pelunasan Piutang - Inv #{$sale->invoice_number}",
-                    ]);
-                }
-
-                if ($isFullyPaid) {
-                    $sale->update([
-                        'payment_method' => $sale->payment_method . " (Lunas via {$methodLabel}{$refText})",
-                        'status' => 'completed',
-                    ]);
-                } else {
-                    $sale->update([
-                        'payment_method' => $sale->payment_method . " (Dicicil Rp " . number_format($paid, 0, ',', '.') . " via {$methodLabel}{$refText})",
-                        'status' => 'pending',
-                    ]);
-                }
-
-                if ($sale->customer_id) {
-                    try {
-                        $customer = \App\Models\Customer::find($sale->customer_id);
-                        if ($customer && \Illuminate\Support\Facades\Schema::hasColumn('customers', 'outstanding_debt') && $customer->outstanding_debt > 0) {
-                            $customer->decrement('outstanding_debt', min($customer->outstanding_debt, $paid));
-                        }
-                    } catch (\Exception $e) {
-                        \Illuminate\Support\Facades\Log::warning('Could not decrement customer debt: ' . $e->getMessage());
-                    }
-                }
             });
 
             Notification::make()

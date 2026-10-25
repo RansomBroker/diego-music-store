@@ -229,74 +229,23 @@ class PosSupplierPayments extends Component
 
         try {
             \Illuminate\Support\Facades\DB::transaction(function () use ($selectedItems) {
-                $totalPaid = 0;
+                $settleAction = app(\App\Actions\Sales\SettleCustomerReceivable::class);
                 foreach ($selectedItems as $item) {
                     $sale = \App\Models\Sale::find($item['sale_id'] ?? null);
                     if ($sale) {
-                        $paid = floatval($item['amount_paid']);
-                        $currentPiutang = $sale->getPiutangAmount();
-                        $isFullyPaid = ($paid >= $currentPiutang);
-                        $totalPaid += $paid;
+                        $paid = floatval($item['amount_paid'] ?? 0);
+                        if ($paid <= 0) {
+                            continue;
+                        }
 
-                        $refText = $this->payment_reference ? " | Ref: {$this->payment_reference}" : '';
-                        $methodLabel = strtoupper($this->payment_method);
-
-                        // Post Journal Entry for settlement
-                        $journalEntry = \App\Models\JournalEntry::create([
-                            'branch_id' => $sale->branch_id,
+                        $settleAction->execute($sale, [
+                            'amount' => $paid,
+                            'account_id' => $this->account_id,
                             'date' => $this->payment_date ?: now()->toDateString(),
-                            'reference_type' => 'Sales',
-                            'reference_id' => $sale->id,
-                            'description' => "Pelunasan Piutang Inv #{$sale->invoice_number}",
-                            'status' => 'posted',
-                            'created_by' => \Illuminate\Support\Facades\Auth::id(),
+                            'payment_method' => $this->payment_method,
+                            'payment_reference' => $this->payment_reference,
+                            'notes' => $this->notes,
                         ]);
-
-                        // Debit chosen Kas/Bank account
-                        if ($this->account_id) {
-                            \App\Models\JournalItem::create([
-                                'journal_entry_id' => $journalEntry->id,
-                                'account_id' => $this->account_id,
-                                'debit' => $paid,
-                                'credit' => 0,
-                                'notes' => "Penerimaan Pelunasan - Inv #{$sale->invoice_number}",
-                            ]);
-                        }
-
-                        // Credit Piutang Dagang (111301001)
-                        $piutangAccount = \App\Helpers\AccountHelper::findByCode('111301001') ?? \App\Models\Account::where('code', '1-1200')->first();
-                        if ($piutangAccount) {
-                            \App\Models\JournalItem::create([
-                                'journal_entry_id' => $journalEntry->id,
-                                'account_id' => $piutangAccount->id,
-                                'debit' => 0,
-                                'credit' => $paid,
-                                'notes' => "Pelunasan Piutang - Inv #{$sale->invoice_number}",
-                            ]);
-                        }
-
-                        if ($isFullyPaid) {
-                            $sale->update([
-                                'payment_method' => $sale->payment_method . " (Lunas via {$methodLabel}{$refText})",
-                                'status' => 'completed',
-                            ]);
-                        } else {
-                            $sale->update([
-                                'payment_method' => $sale->payment_method . " (Dicicil Rp " . number_format($paid, 0, ',', '.') . " via {$methodLabel}{$refText})",
-                                'status' => 'pending',
-                            ]);
-                        }
-                    }
-                }
-
-                if ($this->customer_id) {
-                    try {
-                        $customer = \App\Models\Customer::find($this->customer_id);
-                        if ($customer && \Illuminate\Support\Facades\Schema::hasColumn('customers', 'outstanding_debt') && $customer->outstanding_debt > 0) {
-                            $customer->decrement('outstanding_debt', min($customer->outstanding_debt, $totalPaid));
-                        }
-                    } catch (\Exception $e) {
-                        \Illuminate\Support\Facades\Log::warning('Could not decrement customer debt: ' . $e->getMessage());
                     }
                 }
             });

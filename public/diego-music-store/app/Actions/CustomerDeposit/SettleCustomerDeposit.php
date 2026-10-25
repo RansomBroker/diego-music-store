@@ -7,6 +7,9 @@ use App\Models\Customer;
 use App\Models\CustomerDeposit;
 use App\Models\JournalEntry;
 use App\Models\JournalItem;
+use App\Models\ProductVariant;
+use App\Models\ProductBranchStock;
+use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -139,6 +142,67 @@ class SettleCustomerDeposit
                 'credit' => $totalAmount,
                 'notes' => "Pendapatan Penjualan Pelunasan Pesanan {$deposit->deposit_number}",
             ]);
+
+            // 2d. Inventory deduction and COGS Journal (if physical goods are sold/handed over)
+            $variant = null;
+            if ($deposit->product_variant_id) {
+                $variant = ProductVariant::with('product')->find($deposit->product_variant_id);
+            }
+
+            if ($variant && ($variant->product?->isPhysical() ?? true)) {
+                $qty = max(1, intval($deposit->qty));
+                $branchStock = ProductBranchStock::firstOrCreate([
+                    'product_variant_id' => $variant->id,
+                    'branch_id' => $deposit->branch_id,
+                ], [
+                    'stock' => 0,
+                    'hpp' => $variant->hpp ?: ($variant->cost_price ?: 0),
+                ]);
+
+                // Deduct stock
+                $branchStock->decrement('stock', $qty);
+
+                $unitHpp = (float) ($branchStock->hpp ?: ($variant->hpp ?: ($variant->cost_price ?: 0)));
+                $totalHpp = round($unitHpp * $qty, 2);
+
+                // Create Stock Movement OUT
+                StockMovement::create([
+                    'product_variant_id' => $variant->id,
+                    'branch_id' => $deposit->branch_id,
+                    'type' => 'out',
+                    'quantity' => $qty,
+                    'original_quantity' => $qty,
+                    'unit_cost' => $unitHpp,
+                    'hpp' => $unitHpp,
+                    'reference_type' => 'CustomerDepositSettlement',
+                    'reference_id' => $deposit->id,
+                ]);
+
+                if ($totalHpp > 0) {
+                    $cogsAccId = $variant->product?->cogs_account_id
+                        ?: \App\Helpers\AccountHelper::resolveAccountId('511501001', 'HARGA POKOK PENJUALAN', 'Expense');
+                    $inventoryAccId = $variant->product?->inventory_account_id
+                        ?: \App\Helpers\AccountHelper::resolveAccountId('111401001', 'PERSEDIAAN BARANG DAGANG', 'Asset');
+
+                    // Debit: COGS / HPP
+                    JournalItem::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $cogsAccId,
+                        'debit' => $totalHpp,
+                        'credit' => 0,
+                        'notes' => "HPP Penyerahan Barang Deposit {$deposit->deposit_number} ({$variant->product?->name})",
+                    ]);
+
+                    // Credit: Persediaan Barang Dagang
+                    JournalItem::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $inventoryAccId,
+                        'debit' => 0,
+                        'credit' => $totalHpp,
+                        'notes' => "Pengurangan Persediaan Penyerahan Barang Deposit {$deposit->deposit_number}",
+                    ]);
+                }
+            }
 
             // 3. Update Deposit Status
             $deposit->update([

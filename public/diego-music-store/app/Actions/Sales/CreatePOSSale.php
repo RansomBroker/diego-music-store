@@ -237,15 +237,28 @@ class CreatePOSSale
                 ]);
             }
 
-            // 5b. Credit: Sales Revenue
+            // 5b. Credit: Sales Revenue & Output VAT (PPN Keluaran)
             $salesAccId = $resolveAccount('411101001', 'PENJUALAN', 'Revenue');
+            $netSales = max(0, $grandTotal - $taxAmount);
+
             JournalItem::create([
                 'journal_entry_id' => $journalEntry->id,
                 'account_id' => $salesAccId,
                 'debit' => 0,
-                'credit' => $grandTotal,
+                'credit' => $netSales,
                 'notes' => "Pendapatan Penjualan POS",
             ]);
+
+            if ($taxAmount > 0) {
+                $taxAccId = $resolveAccount('211201001', 'HUTANG PPN (PPN KELUARAN)', 'Liability');
+                JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $taxAccId,
+                    'debit' => 0,
+                    'credit' => $taxAmount,
+                    'notes' => "PPN Keluaran POS",
+                ]);
+            }
 
             // 5c. COGS Journal (if physical goods sold)
             if ($totalCOGS > 0) {

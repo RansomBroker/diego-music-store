@@ -314,4 +314,65 @@ class CustomerDepositTest extends TestCase
             ->assertSet('showFormModal', true) // Modal stays open due to error
             ->assertHasErrors(['deposit_amount']);
     }
+
+    public function test_settlement_on_physical_product_deducts_stock_and_records_cogs_journal(): void
+    {
+        $variant = $this->product->variants()->first();
+        $variant->update(['hpp' => 8000000, 'cost_price' => 8000000]);
+
+        $branchStock = \App\Models\ProductBranchStock::create([
+            'branch_id' => $this->branch->id,
+            'product_variant_id' => $variant->id,
+            'stock' => 5,
+            'hpp' => 8000000,
+        ]);
+
+        $cogsAccount = Account::find(\App\Helpers\AccountHelper::resolveAccountId('511501001', 'HARGA POKOK PENJUALAN', 'Expense'));
+        $invAccount = Account::find(\App\Helpers\AccountHelper::resolveAccountId('111401001', 'PERSEDIAAN BARANG DAGANG', 'Asset'));
+
+        $createAction = new CreateCustomerDeposit();
+        $deposit = $createAction->execute([
+            'customer_id' => $this->customer->id,
+            'branch_id' => $this->branch->id,
+            'deposit_date' => now()->toDateString(),
+            'product_type' => 'existing',
+            'product_id' => $this->product->id,
+            'product_variant_id' => $variant->id,
+            'product_name' => $this->product->name,
+            'price' => 15000000,
+            'qty' => 1,
+            'deposit_amount' => 5000000,
+            'account_id' => $this->cashAccount->id,
+            'payment_method' => 'Tunai',
+        ], $this->user);
+
+        $settleAction = new SettleCustomerDeposit();
+        $settled = $settleAction->execute($deposit, [
+            'settlement_account_id' => $this->cashAccount->id,
+            'settlement_payment_method' => 'Tunai',
+        ], $this->user);
+
+        // Verify stock was decremented from 5 to 4
+        $this->assertEquals(4, $branchStock->fresh()->stock);
+
+        // Verify StockMovement OUT was created
+        $this->assertDatabaseHas('stock_movements', [
+            'product_variant_id' => $variant->id,
+            'branch_id' => $this->branch->id,
+            'type' => 'out',
+            'quantity' => 1,
+            'reference_type' => 'CustomerDepositSettlement',
+            'reference_id' => $deposit->id,
+        ]);
+
+        // Verify COGS & Inventory journal items were added to the settlement journal
+        $settleJournal = $settled->settlementJournalEntry;
+        $this->assertNotNull($settleJournal);
+
+        $debitCogs = $settleJournal->items()->where('account_id', $cogsAccount->id)->where('debit', 8000000)->first();
+        $this->assertNotNull($debitCogs, 'Jurnal Debit HPP senilai Rp 8.000.000 harus tercatat');
+
+        $creditInv = $settleJournal->items()->where('account_id', $invAccount->id)->where('credit', 8000000)->first();
+        $this->assertNotNull($creditInv, 'Jurnal Kredit Persediaan senilai Rp 8.000.000 harus tercatat');
+    }
 }

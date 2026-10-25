@@ -60,8 +60,8 @@ class PostSalesReturn
             }
 
             // 2. Post Journal Entries
-            if ($salesReturn->total_refund > 0) {
-                $journalNo = 'JV-SR-' . now()->format('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            if ($salesReturn->total_refund > 0 || $totalReturnedCOGS > 0) {
+                $journalNo = JournalEntry::generateEntryNo($salesReturn->branch_id);
 
                 $journalEntry = JournalEntry::create([
                     'branch_id'      => $salesReturn->branch_id,
@@ -80,53 +80,91 @@ class PostSalesReturn
                     return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);
                 };
 
-                $returAccId = $resolveAccount('411201001', 'RETUR PENJUALAN', 'Revenue');
-                JournalItem::create([
-                    'journal_entry_id' => $journalEntry->id,
-                    'account_id'       => $returAccId,
-                    'debit'            => $salesReturn->total_refund,
-                    'credit'           => 0,
-                    'notes'            => "Pembalikan Pendapatan Retur Penjualan",
-                ]);
-
-                $payMethod = strtolower($sale?->payment_method ?: 'tunai');
-                if (str_contains($payMethod, 'debit')) {
-                    $creditAccId = $resolveAccount('111201001', 'BANK BCA', 'Asset');
-                    $methodName = 'Bank BCA';
-                } else {
-                    $creditAccId = $resolveAccount('111101001', 'KAS', 'Asset');
-                    $methodName = 'Kas Utama';
-                }
-
-                JournalItem::create([
-                    'journal_entry_id' => $journalEntry->id,
-                    'account_id'       => $creditAccId,
-                    'debit'            => 0,
-                    'credit'           => $salesReturn->total_refund,
-                    'notes'            => "Pengembalian Dana POS via {$methodName}",
-                ]);
-
-                if ($totalReturnedCOGS > 0) {
-                    $cogsAccId = $resolveAccount('511501001', 'HARGA POKOK PENJUALAN', 'Expense');
-                    $inventoryAccId = $resolveAccount('111401001', 'PERSEDIAAN BARANG DAGANG', 'Asset');
-
+                if ($salesReturn->total_refund > 0) {
+                    $returAccId = $resolveAccount('411201001', 'RETUR PENJUALAN', 'Revenue');
                     JournalItem::create([
                         'journal_entry_id' => $journalEntry->id,
-                        'account_id'       => $inventoryAccId,
-                        'debit'            => $totalReturnedCOGS,
+                        'account_id'       => $returAccId,
+                        'debit'            => $salesReturn->total_refund,
                         'credit'           => 0,
-                        'notes'            => "Pengembalian Persediaan Retur POS",
+                        'notes'            => "Pembalikan Pendapatan Retur Penjualan",
                     ]);
 
+                // Check outstanding receivable on original sale
+                $currentPiutang = $sale ? max(0, (float) $sale->getPiutangAmount()) : 0;
+                $piutangReduction = min((float) $salesReturn->total_refund, $currentPiutang);
+                $cashRefund = (float) $salesReturn->total_refund - $piutangReduction;
+
+                // Credit Piutang if there is unpaid receivable on this sale
+                if ($piutangReduction > 0) {
+                    $piutangAccId = $resolveAccount('111301001', 'PIUTANG DAGANG', 'Asset');
                     JournalItem::create([
                         'journal_entry_id' => $journalEntry->id,
-                        'account_id'       => $cogsAccId,
+                        'account_id'       => $piutangAccId,
                         'debit'            => 0,
-                        'credit'           => $totalReturnedCOGS,
-                        'notes'            => "Pembalikan HPP Retur POS",
+                        'credit'           => $piutangReduction,
+                        'notes'            => "Pengurangan Piutang Penjualan (Retur #{$salesReturn->return_number})",
+                    ]);
+
+                    if ($sale->customer_id && \Illuminate\Support\Facades\Schema::hasColumn('customers', 'outstanding_debt')) {
+                        try {
+                            $customer = \App\Models\Customer::find($sale->customer_id);
+                            if ($customer) {
+                                $customer->decrement('outstanding_debt', min($customer->outstanding_debt, $piutangReduction));
+                            }
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning('Could not decrement customer outstanding_debt on return: ' . $e->getMessage());
+                        }
+                    }
+
+                    // If remaining piutang is now 0, update sale status to completed
+                    if (($currentPiutang - $piutangReduction) <= 0 && $sale->status !== 'completed') {
+                        $sale->update(['status' => 'completed']);
+                    }
+                }
+
+                // Credit Kas/Bank for any remaining refund amount
+                if ($cashRefund > 0) {
+                    $payMethod = strtolower($sale?->payment_method ?: 'tunai');
+                    if (str_contains($payMethod, 'debit') || str_contains($payMethod, 'bank') || str_contains($payMethod, 'transfer')) {
+                        $creditAccId = $resolveAccount('111201001', 'BANK BCA', 'Asset');
+                        $methodName = 'Bank BCA';
+                    } else {
+                        $creditAccId = $resolveAccount('111101001', 'KAS', 'Asset');
+                        $methodName = 'Kas Utama';
+                    }
+
+                    JournalItem::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id'       => $creditAccId,
+                        'debit'            => 0,
+                        'credit'           => $cashRefund,
+                        'notes'            => "Pengembalian Dana POS via {$methodName}",
                     ]);
                 }
             }
+
+            if ($totalReturnedCOGS > 0) {
+                $cogsAccId = $resolveAccount('511501001', 'HARGA POKOK PENJUALAN', 'Expense');
+                $inventoryAccId = $resolveAccount('111401001', 'PERSEDIAAN BARANG DAGANG', 'Asset');
+
+                JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id'       => $inventoryAccId,
+                    'debit'            => $totalReturnedCOGS,
+                    'credit'           => 0,
+                    'notes'            => "Pengembalian Persediaan Retur POS",
+                ]);
+
+                JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id'       => $cogsAccId,
+                    'debit'            => 0,
+                    'credit'           => $totalReturnedCOGS,
+                    'notes'            => "Pembalikan HPP Retur POS",
+                ]);
+            }
+        }
 
             $salesReturn->update([
                 'status' => 'posted',
