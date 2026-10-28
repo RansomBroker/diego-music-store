@@ -29,13 +29,15 @@ class MultiBranchCoaProvisioningTest extends TestCase
             'name' => 'Cabang Pontianak Kota',
         ]);
 
-        // Branch must have exactly 97 COA accounts provisioned
-        $branchAccountsCount = Account::where('branch_id', $branch->id)->count();
-        $this->assertEquals(97, $branchAccountsCount);
+        // Branch must have 98 detail accounts from CSV and 150 total accounts (including 52 headers & sub-headers)
+        $detailCount = Account::where('branch_id', $branch->id)->where('is_header', false)->count();
+        $this->assertEquals(98, $detailCount);
+        $totalCount = Account::where('branch_id', $branch->id)->count();
+        $this->assertEquals(150, $totalCount);
 
         // Verify root headers (Level 1) exist
         $rootHeaders = Account::where('branch_id', $branch->id)->whereNull('parent_id')->count();
-        $this->assertEquals(8, $rootHeaders);
+        $this->assertEquals(6, $rootHeaders);
 
         // Verify sub-headers (Level 2) and detail accounts have correct parent_id
         $kasBesar = Account::where('branch_id', $branch->id)->where('code', '111101001')->first();
@@ -45,7 +47,7 @@ class MultiBranchCoaProvisioningTest extends TestCase
 
         $parent = Account::find($kasBesar->parent_id);
         $this->assertNotNull($parent);
-        $this->assertEquals('111101', $parent->code);
+        $this->assertEquals('111100000', $parent->code);
         $this->assertEquals($branch->id, $parent->branch_id);
 
         // Verify pointer columns on branch are set
@@ -115,7 +117,9 @@ class MultiBranchCoaProvisioningTest extends TestCase
 
         app(ProvisionBranchCoaAccounts::class)->executeAll();
 
-        $this->assertEquals(97, Account::where('branch_id', $branch1->id)->count());
-        $this->assertEquals(97, Account::where('branch_id', $branch2->id)->count());
+        $this->assertEquals(98, Account::where('branch_id', $branch1->id)->where('is_header', false)->count());
+        $this->assertEquals(98, Account::where('branch_id', $branch2->id)->where('is_header', false)->count());
+        $this->assertEquals(150, Account::where('branch_id', $branch1->id)->count());
+        $this->assertEquals(150, Account::where('branch_id', $branch2->id)->count());
     }
 }

@@ -45,11 +45,15 @@ class AccountHelper
      */
     public static function findByCode(string $code, ?int $branchId = null): ?Account
     {
-        if ($branchId === null && auth()->check()) {
-            try {
-                $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
-            } catch (\Throwable $e) {
-                $branchId = null;
+        if ($branchId === null) {
+            if (session()->has('pos_active_branch_id')) {
+                $branchId = (int) session('pos_active_branch_id');
+            } elseif (auth()->check()) {
+                try {
+                    $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+                } catch (\Throwable $e) {
+                    $branchId = null;
+                }
             }
         }
 
@@ -89,11 +93,15 @@ class AccountHelper
     public static function resolveAccountId(string $code, string $defaultName = 'Default Account', string $classification = 'asset', ?int $branchId = null): int
     {
         $targetCode = self::LEGACY_CODE_MAP[$code] ?? $code;
-        if ($branchId === null && auth()->check()) {
-            try {
-                $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
-            } catch (\Throwable $e) {
-                $branchId = null;
+        if ($branchId === null) {
+            if (session()->has('pos_active_branch_id')) {
+                $branchId = (int) session('pos_active_branch_id');
+            } elseif (auth()->check()) {
+                try {
+                    $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+                } catch (\Throwable $e) {
+                    $branchId = null;
+                }
             }
         }
 

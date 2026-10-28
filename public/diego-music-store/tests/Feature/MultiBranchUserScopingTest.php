@@ -75,10 +75,10 @@ class MultiBranchUserScopingTest extends TestCase
 
         $query = UserResource::getEloquentQuery();
 
-        $this->assertTrue($query->where('users.id', $this->owner->id)->exists());
-        $this->assertTrue($query->where('users.id', $this->branchAdmin1->id)->exists());
-        $this->assertTrue($query->where('users.id', $this->cashierBranch1->id)->exists());
-        $this->assertTrue($query->where('users.id', $this->cashierBranch2->id)->exists());
+        $this->assertTrue((clone $query)->where('users.id', $this->owner->id)->exists());
+        $this->assertTrue((clone $query)->where('users.id', $this->branchAdmin1->id)->exists());
+        $this->assertTrue((clone $query)->where('users.id', $this->cashierBranch1->id)->exists());
+        $this->assertTrue((clone $query)->where('users.id', $this->cashierBranch2->id)->exists());
     }
 
     public function test_branch_admin_only_sees_own_branch_users_and_cannot_see_owner_or_other_branches(): void
@@ -89,12 +89,12 @@ class MultiBranchUserScopingTest extends TestCase
         $query = UserResource::getEloquentQuery();
 
         // Must see own branch users
-        $this->assertTrue($query->where('users.id', $this->branchAdmin1->id)->exists());
-        $this->assertTrue($query->where('users.id', $this->cashierBranch1->id)->exists());
+        $this->assertTrue((clone $query)->where('users.id', $this->branchAdmin1->id)->exists());
+        $this->assertTrue((clone $query)->where('users.id', $this->cashierBranch1->id)->exists());
 
         // Must NOT see owner or other branch users
-        $this->assertFalse($query->where('users.id', $this->owner->id)->exists());
-        $this->assertFalse($query->where('users.id', $this->cashierBranch2->id)->exists());
+        $this->assertFalse((clone $query)->where('users.id', $this->owner->id)->exists());
+        $this->assertFalse((clone $query)->where('users.id', $this->cashierBranch2->id)->exists());
     }
 
     public function test_pos_users_livewire_isolates_users_for_non_owner(): void

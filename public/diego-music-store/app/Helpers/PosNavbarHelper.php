@@ -43,19 +43,26 @@ class PosNavbarHelper
     public static function resolveActiveSession(?array $activeSessionInfo = null): ?array
     {
         if (empty($activeSessionInfo) && Auth::check()) {
-            $activeBranchId = BranchHelper::getActiveBranchId();
-            $activeSession = CashSession::with('user')
-                ->where('branch_id', $activeBranchId)
-                ->where('status', 'open')
-                ->first();
+            try {
+                $activeBranchId = BranchHelper::getActiveBranchId();
+            } catch (\Throwable $e) {
+                $activeBranchId = session('pos_active_branch_id');
+            }
 
-            if ($activeSession) {
-                $activeSessionInfo = [
-                    'id'           => $activeSession->id,
-                    'opened_at'    => $activeSession->opened_at ? $activeSession->opened_at->format('d M Y H:i') : now()->format('d M Y H:i'),
-                    'opening_cash' => $activeSession->opening_cash,
-                    'opened_by'    => $activeSession->user?->name ?? (Auth::user()?->name ?? 'Kasir'),
-                ];
+            if ($activeBranchId) {
+                $activeSession = CashSession::with('user')
+                    ->where('branch_id', $activeBranchId)
+                    ->where('status', 'open')
+                    ->first();
+
+                if ($activeSession) {
+                    $activeSessionInfo = [
+                        'id'           => $activeSession->id,
+                        'opened_at'    => $activeSession->opened_at ? $activeSession->opened_at->format('d M Y H:i') : now()->format('d M Y H:i'),
+                        'opening_cash' => $activeSession->opening_cash,
+                        'opened_by'    => $activeSession->user?->name ?? (Auth::user()?->name ?? 'Kasir'),
+                    ];
+                }
             }
         }
 
@@ -84,7 +91,12 @@ class PosNavbarHelper
             ];
         }
 
-        $currentActiveBranchId = BranchHelper::getActiveBranchId();
+        try {
+            $currentActiveBranchId = BranchHelper::getActiveBranchId();
+        } catch (\Throwable $e) {
+            $currentActiveBranchId = session('pos_active_branch_id') ?: Auth::user()?->branches()->first()?->id;
+        }
+
         $currentBranchModel = $currentActiveBranchId ? Branch::find($currentActiveBranchId) : Branch::first();
         $userBranchList = BranchHelper::getAllowedBranchesQuery()->get();
 

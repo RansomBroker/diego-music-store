@@ -44,10 +44,11 @@ class MultiBranchBackofficeScopingTest extends TestCase
         parent::setUp();
 
         $this->user = User::factory()->create(['is_active' => true]);
-        $this->actingAs($this->user);
-
         $this->branch1 = Branch::create(['name' => 'Cabang 1', 'is_active' => true]);
         $this->branch2 = Branch::create(['name' => 'Cabang 2', 'is_active' => true]);
+
+        $this->user->branches()->attach([$this->branch1->id, $this->branch2->id]);
+        $this->actingAs($this->user);
 
         // Default to Branch 1 active in session
         session(['pos_active_branch_id' => $this->branch1->id]);
@@ -71,14 +72,14 @@ class MultiBranchBackofficeScopingTest extends TestCase
             'branch_id'     => $this->branch1->id,
             'customer_id'   => $customer->id,
             'do_number'     => 'DO-001',
-            'delivery_date' => now(),
+            'shipping_date' => now(),
             'status'        => 'draft',
         ]);
         DeliveryOrder::create([
             'branch_id'     => $this->branch2->id,
             'customer_id'   => $customer->id,
             'do_number'     => 'DO-002',
-            'delivery_date' => now(),
+            'shipping_date' => now(),
             'status'        => 'draft',
         ]);
 
@@ -185,11 +186,13 @@ class MultiBranchBackofficeScopingTest extends TestCase
     public function test_employee_and_commission_and_violation_resources_scope_to_active_branch(): void
     {
         $emp1 = Employee::create([
+            'nik'       => 'EMP-001',
             'name'      => 'Staff Cabang 1',
             'branch_id' => $this->branch1->id,
             'is_active' => true,
         ]);
         $emp2 = Employee::create([
+            'nik'       => 'EMP-002',
             'name'      => 'Staff Cabang 2',
             'branch_id' => $this->branch2->id,
             'is_active' => true,
@@ -243,8 +246,8 @@ class MultiBranchBackofficeScopingTest extends TestCase
 
     public function test_kpi_evaluation_and_focus_product_resources_scope_to_active_branch(): void
     {
-        $emp1 = Employee::create(['name' => 'Emp 1', 'branch_id' => $this->branch1->id, 'is_active' => true]);
-        $emp2 = Employee::create(['name' => 'Emp 2', 'branch_id' => $this->branch2->id, 'is_active' => true]);
+        $emp1 = Employee::create(['nik' => 'EMP-003', 'name' => 'Emp 1', 'branch_id' => $this->branch1->id, 'is_active' => true]);
+        $emp2 = Employee::create(['nik' => 'EMP-004', 'name' => 'Emp 2', 'branch_id' => $this->branch2->id, 'is_active' => true]);
 
         KpiEvaluation::create([
             'employee_id' => $emp1->id,
@@ -268,6 +271,7 @@ class MultiBranchBackofficeScopingTest extends TestCase
             'product_variant_id' => $variant->id,
             'branch_id'          => $this->branch1->id,
             'focus_number'       => 'FP-001',
+            'reason'             => 'Slow moving',
             'status'             => 'ACTIVE',
             'active_from'        => now(),
         ]);
@@ -275,6 +279,7 @@ class MultiBranchBackofficeScopingTest extends TestCase
             'product_variant_id' => $variant->id,
             'branch_id'          => $this->branch2->id,
             'focus_number'       => 'FP-002',
+            'reason'             => 'Slow moving',
             'status'             => 'ACTIVE',
             'active_from'        => now(),
         ]);

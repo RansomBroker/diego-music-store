@@ -102,6 +102,8 @@ class MultiBranchManagementTest extends TestCase
             'email'    => 'owneruser@test.com',
             'password' => bcrypt('password'),
         ]);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner']);
+        $user->assignRole('owner');
 
         Livewire::actingAs($user)
             ->test(PosBranches::class)
