@@ -67,6 +67,22 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     }
 
     /**
+     * Determine whether the user can access all branches via role or permission.
+     */
+    public function canAccessAllBranches(): bool
+    {
+        return \App\Helpers\BranchHelper::canAccessAllBranches($this);
+    }
+
+    /**
+     * Determine whether the user can access / switch to a specific branch.
+     */
+    public function canAccessBranch(int|Branch $branch): bool
+    {
+        return \App\Helpers\BranchHelper::canUserSwitchToBranch($this, $branch);
+    }
+
+    /**
      * Get the employee profile associated with this user.
      */
     public function employee(): HasOne

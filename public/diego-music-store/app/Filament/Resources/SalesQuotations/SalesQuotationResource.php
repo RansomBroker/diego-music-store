@@ -46,6 +46,12 @@ class SalesQuotationResource extends Resource
         return [];
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId());
+    }
+
     public static function getPages(): array
     {
         return [

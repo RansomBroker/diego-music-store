@@ -42,6 +42,23 @@ class AccountResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        $query = parent::getEloquentQuery();
+
+        if ($branchId) {
+            return $query->where('branch_id', $branchId);
+        }
+
+        $user = auth()->user();
+        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+            return $query->whereIn('branch_id', $user->branches()->pluck('branches.id'));
+        }
+
+        return $query;
+    }
+
     public static function getPages(): array
     {
         return [

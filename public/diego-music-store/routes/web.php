@@ -58,6 +58,7 @@ Route::middleware('auth.pos')->group(function () {
     // Laporan ERP Routes
     Route::get('/pos/reports', fn() => redirect()->route('pos.reports.sales'))->name('pos.reports');
     Route::get('/pos/reports/sales', App\Livewire\PosReportsSales::class)->name('pos.reports.sales');
+    Route::get('/pos/reports/sales-queue', App\Livewire\PosReportsSalesQueue::class)->name('pos.reports.sales-queue');
     Route::get('/pos/reports/ar-aging', App\Livewire\PosReportsArAging::class)->name('pos.reports.ar-aging');
     Route::get('/pos/reports/ar-settlement', App\Livewire\PosReportsArSettlement::class)->name('pos.reports.ar-settlement');
     Route::get('/pos/reports/daily-cash', App\Livewire\PosReportsDailyCash::class)->name('pos.reports.daily-cash');
@@ -67,8 +68,23 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/switch-branch/{branch}', function (\App\Models\Branch $branch) {
         if (auth()->check()) {
             $user = auth()->user();
-            if ($user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']) || $user->branches()->where('branches.id', $branch->id)->exists()) {
+            if (\App\Helpers\BranchHelper::canUserSwitchToBranch($user, $branch)) {
+                // Cegah ganti cabang HANYA untuk kasir non-manajemen jika sedang memiliki sesi kasir aktif
+                if (!\App\Helpers\BranchHelper::canAccessAllBranches($user)) {
+                    $currentBranchId = session('pos_active_branch_id');
+                    $hasActiveSession = $currentBranchId && \App\Models\CashSession::query()
+                        ->where('branch_id', $currentBranchId)
+                        ->where('status', 'open')
+                        ->where('user_id', $user->id)
+                        ->exists();
+
+                    if ($hasActiveSession && (int) $branch->id !== (int) $currentBranchId) {
+                        return redirect()->back()->with('error', 'Tidak dapat berpindah cabang saat sesi kasir Anda sedang aktif.');
+                    }
+                }
+
                 session(['pos_active_branch_id' => $branch->id]);
+                session()->save();
             }
         }
         return redirect()->back();

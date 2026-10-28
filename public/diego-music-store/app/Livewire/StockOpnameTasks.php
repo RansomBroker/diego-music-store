@@ -319,10 +319,12 @@ class StockOpnameTasks extends Component
     public function render()
     {
         $userId = auth()->id();
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
 
         $assignments = StockOpnameAssignment::query()
             ->with(['period.branch', 'preset', 'stockOpname.items'])
             ->where('assigned_user_id', $userId)
+            ->when($activeBranchId, fn ($q) => $q->whereHas('period', fn ($sq) => $sq->where('branch_id', $activeBranchId)))
             ->whereHas('period', fn ($query) => $query->whereIn('status', [
                 StockOpnamePeriod::STATUS_ACTIVE,
                 StockOpnamePeriod::STATUS_REVIEW,
@@ -349,7 +351,6 @@ class StockOpnameTasks extends Component
             : null;
 
         $selectedLogoUrl = null;
-        $activeBranchId = session('pos_active_branch_id') ?: auth()->user()?->employee?->branch_id;
         if ($activeBranchId) {
             $branch = \App\Models\Branch::find($activeBranchId);
             $selectedLogoUrl = ($branch && $branch->logo_path) ? \Illuminate\Support\Facades\Storage::url($branch->logo_path) : null;

@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Actions\Accounting\GenerateIncomeStatementReport;
+use App\Helpers\BranchHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -48,10 +49,13 @@ class IncomeStatement extends Page implements HasForms
 
     public function mount(): void
     {
+        $canAccessAll = BranchHelper::canAccessAllBranches();
+        $defaultBranch = $canAccessAll ? null : BranchHelper::getActiveBranchId();
+
         $this->form->fill([
             'from_date'     => now()->startOfMonth()->format('Y-m-d'),
             'to_date'       => now()->format('Y-m-d'),
-            'branch_id'     => null,
+            'branch_id'     => $defaultBranch,
             'account_level' => 'all',
             'view_type'     => 'detail',
         ]);
@@ -103,8 +107,9 @@ class IncomeStatement extends Page implements HasForms
 
                             Select::make('branch_id')
                                 ->label('Filter Cabang')
-                                ->options(Branch::orderBy('name')->pluck('name', 'id'))
-                                ->placeholder('Semua Cabang (Konsolidasi)')
+                                ->options(fn () => BranchHelper::getAllowedBranchesQuery()->pluck('name', 'id'))
+                                ->placeholder(fn () => BranchHelper::canAccessAllBranches() ? 'Semua Cabang (Konsolidasi)' : null)
+                                ->required(fn () => !BranchHelper::canAccessAllBranches())
                                 ->searchable()
                                 ->live(),
 
@@ -142,6 +147,13 @@ class IncomeStatement extends Page implements HasForms
         $branchId     = !empty($state['branch_id']) ? (int) $state['branch_id'] : null;
         $viewType     = $state['view_type'] ?? 'detail';
         $accountLevel = $state['account_level'] ?? 'all';
+
+        if (!BranchHelper::canAccessAllBranches()) {
+            $allowedBranchIds = BranchHelper::getAllowedBranchesQuery()->pluck('id')->toArray();
+            if (!$branchId || !in_array($branchId, $allowedBranchIds, true)) {
+                $branchId = BranchHelper::getActiveBranchId();
+            }
+        }
 
         return (new GenerateIncomeStatementReport())->execute($fromDate, $toDate, $branchId, $viewType, $accountLevel);
     }

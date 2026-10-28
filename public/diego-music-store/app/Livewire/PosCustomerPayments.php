@@ -62,6 +62,7 @@ class PosCustomerPayments extends Component
         $this->branch_id = \App\Helpers\BranchHelper::getActiveBranchId();
 
         $defaultAccount = Account::where('classification', 'asset')
+            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
             ->where('is_header', false)
             ->first();
         if ($defaultAccount) {
@@ -395,6 +396,7 @@ class PosCustomerPayments extends Component
             : null;
 
         $accounts = Account::where('classification', 'asset')
+            ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId))
             ->where('is_header', false)
             ->orderBy('code')
             ->get();

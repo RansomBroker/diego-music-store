@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AssetDisposals;
 
 use App\Actions\Accounting\PostAssetDisposal;
+use App\Helpers\BranchHelper;
 use App\Models\Account;
 use App\Models\Asset;
 use App\Models\AssetDisposal;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -39,7 +41,7 @@ class AssetDisposalResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        $accounts = Account::where('is_header', false)->orderBy('code')->pluck('name', 'id');
+        $accounts = fn () => Account::where('branch_id', BranchHelper::getActiveBranchId())->where('is_header', false)->orderBy('code')->pluck('name', 'id');
 
         return $schema
             ->components([
@@ -73,8 +75,9 @@ class AssetDisposalResource extends Resource
 
                             Select::make('asset_id')
                                 ->label('Pilih Aset Tetap')
-                                ->options(
+                                ->options(fn () =>
                                     Asset::where('status', 'active')
+                                        ->where('branch_id', BranchHelper::getActiveBranchId())
                                         ->get()
                                         ->mapWithKeys(fn ($a) => [$a->id => "{$a->asset_code} - {$a->name} (Harga Perolehan: Rp " . number_format($a->purchase_cost, 0, ',', '.') . ")"])
                                 )
@@ -95,6 +98,7 @@ class AssetDisposalResource extends Resource
                             Select::make('branch_id')
                                 ->label('Cabang')
                                 ->options(Branch::orderBy('name')->pluck('name', 'id'))
+                                ->default(fn () => BranchHelper::getActiveBranchId())
                                 ->placeholder('Semua Cabang / Pusat')
                                 ->searchable(),
 
@@ -217,6 +221,12 @@ class AssetDisposalResource extends Resource
                 \Filament\Actions\DeleteAction::make()
                     ->visible(fn (AssetDisposal $record) => $record->status === 'draft'),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $branchId = BranchHelper::getActiveBranchId();
+        return parent::getEloquentQuery()->where('branch_id', $branchId);
     }
 
     public static function getPages(): array

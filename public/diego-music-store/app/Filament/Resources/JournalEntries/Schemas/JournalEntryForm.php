@@ -10,6 +10,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
+use App\Helpers\BranchHelper;
 
 class JournalEntryForm
 {
@@ -38,6 +39,7 @@ class JournalEntryForm
                                 Select::make('branch_id')
                                     ->label('Cabang')
                                     ->relationship('branch', 'name')
+                                    ->default(fn () => BranchHelper::getActiveBranchId())
                                     ->required()
                                     ->searchable()
                                     ->preload(),
@@ -63,7 +65,7 @@ class JournalEntryForm
                                             ->relationship(
                                                 name: 'account',
                                                 titleAttribute: 'name',
-                                                modifyQueryUsing: fn ($query) => $query->where('is_header', false)
+                                                modifyQueryUsing: fn ($query) => $query->where('branch_id', BranchHelper::getActiveBranchId())->where('is_header', false)
                                             )
                                             ->getOptionLabelFromRecordUsing(fn ($record) => "[{$record->code}] {$record->name}")
                                             ->required()

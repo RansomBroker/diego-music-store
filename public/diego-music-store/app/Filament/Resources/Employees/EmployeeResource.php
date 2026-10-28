@@ -5,12 +5,14 @@ namespace App\Filament\Resources\Employees;
 use App\Filament\Resources\Employees\Pages\ListEmployees;
 use App\Filament\Resources\Employees\Schemas\EmployeeForm;
 use App\Filament\Resources\Employees\Tables\EmployeesTable;
+use App\Helpers\BranchHelper;
 use App\Models\Employee;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class EmployeeResource extends Resource
 {
@@ -46,6 +48,12 @@ class EmployeeResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $branchId = BranchHelper::getActiveBranchId();
+        return parent::getEloquentQuery()->where('branch_id', $branchId);
     }
 
     public static function getPages(): array

@@ -13,6 +13,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Placeholder;
 use App\Models\ProductVariant;
 use App\Models\ProductBranchStock;
+use App\Helpers\BranchHelper;
 
 class StockOpnameForm
 {
@@ -34,6 +35,7 @@ class StockOpnameForm
                                 Select::make('branch_id')
                                     ->label('Cabang')
                                     ->relationship('branch', 'name')
+                                    ->default(fn () => BranchHelper::getActiveBranchId())
                                     ->required()
                                     ->searchable()
                                     ->preload()

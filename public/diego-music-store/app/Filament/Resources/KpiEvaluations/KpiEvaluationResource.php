@@ -4,6 +4,7 @@ namespace App\Filament\Resources\KpiEvaluations;
 
 use App\Actions\Kpi\ApproveKpiEvaluation;
 use App\Filament\Resources\KpiEvaluations\Pages\ListKpiEvaluations;
+use App\Helpers\BranchHelper;
 use App\Models\KpiEvaluation;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -11,6 +12,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class KpiEvaluationResource extends Resource
 {
@@ -91,6 +93,12 @@ class KpiEvaluationResource extends Resource
             ->actions([
                 //
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $branchId = BranchHelper::getActiveBranchId();
+        return parent::getEloquentQuery()->where('branch_id', $branchId);
     }
 
     public static function getPages(): array

@@ -46,13 +46,17 @@ class StockOpnamePresetResource extends Resource
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $query = parent::getEloquentQuery();
-        $user = auth()->user();
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
 
+        if ($activeBranchId) {
+            return $query->where('branch_id', $activeBranchId);
+        }
+
+        $user = auth()->user();
         if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
             return $query->whereIn('branch_id', $user->branches()->pluck('branches.id'));
         }
 
-        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
-        return $activeBranchId ? $query->where('branch_id', $activeBranchId) : $query;
+        return $query;
     }
 }

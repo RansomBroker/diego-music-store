@@ -57,10 +57,9 @@
         {{-- Tombol Kembali (hanya tampil jika showBack=true) --}}
         @if ($showBack)
             <a href="{{ $resolvedBackUrl }}"
-               class="flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-700 hover:bg-primary/10 dark:hover:bg-blue-950/40 rounded-xl transition-all group flex-shrink-0"
+               class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 flex items-center justify-center transition-all group flex-shrink-0 shadow-xs active:scale-95"
                title="Kembali ke {{ $backLabel }}">
-                <i class="ph-bold ph-arrow-left text-base group-hover:-translate-x-0.5 transition-transform"></i>
-                <span class="hidden sm:inline">{{ $backLabel }}</span>
+                <i class="ph-bold ph-arrow-left text-base sm:text-lg group-hover:-translate-x-0.5 transition-transform"></i>
             </a>
         @endif
 
@@ -71,10 +70,43 @@
                 <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate leading-tight tracking-tight">
                     {{ $pageTitle }}
                 </h1>
-                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 truncate flex items-center gap-1 mt-0.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-primary inline-block flex-shrink-0"></span>
-                    <span class="truncate">{{ $currentBranchModel?->store_name ?: ($currentBranchModel?->name ?: 'Diego Music Store') }}</span>
-                </p>
+                @if ($userBranchList->count() > 1)
+                    <div class="relative flex-shrink-0 mt-0.5" x-data="{ openBranchDropdownMobile: false }">
+                        <button 
+                            @click="openBranchDropdownMobile = !openBranchDropdownMobile"
+                            type="button"
+                            class="text-[10px] font-bold text-primary dark:text-blue-400 truncate flex items-center gap-1 cursor-pointer hover:underline"
+                            title="Klik untuk ganti cabang"
+                        >
+                            <span class="w-1.5 h-1.5 rounded-full bg-primary inline-block flex-shrink-0"></span>
+                            <span class="truncate">{{ $currentBranchModel?->name ?: ($currentBranchModel?->store_name ?: 'Diego Music Store') }}</span>
+                            <i class="ph-bold ph-caret-down text-[9px]"></i>
+                        </button>
+                        <div 
+                            x-show="openBranchDropdownMobile" 
+                            @click.away="openBranchDropdownMobile = false" 
+                            x-cloak 
+                            class="absolute left-0 mt-1 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-1.5 space-y-1"
+                        >
+                            <div class="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700/50">
+                                Ganti Cabang Aktif
+                            </div>
+                            @foreach ($userBranchList as $b)
+                                <a href="{{ route('pos.switch-branch', $b->id) }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-colors {{ $b->id == $currentActiveBranchId ? 'bg-primary text-white font-bold' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700' }}">
+                                    <span>{{ $b->name }}</span>
+                                    @if ($b->id == $currentActiveBranchId)
+                                        <i class="ph-bold ph-check text-xs"></i>
+                                    @endif
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @else
+                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 truncate flex items-center gap-1 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary inline-block flex-shrink-0"></span>
+                        <span class="truncate">{{ $currentBranchModel?->store_name ?: ($currentBranchModel?->name ?: 'Diego Music Store') }}</span>
+                    </p>
+                @endif
             </div>
 
             <!-- Desktop View (>= sm): Nama Toko & Cabang di atas, Judul di bawah -->
@@ -89,7 +121,8 @@
                             <button 
                                 @click="openBranchDropdown = !openBranchDropdown" 
                                 type="button"
-                                class="flex items-center gap-1 px-2.5 py-1 bg-primary/10 hover:bg-primary/20 text-primary dark:text-blue-400 border border-primary/20 rounded-full text-xs font-bold transition-all cursor-pointer"
+                                class="flex items-center gap-1.5 px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary dark:text-blue-400 border border-primary/20 rounded-full text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                                title="Klik untuk berganti cabang operasional"
                             >
                                 <i class="ph-bold ph-storefront text-xs"></i>
                                 <span>{{ $currentBranchModel?->name ?: 'Pilih Cabang' }}</span>
@@ -100,14 +133,21 @@
                                 x-show="openBranchDropdown" 
                                 @click.away="openBranchDropdown = false" 
                                 x-cloak 
-                                class="absolute left-0 mt-2 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-1.5"
+                                class="absolute left-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-2 space-y-1"
                             >
-                                <div class="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ganti Cabang Aktif</div>
+                                <div class="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700/50">
+                                    Ganti Cabang Aktif
+                                </div>
                                 @foreach ($userBranchList as $b)
-                                    <a href="{{ route('pos.switch-branch', $b->id) }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl {{ $b->id == $currentActiveBranchId ? 'bg-primary text-white' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700' }}">
-                                        <span>{{ $b->name }}</span>
+                                    <a href="{{ route('pos.switch-branch', $b->id) }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-colors {{ $b->id == $currentActiveBranchId ? 'bg-primary text-white font-bold' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700' }}">
+                                        <div class="truncate">
+                                            <div class="font-bold">{{ $b->name }}</div>
+                                            @if ($b->store_name || $b->city)
+                                                <div class="text-[10px] opacity-75 font-normal">{{ $b->store_name ?: $b->city }}</div>
+                                            @endif
+                                        </div>
                                         @if ($b->id == $currentActiveBranchId)
-                                            <i class="ph-bold ph-check"></i>
+                                            <i class="ph-bold ph-check text-sm shrink-0"></i>
                                         @endif
                                     </a>
                                 @endforeach
@@ -289,19 +329,6 @@
             </div>
         @endif
 
-        {{-- Dropdown Cabang Terkunci (POS Kasir) --}}
-        @if ($showBranchSelector && count($branches) > 0)
-            <div class="relative flex-shrink-0">
-                <select wire:model.live="selectedBranchId"
-                        disabled
-                        class="pl-2.5 pr-7 py-1.5 bg-slate-100 dark:bg-slate-700 border-none rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 outline-none cursor-not-allowed opacity-80"
-                        title="Cabang terkunci oleh sesi kasir aktif. Tutup sesi untuk mengganti cabang.">
-                    @foreach ($branches as $branch)
-                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-        @endif
 
         {{-- Notifications Toggle --}}
         <button @click="$dispatch('open-notifications')"
@@ -318,51 +345,138 @@
             <span x-show="unreadCount > 0" x-cloak class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-700 shadow-sm" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
         </button>
 
-        {{-- Dark Mode Toggle --}}
+        {{-- Dark Mode Toggle (Hidden pada < 2xl karena sudah ada di dalam dropdown profil user) --}}
         <button onclick="toggleDarkMode()"
                 type="button"
-                class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 cursor-pointer shadow-xs"
+                class="hidden 2xl:flex w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 cursor-pointer shadow-xs"
                 title="Ubah Tema Gelap / Terang">
             <i class="ph-bold ph-sun dark:hidden text-base text-amber-500"></i>
             <i class="ph-bold ph-moon hidden dark:block text-base text-blue-400"></i>
         </button>
 
-        {{-- Divider --}}
-        <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1 flex-shrink-0"></div>
+        {{-- Divider (Hidden pada < 2xl) --}}
+        <div class="hidden 2xl:block h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1 flex-shrink-0"></div>
 
-        {{-- Profil User Avatar --}}
-        <div class="flex items-center gap-2.5 flex-shrink-0">
-            <div class="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-600 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-xs flex-shrink-0 flex items-center justify-center font-bold text-xs text-primary dark:text-blue-400"
-                 title="{{ auth()->user()->name ?? 'User' }} ({{ auth()->user()->roles()->first()?->name ?? 'Kasir' }})">
-                @if (auth()->user()?->avatar_full_url)
-                    <img src="{{ auth()->user()->avatar_full_url }}"
-                         alt="{{ auth()->user()->name }}"
-                         class="w-full h-full object-cover">
-                @else
-                    {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
-                @endif
-            </div>
-            <div class="hidden xl:block text-left leading-tight">
-                <div class="text-sm font-black text-slate-800 dark:text-slate-100 leading-tight">
-                    {{ auth()->user()->name ?? 'Administrator' }}
+        {{-- Profil User Avatar & Dropdown Menu --}}
+        <div class="relative flex-shrink-0" x-data="{ openUserDropdown: false }">
+            <button
+                @click="openUserDropdown = !openUserDropdown"
+                type="button"
+                class="flex items-center gap-2 p-1 sm:p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/70 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all cursor-pointer group active:scale-[0.98]"
+                title="Menu Akun & Pengaturan (Klik untuk Buka)"
+                aria-expanded="false"
+                :aria-expanded="openUserDropdown.toString()"
+            >
+                {{-- Avatar --}}
+                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-600 shadow-xs flex-shrink-0 flex items-center justify-center font-bold text-xs text-primary dark:text-blue-400 group-hover:ring-2 group-hover:ring-primary/20 transition-all">
+                    @if (auth()->user()?->avatar_full_url)
+                        <img src="{{ auth()->user()->avatar_full_url }}"
+                             alt="{{ auth()->user()->name }}"
+                             class="w-full h-full object-cover">
+                    @else
+                        {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
+                    @endif
                 </div>
-                @if ($todaySalesTotal !== null)
-                    <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">
-                        Penjualan:
-                        <span class="text-emerald-600 dark:text-emerald-400 font-extrabold">
-                            Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}
+
+                {{-- Username & Info --}}
+                <div class="hidden xl:block text-left leading-tight">
+                    <div class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 leading-tight flex items-center gap-1">
+                        <span class="truncate max-w-[110px]">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                        <i class="ph-bold ph-caret-down text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-200" :class="{ 'rotate-180': openUserDropdown }"></i>
+                    </div>
+                    @if ($todaySalesTotal !== null)
+                        <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate max-w-[120px]">
+                            Penjualan:
+                            <span class="text-emerald-600 dark:text-emerald-400 font-extrabold">
+                                Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}
+                            </span>
+                        </div>
+                    @else
+                        <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate max-w-[120px]">
+                            {{ auth()->user()->roles()->first()?->name ?? 'Kasir' }}
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Caret indicator on < xl --}}
+                <i class="ph-bold ph-caret-down text-xs text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 block xl:hidden"></i>
+            </button>
+
+            <!-- Dropdown Menu Panel -->
+            <div
+                x-show="openUserDropdown"
+                @click.away="openUserDropdown = false"
+                x-cloak
+                class="absolute right-0 mt-2 w-64 sm:w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 p-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-150"
+            >
+                {{-- Header Profil di dalam Dropdown --}}
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/50 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-600 shadow-xs flex-shrink-0 flex items-center justify-center font-bold text-sm text-primary dark:text-blue-400">
+                        @if (auth()->user()?->avatar_full_url)
+                            <img src="{{ auth()->user()->avatar_full_url }}"
+                                 alt="{{ auth()->user()->name }}"
+                                 class="w-full h-full object-cover">
+                        @else
+                            {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
+                        @endif
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">
+                            {{ auth()->user()->name ?? 'Administrator' }}
+                        </div>
+                        <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate">
+                            {{ auth()->user()->roles()->first()?->name ?? 'Kasir' }} • {{ $currentBranchModel?->name ?: 'Cabang Utama' }}
+                        </div>
+                        @if ($todaySalesTotal !== null)
+                            <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                Penjualan: Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Action Menu List --}}
+                <div class="space-y-1">
+                    {{-- 1. Toggle Mode Gelap / Terang --}}
+                    <button
+                        type="button"
+                        onclick="toggleDarkMode()"
+                        class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer group"
+                    >
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-blue-950/40 text-amber-500 dark:text-blue-400 flex items-center justify-center border border-amber-200/50 dark:border-blue-800/40">
+                                <i class="ph-bold ph-sun dark:hidden text-sm"></i>
+                                <i class="ph-bold ph-moon hidden dark:block text-sm"></i>
+                            </div>
+                            <span class="dark:hidden">Mode Gelap</span>
+                            <span class="hidden dark:inline">Mode Terang</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                            <i class="ph-bold ph-arrows-left-right text-xs"></i>
                         </span>
-                    </div>
-                @else
-                    <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">
-                        {{ auth()->user()->roles()->first()?->name ?? 'Kasir' }}
-                    </div>
-                @endif
+                    </button>
+
+                    <div class="h-[1px] bg-slate-150 dark:bg-slate-700/70 my-1"></div>
+
+                    {{-- 2. Tombol Logout --}}
+                    <form action="{{ route('pos.logout') }}" method="POST" class="w-full">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition cursor-pointer group"
+                        >
+                            <div class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-200 dark:border-rose-800/60 group-hover:scale-105 transition-transform">
+                                <i class="ph-bold ph-sign-out text-sm"></i>
+                            </div>
+                            <span>Keluar / Logout</span>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
 
-        {{-- Tombol Logout --}}
-        <form action="{{ route('pos.logout') }}" method="POST" class="inline-block flex-shrink-0">
+        {{-- Tombol Logout Standalone (Hidden pada < 2xl) --}}
+        <form action="{{ route('pos.logout') }}" method="POST" class="hidden 2xl:inline-block flex-shrink-0">
             @csrf
             <button type="submit"
                     class="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-extrabold text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/80 rounded-xl transition-all cursor-pointer shadow-xs active:scale-95 group"

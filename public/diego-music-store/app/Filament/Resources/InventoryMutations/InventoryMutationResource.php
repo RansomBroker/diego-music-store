@@ -48,6 +48,16 @@ class InventoryMutationResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        return parent::getEloquentQuery()
+            ->where(function (\Illuminate\Database\Eloquent\Builder $query) use ($activeBranchId) {
+                $query->where('sender_branch_id', $activeBranchId)
+                      ->orWhere('receiver_branch_id', $activeBranchId);
+            });
+    }
+
     public static function getPages(): array
     {
         return [

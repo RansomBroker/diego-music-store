@@ -54,12 +54,26 @@ class EmployeeForm
                     ->schema([
                         Select::make('branch_id')
                             ->relationship('branch', 'name')
+                            ->default(fn () => \App\Helpers\BranchHelper::getActiveBranchId())
                             ->label('Cabang Utilitas / Home Branch')
                             ->placeholder('Pilih Cabang...')
                             ->nullable(),
 
                         Select::make('user_id')
-                            ->relationship('user', 'name')
+                            ->relationship(
+                                name: 'user',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query) {
+                                    $authUser = auth()->user();
+                                    if ($authUser && !$authUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+                                        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+                                        if ($activeBranchId) {
+                                            return $query->whereHas('branches', fn ($q) => $q->where('branches.id', $activeBranchId));
+                                        }
+                                    }
+                                    return $query;
+                                }
+                            )
                             ->label('Akun Login Sistem (User)')
                             ->placeholder('Pilih Akun User...')
                             ->nullable()

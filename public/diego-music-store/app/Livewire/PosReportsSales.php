@@ -188,11 +188,11 @@ class PosReportsSales extends Component
         $customers = Customer::orderBy('name')->get();
 
         $salesUsers = User::whereHas('roles', fn($q) => $q->whereIn('name', ['sales', 'owner', 'admin']))
-            ->orWhereIn('id', Sale::whereNotNull('sales_rep_id')->distinct()->pluck('sales_rep_id'))
+            ->orWhereIn('id', Sale::where('branch_id', $activeBranchId)->whereNotNull('sales_rep_id')->distinct()->pluck('sales_rep_id'))
             ->orderBy('name')->get();
 
         $cashierUsers = User::whereHas('roles', fn($q) => $q->whereIn('name', ['cashier', 'kasir', 'owner', 'admin']))
-            ->orWhereIn('id', Sale::whereNotNull('created_by')->distinct()->pluck('created_by'))
+            ->orWhereIn('id', Sale::where('branch_id', $activeBranchId)->whereNotNull('created_by')->distinct()->pluck('created_by'))
             ->orderBy('name')->get();
 
         $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->pluck('name');

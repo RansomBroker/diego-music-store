@@ -221,12 +221,14 @@ class PosEmployeeTasks extends Component
                 $q->where('status', $this->statusFilter);
             });
 
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+
         // If not admin/owner, maybe they only see their own tasks.
-        // Assuming Owner can see all tasks they created. 
-        // For simplicity, we just show tasks created by current user if they are owner.
-        // Or if they are employee, they see tasks assigned to them.
         if ($user->hasRole(['owner', 'admin', 'super_admin'])) {
             $query->where('owner_id', $user->id);
+            if ($activeBranchId) {
+                $query->whereHas('employee', fn($q) => $q->where('branch_id', $activeBranchId));
+            }
         } else {
             // Employee view (if they access this page)
             $query->whereHas('employee', function($q) use ($user) {
@@ -236,6 +238,7 @@ class PosEmployeeTasks extends Component
 
         $tasks = $query->latest()->paginate(15);
         $employees = Employee::where('is_active', true)
+            ->when($activeBranchId, fn($q) => $q->where('branch_id', $activeBranchId))
             ->whereHas('user', function ($query) {
                 $query->whereDoesntHave('roles', function ($q) {
                     $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
@@ -243,7 +246,6 @@ class PosEmployeeTasks extends Component
             })
             ->get();
 
-        $activeBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
         $branch = $activeBranchId ? \App\Models\Branch::find($activeBranchId) : \App\Models\Branch::first();
         $selectedLogoUrl = ($branch && !empty($branch->logo_path))
             ? \Illuminate\Support\Facades\Storage::url($branch->logo_path)

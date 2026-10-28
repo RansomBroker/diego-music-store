@@ -3,12 +3,14 @@
 namespace App\Filament\Resources\SalesCommissions;
 
 use App\Filament\Resources\SalesCommissions\Pages\ListSalesCommissions;
+use App\Helpers\BranchHelper;
 use App\Models\SalesCommissionLog;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class SalesCommissionResource extends Resource
 {
@@ -88,6 +90,13 @@ class SalesCommissionResource extends Resource
                         ])),
                 ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $branchId = BranchHelper::getActiveBranchId();
+        return parent::getEloquentQuery()
+            ->whereHas('employee', fn (Builder $q) => $q->where('branch_id', $branchId));
     }
 
     public static function getPages(): array

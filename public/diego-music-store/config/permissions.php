@@ -85,6 +85,7 @@ return [
             'master.payment_methods' => 'Kelola Metode Pembayaran & EDC',
             'master.vouchers' => 'Kelola Voucher & Promo Toko',
             'master.branches' => 'Kelola Data Cabang Toko',
+            'branch.switch' => 'Pindah & Ganti Akses Lokasi Cabang Toko',
             'master.users' => 'Kelola User Akun Login',
             'utility.store' => 'Profil Toko, Setting WhatsApp & Performa Cabang',
             'utility.receipt' => 'Pengaturan Template Struk & Printer',

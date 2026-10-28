@@ -21,9 +21,12 @@ class AccountForm
                 Section::make('Detail Akun Keuangan')
                     ->columnSpan('full')
                     ->schema([
+                        \Filament\Forms\Components\Hidden::make('branch_id')
+                            ->default(fn () => \App\Helpers\BranchHelper::getActiveBranchId()),
+
                         TextInput::make('code')
                             ->required()
-                            ->unique(ignoreRecord: true)
+                            ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule) => $rule->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId()))
                             ->maxLength(50)
                             ->label('Kode Akun')
                             ->placeholder('e.g., 111101001'),
@@ -59,11 +62,15 @@ class AccountForm
 
                         Select::make('parent_id')
                             ->label('Akun Induk (Parent)')
-                            ->options(fn ($record) => Account::where('is_header', true)
-                                ->when($record, fn($q) => $q->where('id', '!=', $record->id))
-                                ->get()
-                                ->mapWithKeys(fn($acc) => [$acc->id => "{$acc->code} - {$acc->name}"])
-                                ->toArray())
+                            ->options(function ($record) {
+                                $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+                                return Account::where('is_header', true)
+                                    ->when($activeBranchId, fn($q) => $q->where('branch_id', $activeBranchId))
+                                    ->when($record, fn($q) => $q->where('id', '!=', $record->id))
+                                    ->get()
+                                    ->mapWithKeys(fn($acc) => [$acc->id => "{$acc->code} - {$acc->name}"])
+                                    ->toArray();
+                            })
                             ->placeholder('Tanpa Induk (Tingkat Atas / Root)')
                             ->searchable()
                             ->preload(),

@@ -61,11 +61,13 @@ class PosSupplierPayments extends Component
     public function mount(): void
     {
         $this->payment_date = now()->format('Y-m-d');
-        $this->branch_id = Auth::user()?->branches()->first()?->id
+        $this->branch_id = \App\Helpers\BranchHelper::getActiveBranchId()
+            ?? Auth::user()?->branches()->first()?->id
             ?? Auth::user()?->branch_id
             ?? Branch::first()?->id;
 
         $defaultAccount = Account::where('classification', 'asset')
+            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
             ->where('is_header', false)
             ->first();
         if ($defaultAccount) {
@@ -111,11 +113,13 @@ class PosSupplierPayments extends Component
             'customer_id', 'payment_reference', 'notes', 'items'
         ]);
         $this->payment_date = now()->format('Y-m-d');
-        $this->branch_id = Auth::user()?->branches()->first()?->id
+        $this->branch_id = \App\Helpers\BranchHelper::getActiveBranchId()
+            ?? Auth::user()?->branches()->first()?->id
             ?? Auth::user()?->branch_id
             ?? Branch::first()?->id;
 
         $defaultAccount = Account::where('classification', 'asset')
+            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
             ->where('is_header', false)
             ->first();
         if ($defaultAccount) {
@@ -135,6 +139,7 @@ class PosSupplierPayments extends Component
         }
 
         $unpaidSales = \App\Models\Sale::query()
+            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
             ->where('customer_id', $value)
             ->where(function ($q) {
                 $q->where('payment_method', 'like', '%piutang%')
@@ -330,7 +335,12 @@ class PosSupplierPayments extends Component
     // ── Render ───────────────────────────────────────────────────────────
     public function render()
     {
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId()
+            ?? Auth::user()?->branches()->first()?->id
+            ?? Branch::first()?->id;
+
         $salesPiutang = \App\Models\Sale::with(['customer', 'branch'])
+            ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId))
             ->where(function ($q) {
                 $q->where('payment_method', 'like', '%piutang%')
                   
@@ -343,13 +353,13 @@ class PosSupplierPayments extends Component
             ->latest()
             ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
-        $userBranchId = Auth::user()?->branches()->first()?->id ?? Branch::first()?->id;
-        $branch = $userBranchId ? Branch::find($userBranchId) : null;
+        $branch = $activeBranchId ? Branch::find($activeBranchId) : null;
         $selectedLogoUrl = ($branch && !empty($branch->logo_path))
             ? Storage::url($branch->logo_path)
             : null;
 
         $accounts = Account::where('classification', 'asset')
+            ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId))
             ->where('is_header', false)
             ->orderBy('code')
             ->get();

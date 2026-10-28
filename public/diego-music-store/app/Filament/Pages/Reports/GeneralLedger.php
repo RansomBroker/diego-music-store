@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Actions\Accounting\GenerateGeneralLedgerReport;
+use App\Helpers\BranchHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -41,10 +42,13 @@ class GeneralLedger extends Page implements HasForms
 
     public function mount(): void
     {
+        $canAccessAll = BranchHelper::canAccessAllBranches();
+        $defaultBranch = $canAccessAll ? null : BranchHelper::getActiveBranchId();
+
         $this->form->fill([
             'from_date'  => now()->startOfMonth()->format('Y-m-d'),
             'to_date'    => now()->format('Y-m-d'),
-            'branch_id'  => null,
+            'branch_id'  => $defaultBranch,
             'account_id' => null,
         ]);
     }
@@ -95,20 +99,23 @@ class GeneralLedger extends Page implements HasForms
 
                             Select::make('branch_id')
                                 ->label('Filter Cabang')
-                                ->options(Branch::orderBy('name')->pluck('name', 'id'))
-                                ->placeholder('Semua Cabang (Konsolidasi)')
+                                ->options(fn () => BranchHelper::getAllowedBranchesQuery()->pluck('name', 'id'))
+                                ->placeholder(fn () => BranchHelper::canAccessAllBranches() ? 'Semua Cabang (Konsolidasi)' : null)
+                                ->required(fn () => !BranchHelper::canAccessAllBranches())
                                 ->searchable()
                                 ->live(),
 
                             Select::make('account_id')
                                 ->label('Pilih Akun')
-                                ->options(
-                                    Account::where('is_active', true)
+                                ->options(function (callable $get) {
+                                    $branchId = $get('branch_id') ?: BranchHelper::getActiveBranchId();
+                                    return Account::where('branch_id', $branchId)
+                                        ->where('is_active', true)
                                         ->where('is_header', false)
                                         ->orderBy('code')
                                         ->get()
-                                        ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"])
-                                )
+                                        ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"]);
+                                })
                                 ->placeholder('Semua Akun (Buku Besar Lengkap)')
                                 ->searchable()
                                 ->live(),
@@ -125,6 +132,13 @@ class GeneralLedger extends Page implements HasForms
         $toDate    = $state['to_date'] ?? now()->format('Y-m-d');
         $branchId  = !empty($state['branch_id']) ? (int) $state['branch_id'] : null;
         $accountId = !empty($state['account_id']) ? (int) $state['account_id'] : null;
+
+        if (!BranchHelper::canAccessAllBranches()) {
+            $allowedBranchIds = BranchHelper::getAllowedBranchesQuery()->pluck('id')->toArray();
+            if (!$branchId || !in_array($branchId, $allowedBranchIds, true)) {
+                $branchId = BranchHelper::getActiveBranchId();
+            }
+        }
 
         return (new GenerateGeneralLedgerReport())->execute($fromDate, $toDate, $accountId, $branchId);
     }

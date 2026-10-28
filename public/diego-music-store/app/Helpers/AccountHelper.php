@@ -41,28 +41,40 @@ class AccountHelper
     ];
 
     /**
-     * Find an account by new code or legacy code (bi-directional).
+     * Find an account by new code or legacy code (bi-directional), scoped by branch.
      */
-    public static function findByCode(string $code): ?Account
+    public static function findByCode(string $code, ?int $branchId = null): ?Account
     {
-        // 1. Direct match
-        $account = Account::where('code', $code)->first();
-        if ($account) {
-            return $account;
-        }
-
-        // 2. Legacy -> New code
-        if (isset(self::LEGACY_CODE_MAP[$code])) {
-            $account = Account::where('code', self::LEGACY_CODE_MAP[$code])->first();
-            if ($account) {
-                return $account;
+        if ($branchId === null && auth()->check()) {
+            try {
+                $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+            } catch (\Throwable $e) {
+                $branchId = null;
             }
         }
 
-        // 3. New -> Legacy code
+        $codesToCheck = [$code];
+        if (isset(self::LEGACY_CODE_MAP[$code])) {
+            $codesToCheck[] = self::LEGACY_CODE_MAP[$code];
+        }
         $reverseMap = array_flip(self::LEGACY_CODE_MAP);
         if (isset($reverseMap[$code])) {
-            $account = Account::where('code', $reverseMap[$code])->first();
+            $codesToCheck[] = $reverseMap[$code];
+        }
+
+        // 1. If branchId is available, search account for this branch first
+        if ($branchId) {
+            foreach ($codesToCheck as $c) {
+                $account = Account::where('code', $c)->where('branch_id', $branchId)->first();
+                if ($account) {
+                    return $account;
+                }
+            }
+        }
+
+        // 2. Fallback to any matching account or default branch
+        foreach ($codesToCheck as $c) {
+            $account = Account::where('code', $c)->first();
             if ($account) {
                 return $account;
             }
@@ -72,16 +84,27 @@ class AccountHelper
     }
 
     /**
-     * Resolve account ID by code (new or legacy), with optional creation fallback.
+     * Resolve account ID by code (new or legacy) scoped to a branch, with optional creation fallback.
      */
-    public static function resolveAccountId(string $code, string $defaultName = 'Default Account', string $classification = 'asset'): int
+    public static function resolveAccountId(string $code, string $defaultName = 'Default Account', string $classification = 'asset', ?int $branchId = null): int
     {
         $targetCode = self::LEGACY_CODE_MAP[$code] ?? $code;
-        $account = self::findByCode($targetCode);
+        if ($branchId === null && auth()->check()) {
+            try {
+                $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+            } catch (\Throwable $e) {
+                $branchId = null;
+            }
+        }
+
+        $account = self::findByCode($targetCode, $branchId);
 
         if (!$account) {
             $account = Account::firstOrCreate(
-                ['code' => $targetCode],
+                [
+                    'code' => $targetCode,
+                    'branch_id' => $branchId,
+                ],
                 [
                     'name' => $defaultName,
                     'classification' => $classification,

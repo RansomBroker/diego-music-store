@@ -7,6 +7,7 @@ Peta komponen arsitektur Diego Music Store (ERP, POS & Accounting). Jaga file in
 
 ## Core Domains & Action Modules (`app/Actions/`)
 - `Pos/`: Transaksi kasir, held transactions, pembayaran multi-metode, voucher, & integrasi stok.
+- `SalesQueue/`: Antrian giliran melayani sales (round-robin), on-duty tracking, & laporan performa.
 - `Accounting/`: General ledger, pembuatan journal entry otomatis/terjadwal, COA, & monthly closing.
 - `Product/`: Manajemen master produk, varian, pricing tier, branch stock, barcode, & bundle.
 - `PurchaseTransaction/` & `PurchaseOrder/`: Siklus pengadaan, PO, penerimaan barang (DO), & hutang supplier.
@@ -15,10 +16,10 @@ Peta komponen arsitektur Diego Music Store (ERP, POS & Accounting). Jaga file in
 - `StockOpname/`, `StockTransfer/`, `InventoryMutation/`: Mutasi stok antar-cabang, opname, & kartu stok.
 - `Employee/`, `Payroll/`, `Attendance/`, `Commission/`: HRIS, absensi/radius, hitung komisi sales, & penggajian.
 - `Customer/` & `Supplier/`: Master data kontak, deposit pelanggan, & histori transaksi.
-- `Branch/`: Konfigurasi multi-cabang, prefix nota, & pengaturan toko.
+- `Branch/`: Konfigurasi multi-cabang, prefix nota, pengaturan toko, & provisioning replikasi COA per cabang.
 
 ## Key Models (`app/Models/`)
-- Sales & POS: `Sale`, `SaleItem`, `PosHeldTransaction`, `PaymentMethod`, `Voucher`
+- Sales & POS: `Sale`, `SaleItem`, `PosHeldTransaction`, `PaymentMethod`, `Voucher`, `SalesQueueMember`, `SalesDutyLog`
 - Accounting: `Account`, `AccountClassification`, `JournalEntry`, `JournalItem`, `MonthlyClosing`
 - Inventory: `Product`, `ProductVariant`, `ProductBranchStock`, `StockMovement`, `StockTransfer`
 - Purchasing: `PurchaseOrder`, `PurchaseTransaction`, `DeliveryOrder`, `SupplierPayment`

@@ -48,4 +48,30 @@ class UserResource extends Resource
             'index' => ListUsers::route('/'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $authUser = auth()->user();
+
+        // Owner dan Super Admin memiliki akses global melihat seluruh pengguna lintas cabang
+        if ($authUser && $authUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+            return $query;
+        }
+
+        // Pengguna non-owner (misal: Admin Cabang) HANYA boleh melihat user cabang mereka dan BUKAN akun Owner
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        if ($activeBranchId) {
+            return $query->whereHas('branches', fn ($q) => $q->where('branches.id', $activeBranchId))
+                ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']));
+        }
+
+        if ($authUser) {
+            $userBranchIds = $authUser->branches()->pluck('branches.id');
+            return $query->whereHas('branches', fn ($q) => $q->whereIn('branches.id', $userBranchIds))
+                ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']));
+        }
+
+        return $query;
+    }
 }

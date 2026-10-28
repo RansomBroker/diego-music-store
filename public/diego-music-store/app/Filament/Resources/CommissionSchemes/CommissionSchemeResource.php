@@ -38,6 +38,7 @@ class CommissionSchemeResource extends Resource
                 Forms\Components\Select::make('branch_id')
                     ->label('Cabang')
                     ->relationship('branch', 'name')
+                    ->default(fn () => \App\Helpers\BranchHelper::getActiveBranchId())
                     ->nullable()
                     ->placeholder('Semua Cabang'),
                 Forms\Components\Select::make('employees')
@@ -45,11 +46,17 @@ class CommissionSchemeResource extends Resource
                     ->relationship(
                         name: 'employees',
                         titleAttribute: 'name',
-                        modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query, $record) => $query->whereDoesntHave('commissionSchemes', function ($q) use ($record) {
-                            if ($record) {
-                                $q->where('commission_schemes.id', '!=', $record->id);
+                        modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query, $record) {
+                            $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+                            if ($activeBranchId) {
+                                $query->where('branch_id', $activeBranchId);
                             }
-                        })
+                            return $query->whereDoesntHave('commissionSchemes', function ($q) use ($record) {
+                                if ($record) {
+                                    $q->where('commission_schemes.id', '!=', $record->id);
+                                }
+                            });
+                        }
                     )
                     ->multiple()
                     ->preload()
@@ -139,5 +146,29 @@ class CommissionSchemeResource extends Resource
         return [
             'index' => ListCommissionSchemes::route('/'),
         ];
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+
+        if ($activeBranchId) {
+            return $query->where(function ($q) use ($activeBranchId) {
+                $q->where('branch_id', $activeBranchId)
+                  ->orWhereNull('branch_id');
+            });
+        }
+
+        $user = auth()->user();
+        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+            $userBranchIds = $user->branches()->pluck('branches.id');
+            return $query->where(function ($q) use ($userBranchIds) {
+                $q->whereIn('branch_id', $userBranchIds)
+                  ->orWhereNull('branch_id');
+            });
+        }
+
+        return $query;
     }
 }

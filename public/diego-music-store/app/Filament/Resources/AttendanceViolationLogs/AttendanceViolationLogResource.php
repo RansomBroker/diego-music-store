@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AttendanceViolationLogs;
 
 use App\Filament\Resources\AttendanceViolationLogs\Pages\ListAttendanceViolationLogs;
+use App\Helpers\BranchHelper;
 use App\Models\AttendanceViolationLog;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -12,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class AttendanceViolationLogResource extends Resource
@@ -33,7 +35,7 @@ class AttendanceViolationLogResource extends Resource
             ->components([
                 Forms\Components\Select::make('employee_id')
                     ->label('Karyawan')
-                    ->relationship('employee', 'name')
+                    ->relationship('employee', 'name', fn (Builder $query) => $query->where('branch_id', BranchHelper::getActiveBranchId()))
                     ->required(),
                 Forms\Components\DatePicker::make('date')
                     ->label('Tanggal')
@@ -132,6 +134,13 @@ class AttendanceViolationLogResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $branchId = BranchHelper::getActiveBranchId();
+        return parent::getEloquentQuery()
+            ->whereHas('employee', fn (Builder $q) => $q->where('branch_id', $branchId));
     }
 
     public static function getPages(): array

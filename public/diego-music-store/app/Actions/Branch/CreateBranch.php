@@ -51,8 +51,8 @@ class CreateBranch
                 'interbranch_payable_account_id' => $data['interbranch_payable_account_id'] ?? null,
             ]);
 
-            // Ensure COA accounts are provisioned if not provided
-            \App\Actions\Branch\EnsureBranchCoaAccounts::execute($branch);
+            // Provision full 97 COA accounts for the new branch automatically
+            app(\App\Actions\Branch\ProvisionBranchCoaAccounts::class)->execute($branch);
 
             // 2. Attach Owner / Admin users to branch_user pivot automatically
             $adminUserIds = User::whereHas('roles', function ($q) {

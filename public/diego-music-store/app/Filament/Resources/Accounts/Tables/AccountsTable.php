@@ -69,10 +69,11 @@ class AccountsTable
                     ->money('idr')
                     ->alignEnd()
                     ->state(function (Account $record) {
+                        $targetBranchId = $record->branch_id ?: \App\Helpers\BranchHelper::getActiveBranchId();
                         $sums = JournalItem::query()
                             ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
                             ->where('account_id', $record->id)
-                            ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted'))
+                            ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted')->where('branch_id', $targetBranchId))
                             ->first();
 
                         $debits = $sums->total_debit ?? 0;
@@ -103,8 +104,9 @@ class AccountsTable
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
                     ->modalContent(function (Account $record) {
+                        $targetBranchId = $record->branch_id ?: \App\Helpers\BranchHelper::getActiveBranchId();
                         $items = JournalItem::where('account_id', $record->id)
-                            ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted'))
+                            ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted')->where('branch_id', $targetBranchId))
                             ->with('journalEntry')
                             ->get()
                             ->sortBy(fn($item) => $item->journalEntry->date . '_' . $item->journalEntry->id);

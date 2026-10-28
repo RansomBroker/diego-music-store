@@ -76,14 +76,17 @@ class PosNavbarHelper
      */
     public static function resolveBranchContext(): array
     {
-        $currentActiveBranchId = session('pos_active_branch_id') ?: Auth::user()?->branches()->first()?->id;
-        $currentBranchModel = $currentActiveBranchId ? Branch::find($currentActiveBranchId) : Branch::first();
+        if (!Auth::check()) {
+            return [
+                'currentActiveBranchId' => null,
+                'currentBranchModel'    => Branch::where('is_active', true)->first(),
+                'userBranchList'        => collect(),
+            ];
+        }
 
-        $userBranchList = Auth::check()
-            ? (Auth::user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin'])
-                ? Branch::where('is_active', true)->get()
-                : Auth::user()->branches()->where('is_active', true)->get())
-            : collect();
+        $currentActiveBranchId = BranchHelper::getActiveBranchId();
+        $currentBranchModel = $currentActiveBranchId ? Branch::find($currentActiveBranchId) : Branch::first();
+        $userBranchList = BranchHelper::getAllowedBranchesQuery()->get();
 
         return [
             'currentActiveBranchId' => $currentActiveBranchId,

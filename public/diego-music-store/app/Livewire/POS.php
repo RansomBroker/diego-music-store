@@ -11,6 +11,7 @@ use App\Actions\Sales\CreatePOSSale;
 use App\Actions\Customer\CreateCustomer;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
+use Livewire\Attributes\On;
 
 use App\Livewire\Traits\POS\WithCartManagement;
 use App\Livewire\Traits\POS\WithCustomerManagement;
@@ -561,6 +562,14 @@ class POS extends Component
     {
         $this->selectedSalesRepId = null;
         $this->selectedSalesRepName = '';
+        $this->salesSearch = '';
+    }
+
+    #[On('pos-select-sales-rep')]
+    public function handleSelectSalesRepFromQueue(array $payload): void
+    {
+        $this->selectedSalesRepId = $payload['id'] ?? null;
+        $this->selectedSalesRepName = $payload['name'] ?? '';
         $this->salesSearch = '';
     }
 

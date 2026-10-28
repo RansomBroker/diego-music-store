@@ -19,7 +19,8 @@ class UpdateUser
     public function execute(User $user, array $data): User
     {
         return DB::transaction(function () use ($user, $data) {
-            // Extract relation arrays
+            $hasBranches = array_key_exists('branches', $data);
+            $hasRoles = array_key_exists('roles', $data);
             $branches = Arr::pull($data, 'branches', []);
             $roles = Arr::pull($data, 'roles', []);
 
@@ -31,9 +32,13 @@ class UpdateUser
             // Update user details
             $user->update($data);
 
-            // Sync relation data
-            $user->branches()->sync($branches);
-            $user->syncRoles($roles);
+            // Sync relation data if provided
+            if ($hasBranches) {
+                $user->branches()->sync($branches);
+            }
+            if ($hasRoles) {
+                $user->syncRoles($roles);
+            }
 
             return $user;
         });

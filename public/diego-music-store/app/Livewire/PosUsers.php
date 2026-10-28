@@ -71,10 +71,13 @@ class PosUsers extends Component
         }
     }
 
-    // ── Modal: Buka Form Tambah ──────────────────────────────────────────
     public function openCreate(): void
     {
         $this->reset(['name', 'username', 'email', 'password', 'avatar', 'existingAvatarUrl', 'selectedBranches', 'selectedRoles', 'editingId', 'isEditing']);
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        if ($activeBranchId) {
+            $this->selectedBranches = [(string) $activeBranchId];
+        }
         $this->is_active = true;
         $this->showModal = true;
     }
@@ -194,11 +197,25 @@ class PosUsers extends Component
         $this->resetPage();
     }
 
-    // ── Render ───────────────────────────────────────────────────────────
     public function render()
     {
-        $users = User::with(['branches', 'roles'])
-            ->when($this->search, fn ($q) =>
+        $authUser = Auth::user();
+        $isOwner = $authUser && $authUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+
+        $query = User::with(['branches', 'roles']);
+
+        if (!$isOwner) {
+            if ($activeBranchId) {
+                $query->whereHas('branches', fn ($q) => $q->where('branches.id', $activeBranchId));
+            } else {
+                $userBranchIds = $authUser ? $authUser->branches()->pluck('branches.id') : [];
+                $query->whereHas('branches', fn ($q) => $q->whereIn('branches.id', $userBranchIds));
+            }
+            $query->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']));
+        }
+
+        $users = $query->when($this->search, fn ($q) =>
                 $q->where('name', 'like', "%{$this->search}%")
                   ->orWhere('username', 'like', "%{$this->search}%")
                   ->orWhere('email', 'like', "%{$this->search}%")
@@ -207,16 +224,23 @@ class PosUsers extends Component
             ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         // Logo untuk sidebar
-        $userBranchId    = Auth::user()->branches()->first()?->id;
-        $branch          = $userBranchId ? Branch::find($userBranchId) : null;
+        $branch = $activeBranchId ? Branch::find($activeBranchId) : null;
         $selectedLogoUrl = ($branch && !empty($branch->logo_path))
             ? \Illuminate\Support\Facades\Storage::url($branch->logo_path)
             : null;
 
+        $branchesList = $isOwner
+            ? Branch::where('is_active', true)->orderBy('name')->get()
+            : \App\Helpers\BranchHelper::getAllowedBranchesQuery()->where('is_active', true)->orderBy('name')->get();
+
+        $rolesList = $isOwner
+            ? Role::orderBy('name')->get()
+            : Role::whereNotIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin'])->orderBy('name')->get();
+
         return view('livewire.pos-users', [
             'users'           => $users,
-            'branchesList'    => Branch::where('is_active', true)->orderBy('name')->get(),
-            'rolesList'       => Role::orderBy('name')->get(),
+            'branchesList'    => $branchesList,
+            'rolesList'       => $rolesList,
             'selectedLogoUrl' => $selectedLogoUrl,
         ])->layout('layouts.pos', ['title' => 'Data User — POS']);
     }

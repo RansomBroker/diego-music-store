@@ -10,6 +10,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use App\Models\Account;
+use App\Helpers\BranchHelper;
 
 class CashTransactionForm
 {
@@ -31,6 +32,7 @@ class CashTransactionForm
                                 Select::make('branch_id')
                                     ->label('Cabang')
                                     ->relationship('branch', 'name')
+                                    ->default(fn () => BranchHelper::getActiveBranchId())
                                     ->required()
                                     ->searchable()
                                     ->preload()
@@ -67,9 +69,11 @@ class CashTransactionForm
                                     })
                                     ->options(function ($get) {
                                         $type = $get('type') ?? 'out';
+                                        $branchId = BranchHelper::getActiveBranchId();
                                         // For 'out' and 'transfer', must select a cash/bank asset account
                                         if ($type === 'out' || $type === 'transfer') {
                                             return Account::query()
+                                                ->where('branch_id', $branchId)
                                                 ->where('is_header', false)
                                                 ->where('code', 'like', '1-1%')
                                                 ->get()
@@ -78,6 +82,7 @@ class CashTransactionForm
                                         }
                                         // For 'in', select non-cash accounts (Revenue, etc.)
                                         return Account::query()
+                                            ->where('branch_id', $branchId)
                                             ->where('is_header', false)
                                             ->where('code', 'not like', '1-1%')
                                             ->get()
@@ -99,9 +104,11 @@ class CashTransactionForm
                                     })
                                     ->options(function ($get) {
                                         $type = $get('type') ?? 'out';
+                                        $branchId = BranchHelper::getActiveBranchId();
                                         // For 'in' and 'transfer', must select a cash/bank asset account
                                         if ($type === 'in' || $type === 'transfer') {
                                             return Account::query()
+                                                ->where('branch_id', $branchId)
                                                 ->where('is_header', false)
                                                 ->where('code', 'like', '1-1%')
                                                 ->get()
@@ -110,6 +117,7 @@ class CashTransactionForm
                                         }
                                         // For 'out', select non-cash accounts (Expense, etc.)
                                         return Account::query()
+                                            ->where('branch_id', $branchId)
                                             ->where('is_header', false)
                                             ->where('code', 'not like', '1-1%')
                                             ->get()

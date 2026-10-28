@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SalesInvoices\Schemas;
 
 use App\Models\ProductVariant;
 use App\Models\SalesQuotation;
+use App\Helpers\BranchHelper;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -41,8 +42,9 @@ class SalesInvoiceForm
 
                                 Select::make('sales_quotation_id')
                                     ->label('Rujukan Penawaran Harga (SQ)')
-                                    ->options(
-                                        SalesQuotation::whereIn('status', ['approved', 'sent', 'draft', 'closed'])
+                                    ->options(fn () =>
+                                        SalesQuotation::where('branch_id', BranchHelper::getActiveBranchId())
+                                            ->whereIn('status', ['approved', 'sent', 'draft', 'closed'])
                                             ->get()
                                             ->pluck('quotation_number', 'id')
                                     )
@@ -82,6 +84,7 @@ class SalesInvoiceForm
                                 Select::make('branch_id')
                                     ->label('Cabang')
                                     ->relationship('branch', 'name')
+                                    ->default(fn () => BranchHelper::getActiveBranchId())
                                     ->required()
                                     ->searchable()
                                     ->preload(),

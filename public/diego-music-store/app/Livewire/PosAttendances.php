@@ -79,7 +79,7 @@ class PosAttendances extends Component
         $this->filterMonth = now()->format('Y-m');
         $this->attendanceDate = now()->format('Y-m-d');
         $this->backdateDate = now()->subDay()->format('Y-m-d');
-        $this->filterBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
+        $this->filterBranchId = \App\Helpers\BranchHelper::getActiveBranchId() ?? session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
 
         if (request()->query('tab') === 'backdate_requests') {
             $this->activeTab = 'backdate_requests';
@@ -366,21 +366,25 @@ class PosAttendances extends Component
             ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
         $employees = $isOwnerUser
-            ? Employee::where('is_active', true)->get()
+            ? Employee::where('is_active', true)
+                ->when($this->filterBranchId, fn ($q) => $q->where('branch_id', $this->filterBranchId))
+                ->get()
             : Employee::query()->whereKey($currentEmployeeId ?? 0)->where('is_active', true)->get();
         $branches = $isOwnerUser
-            ? Branch::where('is_active', true)->get()
+            ? \App\Helpers\BranchHelper::getAllowedBranchesQuery()->where('is_active', true)->get()
             : auth()->user()->branches()->where('branches.is_active', true)->get();
 
         $pendingQuery = AttendanceBackdateRequest::with(['employee', 'branch'])
             ->where('status', 'pending');
         if (!$isOwnerUser) {
             $pendingQuery->where('employee_id', $currentEmployeeId ?? 0);
+        } elseif ($this->filterBranchId) {
+            $pendingQuery->where('branch_id', $this->filterBranchId);
         }
         $pendingBackdateRequests = $pendingQuery->orderBy('requested_date', 'desc')->get();
 
         $activeBranchId = $isOwnerUser
-            ? (session('pos_active_branch_id') ?: auth()->user()?->branches()->where('branches.is_active', true)->value('branches.id'))
+            ? ($this->filterBranchId ?: \App\Helpers\BranchHelper::getActiveBranchId())
             : auth()->user()?->employee?->branch_id;
         $branch = $activeBranchId ? Branch::where('is_active', true)->find($activeBranchId) : null;
         $selectedLogoUrl = ($branch && !empty($branch->logo_path))

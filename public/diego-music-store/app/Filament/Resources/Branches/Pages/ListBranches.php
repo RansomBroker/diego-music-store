@@ -20,17 +20,17 @@ class ListBranches extends ListRecords
     {
         return [
             Action::make('sync_coa')
-                ->label('Sinkronisasi Akun COA Cabang')
+                ->label('Sinkronisasi 97 Akun COA Cabang')
                 ->icon('heroicon-o-arrow-path')
                 ->color('info')
                 ->requiresConfirmation()
-                ->modalHeading('Sinkronisasi Akun COA Cabang')
-                ->modalDescription('Apakah Anda ingin memastikan semua cabang memiliki akun COA (Persediaan, Piutang Antar Cabang, dan Hutang Antar Cabang) secara otomatis?')
+                ->modalHeading('Sinkronisasi 97 Akun COA Cabang')
+                ->modalDescription('Apakah Anda ingin memastikan seluruh cabang memiliki 97 akun COA resmi (lengkap seperti cabang utama) secara otomatis?')
                 ->action(function () {
-                    $count = EnsureBranchCoaAccounts::executeAll();
+                    $count = \App\Actions\Branch\ProvisionBranchCoaAccounts::executeAll();
                     Notification::make()
                         ->title('Sinkronisasi Berhasil')
-                        ->body("Akun COA untuk {$count} cabang berhasil diperiksa dan disinkronkan.")
+                        ->body("97 Akun COA untuk {$count} cabang berhasil diperiksa dan disinkronkan.")
                         ->success()
                         ->send();
                 }),

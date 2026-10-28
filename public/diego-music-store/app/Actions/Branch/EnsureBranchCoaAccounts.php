@@ -14,6 +14,9 @@ class EnsureBranchCoaAccounts
      */
     public static function execute(Branch $branch): Branch
     {
+        // First provision the full 97 official COA accounts for the branch
+        app(ProvisionBranchCoaAccounts::class)->execute($branch);
+
         return DB::transaction(function () use ($branch) {
             $branch->refresh();
 

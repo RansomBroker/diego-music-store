@@ -5,12 +5,14 @@ namespace App\Filament\Resources\ScheduledJournalEntries;
 use App\Filament\Resources\ScheduledJournalEntries\Pages\ListScheduledJournalEntries;
 use App\Filament\Resources\ScheduledJournalEntries\Schemas\ScheduledJournalEntryForm;
 use App\Filament\Resources\ScheduledJournalEntries\Tables\ScheduledJournalEntriesTable;
+use App\Helpers\BranchHelper;
 use App\Models\ScheduledJournalEntry;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ScheduledJournalEntryResource extends Resource
 {
@@ -44,6 +46,12 @@ class ScheduledJournalEntryResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $branchId = BranchHelper::getActiveBranchId();
+        return parent::getEloquentQuery()->where('branch_id', $branchId);
     }
 
     public static function getPages(): array

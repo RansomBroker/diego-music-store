@@ -9,7 +9,7 @@
 ])
 
 @php
-    $baseClasses = 'relative inline-flex items-center justify-center gap-1.5 font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer select-none rounded-lg border';
+    $baseClasses = 'relative inline-flex items-center justify-center gap-1.5 font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer select-none rounded-lg border whitespace-nowrap';
     
     // Sizes
     $sizes = [
@@ -56,9 +56,9 @@
         {{ $attributes->merge(['class' => $classes]) }}
     >
         @if ($icon)
-            <i class="ph {{ $icon }} {{ $size === 'lg' ? 'text-xl group-hover:scale-110 transition-transform' : 'text-sm' }} font-bold"></i>
+            <i class="ph {{ $icon }} {{ $size === 'lg' ? 'text-xl group-hover:scale-110 transition-transform' : 'text-xs sm:text-sm' }} font-bold flex-shrink-0"></i>
         @endif
-        <span>{{ $slot }}</span>
+        {{ $slot }}
     </a>
 @else
     <button 
@@ -67,8 +67,8 @@
         {{ $attributes->merge(['class' => $classes]) }}
     >
         @if ($icon)
-            <i class="ph {{ $icon }} {{ $size === 'lg' ? 'text-xl group-hover:scale-110 transition-transform' : 'text-sm' }} font-bold"></i>
+            <i class="ph {{ $icon }} {{ $size === 'lg' ? 'text-xl group-hover:scale-110 transition-transform' : 'text-xs sm:text-sm' }} font-bold flex-shrink-0"></i>
         @endif
-        <span>{{ $slot }}</span>
+        {{ $slot }}
     </button>
 @endif

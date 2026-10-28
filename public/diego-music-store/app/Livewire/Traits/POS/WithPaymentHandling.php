@@ -209,6 +209,26 @@ trait WithPaymentHandling
                 }
             }
 
+            // Link sale transaction to active sales duty log if present
+            if ($sale && $sale->sales_rep_id) {
+                try {
+                    $activeDutyLog = \App\Models\SalesDutyLog::where('user_id', $sale->sales_rep_id)
+                        ->where('branch_id', $this->selectedBranchId)
+                        ->where('status', 'serving')
+                        ->latest()
+                        ->first();
+
+                    if ($activeDutyLog) {
+                        $activeDutyLog->update([
+                            'sale_id' => $sale->id,
+                            'closing_amount' => $activeDutyLog->closing_amount + $sale->grand_total,
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Could not link sales duty log for sale #{$sale->id}: " . $e->getMessage());
+                }
+            }
+
             $targetPhone = trim($customerPhone);
 
             // Reset POS State

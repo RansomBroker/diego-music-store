@@ -60,6 +60,7 @@
         :salesReps="$this->salesReps"
         :saleCategories="$this->saleCategories"
         :editingSaleId="$editingSaleId"
+        :selectedBranchId="$selectedBranchId"
     />
 
 

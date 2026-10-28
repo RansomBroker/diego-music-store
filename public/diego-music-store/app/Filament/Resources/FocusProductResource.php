@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Actions\FocusProduct\DismissFocusProduct;
 use App\Actions\FocusProduct\ResolveFocusProduct;
 use App\Filament\Resources\FocusProductResource\Pages;
+use App\Helpers\BranchHelper;
 use App\Helpers\FocusProductHelper;
 use App\Models\Branch;
 use App\Models\FocusProduct;
@@ -12,6 +13,7 @@ use App\Models\ProductBranchStock;
 use App\Models\SaleItem;
 use App\Models\StockMovement;
 use BackedEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -319,6 +321,12 @@ class FocusProductResource extends Resource
                             ]),
                     ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $branchId = BranchHelper::getActiveBranchId();
+        return parent::getEloquentQuery()->where('branch_id', $branchId);
     }
 
     public static function getPages(): array

@@ -138,4 +138,21 @@ class AttendanceRadiusResource extends Resource
             'index' => ListAttendanceRadiuses::route('/'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+
+        if ($activeBranchId) {
+            return $query->where('id', $activeBranchId);
+        }
+
+        $user = auth()->user();
+        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+            return $query->whereIn('id', $user->branches()->pluck('branches.id'));
+        }
+
+        return $query;
+    }
 }

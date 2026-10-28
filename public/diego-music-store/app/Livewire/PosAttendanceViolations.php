@@ -53,7 +53,7 @@ class PosAttendanceViolations extends Component
     public function mount(): void
     {
         $this->filterMonth = now()->format('Y-m');
-        $this->filterBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
+        $this->filterBranchId = \App\Helpers\BranchHelper::getActiveBranchId() ?? session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
     }
 
     public function updatingSearch(): void
@@ -271,7 +271,7 @@ class PosAttendanceViolations extends Component
 
     public function render()
     {
-        $activeBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId() ?? session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
         $branchId       = $this->filterBranchId ?: $activeBranchId;
         $branch         = $branchId ? Branch::find($branchId) : Branch::first();
 
@@ -279,7 +279,7 @@ class PosAttendanceViolations extends Component
             ? Storage::url($branch->logo_path)
             : null;
 
-        $branches = Branch::where('is_active', true)->get();
+        $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->where('is_active', true)->get();
 
         [$year, $month] = explode('-', $this->filterMonth ?: now()->format('Y-m'));
 

@@ -22,9 +22,9 @@ class OwnerDashboardWidgets extends Component
         $this->dateFrom = now()->startOfMonth()->format('Y-m-d');
         $this->dateTo   = now()->format('Y-m-d');
         
-        $sessionBranch = session('pos_active_branch_id');
-        if ($sessionBranch) {
-            $this->branchId = (string) $sessionBranch;
+        $activeBranch = \App\Helpers\BranchHelper::getActiveBranchId();
+        if ($activeBranch) {
+            $this->branchId = (string) $activeBranch;
         }
     }
 
@@ -58,7 +58,7 @@ class OwnerDashboardWidgets extends Component
 
         $dashboardData = $action->execute($filters);
 
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->where('is_active', true)->orderBy('name')->get();
         $productCategories = Product::select('category')
             ->whereNotNull('category')
             ->where('category', '!=', '')

@@ -118,8 +118,11 @@ class StockOpnameReview extends Component
 
     private function findReviewablePeriod(int $periodId): StockOpnamePeriod
     {
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+
         return StockOpnamePeriod::query()
             ->with(['branch', 'assignments.preset', 'assignments.assignedUser', 'assignments.stockOpname.items.productVariant.product', 'finalStockOpname'])
+            ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId))
             ->whereKey($periodId)
             ->whereIn('status', [
                 StockOpnamePeriod::STATUS_ACTIVE,
@@ -131,8 +134,11 @@ class StockOpnameReview extends Component
 
     private function findReviewableAssignment(int $assignmentId): StockOpnameAssignment
     {
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+
         $assignment = StockOpnameAssignment::query()
             ->with(['period.branch', 'preset', 'assignedUser', 'stockOpname.items.productVariant.product'])
+            ->when($activeBranchId, fn ($q) => $q->whereHas('period', fn ($sq) => $sq->where('branch_id', $activeBranchId)))
             ->whereKey($assignmentId)
             ->firstOrFail();
 
@@ -155,8 +161,11 @@ class StockOpnameReview extends Component
 
     public function render()
     {
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+
         $periods = StockOpnamePeriod::query()
             ->with(['branch', 'assignments.preset', 'assignments.assignedUser', 'assignments.stockOpname.items', 'finalStockOpname'])
+            ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId))
             ->whereIn('status', [
                 StockOpnamePeriod::STATUS_ACTIVE,
                 StockOpnamePeriod::STATUS_REVIEW,
@@ -175,7 +184,6 @@ class StockOpnameReview extends Component
             : null;
 
         $selectedLogoUrl = null;
-        $activeBranchId = session('pos_active_branch_id') ?: auth()->user()?->employee?->branch_id;
         if ($activeBranchId) {
             $branch = Branch::find($activeBranchId);
             $selectedLogoUrl = ($branch && $branch->logo_path) ? Storage::url($branch->logo_path) : null;

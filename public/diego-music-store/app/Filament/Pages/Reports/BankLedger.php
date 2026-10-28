@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Actions\Accounting\GenerateBankLedgerReport;
+use App\Helpers\BranchHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -42,10 +43,13 @@ class BankLedger extends Page implements HasForms
 
     public function mount(): void
     {
+        $canAccessAll = BranchHelper::canAccessAllBranches();
+        $defaultBranch = $canAccessAll ? null : BranchHelper::getActiveBranchId();
+
         $this->form->fill([
             'from_date'     => now()->startOfMonth()->format('Y-m-d'),
             'to_date'       => now()->format('Y-m-d'),
-            'branch_id'     => null,
+            'branch_id'     => $defaultBranch,
             'account_id'    => null,
             'mutation_type' => 'all',
             'search'        => null,
@@ -98,21 +102,24 @@ class BankLedger extends Page implements HasForms
 
                             Select::make('branch_id')
                                 ->label('Filter Cabang')
-                                ->options(Branch::orderBy('name')->pluck('name', 'id'))
-                                ->placeholder('Semua Cabang (Konsolidasi)')
+                                ->options(fn () => BranchHelper::getAllowedBranchesQuery()->pluck('name', 'id'))
+                                ->placeholder(fn () => BranchHelper::canAccessAllBranches() ? 'Semua Cabang (Konsolidasi)' : null)
+                                ->required(fn () => !BranchHelper::canAccessAllBranches())
                                 ->searchable()
                                 ->live(),
 
                             Select::make('account_id')
                                 ->label('Pilih Rekening Bank')
-                                ->options(
-                                    Account::where('is_active', true)
+                                ->options(function (callable $get) {
+                                    $branchId = $get('branch_id') ?: BranchHelper::getActiveBranchId();
+                                    return Account::where('branch_id', $branchId)
+                                        ->where('is_active', true)
                                         ->where('is_header', false)
                                         ->where('classification', 'asset')
                                         ->orderBy('code')
                                         ->get()
-                                        ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"])
-                                )
+                                        ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"]);
+                                })
                                 ->placeholder('Semua Rekening Bank')
                                 ->searchable()
                                 ->live(),
@@ -146,6 +153,13 @@ class BankLedger extends Page implements HasForms
         $accountId    = !empty($state['account_id']) ? (int) $state['account_id'] : null;
         $mutationType = $state['mutation_type'] ?? 'all';
         $search       = $state['search'] ?? null;
+
+        if (!BranchHelper::canAccessAllBranches()) {
+            $allowedBranchIds = BranchHelper::getAllowedBranchesQuery()->pluck('id')->toArray();
+            if (!$branchId || !in_array($branchId, $allowedBranchIds, true)) {
+                $branchId = BranchHelper::getActiveBranchId();
+            }
+        }
 
         return (new GenerateBankLedgerReport())->execute($fromDate, $toDate, $accountId, $branchId, $mutationType, $search);
     }

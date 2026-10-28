@@ -17,7 +17,9 @@ class SalesEmployeeDashboardWidgets extends Component
         $isOwner = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
 
         if ($isOwner) {
+            $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
             $firstEmp = Employee::where('is_active', true)
+                ->when($activeBranchId, fn($q) => $q->where('branch_id', $activeBranchId))
                 ->whereDoesntHave('user.roles', fn($q) => $q->whereIn('name', ['owner', 'Owner']))
                 ->orderBy('name', 'asc')
                 ->first();
@@ -31,6 +33,7 @@ class SalesEmployeeDashboardWidgets extends Component
     {
         $currentUser = Auth::user();
         $isOwner = $currentUser && $currentUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
 
         // Non-management users must never choose another employee through Livewire state.
         if (!$isOwner) {
@@ -41,6 +44,7 @@ class SalesEmployeeDashboardWidgets extends Component
         $employeesList = $isOwner
             ? Employee::with('user')
                 ->where('is_active', true)
+                ->when($activeBranchId, fn($q) => $q->where('branch_id', $activeBranchId))
                 ->whereDoesntHave('user.roles', fn($q) => $q->whereIn('name', ['owner', 'Owner']))
                 ->orderBy('name', 'asc')
                 ->get()

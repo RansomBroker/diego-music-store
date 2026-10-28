@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Actions\Accounting\GenerateBalanceSheetReport;
+use App\Helpers\BranchHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -48,9 +49,12 @@ class BalanceSheet extends Page implements HasForms
 
     public function mount(): void
     {
+        $canAccessAll = BranchHelper::canAccessAllBranches();
+        $defaultBranch = $canAccessAll ? null : BranchHelper::getActiveBranchId();
+
         $this->form->fill([
             'as_of_date'    => now()->format('Y-m-d'),
-            'branch_id'     => null,
+            'branch_id'     => $defaultBranch,
             'view_type'     => 'detail',
             'account_level' => 'all',
         ]);
@@ -96,8 +100,9 @@ class BalanceSheet extends Page implements HasForms
 
                             Select::make('branch_id')
                                 ->label('Filter Cabang')
-                                ->options(Branch::orderBy('name')->pluck('name', 'id'))
-                                ->placeholder('Semua Cabang (Konsolidasi)')
+                                ->options(fn () => BranchHelper::getAllowedBranchesQuery()->pluck('name', 'id'))
+                                ->placeholder(fn () => BranchHelper::canAccessAllBranches() ? 'Semua Cabang (Konsolidasi)' : null)
+                                ->required(fn () => !BranchHelper::canAccessAllBranches())
                                 ->searchable()
                                 ->live(),
 
@@ -134,6 +139,13 @@ class BalanceSheet extends Page implements HasForms
         $branchId     = !empty($state['branch_id']) ? (int) $state['branch_id'] : null;
         $viewType     = $state['view_type'] ?? 'detail';
         $accountLevel = $state['account_level'] ?? 'all';
+
+        if (!BranchHelper::canAccessAllBranches()) {
+            $allowedBranchIds = BranchHelper::getAllowedBranchesQuery()->pluck('id')->toArray();
+            if (!$branchId || !in_array($branchId, $allowedBranchIds, true)) {
+                $branchId = BranchHelper::getActiveBranchId();
+            }
+        }
 
         return (new GenerateBalanceSheetReport())->execute($asOfDate, $branchId, $viewType, $accountLevel);
     }

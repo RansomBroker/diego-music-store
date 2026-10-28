@@ -80,6 +80,7 @@ class PosEmployees extends Component
         ]);
         $this->monthly_off_days_quota = 4;
         $this->basic_salary = 0;
+        $this->branch_id = \App\Helpers\BranchHelper::getActiveBranchId();
         $this->is_active = true;
         $this->join_date = now()->format('Y-m-d');
         $this->showModal = true;
@@ -210,7 +211,9 @@ class PosEmployees extends Component
     // ── Render ───────────────────────────────────────────────────────────
     public function render()
     {
-        $query = Employee::with(['user.roles', 'branch']);
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        $query = Employee::with(['user.roles', 'branch'])
+            ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId));
 
         if (!empty(trim($this->search))) {
             $searchTerm = '%' . trim($this->search) . '%';
@@ -225,9 +228,16 @@ class PosEmployees extends Component
         $employees = $query->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
-        $branches = Branch::where('is_active', true)->get();
-        $users    = User::where('is_active', true)->get();
-        $activeBranchId = session('pos_active_branch_id') ?: auth()->user()?->branches()->first()?->id;
+        $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->where('is_active', true)->get();
+
+        $isOwner = auth()->user()?->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $usersQuery = User::where('is_active', true);
+        if (!$isOwner) {
+            $usersQuery->when($activeBranchId, fn ($q) => $q->whereHas('branches', fn ($sq) => $sq->where('branches.id', $activeBranchId)))
+                ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']));
+        }
+        $users = $usersQuery->orderBy('name')->get();
+
         $branch = $activeBranchId ? Branch::find($activeBranchId) : Branch::first();
         $selectedLogoUrl = ($branch && !empty($branch->logo_path))
             ? \Illuminate\Support\Facades\Storage::url($branch->logo_path)

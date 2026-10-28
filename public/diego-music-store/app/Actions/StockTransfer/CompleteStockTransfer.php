@@ -32,15 +32,28 @@ class CompleteStockTransfer
                 throw new Exception("Cabang Tujuan ({$toBranch->name}) belum memiliki pengaturan Akun COA yang lengkap untuk proses transfer.");
             }
 
-            // 2. Buat Journal Entry
-            $journal = JournalEntry::create([
+            // 2. Buat Journal Entry Berpasangan (Dual Balanced Journals)
+            // 2a. Jurnal Sisi Cabang Pengirim (Origin)
+            $originJournal = JournalEntry::create([
                 'entry_no' => JournalEntry::generateEntryNo($fromBranch->id),
                 'date' => $transfer->transfer_date,
-                'description' => "Jurnal Transfer Barang: {$transfer->transfer_number} ({$fromBranch->name} -> {$toBranch->name})",
+                'description' => "Jurnal Transfer Keluar: {$transfer->transfer_number} ({$fromBranch->name} -> {$toBranch->name})",
                 'reference_type' => StockTransfer::class,
                 'reference_id' => $transfer->id,
                 'status' => 'posted',
                 'branch_id' => $fromBranch->id,
+                'posted_at' => now(),
+            ]);
+
+            // 2b. Jurnal Sisi Cabang Penerima (Destination)
+            $destJournal = JournalEntry::create([
+                'entry_no' => JournalEntry::generateEntryNo($toBranch->id),
+                'date' => $transfer->transfer_date,
+                'description' => "Jurnal Transfer Masuk: {$transfer->transfer_number} (dari {$fromBranch->name})",
+                'reference_type' => StockTransfer::class,
+                'reference_id' => $transfer->id,
+                'status' => 'posted',
+                'branch_id' => $toBranch->id,
                 'posted_at' => now(),
             ]);
 
@@ -103,12 +116,12 @@ class CompleteStockTransfer
                 $destStock->save();
             }
 
-            // 4. Proses Jurnal Items (Pola 4 Akun)
+            // 4. Proses Jurnal Items (Pola Simetris 2 Buku Besar)
             
-            // --- Sisi Cabang Asal ---
+            // --- Sisi Buku Besar Cabang Asal ($fromBranch) ---
             // Debit: Piutang Antar Cabang
             JournalItem::create([
-                'journal_entry_id' => $journal->id,
+                'journal_entry_id' => $originJournal->id,
                 'account_id' => $fromBranch->interbranch_receivable_account_id,
                 'notes' => "Piutang Antar Cabang - Transfer ke {$toBranch->name}",
                 'debit' => $totalValue,
@@ -116,17 +129,17 @@ class CompleteStockTransfer
             ]);
             // Credit: Persediaan Cabang Asal
             JournalItem::create([
-                'journal_entry_id' => $journal->id,
+                'journal_entry_id' => $originJournal->id,
                 'account_id' => $fromBranch->inventory_account_id,
                 'notes' => "Persediaan Barang Dagang ({$fromBranch->name}) - Keluar ke {$toBranch->name}",
                 'debit' => 0,
                 'credit' => $totalValue,
             ]);
 
-            // --- Sisi Cabang Tujuan ---
+            // --- Sisi Buku Besar Cabang Tujuan ($toBranch) ---
             // Debit: Persediaan Cabang Tujuan
             JournalItem::create([
-                'journal_entry_id' => $journal->id,
+                'journal_entry_id' => $destJournal->id,
                 'account_id' => $toBranch->inventory_account_id,
                 'notes' => "Persediaan Barang Dagang ({$toBranch->name}) - Masuk dari {$fromBranch->name}",
                 'debit' => $totalValue,
@@ -134,7 +147,7 @@ class CompleteStockTransfer
             ]);
             // Credit: Hutang Antar Cabang
             JournalItem::create([
-                'journal_entry_id' => $journal->id,
+                'journal_entry_id' => $destJournal->id,
                 'account_id' => $toBranch->interbranch_payable_account_id,
                 'notes' => "Hutang Antar Cabang - Diterima dari {$fromBranch->name}",
                 'debit' => 0,
@@ -145,7 +158,7 @@ class CompleteStockTransfer
             $transfer->update([
                 'status' => 'COMPLETED',
                 'completed_at' => now(),
-                'journal_entry_id' => $journal->id,
+                'journal_entry_id' => $originJournal->id,
                 'total_cost' => $totalValue,
             ]);
 

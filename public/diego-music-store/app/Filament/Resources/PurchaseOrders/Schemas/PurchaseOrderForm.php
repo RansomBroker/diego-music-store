@@ -19,6 +19,7 @@ use App\Models\ProductVariant;
 use App\Models\Unit;
 use App\Helpers\FormatHelper;
 use App\Helpers\PoSmartAssistHelper;
+use App\Helpers\BranchHelper;
 use Filament\Forms\Get;
 
 class PurchaseOrderForm
@@ -48,6 +49,7 @@ class PurchaseOrderForm
                                 Select::make('branch_id')
                                     ->label('Cabang Pemesan')
                                     ->relationship('branch', 'name')
+                                    ->default(fn () => BranchHelper::getActiveBranchId())
                                     ->required()
                                     ->searchable()
                                     ->preload(),
@@ -185,7 +187,8 @@ class PurchaseOrderForm
 
                                 Select::make('shipping_payment_account_id')
                                     ->label('Metode Pembayaran Ongkir')
-                                    ->options(fn () => \App\Models\Account::where('is_header', false)
+                                    ->options(fn () => \App\Models\Account::where('branch_id', BranchHelper::getActiveBranchId())
+                                        ->where('is_header', false)
                                         ->where('code', 'like', '1-1%')
                                         ->get()
                                         ->mapWithKeys(fn ($acc) => [$acc->id => "[{$acc->code}] {$acc->name}"])

@@ -28,7 +28,8 @@
     'salesReps' => [],
     'saleCategories' => [],
     'editingSaleId' => null,
-    'cartVariants' => []
+    'cartVariants' => [],
+    'selectedBranchId' => null,
 ])
 
 <div class="flex-1 w-full bg-white dark:bg-slate-800 flex flex-col h-full transition-colors overflow-hidden">
@@ -54,10 +55,10 @@
         @endif
 
         <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2 mb-2">
-            <div class="flex flex-col">
-                <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Transaksi Saat Ini</h2>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="text-xs  font-bold text-slate-900 dark:text-slate-100">
+            <div class="flex flex-col flex-shrink-0">
+                <h2 class="text-base xl:text-lg font-bold text-slate-800 dark:text-slate-100 whitespace-nowrap">Transaksi Saat Ini</h2>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                    <span class="text-xs font-bold text-slate-900 dark:text-slate-100">
                         {{ $this->previewInvoiceNumber }}
                     </span>
                     @if ($editingSaleId)
@@ -73,149 +74,157 @@
             </div>
             
             <!-- Toolbar Utility Buttons with Labels -->
-            <div class="flex items-stretch gap-2">
+            <div class="flex items-stretch gap-1.5 sm:gap-2 flex-1 min-w-0">
+                <!-- Antrian Sales (Di Sebelah Kiri Tambah Produk) -->
+                <livewire:pos.sales-queue-widget :branch-id="$selectedBranchId" wire:key="pos-sales-queue-widget" />
+
                 <!-- Tombol Utama Tambah Produk (Expand 2 Baris) -->
                 <button 
                     wire:click="openProductSearch"
                     type="button" 
-                    title="Tambah Produk"
-                    class="flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl px-3 transition-all active:scale-[0.98] w-24 sm:w-28 flex-shrink-0 border border-emerald-400/20 group"
+                    title="Tambah Produk (F2 / Klik)"
+                    class="flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black rounded-xl px-2.5 py-1.5 transition-all active:scale-[0.98] w-22 sm:w-24 flex-shrink-0 border border-emerald-400/20 group cursor-pointer shadow-xs"
                 >
-                    <i class="ph-bold ph-plus text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-[10px] sm:text-xs leading-tight text-center">Tambah<br>Produk</span>
+                    <i class="ph-bold ph-plus text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-[11px] font-black leading-tight text-center">Tambah<br>Produk</span>
                 </button>
 
                 <!-- Kumpulan Tombol Utility -->
-                <div class="flex flex-col gap-2 justify-center flex-1">
-                    <!-- Baris 1: Aksi Utama & Navigasi -->
-                    <div class="flex items-center flex-wrap gap-2">
-                        <!-- Daftar Transaksi (Hari Ini) -->
+                <div class="flex flex-col gap-1.5 justify-center flex-1 min-w-0">
+                    <!-- Baris 1: Aksi Utama & Navigasi (5 Kolom Penuh: Transaksi, Tunda, Simpan, Struk, Reset) -->
+                    <div class="grid grid-cols-5 gap-1 sm:gap-1.5 w-full">
+                        <!-- 1. Daftar Transaksi (Hari Ini) -->
                         <x-pos.utility.button 
                             href="/pos/transactions?fromDate={{ now()->format('Y-m-d') }}&toDate={{ now()->format('Y-m-d') }}" 
                             variant="info" 
-                            size="sm" 
+                            size="xs" 
                             icon="ph-bold ph-list-dashes" 
-                            title="Daftar Transaksi"
-                            class="!bg-indigo-500 hover:!bg-indigo-600 dark:!bg-indigo-600 dark:hover:!bg-indigo-700 !text-white !border-transparent"
+                            title="Daftar Transaksi Hari Ini"
+                            class="!w-full !bg-indigo-500 hover:!bg-indigo-600 dark:!bg-indigo-600 dark:hover:!bg-indigo-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
                         >
-                            Daftar Transaksi
+                            <span>Transaksi</span>
                         </x-pos.utility.button>
 
-                    <!-- Daftar Transaksi Tunda (Hold / List) -->
-                    <x-pos.utility.button 
-                        wire:click="openHeldTransactionsModal" 
-                        variant="warning" 
-                        size="sm" 
-                        icon="ph-bold ph-folder-open" 
-                        title="Daftar Transaksi Tunda"
-                        class="!bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent"
-                    >
-                        Daftar Transaksi Tunda
-                        @if (count($heldTransactions) > 0)
-                            <span class="absolute -top-2 -right-2 flex h-5 w-5 pointer-events-none">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-5 w-5 bg-rose-600 items-center justify-center text-[10px] font-bold text-white shadow-sm border border-rose-700">
-                                    {{ count($heldTransactions) }}
+                        <!-- 2. Daftar Transaksi Tunda (Hold / List) -->
+                        <x-pos.utility.button 
+                            wire:click="openHeldTransactionsModal" 
+                            variant="warning" 
+                            size="xs" 
+                            icon="ph-bold ph-folder-open" 
+                            title="Daftar Transaksi Tunda"
+                            class="!w-full !bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                        >
+                            <span>Tunda</span>
+                            @if (count($heldTransactions) > 0)
+                                <span class="absolute -top-1.5 -right-1.5 flex h-4 w-4 pointer-events-none">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-4 w-4 bg-rose-600 items-center justify-center text-[9px] font-bold text-white shadow-xs border border-rose-700">
+                                        {{ count($heldTransactions) }}
+                                    </span>
                                 </span>
-                            </span>
-                        @endif
-                    </x-pos.utility.button>
+                            @endif
+                        </x-pos.utility.button>
 
-                    <!-- Simpan Transaksi Saat Ini -->
-                    <x-pos.utility.button 
-                        wire:click="holdTransaction" 
-                        variant="warning" 
-                        size="sm" 
-                        icon="ph-bold ph-folder-simple-plus" 
-                        title="Simpan Transaksi Sekarang" 
-                        :disabled="empty($cart)"
-                        class="!bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent"
-                    >
-                        Simpan Transaksi
-                    </x-pos.utility.button>
+                        <!-- 3. Simpan Transaksi Saat Ini -->
+                        <x-pos.utility.button 
+                            wire:click="holdTransaction" 
+                            variant="warning" 
+                            size="xs" 
+                            icon="ph-bold ph-folder-simple-plus" 
+                            title="Simpan Transaksi Sekarang (Hold)" 
+                            :disabled="empty($cart)"
+                            class="!w-full !bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                        >
+                            <span>Simpan</span>
+                        </x-pos.utility.button>
+
+                        <!-- 4. Print Struk Terakhir -->
+                        <x-pos.utility.button 
+                            wire:click="reprintLastReceipt" 
+                            variant="success" 
+                            size="xs" 
+                            icon="ph-bold ph-printer" 
+                            title="Cetak Struk Terakhir" 
+                            :disabled="!$lastSaleId"
+                            class="!w-full !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                        >
+                            <span>Struk</span>
+                        </x-pos.utility.button>
+
+                        <!-- 5. Reset Transaksi -->
+                        <x-pos.utility.button 
+                            @click="$dispatch('confirm-open', { 
+                                title: 'Reset Transaksi?', 
+                                message: 'Ini akan mengosongkan seluruh keranjang belanja dan mengatur ulang data pelanggan.', 
+                                onConfirm: 'livewire:clearCart', 
+                                confirmLabel: 'Ya, Reset', 
+                                isDanger: true 
+                            })"
+                            variant="danger" 
+                            size="xs" 
+                            icon="ph-bold ph-trash" 
+                            title="Reset Transaksi"
+                            class="!w-full !bg-red-600 hover:!bg-red-700 dark:!bg-red-700 dark:hover:!bg-red-800 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                        >
+                            <span>Reset</span>
+                        </x-pos.utility.button>
+                    </div>
+
+                    <!-- Baris 2: Cetak Dokumen (4 Kolom Penuh: Bill, Large Bill, Penawaran, Invoice) -->
+                    <div class="grid grid-cols-4 gap-1 sm:gap-1.5 w-full">
+                        <!-- 1. Print Bill -->
+                        <x-pos.utility.button 
+                            wire:click="printDraft('bill')" 
+                            variant="info" 
+                            size="xs" 
+                            icon="ph-bold ph-receipt" 
+                            title="Cetak Bill Sementara" 
+                            :disabled="empty($cart)"
+                            class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                        >
+                            <span>Bill</span>
+                        </x-pos.utility.button>
+
+                        <!-- 2. Print Large Bill -->
+                        <x-pos.utility.button 
+                            wire:click="printDraft('large')" 
+                            variant="info" 
+                            size="xs" 
+                            icon="ph-bold ph-file-text" 
+                            title="Cetak Large Bill" 
+                            :disabled="empty($cart)"
+                            class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                        >
+                            <span>Large Bill</span>
+                        </x-pos.utility.button>
+
+                        <!-- 3. Print Penawaran -->
+                        <x-pos.utility.button 
+                            wire:click="printDraft('penawaran')" 
+                            variant="info" 
+                            size="xs" 
+                            icon="ph-bold ph-handshake" 
+                            title="Cetak Penawaran Harga" 
+                            :disabled="empty($cart)"
+                            class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                        >
+                            <span>Penawaran</span>
+                        </x-pos.utility.button>
+
+                        <!-- 4. Print Invoice -->
+                        <x-pos.utility.button 
+                            wire:click="printDraft('invoice')" 
+                            variant="success" 
+                            size="xs" 
+                            icon="ph-bold ph-file-arrow-up" 
+                            title="Cetak Invoice" 
+                            :disabled="empty($cart)"
+                            class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                        >
+                            <span>Invoice</span>
+                        </x-pos.utility.button>
+                    </div>
                 </div>
-
-                <!-- Baris 2: Cetak Dokumen & Reset -->
-                <div class="flex items-center flex-wrap gap-2">
-                    <!-- Print Bill -->
-                    <x-pos.utility.button 
-                        wire:click="printDraft('bill')" 
-                        variant="info" 
-                        size="sm" 
-                        icon="ph-bold ph-receipt" 
-                        title="Cetak Bill Sementara" 
-                        :disabled="empty($cart)"
-                    >
-                        Bill
-                    </x-pos.utility.button>
-
-                    <!-- Print Large Bill -->
-                    <x-pos.utility.button 
-                        wire:click="printDraft('large')" 
-                        variant="info" 
-                        size="sm" 
-                        icon="ph-bold ph-file-text" 
-                        title="Cetak Large Bill" 
-                        :disabled="empty($cart)"
-                    >
-                        Large Bill
-                    </x-pos.utility.button>
-
-                    <!-- Print Penawaran -->
-                    <x-pos.utility.button 
-                        wire:click="printDraft('penawaran')" 
-                        variant="info" 
-                        size="sm" 
-                        icon="ph-bold ph-handshake" 
-                        title="Cetak Penawaran Harga" 
-                        :disabled="empty($cart)"
-                    >
-                        Penawaran
-                    </x-pos.utility.button>
-
-                    <!-- Print Invoice -->
-                    <x-pos.utility.button 
-                        wire:click="printDraft('invoice')" 
-                        variant="success" 
-                        size="sm" 
-                        icon="ph-bold ph-file-arrow-up" 
-                        title="Cetak Invoice" 
-                        :disabled="empty($cart)"
-                    >
-                        Invoice
-                    </x-pos.utility.button>
-
-                    <!-- Print Struk Terakhir -->
-                    <x-pos.utility.button 
-                        wire:click="reprintLastReceipt" 
-                        variant="success" 
-                        size="sm" 
-                        icon="ph-bold ph-printer" 
-                        title="Cetak Struk Terakhir" 
-                        :disabled="!$lastSaleId"
-                    >
-                        Struk
-                    </x-pos.utility.button>
-
-                    <!-- Reset Transaksi -->
-                    <x-pos.utility.button 
-                        @click="$dispatch('confirm-open', { 
-                            title: 'Reset Transaksi?', 
-                            message: 'Ini akan mengosongkan seluruh keranjang belanja dan mengatur ulang data pelanggan.', 
-                            onConfirm: 'livewire:clearCart', 
-                            confirmLabel: 'Ya, Reset', 
-                            isDanger: true 
-                        })"
-                        variant="danger" 
-                        size="sm" 
-                        icon="ph-bold ph-trash" 
-                        title="Reset Transaksi"
-                        class="!bg-red-600 hover:!bg-red-700 dark:!bg-red-700 dark:hover:!bg-red-800 !text-white !border-transparent"
-                    >
-                        Reset
-                    </x-pos.utility.button>
-                </div>
-            </div>
         </div>
         </div>
 

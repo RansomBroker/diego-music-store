@@ -3,10 +3,73 @@
 namespace App\Helpers;
 
 use App\Models\Branch;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class BranchHelper
 {
+    /**
+     * Determine if a user has permissions or roles granting access to all active branches.
+     */
+    public static function canAccessAllBranches(?User $user = null): bool
+    {
+        $user = $user ?? Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        // 1. Management and administrative roles with global branch access
+        $managementRoles = [
+            'owner', 'Owner',
+            'super_admin', 'Super Admin', 'super-admin',
+            'admin', 'Admin',
+            'manager', 'Manager',
+        ];
+        if ($user->hasRole($managementRoles)) {
+            return true;
+        }
+
+        // 2. Hak akses / permissions that grant branch management or switching all branches
+        $branchPermissions = [
+            'master.branches',
+            'utility.store',
+            'branch.switch',
+        ];
+
+        foreach ($branchPermissions as $perm) {
+            if ($user->can($perm)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if a user can switch to a specific branch based on role, permission, or assignment.
+     */
+    public static function canUserSwitchToBranch(User $user, int|Branch $branch): bool
+    {
+        $branchId = $branch instanceof Branch ? $branch->id : (int) $branch;
+
+        // Verify the target branch actually exists and is active
+        $targetExists = Branch::query()->whereKey($branchId)->where('is_active', true)->exists();
+        if (!$targetExists) {
+            return false;
+        }
+
+        // 1. If user can access all branches via role or hak akses
+        if (static::canAccessAllBranches($user)) {
+            return true;
+        }
+
+        // 2. Otherwise, user must be explicitly assigned to this branch
+        return $user->branches()
+            ->where('branches.id', $branchId)
+            ->where('branches.is_active', true)
+            ->exists();
+    }
+
     /**
      * Resolve the active branch without granting unassigned users an implicit branch.
      */
@@ -16,7 +79,7 @@ class BranchHelper
         abort_unless($user, 403, 'Autentikasi diperlukan untuk mengakses cabang.');
 
         $sessionBranchId = session('pos_active_branch_id');
-        $isManagement = $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $isManagement = static::canAccessAllBranches($user);
 
         if ($isManagement) {
             if ($sessionBranchId && Branch::query()->whereKey($sessionBranchId)->where('is_active', true)->exists()) {
@@ -50,13 +113,13 @@ class BranchHelper
     }
 
     /**
-     * Query only active branches available to the current user.
+     * Query only active branches available to the current user according to role & hak akses.
      */
-    public static function getAllowedBranchesQuery()
+    public static function getAllowedBranchesQuery(?User $user = null)
     {
-        $user = Auth::user();
+        $user = $user ?? Auth::user();
 
-        if ($user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+        if ($user && static::canAccessAllBranches($user)) {
             return Branch::query()->where('is_active', true)->orderBy('name');
         }
 

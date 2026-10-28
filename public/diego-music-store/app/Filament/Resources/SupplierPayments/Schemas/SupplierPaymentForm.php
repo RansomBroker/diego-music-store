@@ -18,6 +18,7 @@ use App\Models\PurchaseTransaction;
 use App\Models\Account;
 use App\Models\Supplier;
 use App\Helpers\FormatHelper;
+use App\Helpers\BranchHelper;
 
 class SupplierPaymentForm
 {
@@ -39,10 +40,11 @@ class SupplierPaymentForm
                                 Select::make('branch_id')
                                     ->label('Cabang')
                                     ->relationship('branch', 'name')
+                                    ->default(fn () => BranchHelper::getActiveBranchId())
                                     ->required()
                                     ->searchable()
                                     ->preload()
-                                    ->disabled(fn ($record) => $record !== null && $paymentStatus = $record->status !== 'draft'),
+                                    ->disabled(fn ($record) => $record !== null && $record->status !== 'draft'),
 
                                 DatePicker::make('payment_date')
                                     ->label('Tanggal Pembayaran')
@@ -58,13 +60,16 @@ class SupplierPaymentForm
                                     ->preload()
                                     ->disabled(fn ($record) => $record !== null && $record->status !== 'draft')
                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set) {
+                                    ->afterStateUpdated(function ($state, callable $set, $get) {
                                         if (!$state) {
                                             $set('items', []);
                                             return;
                                         }
 
+                                        $branchId = $get('branch_id') ?: BranchHelper::getActiveBranchId();
+
                                         $unpaidTransactions = PurchaseTransaction::query()
+                                            ->where('branch_id', $branchId)
                                             ->where('supplier_id', $state)
                                             ->where('purchase_type', 'Kredit')
                                             ->where('status', 'posted')
@@ -91,7 +96,8 @@ class SupplierPaymentForm
 
                                 Select::make('account_id')
                                     ->label('Akun Kas / Bank')
-                                    ->options(fn () => Account::where('classification', 'asset')
+                                    ->options(fn () => Account::where('branch_id', BranchHelper::getActiveBranchId())
+                                        ->where('classification', 'asset')
                                         ->where('is_header', false)
                                         ->where('code', 'like', '1-1%') // Cash and cash equivalents
                                         ->get()

@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Account extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'branch_id',
         'code',
         'name',
         'classification',
@@ -21,16 +23,34 @@ class Account extends Model
     ];
 
     protected $casts = [
+        'branch_id' => 'integer',
         'is_active' => 'boolean',
         'is_header' => 'boolean',
     ];
 
     /**
-     * Find account by code or legacy code mapping.
+     * Find account by code or legacy code mapping within a branch.
      */
-    public static function findByCode(string $code): ?self
+    public static function findByCode(string $code, ?int $branchId = null): ?self
     {
-        return \App\Helpers\AccountHelper::findByCode($code);
+        return \App\Helpers\AccountHelper::findByCode($code, $branchId);
+    }
+
+    /**
+     * Get the branch this account belongs to.
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    /**
+     * Scope query to a specific branch or active branch session.
+     */
+    public function scopeForBranch($query, ?int $branchId = null)
+    {
+        $targetBranchId = $branchId ?: \App\Helpers\BranchHelper::getActiveBranchId();
+        return $query->where('branch_id', $targetBranchId);
     }
 
     /**
