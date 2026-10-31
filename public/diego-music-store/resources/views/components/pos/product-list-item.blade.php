@@ -77,31 +77,46 @@
         @if ($isOutOfStock)
             <span class="text-xs font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1.5 rounded-xl border border-rose-200/50 dark:border-rose-900/40">Habis</span>
         @elseif ($qtyInCart > 0 && $clickAction === 'addToCart')
-            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-250 dark:border-slate-700 rounded-lg p-0.5">
-                <x-pos.utility.button 
-                    wire:click.stop="updateQty({{ $variant->id }}, -1)"
-                    wire:loading.attr="disabled"
-                    class="!rounded-full !w-7 !h-7 !p-0 !bg-white hover:!bg-red-500 !text-slate-700 hover:!text-white dark:!bg-slate-700 dark:!text-slate-300 dark:hover:!bg-red-650 dark:hover:!text-white !shadow-none flex-shrink-0"
+            <div 
+                x-data="{
+                    qty: {{ (int) $qtyInCart }},
+                    timer: null,
+                    changeQty(diff) {
+                        let next = this.qty + diff;
+                        if (next < 0) next = 0;
+                        this.qty = next;
+                        clearTimeout(this.timer);
+                        this.timer = setTimeout(() => {
+                            $wire.setCartQty({{ $variant->id }}, this.qty);
+                        }, 300);
+                    }
+                }"
+                class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-250 dark:border-slate-700 rounded-lg p-0.5 select-none"
+            >
+                <button 
+                    type="button"
+                    @click.stop="changeQty(-1)"
+                    class="rounded-full w-7 h-7 p-0 bg-white hover:bg-red-500 text-slate-700 hover:text-white dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-red-650 dark:hover:text-white flex items-center justify-center flex-shrink-0 active:scale-90 transition-all cursor-pointer"
                 >
                     <i class="ph-bold ph-minus text-xs"></i>
-                </x-pos.utility.button>
-                <span class="w-5 text-center text-xs font-black text-slate-800 dark:text-white">{{ $qtyInCart }}</span>
-                <x-pos.utility.button 
-                    wire:click.stop="updateQty({{ $variant->id }}, 1)"
-                    wire:loading.attr="disabled"
-                    class="!rounded-full !w-7 !h-7 !p-0 !bg-white hover:!bg-primary !text-slate-700 hover:!text-white dark:!bg-slate-700 dark:!text-slate-300 dark:hover:!bg-primary dark:hover:!text-white !shadow-none flex-shrink-0"
+                </button>
+                <span x-text="qty" class="w-5 text-center text-xs font-black text-slate-800 dark:text-white"></span>
+                <button 
+                    type="button"
+                    @click.stop="changeQty(1)"
+                    class="rounded-full w-7 h-7 p-0 bg-white hover:bg-primary text-slate-700 hover:text-white dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-primary dark:hover:text-white flex items-center justify-center flex-shrink-0 active:scale-90 transition-all cursor-pointer"
                 >
                     <i class="ph-bold ph-plus text-xs"></i>
-                </x-pos.utility.button>
+                </button>
             </div>
         @else
-            <x-pos.utility.button 
+            <button 
+                type="button"
                 wire:click.stop="{{ $clickAction }}({{ $variant->id }})"
-                wire:loading.attr="disabled"
-                class="!rounded-full !w-9 !h-9 !p-0 !bg-primary-light hover:!bg-primary !text-primary hover:!text-white dark:!bg-blue-950/60 dark:!text-blue-400 dark:hover:!bg-primary dark:hover:!text-white !shadow-none flex-shrink-0"
+                class="rounded-full w-9 h-9 p-0 bg-primary-light hover:bg-primary text-primary hover:text-white dark:bg-blue-950/60 dark:text-blue-400 dark:hover:bg-primary dark:hover:text-white flex items-center justify-center flex-shrink-0 active:scale-90 transition-all cursor-pointer"
             >
                 <i class="ph-bold ph-plus text-lg"></i>
-            </x-pos.utility.button>
+            </button>
         @endif
     </div>
 </div>

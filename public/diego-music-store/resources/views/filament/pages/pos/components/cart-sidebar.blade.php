@@ -20,6 +20,7 @@
     'customerPoints' => 0,
     'pointDiscountAmount' => 0,
     'heldTransactions' => [],
+    'heldTransactionsCount' => null,
     'lastSaleId' => null,
     'salesSearch' => '',
     'selectedSalesRepId' => null,
@@ -82,8 +83,8 @@
                 <button 
                     wire:click="openProductSearch"
                     type="button" 
-                    title="Tambah Produk (F2 / Klik)"
-                    class="flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black rounded-xl px-2.5 py-1.5 transition-all active:scale-[0.98] w-22 sm:w-24 flex-shrink-0 border border-emerald-400/20 group cursor-pointer shadow-xs"
+                    title="Tambah Produk (F1 / Klik)"
+                    class="flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-black rounded-xl px-2.5 py-1.5 transition-all active:scale-[0.98] w-22 sm:w-24 flex-shrink-0 border border-emerald-500/30 group cursor-pointer shadow-xs"
                 >
                     <i class="ph-bold ph-plus text-xl mb-1 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[11px] font-black leading-tight text-center">Tambah<br>Produk</span>
@@ -115,11 +116,12 @@
                             class="!w-full !bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
                         >
                             <span>Tunda</span>
-                            @if (count($heldTransactions) > 0)
+                            @php $hCount = $heldTransactionsCount ?? count($heldTransactions); @endphp
+                            @if ($hCount > 0)
                                 <span class="absolute -top-1.5 -right-1.5 flex h-4 w-4 pointer-events-none">
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-4 w-4 bg-rose-600 items-center justify-center text-[9px] font-bold text-white shadow-xs border border-rose-700">
-                                        {{ count($heldTransactions) }}
+                                        {{ $hCount }}
                                     </span>
                                 </span>
                             @endif
@@ -269,6 +271,7 @@
                             placeholder="Cari Pelanggan..."
                             icon="ph-user-plus"
                             live
+                            debounce="350ms"
                             size="sm"
                             @focus="isOpen = true"
                             @click="isOpen = true"
@@ -367,6 +370,7 @@
                             placeholder="Cari Sales..."
                             icon="ph-identification-card"
                             live
+                            debounce="350ms"
                             size="sm"
                             @focus="isOpen = true"
                             @click="isOpen = true"
@@ -446,8 +450,11 @@
                                         class="w-full pl-6 pr-5 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:ring-0 cursor-pointer appearance-none"
                                     >
                                         @foreach ($pricingTiers as $tier)
+                                            @php
+                                                $tierPrice = $item['tier_prices'][$tier->id] ?? ($itemVariant ? $itemVariant->priceForTier($tier->id) : ($item['base_price'] ?? $item['price']));
+                                            @endphp
                                             <option value="{{ $tier->id }}" {{ ($item['pricing_tier_id'] ?? '') == $tier->id ? 'selected' : '' }} class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
-                                                {{ $tier->name }} ({{ \App\Helpers\FormatHelper::rupiah($itemVariant ? $itemVariant->priceForTier($tier->id) : 0) }})
+                                                {{ $tier->name }} ({{ \App\Helpers\FormatHelper::rupiah($tierPrice) }})
                                             </option>
                                         @endforeach
                                     </select>
@@ -500,12 +507,53 @@
                             </td>
                             <td class="py-2 px-2 text-[11px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/20">{{ \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>
                             <td class="py-2 px-2 align-middle">
-                                <div class="flex items-center justify-center gap-1 bg-slate-100 dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-md p-0.5 mx-auto w-fit">
-                                    <button wire:click="updateQty({{ $id }}, -1)" wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-wait" class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
+                                <div 
+                                    x-data="{
+                                        qty: {{ (int) $item['qty'] }},
+                                        timer: null,
+                                        changeQty(diff) {
+                                            let next = this.qty + diff;
+                                            if (next < 0) next = 0;
+                                            this.qty = next;
+                                            clearTimeout(this.timer);
+                                            this.timer = setTimeout(() => {
+                                                $wire.setCartQty({{ $id }}, this.qty);
+                                            }, 300);
+                                        },
+                                        setDirectQty(val) {
+                                            let parsed = parseInt(val) || 0;
+                                            if (parsed < 0) parsed = 0;
+                                            this.qty = parsed;
+                                            clearTimeout(this.timer);
+                                            this.timer = setTimeout(() => {
+                                                $wire.setCartQty({{ $id }}, this.qty);
+                                            }, 300);
+                                        }
+                                    }"
+                                    class="flex items-center justify-center gap-0.5 bg-slate-100 dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-md p-0.5 mx-auto w-fit select-none"
+                                >
+                                    <button 
+                                        type="button"
+                                        @click.stop="changeQty(-1)" 
+                                        class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-rose-500 hover:border-rose-300 dark:hover:text-rose-400 transition-colors cursor-pointer active:scale-90"
+                                        title="Kurangi"
+                                    >
                                         <i class="ph-bold ph-minus text-[10px]"></i>
                                     </button>
-                                    <span class="w-5 text-center text-xs font-extrabold text-slate-900 dark:text-white">{{ $item['qty'] }}</span>
-                                    <button wire:click="updateQty({{ $id }}, 1)" wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-wait" class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer">
+                                    <input 
+                                        type="number"
+                                        min="0"
+                                        :value="qty"
+                                        @input="setDirectQty($event.target.value)"
+                                        @keydown.enter.prevent="$el.blur()"
+                                        class="w-7 text-center text-xs font-extrabold text-slate-900 dark:text-white bg-transparent border-none p-0 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                    <button 
+                                        type="button"
+                                        @click.stop="changeQty(1)" 
+                                        class="w-5 h-5 rounded bg-white dark:bg-slate-700 shadow border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-primary hover:border-blue-400 dark:hover:text-blue-400 transition-colors cursor-pointer active:scale-90"
+                                        title="Tambah"
+                                    >
                                         <i class="ph-bold ph-plus text-[10px]"></i>
                                     </button>
                                 </div>

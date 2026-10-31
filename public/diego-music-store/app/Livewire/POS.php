@@ -91,6 +91,7 @@ class POS extends Component
     public $selectedSalesRepName = '';
     public $salesSearch = '';
     public $saleCategory = 'Store';
+    public string $previewInvoiceNumber = '';
     public $invoiceDate = '';
     public $activeSessionInfo = [];
 
@@ -139,6 +140,7 @@ class POS extends Component
         $this->invoiceDate = now()->format('Y-m-d');
         $defaultCategory = \App\Models\SaleCategory::first();
         $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
+        $this->updatePreviewInvoiceNumber();
         $this->viewMode = session('pos_view_mode', 'grid');
 
         $this->visibleCategoryTabs = session('pos_visible_categories', []);
@@ -446,13 +448,26 @@ class POS extends Component
         return cache()->remember('pos_sale_categories', 600, fn() => \App\Models\SaleCategory::all());
     }
 
+    public function updatePreviewInvoiceNumber(): void
+    {
+        $this->previewInvoiceNumber = \App\Models\Sale::generateInvoiceNumber($this->saleCategory);
+    }
+
+    public function updatedSaleCategory(): void
+    {
+        $this->updatePreviewInvoiceNumber();
+    }
+
     /**
      * Preview the next invoice number for the currently selected sale category.
      * This is a candidate number only; checkout generates the definitive number.
      */
     public function getPreviewInvoiceNumberProperty(): string
     {
-        return \App\Models\Sale::generateInvoiceNumber($this->saleCategory);
+        if (empty($this->previewInvoiceNumber)) {
+            $this->updatePreviewInvoiceNumber();
+        }
+        return $this->previewInvoiceNumber;
     }
 
     public function getBranchesProperty()
@@ -540,14 +555,22 @@ class POS extends Component
         if (empty($this->cart)) {
             return collect();
         }
-        return \App\Models\ProductVariant::with([
-                'product:id,name,type',
-                'tierPrices:id,product_variant_id,pricing_tier_id,price',
-                'branchStocks:id,product_variant_id,branch_id,stock',
-                'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
-            ])
-            ->whereIn('id', array_keys($this->cart))
-            ->get()
+
+        // Only query variants that don't have tier_prices cached in cart
+        $missingIds = [];
+        foreach ($this->cart as $id => $item) {
+            if (empty($item['tier_prices'])) {
+                $missingIds[] = $id;
+            }
+        }
+
+        if (empty($missingIds)) {
+            return collect();
+        }
+
+        return \App\Models\ProductVariant::with(['tierPrices:id,product_variant_id,pricing_tier_id,price'])
+            ->whereIn('id', $missingIds)
+            ->get(['id', 'price'])
             ->keyBy('id');
     }
 

@@ -1,5 +1,33 @@
 <div 
-    x-data="{ showShortcuts: false }"
+    x-data="{ 
+        showShortcuts: false,
+        barcodeBuffer: '',
+        barcodeTimeout: null,
+        handleGlobalBarcode(e) {
+            const active = document.activeElement;
+            const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
+            
+            if (e.key === 'Enter') {
+                if (this.barcodeBuffer.length >= 2 && !isInput) {
+                    e.preventDefault();
+                    $wire.scanBarcode(this.barcodeBuffer);
+                    this.barcodeBuffer = '';
+                    return;
+                }
+                this.barcodeBuffer = '';
+                return;
+            }
+
+            if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey && !isInput) {
+                this.barcodeBuffer += e.key;
+                clearTimeout(this.barcodeTimeout);
+                this.barcodeTimeout = setTimeout(() => {
+                    this.barcodeBuffer = '';
+                }, 150);
+            }
+        }
+    }"
+    @keydown.window="handleGlobalBarcode($event)"
     @keydown.window.f1.prevent="$wire.openProductSearch()"
     @keydown.window.alt.p.prevent="$wire.openProductSearch()"
     @keydown.window.f2.prevent="document.getElementById('customer-search-input')?.focus(); document.getElementById('customer-search-input')?.select()"
@@ -52,6 +80,7 @@
         :customerPoints="$customerPoints"
         :pointDiscountAmount="$this->pointDiscountAmount"
         :heldTransactions="$this->heldTransactions"
+        :heldTransactionsCount="$this->heldTransactionsCount"
         :lastSaleId="$lastSaleId"
         :salesSearch="$salesSearch"
         :selectedSalesRepId="$selectedSalesRepId"

@@ -51,10 +51,19 @@ trait WithCartManagement
                 $tierId = $defaultTier ? $defaultTier->id : null;
             }
 
+            $tierPricesMap = [];
+            if ($variant->relationLoaded('tierPrices')) {
+                foreach ($variant->tierPrices as $tp) {
+                    $tierPricesMap[$tp->pricing_tier_id] = (int) $tp->price;
+                }
+            }
+
             $this->cart[$variantId] = [
                 'variant_id' => $variant->id,
                 'name' => $name,
                 'price' => $variant->priceForTier($tierId),
+                'base_price' => (int) $variant->price,
+                'tier_prices' => $tierPricesMap,
                 'qty' => 1,
                 'type' => $variant->product->type,
                 'category' => $variant->product->category ?? null,
@@ -76,28 +85,31 @@ trait WithCartManagement
         $this->autoSaveDraft();
     }
 
-    public function updateQty($variantId, $change)
+    public function setCartQty($variantId, $newQty)
     {
         if (!isset($this->cart[$variantId])) {
             return;
         }
 
-        $newQty = $this->cart[$variantId]['qty'] + $change;
+        $newQty = (int) $newQty;
 
         if ($newQty <= 0) {
             unset($this->cart[$variantId]);
+            $this->autoSaveDraft();
             return;
         }
 
+        $oldQty = $this->cart[$variantId]['qty'] ?? 1;
+
         // Check stock only when increasing quantity (skip DB query entirely when decreasing)
-        if ($change > 0) {
+        if ($newQty > $oldQty) {
             $variant = ProductVariant::with([
                 'product:id,name,type',
                 'branchStocks:id,product_variant_id,branch_id,stock',
                 'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
-            ])->findOrFail($variantId);
+            ])->find($variantId);
 
-            if (($variant->product->isPhysical() || $variant->product->isBundle())) {
+            if ($variant && ($variant->product->isPhysical() || $variant->product->isBundle())) {
                 $stock = $variant->stockForBranch($this->selectedBranchId);
                 if ($stock < $newQty) {
                     Notification::make()
@@ -117,6 +129,16 @@ trait WithCartManagement
         $this->autoSaveDraft();
     }
 
+    public function updateQty($variantId, $change)
+    {
+        if (!isset($this->cart[$variantId])) {
+            return;
+        }
+
+        $newQty = $this->cart[$variantId]['qty'] + $change;
+        $this->setCartQty($variantId, $newQty);
+    }
+
     public function updateItemNote($variantId, $note)
     {
         if (isset($this->cart[$variantId])) {
@@ -124,17 +146,68 @@ trait WithCartManagement
         }
     }
 
+    public function scanBarcode($barcode)
+    {
+        $barcode = trim((string) $barcode);
+        if (empty($barcode)) {
+            return;
+        }
+
+        $variant = ProductVariant::with([
+            'product:id,name,type,category,is_active',
+            'branchStocks:id,product_variant_id,branch_id,stock',
+            'tierPrices:id,product_variant_id,pricing_tier_id,price',
+        ])
+        ->where('is_active', true)
+        ->where(function ($q) use ($barcode) {
+            $q->where('barcode', $barcode)
+              ->orWhere('sku', $barcode);
+        })
+        ->first();
+
+        if (!$variant) {
+            Notification::make()
+                ->title('Produk Tidak Ditemukan')
+                ->body("Tidak ditemukan produk dengan Barcode / SKU '{$barcode}'.")
+                ->warning()
+                ->send();
+            return;
+        }
+
+        $this->addToCart($variant->id);
+
+        Notification::make()
+            ->title('Produk Ditambahkan')
+            ->body("{$variant->product->name} berhasil ditambahkan ke keranjang.")
+            ->success()
+            ->send();
+    }
+
     public function updateItemPricingTier($variantId, $tierId)
     {
         if (isset($this->cart[$variantId])) {
-            $variant = ProductVariant::with('tierPrices')->find($variantId);
-            if ($variant) {
-                $this->cart[$variantId]['pricing_tier_id'] = $tierId;
-                $this->cart[$variantId]['price'] = $variant->priceForTier($tierId);
-                $this->recalculateItemDiscountAmount($variantId);
-                $this->recalculateItemTaxAmount($variantId);
-                $this->selectedPricingTierId = 'custom';
+            $item = &$this->cart[$variantId];
+            $price = $item['tier_prices'][$tierId] ?? null;
+
+            if ($price === null) {
+                $variant = ProductVariant::with('tierPrices')->find($variantId);
+                if ($variant) {
+                    $price = $variant->priceForTier($tierId);
+                    if (!isset($item['tier_prices'])) {
+                        $item['tier_prices'] = [];
+                    }
+                    $item['tier_prices'][$tierId] = $price;
+                } else {
+                    $price = $item['base_price'] ?? $item['price'];
+                }
             }
+
+            $item['pricing_tier_id'] = $tierId;
+            $item['price'] = $price;
+            $this->recalculateItemDiscountAmount($variantId);
+            $this->recalculateItemTaxAmount($variantId);
+            $this->selectedPricingTierId = 'custom';
+            $this->autoSaveDraft();
         }
     }
 

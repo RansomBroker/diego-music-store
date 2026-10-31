@@ -49,6 +49,8 @@ class POSLivewireTest extends TestCase
             'phone' => '123',
             'is_active' => true,
         ]);
+        $this->user->branches()->attach($this->branch->id);
+        session(['pos_active_branch_id' => $this->branch->id]);
 
         // Create pricing tiers
         $this->retailTier = PricingTier::create([

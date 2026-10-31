@@ -12,19 +12,34 @@ trait WithDraftTransactions
 {
     private function resolveHeldTransactionBranchId(): int
     {
+        if (!empty($this->selectedBranchId)) {
+            return (int) $this->selectedBranchId;
+        }
+
         $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
-        $requestedBranchId = (int) ($this->selectedBranchId ?? 0);
-        $branchId = $requestedBranchId && in_array($requestedBranchId, $allowedBranchIds, true)
-            ? $requestedBranchId
-            : \App\Helpers\BranchHelper::getActiveBranchId();
-        abort_unless(in_array($branchId, $allowedBranchIds, true), 403);
-        $this->selectedBranchId = $branchId;
-        return $branchId;
+        $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        if (!empty($allowedBranchIds) && !in_array($branchId, $allowedBranchIds, true)) {
+            $branchId = $allowedBranchIds[0];
+        }
+        $this->selectedBranchId = (int) $branchId;
+        return (int) $branchId;
+    }
+
+    public function getHeldTransactionsCountProperty(): int
+    {
+        return PosHeldTransaction::where('user_id', Auth::id())
+            ->where('branch_id', $this->resolveHeldTransactionBranchId())
+            ->whereNotNull('cart_data')
+            ->count();
     }
 
     public function getHeldTransactionsProperty()
     {
+        if (!$this->showHeldModal) {
+            return collect();
+        }
+
         return PosHeldTransaction::where('user_id', Auth::id())
             ->where('branch_id', $this->resolveHeldTransactionBranchId())
             ->whereNotNull('cart_data')

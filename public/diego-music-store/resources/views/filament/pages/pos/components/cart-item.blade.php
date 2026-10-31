@@ -25,12 +25,43 @@
             </div>
         </div>
         <!-- Counter -->
-        <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-lg p-1">
-            <button wire:click="updateQty({{ $id }}, -1)" class="w-7 h-7 rounded bg-white dark:bg-slate-600 shadow-sm flex items-center justify-center text-slate-650 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors">
+        <div 
+            x-data="{
+                qty: {{ (int) $item['qty'] }},
+                timer: null,
+                changeQty(diff) {
+                    let next = this.qty + diff;
+                    if (next < 0) next = 0;
+                    this.qty = next;
+                    clearTimeout(this.timer);
+                    this.timer = setTimeout(() => {
+                        $wire.setCartQty({{ $id }}, this.qty);
+                    }, 300);
+                },
+                setDirectQty(val) {
+                    let parsed = parseInt(val) || 0;
+                    if (parsed < 0) parsed = 0;
+                    this.qty = parsed;
+                    clearTimeout(this.timer);
+                    this.timer = setTimeout(() => {
+                        $wire.setCartQty({{ $id }}, this.qty);
+                    }, 300);
+                }
+            }"
+            class="flex items-center gap-1 bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-lg p-1 select-none"
+        >
+            <button type="button" @click.stop="changeQty(-1)" class="w-7 h-7 rounded bg-white dark:bg-slate-600 shadow-sm flex items-center justify-center text-slate-650 dark:text-slate-300 hover:text-rose-500 hover:border-rose-300 dark:hover:text-rose-400 transition-colors active:scale-90 cursor-pointer">
                 <i class="ph ph-minus"></i>
             </button>
-            <span class="w-4 text-center text-sm font-semibold text-slate-800 dark:text-slate-200">{{ $item['qty'] }}</span>
-            <button wire:click="updateQty({{ $id }}, 1)" class="w-7 h-7 rounded bg-white dark:bg-slate-600 shadow-sm flex items-center justify-center text-slate-650 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors">
+            <input 
+                type="number"
+                min="0"
+                :value="qty"
+                @input="setDirectQty($event.target.value)"
+                @keydown.enter.prevent="$el.blur()"
+                class="w-8 text-center text-sm font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none p-0 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <button type="button" @click.stop="changeQty(1)" class="w-7 h-7 rounded bg-white dark:bg-slate-600 shadow-sm flex items-center justify-center text-slate-650 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors active:scale-90 cursor-pointer">
                 <i class="ph ph-plus"></i>
             </button>
         </div>
