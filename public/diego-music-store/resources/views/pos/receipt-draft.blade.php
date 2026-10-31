@@ -6,8 +6,6 @@
     <title>
         @if($format === 'penawaran')
             Penawaran Harga #{{ $draft->invoice_number }}
-        @elseif($format === 'large')
-            Large Bill #{{ $draft->invoice_number }}
         @else
             Invoice #{{ $draft->invoice_number }}
         @endif
@@ -432,22 +430,16 @@
                     <div style="border-bottom: 1px solid #000; width: 150px;"></div>
                 </div>
             </div>
-
-            <div class="text-center" style="margin-top: 30px; font-size: 12px; border-top: 1px dashed #000; padding-top: 10px;">
-                BUKAN BUKTI TRANSAKSI RESMI
-            </div>
         </div>
     @else
         <!-- Modern A4 layout for Penawaran and Tagihan -->
         <div class="page-container">
             
-            <div class="watermark-banner">
-                @if($format === 'penawaran')
-                    DOKUMEN PENAWARAN HARGA - BUKAN BUKTI TRANSAKSI RESMI
-                @else
-                    DRAFT TAGIHAN / INVOICE - BUKAN BUKTI PEMBAYARAN RESMI
-                @endif
-            </div>
+            @if($format === 'penawaran')
+                <div class="watermark-banner">
+                    DOKUMEN PENAWARAN HARGA
+                </div>
+            @endif
 
             <div class="header-container">
                 <div class="store-info">
@@ -462,7 +454,7 @@
                         @elseif($format === 'tagihan')
                             DRAFT INVOICE
                         @else
-                            LARGE BILL
+                            INVOICE
                         @endif
                     </h2>
                     <p>No. Ref: <span style="font-family: monospace;">{{ $draft->invoice_number }}</span></p>

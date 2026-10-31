@@ -322,6 +322,7 @@ trait WithPaymentHandling
         $this->enableTax = false;
         $this->taxPercent = 11;
         $this->usePoints = false;
+        $this->updatePreviewInvoiceNumber();
 
         $this->currentDraftId = \Illuminate\Support\Str::uuid()->toString();
         $this->lastSavedDraftHash = null;

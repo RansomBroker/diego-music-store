@@ -215,12 +215,12 @@
 
                         <!-- 4. Print Invoice -->
                         <x-pos.utility.button 
-                            wire:click="printDraft('invoice')" 
+                            wire:click="printLastInvoice" 
                             variant="success" 
                             size="xs" 
                             icon="ph-bold ph-file-arrow-up" 
-                            title="Cetak Invoice" 
-                            :disabled="empty($cart)"
+                            title="Cetak Invoice Transaksi Terakhir" 
+                            :disabled="!$lastSaleId"
                             class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
                         >
                             <span>Invoice</span>

@@ -150,6 +150,32 @@ trait WithDraftTransactions
             ->send();
     }
 
+    public function printLastInvoice()
+    {
+        if (!$this->lastSaleId) {
+            Notification::make()
+                ->title('Tidak Ada Transaksi Terakhir')
+                ->body('Belum ada transaksi yang diselesaikan dalam sesi ini.')
+                ->warning()
+                ->send();
+            return;
+        }
+
+        $url = url('/pos/receipt/' . $this->lastSaleId . '?format=invoice');
+        $this->dispatch('open-draft-bill', url: $url);
+
+        Notification::make()
+            ->title('Mencetak Invoice Terakhir')
+            ->body('Invoice transaksi sebelumnya sedang dipersiapkan untuk dicetak.')
+            ->success()
+            ->send();
+    }
+
+    public function reprintLastInvoice()
+    {
+        $this->printLastInvoice();
+    }
+
     public function printBill()
     {
         $this->printDraft('bill');
@@ -168,6 +194,7 @@ trait WithDraftTransactions
         }
 
         $data = base64_encode(json_encode([
+            'invoice_number' => $this->previewInvoiceNumber ?: $this->getPreviewInvoiceNumberProperty(),
             'branch_id' => $this->selectedBranchId,
             'customer_id' => $this->selectedCustomerId,
             'customer_name' => $this->selectedCustomerName,
@@ -184,7 +211,7 @@ trait WithDraftTransactions
 
         $titles = [
             'bill' => 'Mencetak Bill Sementara',
-            'large' => 'Mencetak Large Bill',
+            'large' => 'Mencetak Invoice',
             'penawaran' => 'Mencetak Penawaran',
             'tagihan' => 'Mencetak Tagihan',
         ];

@@ -164,6 +164,7 @@ class POS extends Component
                         ->send();
                 } else {
                     $this->editingSaleId = $sale->id;
+                    $this->previewInvoiceNumber = $sale->invoice_number;
                     if ($sale->customer) {
                         $this->selectedCustomerId = $sale->customer_id;
                         $this->selectedCustomerName = $sale->customer->name;
