@@ -84,21 +84,69 @@ class PosNavbarHelper
     public static function resolveBranchContext(): array
     {
         if (!Auth::check()) {
+            $defaultBranch = null;
+            try {
+                $defaultBranch = Branch::where('is_active', true)->first();
+            } catch (\Throwable $e) {
+                // Table might not exist in unit tests or during bootstrap
+            }
+
             return [
                 'currentActiveBranchId' => null,
-                'currentBranchModel'    => Branch::where('is_active', true)->first(),
+                'currentBranchModel'    => $defaultBranch,
                 'userBranchList'        => collect(),
             ];
+        }
+
+        $user = Auth::user();
+        $isManagement = false;
+        try {
+            $isManagement = BranchHelper::canAccessAllBranches($user);
+        } catch (\Throwable $e) {
+            $isManagement = false;
         }
 
         try {
             $currentActiveBranchId = BranchHelper::getActiveBranchId();
         } catch (\Throwable $e) {
-            $currentActiveBranchId = session('pos_active_branch_id') ?: Auth::user()?->branches()->first()?->id;
+            $sessionBranchId = session('pos_active_branch_id');
+            if ($isManagement) {
+                try {
+                    $currentActiveBranchId = $sessionBranchId ?: Branch::where('is_active', true)->value('id');
+                } catch (\Throwable $e) {
+                    $currentActiveBranchId = null;
+                }
+            } else {
+                $userAssignedIds = [];
+                try {
+                    $userAssignedIds = $user->branches()->where('branches.is_active', true)->pluck('branches.id')->all();
+                } catch (\Throwable $e) {
+                    $userAssignedIds = [];
+                }
+
+                if (!empty($userAssignedIds) && in_array((int) $sessionBranchId, $userAssignedIds, true)) {
+                    $currentActiveBranchId = (int) $sessionBranchId;
+                } else {
+                    $currentActiveBranchId = $userAssignedIds[0] ?? null;
+                }
+            }
         }
 
-        $currentBranchModel = $currentActiveBranchId ? Branch::find($currentActiveBranchId) : Branch::first();
-        $userBranchList = BranchHelper::getAllowedBranchesQuery()->get();
+        $currentBranchModel = null;
+        if ($currentActiveBranchId) {
+            try {
+                $currentBranchModel = Branch::find($currentActiveBranchId);
+            } catch (\Throwable $e) {
+                $currentBranchModel = null;
+            }
+        }
+
+        $userBranchList = collect();
+        try {
+            $userBranchList = BranchHelper::getAllowedBranchesQuery()->get();
+        } catch (\Throwable $e) {
+            $userBranchList = collect();
+        }
 
         return [
             'currentActiveBranchId' => $currentActiveBranchId,
@@ -117,7 +165,13 @@ class PosNavbarHelper
     public static function resolveAttendanceContext(?Branch $currentBranchModel, bool $isOwner): array
     {
         // Jika user adalah Owner, kecualikan dari kewajiban presensi karyawan
-        $currentEmployee = (Auth::check() && !$isOwner) ? Auth::user()->employee : null;
+        $currentEmployee = null;
+        try {
+            $currentEmployee = (Auth::check() && !$isOwner) ? Auth::user()->employee : null;
+        } catch (\Throwable $e) {
+            $currentEmployee = null;
+        }
+
         $todayDate = now()->format('Y-m-d');
 
         $todayAttendance = null;
@@ -128,22 +182,26 @@ class PosNavbarHelper
         $todayStatusText = $isOwner ? 'Owner (Bebas Presensi)' : 'Belum Presensi';
 
         if ($currentEmployee) {
-            $usedOffDays = $currentEmployee->used_off_days_this_month;
-            $quotaOffDays = $currentEmployee->monthly_off_days_quota;
-            $isOverQuota = $currentEmployee->is_off_days_over_quota;
-            $overCount = $currentEmployee->off_days_over_count;
+            try {
+                $usedOffDays = $currentEmployee->used_off_days_this_month;
+                $quotaOffDays = $currentEmployee->monthly_off_days_quota;
+                $isOverQuota = $currentEmployee->is_off_days_over_quota;
+                $overCount = $currentEmployee->off_days_over_count;
 
-            $todayAttendance = EmployeeAttendance::where('employee_id', $currentEmployee->id)
-                ->where('date', $todayDate)
-                ->first();
+                $todayAttendance = EmployeeAttendance::where('employee_id', $currentEmployee->id)
+                    ->where('date', $todayDate)
+                    ->first();
 
-            if ($todayAttendance) {
-                if ($todayAttendance->status === 'hadir') {
-                    $clockInFormatted = $todayAttendance->clock_in ? $todayAttendance->clock_in->format('H:i') : '-';
-                    $todayStatusText = "Hadir ({$clockInFormatted})";
-                } else {
-                    $todayStatusText = ucfirst(str_replace('_', ' ', $todayAttendance->status));
+                if ($todayAttendance) {
+                    if ($todayAttendance->status === 'hadir') {
+                        $clockInFormatted = $todayAttendance->clock_in ? $todayAttendance->clock_in->format('H:i') : '-';
+                        $todayStatusText = "Hadir ({$clockInFormatted})";
+                    } else {
+                        $todayStatusText = ucfirst(str_replace('_', ' ', $todayAttendance->status));
+                    }
                 }
+            } catch (\Throwable $e) {
+                // Table might not exist or error during lookup
             }
         }
 
@@ -167,18 +225,22 @@ class PosNavbarHelper
 
         $allBranchEmployees = collect();
         if ($isOwner && $currentBranchModel) {
-            $allBranchEmployees = Employee::with(['attendances' => function ($q) use ($todayDate) {
-                $q->where('date', $todayDate);
-            }, 'user'])
-            ->where('is_active', true)
-            ->whereDoesntHave('user.roles', function ($q) {
-                $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
-            })
-            ->where(function ($q) use ($currentBranchModel) {
-                $q->where('branch_id', $currentBranchModel->id)
-                  ->orWhereNull('branch_id');
-            })
-            ->get();
+            try {
+                $allBranchEmployees = Employee::with(['attendances' => function ($q) use ($todayDate) {
+                    $q->where('date', $todayDate);
+                }, 'user'])
+                ->where('is_active', true)
+                ->whereDoesntHave('user.roles', function ($q) {
+                    $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
+                })
+                ->where(function ($q) use ($currentBranchModel) {
+                    $q->where('branch_id', $currentBranchModel->id)
+                      ->orWhereNull('branch_id');
+                })
+                ->get();
+            } catch (\Throwable $e) {
+                $allBranchEmployees = collect();
+            }
         }
 
         return [

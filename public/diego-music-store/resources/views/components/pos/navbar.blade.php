@@ -27,6 +27,10 @@
     'showBranchSelector' => false,
     'showCloseSession'   => false,
     'showSidebarToggle'  => true,
+    'showNotifications'  => true,
+    'showAttendance'     => true,
+    'showCashSession'    => true,
+    'showClock'          => true,
 ])
 
 @php
@@ -103,8 +107,8 @@
                     </div>
                 @else
                     <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 truncate flex items-center gap-1 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-primary inline-block flex-shrink-0"></span>
-                        <span class="truncate">{{ $currentBranchModel?->store_name ?: ($currentBranchModel?->name ?: 'Diego Music Store') }}</span>
+                        <span class="w-1.5 h-1.5 rounded-full {{ $currentBranchModel ? 'bg-primary' : (Auth::check() ? 'bg-amber-500' : 'bg-slate-400') }} inline-block flex-shrink-0"></span>
+                        <span class="truncate">{{ $currentBranchModel?->store_name ?: ($currentBranchModel?->name ?: (Auth::check() ? 'Belum Ditugaskan' : 'Diego Music Store')) }}</span>
                     </p>
                 @endif
             </div>
@@ -154,9 +158,15 @@
                             </div>
                         </div>
                     @else
-                        <span class="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold inline-block flex-shrink-0">
-                            {{ $currentBranchModel?->name ?: 'Cabang Utama' }}
-                        </span>
+                        @if ($currentBranchModel)
+                            <span class="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold inline-block flex-shrink-0">
+                                {{ $currentBranchModel->name }}
+                            </span>
+                        @elseif (Auth::check())
+                            <span class="px-2.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded-full text-xs font-bold inline-block flex-shrink-0">
+                                Belum Ditugaskan
+                            </span>
+                        @endif
                     @endif
                 </div>
                 <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1 truncate">
@@ -173,7 +183,7 @@
         {{ $slot }}
 
         {{-- Tombol Pintar Presensi (Smart Detection) - Khusus Karyawan --}}
-        @if (!$isOwner)
+        @if ($showAttendance && Auth::check() && !$isOwner && $currentEmployee)
             @if ($clockState === 'not_clocked_in')
                 <a
                     href="{{ route('pos.attendances') }}?action=clock_in"
@@ -212,7 +222,7 @@
         @endif
 
         {{-- Widget Presensi Karyawan & Kuota Off-Day --}}
-        @if ($currentEmployee)
+        @if ($showAttendance && $currentEmployee)
             <div class="relative flex-shrink-0" x-data="{ openAttendanceModal: false }">
                 <button
                     @click="openAttendanceModal = !openAttendanceModal"
@@ -282,68 +292,72 @@
         @endif
 
         {{-- Status Sesi Kasir --}}
-        @if (!empty($activeSessionInfo))
-            <div class="flex items-center gap-1.5 flex-shrink-0">
-                <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/50 dark:border-emerald-800/40 rounded-xl text-left"
-                     title="Sesi ID: #{{ $activeSessionInfo['id'] }} • Dibuka: {{ $activeSessionInfo['opened_by'] ?? 'Kasir' }} • Modal: Rp {{ number_format($activeSessionInfo['opening_cash'], 0, ',', '.') }}">
-                    <span class="relative flex h-2 w-2 flex-shrink-0">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <div class="leading-none">
-                        <div class="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
-                            Sesi: {{ $activeSessionInfo['opened_by'] ?? (auth()->user()->name ?? 'Kasir') }}
-                        </div>
-                        <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
-                            {{ substr($activeSessionInfo['opened_at'], -5) }} • Rp {{ number_format($activeSessionInfo['opening_cash'], 0, ',', '.') }}
+        @if ($showCashSession)
+            @if (!empty($activeSessionInfo))
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/50 dark:border-emerald-800/40 rounded-xl text-left"
+                         title="Sesi ID: #{{ $activeSessionInfo['id'] }} • Dibuka: {{ $activeSessionInfo['opened_by'] ?? 'Kasir' }} • Modal: Rp {{ number_format($activeSessionInfo['opening_cash'], 0, ',', '.') }}">
+                        <span class="relative flex h-2 w-2 flex-shrink-0">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <div class="leading-none">
+                            <div class="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+                                Sesi: {{ $activeSessionInfo['opened_by'] ?? (auth()->user()->name ?? 'Kasir') }}
+                            </div>
+                            <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
+                                {{ substr($activeSessionInfo['opened_at'], -5) }} • Rp {{ number_format($activeSessionInfo['opening_cash'], 0, ',', '.') }}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {{-- Tombol Tutup Sesi (opsional) --}}
-                @if ($showCloseSession)
-                    <button
-                        type="button"
-                        @click="$dispatch('confirm-open', {
-                            title: 'Tutup Sesi Kasir?',
-                            message: 'Anda akan dialihkan ke halaman penutupan sesi untuk mencatat kas fisik dan mencetak Z-Report.',
-                            onConfirm: 'redirect:{{ route('pos.session') }}',
-                            confirmLabel: 'Ya, Tutup Sesi',
-                            isDanger: true
-                        })"
-                        class="flex items-center gap-1 px-3 py-2 text-xs font-black text-white bg-rose-600 hover:bg-rose-700 active:scale-95 rounded-xl shadow-xs transition-all cursor-pointer flex-shrink-0"
-                        title="Tutup Sesi Kasir"
-                    >
-                        <i class="ph-bold ph-lock-key text-sm"></i>
-                        <span>Tutup Sesi</span>
-                    </button>
-                @endif
-            </div>
-        @else
-            <div class="flex items-center gap-1.5 px-3 py-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200/50 dark:border-rose-800/40 rounded-xl text-left flex-shrink-0"
-                 title="Sesi Kasir Tidak Aktif">
-                <span class="h-2 w-2 rounded-full bg-rose-500 flex-shrink-0"></span>
-                <span class="text-xs font-black text-rose-800 dark:text-rose-350 uppercase tracking-wider leading-none">
-                    Sesi Nonaktif
-                </span>
-            </div>
+                    {{-- Tombol Tutup Sesi (opsional) --}}
+                    @if ($showCloseSession)
+                        <button
+                            type="button"
+                            @click="$dispatch('confirm-open', {
+                                title: 'Tutup Sesi Kasir?',
+                                message: 'Anda akan dialihkan ke halaman penutupan sesi untuk mencatat kas fisik dan mencetak Z-Report.',
+                                onConfirm: 'redirect:{{ route('pos.session') }}',
+                                confirmLabel: 'Ya, Tutup Sesi',
+                                isDanger: true
+                            })"
+                            class="flex items-center gap-1 px-3 py-2 text-xs font-black text-white bg-rose-600 hover:bg-rose-700 active:scale-95 rounded-xl shadow-xs transition-all cursor-pointer flex-shrink-0"
+                            title="Tutup Sesi Kasir"
+                        >
+                            <i class="ph-bold ph-lock-key text-sm"></i>
+                            <span>Tutup Sesi</span>
+                        </button>
+                    @endif
+                </div>
+            @else
+                <div class="flex items-center gap-1.5 px-3 py-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200/50 dark:border-rose-800/40 rounded-xl text-left flex-shrink-0"
+                     title="Sesi Kasir Tidak Aktif">
+                    <span class="h-2 w-2 rounded-full bg-rose-500 flex-shrink-0"></span>
+                    <span class="text-xs font-black text-rose-800 dark:text-rose-350 uppercase tracking-wider leading-none">
+                        Sesi Nonaktif
+                    </span>
+                </div>
+            @endif
         @endif
 
 
         {{-- Notifications Toggle --}}
-        <button @click="$dispatch('open-notifications')"
-                type="button"
-                class="relative w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 cursor-pointer shadow-xs"
-                title="Pusat Notifikasi & Tugas">
-            <i class="ph-bold ph-bell text-base"></i>
-            {{-- Notification Badge Indicator --}}
-            <span x-show="unreadCount > 0" x-cloak class="absolute top-1 right-1 flex h-2.5 w-2.5">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white dark:border-slate-700"></span>
-            </span>
-            <!-- Number Counter (Desktop) -->
-            <span x-show="unreadCount > 0" x-cloak class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-700 shadow-sm" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
-        </button>
+        @if ($showNotifications && Auth::check())
+            <button @click="$dispatch('open-notifications')"
+                    type="button"
+                    class="relative w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 cursor-pointer shadow-xs"
+                    title="Pusat Notifikasi & Tugas">
+                <i class="ph-bold ph-bell text-base"></i>
+                {{-- Notification Badge Indicator --}}
+                <span x-show="unreadCount > 0" x-cloak class="absolute top-1 right-1 flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white dark:border-slate-700"></span>
+                </span>
+                <!-- Number Counter (Desktop) -->
+                <span x-show="unreadCount > 0" x-cloak class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-700 shadow-sm" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
+            </button>
+        @endif
 
         {{-- Dark Mode Toggle (Hidden pada < 2xl karena sudah ada di dalam dropdown profil user) --}}
         <button onclick="toggleDarkMode()"
@@ -357,61 +371,19 @@
         {{-- Divider (Hidden pada < 2xl) --}}
         <div class="hidden 2xl:block h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1 flex-shrink-0"></div>
 
-        {{-- Profil User Avatar & Dropdown Menu --}}
-        <div class="relative flex-shrink-0" x-data="{ openUserDropdown: false }">
-            <button
-                @click="openUserDropdown = !openUserDropdown"
-                type="button"
-                class="flex items-center gap-2 p-1 sm:p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/70 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all cursor-pointer group active:scale-[0.98]"
-                title="Menu Akun & Pengaturan (Klik untuk Buka)"
-                aria-expanded="false"
-                :aria-expanded="openUserDropdown.toString()"
-            >
-                {{-- Avatar --}}
-                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-600 shadow-xs flex-shrink-0 flex items-center justify-center font-bold text-xs text-primary dark:text-blue-400 group-hover:ring-2 group-hover:ring-primary/20 transition-all">
-                    @if (auth()->user()?->avatar_full_url)
-                        <img src="{{ auth()->user()->avatar_full_url }}"
-                             alt="{{ auth()->user()->name }}"
-                             class="w-full h-full object-cover">
-                    @else
-                        {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
-                    @endif
-                </div>
-
-                {{-- Username & Info --}}
-                <div class="hidden xl:block text-left leading-tight">
-                    <div class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 leading-tight flex items-center gap-1">
-                        <span class="truncate max-w-[110px]">{{ auth()->user()->name ?? 'Administrator' }}</span>
-                        <i class="ph-bold ph-caret-down text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-200" :class="{ 'rotate-180': openUserDropdown }"></i>
-                    </div>
-                    @if ($todaySalesTotal !== null)
-                        <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate max-w-[120px]">
-                            Penjualan:
-                            <span class="text-emerald-600 dark:text-emerald-400 font-extrabold">
-                                Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}
-                            </span>
-                        </div>
-                    @else
-                        <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate max-w-[120px]">
-                            {{ auth()->user()->roles()->first()?->name ?? 'Kasir' }}
-                        </div>
-                    @endif
-                </div>
-
-                {{-- Caret indicator on < xl --}}
-                <i class="ph-bold ph-caret-down text-xs text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 block xl:hidden"></i>
-            </button>
-
-            <!-- Dropdown Menu Panel -->
-            <div
-                x-show="openUserDropdown"
-                @click.away="openUserDropdown = false"
-                x-cloak
-                class="absolute right-0 mt-2 w-64 sm:w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 p-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-150"
-            >
-                {{-- Header Profil di dalam Dropdown --}}
-                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/50 flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-600 shadow-xs flex-shrink-0 flex items-center justify-center font-bold text-sm text-primary dark:text-blue-400">
+        @if (Auth::check())
+            {{-- Profil User Avatar & Dropdown Menu --}}
+            <div class="relative flex-shrink-0" x-data="{ openUserDropdown: false }">
+                <button
+                    @click="openUserDropdown = !openUserDropdown"
+                    type="button"
+                    class="flex items-center gap-2 p-1 sm:p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/70 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all cursor-pointer group active:scale-[0.98]"
+                    title="Menu Akun & Pengaturan (Klik untuk Buka)"
+                    aria-expanded="false"
+                    :aria-expanded="openUserDropdown.toString()"
+                >
+                    {{-- Avatar --}}
+                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-600 shadow-xs flex-shrink-0 flex items-center justify-center font-bold text-xs text-primary dark:text-blue-400 group-hover:ring-2 group-hover:ring-primary/20 transition-all">
                         @if (auth()->user()?->avatar_full_url)
                             <img src="{{ auth()->user()->avatar_full_url }}"
                                  alt="{{ auth()->user()->name }}"
@@ -420,81 +392,134 @@
                             {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
                         @endif
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">
-                            {{ auth()->user()->name ?? 'Administrator' }}
-                        </div>
-                        <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate">
-                            {{ auth()->user()->roles()->first()?->name ?? 'Kasir' }} • {{ $currentBranchModel?->name ?: 'Cabang Utama' }}
+
+                    {{-- Username & Info --}}
+                    <div class="hidden xl:block text-left leading-tight">
+                        <div class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 leading-tight flex items-center gap-1">
+                            <span class="truncate max-w-[110px]">{{ auth()->user()->name ?? 'Pengguna' }}</span>
+                            <i class="ph-bold ph-caret-down text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-200" :class="{ 'rotate-180': openUserDropdown }"></i>
                         </div>
                         @if ($todaySalesTotal !== null)
-                            <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                                Penjualan: Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}
+                            <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate max-w-[120px]">
+                                Penjualan:
+                                <span class="text-emerald-600 dark:text-emerald-400 font-extrabold">
+                                    Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}
+                                </span>
+                            </div>
+                        @else
+                            <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate max-w-[120px]">
+                                {{ auth()->user()?->roles()->first()?->name ?? 'Kasir' }}
                             </div>
                         @endif
                     </div>
-                </div>
 
-                {{-- Action Menu List --}}
-                <div class="space-y-1">
-                    {{-- 1. Toggle Mode Gelap / Terang --}}
-                    <button
-                        type="button"
-                        onclick="toggleDarkMode()"
-                        class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer group"
-                    >
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-blue-950/40 text-amber-500 dark:text-blue-400 flex items-center justify-center border border-amber-200/50 dark:border-blue-800/40">
-                                <i class="ph-bold ph-sun dark:hidden text-sm"></i>
-                                <i class="ph-bold ph-moon hidden dark:block text-sm"></i>
-                            </div>
-                            <span class="dark:hidden">Mode Gelap</span>
-                            <span class="hidden dark:inline">Mode Terang</span>
+                    {{-- Caret indicator on < xl --}}
+                    <i class="ph-bold ph-caret-down text-xs text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 block xl:hidden"></i>
+                </button>
+
+                <!-- Dropdown Menu Panel -->
+                <div
+                    x-show="openUserDropdown"
+                    @click.away="openUserDropdown = false"
+                    x-cloak
+                    class="absolute right-0 mt-2 w-64 sm:w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 p-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-150"
+                >
+                    {{-- Header Profil di dalam Dropdown --}}
+                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/50 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-600 shadow-xs flex-shrink-0 flex items-center justify-center font-bold text-sm text-primary dark:text-blue-400">
+                            @if (auth()->user()?->avatar_full_url)
+                                <img src="{{ auth()->user()->avatar_full_url }}"
+                                     alt="{{ auth()->user()->name }}"
+                                     class="w-full h-full object-cover">
+                            @else
+                                {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
+                            @endif
                         </div>
-                        <span class="text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
-                            <i class="ph-bold ph-arrows-left-right text-xs"></i>
-                        </span>
-                    </button>
-
-                    <div class="h-[1px] bg-slate-150 dark:bg-slate-700/70 my-1"></div>
-
-                    {{-- 2. Tombol Logout --}}
-                    <form action="{{ route('pos.logout') }}" method="POST" class="w-full">
-                        @csrf
-                        <button
-                            type="submit"
-                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition cursor-pointer group"
-                        >
-                            <div class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-200 dark:border-rose-800/60 group-hover:scale-105 transition-transform">
-                                <i class="ph-bold ph-sign-out text-sm"></i>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">
+                                {{ auth()->user()->name ?? 'Pengguna' }}
                             </div>
-                            <span>Keluar / Logout</span>
+                            <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate">
+                                {{ auth()->user()?->roles()->first()?->name ?? 'Kasir' }} • {{ $currentBranchModel?->name ?: 'Belum Ditugaskan' }}
+                            </div>
+                            @if ($todaySalesTotal !== null)
+                                <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                    Penjualan: Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Action Menu List --}}
+                    <div class="space-y-1">
+                        {{-- 1. Toggle Mode Gelap / Terang --}}
+                        <button
+                            type="button"
+                            onclick="toggleDarkMode()"
+                            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer group"
+                        >
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-blue-950/40 text-amber-500 dark:text-blue-400 flex items-center justify-center border border-amber-200/50 dark:border-blue-800/40">
+                                    <i class="ph-bold ph-sun dark:hidden text-sm"></i>
+                                    <i class="ph-bold ph-moon hidden dark:block text-sm"></i>
+                                </div>
+                                <span class="dark:hidden">Mode Gelap</span>
+                                <span class="hidden dark:inline">Mode Terang</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                                <i class="ph-bold ph-arrows-left-right text-xs"></i>
+                            </span>
                         </button>
-                    </form>
+
+                        <div class="h-[1px] bg-slate-150 dark:bg-slate-700/70 my-1"></div>
+
+                        {{-- 2. Tombol Logout --}}
+                        <form action="{{ route('pos.logout') }}" method="POST" class="w-full">
+                            @csrf
+                            <button
+                                type="submit"
+                                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition cursor-pointer group"
+                            >
+                                <div class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-200 dark:border-rose-800/60 group-hover:scale-105 transition-transform">
+                                    <i class="ph-bold ph-sign-out text-sm"></i>
+                                </div>
+                                <span>Keluar / Logout</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {{-- Tombol Logout Standalone (Hidden pada < 2xl) --}}
-        <form action="{{ route('pos.logout') }}" method="POST" class="hidden 2xl:inline-block flex-shrink-0">
-            @csrf
-            <button type="submit"
-                    class="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-extrabold text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/80 rounded-xl transition-all cursor-pointer shadow-xs active:scale-95 group"
-                    title="Logout (Keluar dari Sistem)">
-                <i class="ph-bold ph-sign-out text-base group-hover:scale-110 transition-transform"></i>
-                <span>Logout</span>
-            </button>
-        </form>
+            {{-- Tombol Logout Standalone --}}
+            <form action="{{ route('pos.logout') }}" method="POST" class="{{ (!$showCashSession && !$showAttendance) ? 'inline-block' : 'hidden xl:inline-block' }} flex-shrink-0">
+                @csrf
+                <button type="submit"
+                        class="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-extrabold text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/80 rounded-xl transition-all cursor-pointer shadow-xs active:scale-95 group"
+                        title="Logout (Keluar dari Sistem)">
+                    <i class="ph-bold ph-sign-out text-base group-hover:scale-110 transition-transform"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        @else
+            <a href="{{ route('pos.login') }}"
+               class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-black shadow-xs hover:shadow-md transition-all cursor-pointer flex-shrink-0"
+               title="Masuk ke Akun">
+                <i class="ph-bold ph-sign-in text-base"></i>
+                <span>Masuk</span>
+            </a>
+        @endif
 
         {{-- Jam & Tanggal (Far Right) --}}
-        <div class="hidden lg:flex flex-col items-end justify-center min-w-[80px] leading-tight text-right flex-shrink-0 pl-1">
-            <span class="text-xs font-black text-slate-800 dark:text-slate-200">
-                {{ now()->format('d M Y') }}
-            </span>
-            <span id="pos-realtime-clock" class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">
-                00:00:00
-            </span>
-        </div>
+        @if ($showClock)
+            <div class="hidden lg:flex flex-col items-end justify-center min-w-[80px] leading-tight text-right flex-shrink-0 pl-1">
+                <span class="text-xs font-black text-slate-800 dark:text-slate-200">
+                    {{ now()->format('d M Y') }}
+                </span>
+                <span id="pos-realtime-clock" class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+                    00:00:00
+                </span>
+            </div>
+        @endif
 
     </div>
 
@@ -505,7 +530,7 @@
         {{ $slot }}
 
         {{-- Tombol Ringkas Presensi Clock In / Out - Khusus Karyawan --}}
-        @if (!$isOwner)
+        @if ($showAttendance && Auth::check() && !$isOwner && $currentEmployee)
             @if ($clockState === 'not_clocked_in')
                 <a
                     href="{{ route('pos.attendances') }}?action=clock_in"
@@ -533,45 +558,56 @@
         @endif
 
         {{-- Notifications Toggle (Mobile) --}}
-        <button @click="$dispatch('open-notifications')"
-                type="button"
-                class="relative w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 cursor-pointer shadow-xs">
-            <i class="ph-bold ph-bell text-base"></i>
-            {{-- Notification Badge Indicator --}}
-            <span x-show="unreadCount > 0" x-cloak class="absolute top-1 right-1 flex h-2.5 w-2.5">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white dark:border-slate-700"></span>
-            </span>
-            <!-- Number Counter (Mobile) -->
-            <span x-show="unreadCount > 0" x-cloak class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-700 shadow-sm" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
-        </button>
+        @if ($showNotifications && Auth::check())
+            <button @click="$dispatch('open-notifications')"
+                    type="button"
+                    class="relative w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 cursor-pointer shadow-xs">
+                <i class="ph-bold ph-bell text-base"></i>
+                {{-- Notification Badge Indicator --}}
+                <span x-show="unreadCount > 0" x-cloak class="absolute top-1 right-1 flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white dark:border-slate-700"></span>
+                </span>
+                <!-- Number Counter (Mobile) -->
+                <span x-show="unreadCount > 0" x-cloak class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-700 shadow-sm" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
+            </button>
+        @endif
 
-        {{-- Tombol Pemicu Mobile Action Drawer --}}
-        <button
-            @click="mobileMenuOpen = true"
-            type="button"
-            class="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all cursor-pointer active:scale-95 flex-shrink-0"
-            title="Menu & Akun Kasir"
-            aria-label="Buka Menu Akun"
-        >
-            <div class="relative w-7 h-7 rounded-lg overflow-hidden border border-white dark:border-slate-700 shadow-xs flex-shrink-0 flex items-center justify-center bg-slate-200 dark:bg-slate-700 font-bold text-[10px] text-primary dark:text-blue-400">
-                @if (auth()->user()?->avatar_full_url)
-                    <img src="{{ auth()->user()->avatar_full_url }}"
-                         alt="Profile"
-                         class="w-full h-full object-cover">
-                @else
-                    {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
-                @endif
-                @if (!empty($activeSessionInfo))
-                    <span class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-slate-800"></span>
-                @endif
-            </div>
-            <i class="ph-bold ph-dots-three-vertical text-slate-500 dark:text-slate-300 text-sm pr-0.5"></i>
-        </button>
+        @if (Auth::check())
+            {{-- Tombol Pemicu Mobile Action Drawer --}}
+            <button
+                @click="mobileMenuOpen = true"
+                type="button"
+                class="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all cursor-pointer active:scale-95 flex-shrink-0"
+                title="Menu & Akun Kasir"
+                aria-label="Buka Menu Akun"
+            >
+                <div class="relative w-7 h-7 rounded-lg overflow-hidden border border-white dark:border-slate-700 shadow-xs flex-shrink-0 flex items-center justify-center bg-slate-200 dark:bg-slate-700 font-bold text-[10px] text-primary dark:text-blue-400">
+                    @if (auth()->user()?->avatar_full_url)
+                        <img src="{{ auth()->user()->avatar_full_url }}"
+                             alt="Profile"
+                             class="w-full h-full object-cover">
+                    @else
+                        {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
+                    @endif
+                    @if (!empty($activeSessionInfo))
+                        <span class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-slate-800"></span>
+                    @endif
+                </div>
+                <i class="ph-bold ph-dots-three-vertical text-slate-500 dark:text-slate-300 text-sm pr-0.5"></i>
+            </button>
+        @else
+            <a href="{{ route('pos.login') }}"
+               class="flex items-center justify-center w-8 h-8 rounded-xl bg-primary text-white text-xs font-black shadow-xs active:scale-95 flex-shrink-0"
+               title="Masuk ke Akun">
+                <i class="ph-bold ph-sign-in text-base"></i>
+            </a>
+        @endif
 
     </div>
 
     {{-- ====== MOBILE ACTION SHEET DRAWER ====== --}}
+    @if (Auth::check())
     <template x-teleport="body">
     <div
         x-show="mobileMenuOpen"
@@ -619,10 +655,10 @@
                     </div>
                     <div class="min-w-0">
                         <div class="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">
-                            {{ auth()->user()->name ?? 'Administrator' }}
+                            {{ auth()->user()->name ?? 'Pengguna' }}
                         </div>
                         <div class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate">
-                            {{ auth()->user()->roles()->first()?->name ?? 'Kasir' }} &bull; {{ $currentBranchModel?->name ?: 'Cabang Utama' }}
+                            {{ auth()->user()?->roles()->first()?->name ?? 'Kasir' }} &bull; {{ $currentBranchModel?->name ?: 'Belum Ditugaskan' }}
                         </div>
                     </div>
                 </div>
@@ -637,6 +673,7 @@
             </div>
 
             <!-- Status Sesi Kasir -->
+            @if ($showCashSession)
             <div class="p-3.5 rounded-2xl border {{ !empty($activeSessionInfo) ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/60' }} space-y-2">
                 <div class="flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2 font-black {{ !empty($activeSessionInfo) ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400' }}">
@@ -670,9 +707,10 @@
                     </div>
                 @endif
             </div>
+            @endif
 
             <!-- Status Presensi & Jatah Off-Day -->
-            @if ($currentEmployee)
+            @if ($showAttendance && $currentEmployee)
                 <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
                     <div class="flex items-center justify-between text-xs font-bold">
                         <span class="text-slate-500 dark:text-slate-400">Presensi Hari Ini:</span>
@@ -751,10 +789,13 @@
         </div>
     </div>
     </template>
+    @endif
 </header>
 
+@if ($showNotifications && Auth::check())
 <!-- NOTIFICATIONS RIGHT SLIDE-OVER (Global - Livewire) -->
 <livewire:pos-notification-drawer />
+@endif
 
 <script>
     function toggleDarkMode() {
