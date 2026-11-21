@@ -67,23 +67,40 @@ jobs:
         run: |
           .\dist\diego-print-agent.exe --help | Out-Null
 
-          $proc = Start-Process -FilePath ".\dist\diego-print-agent.exe" -ArgumentList "--port 18921" -PassThru -NoNewWindow
+          $stdoutLog = Join-Path $env:RUNNER_TEMP "agent-stdout.log"
+          $stderrLog = Join-Path $env:RUNNER_TEMP "agent-stderr.log"
+          $proc = Start-Process -FilePath ".\dist\diego-print-agent.exe" `
+            -ArgumentList @("--port", "18921") `
+            -RedirectStandardOutput $stdoutLog `
+            -RedirectStandardError $stderrLog `
+            -PassThru -NoNewWindow
           try {
             $ok = $false
+            $lastError = $null
             for ($i = 0; $i -lt 15; $i++) {
               Start-Sleep -Seconds 1
               try {
                 $resp = Invoke-RestMethod -Uri "http://127.0.0.1:18921/api/status" -TimeoutSec 2
-                if ($resp.status -eq "ok") {
-                  $ok = $true
-                  Write-Host "Smoke test OK: $($resp | ConvertTo-Json -Compress)"
-                  break
+                if ($resp.status -eq "online") {
+                  $printersResp = Invoke-RestMethod -Uri "http://127.0.0.1:18921/api/printers" -TimeoutSec 5
+                  if ($printersResp.status -eq "success") {
+                    $ok = $true
+                    Write-Host "Smoke test status OK: $($resp | ConvertTo-Json -Compress)"
+                    Write-Host "Smoke test printers OK: $($printersResp | ConvertTo-Json -Compress)"
+                    break
+                  }
+                } else {
+                  $lastError = "Unexpected /api/status payload: $($resp | ConvertTo-Json -Compress)"
                 }
               } catch {
+                $lastError = $_.Exception.Message
               }
             }
             if (-not $ok) {
-              throw "Compiled diego-print-agent.exe failed to respond on /api/status"
+              Write-Host "Last error: $lastError"
+              if (Test-Path $stdoutLog) { Write-Host "STDOUT:"; Get-Content $stdoutLog }
+              if (Test-Path $stderrLog) { Write-Host "STDERR:"; Get-Content $stderrLog }
+              throw "Compiled diego-print-agent.exe failed smoke test: $lastError"
             }
           } finally {
             if ($proc -and -not $proc.HasExited) {
