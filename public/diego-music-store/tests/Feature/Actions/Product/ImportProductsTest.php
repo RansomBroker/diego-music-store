@@ -371,5 +371,46 @@ CSV;
             }
         }
     }
+
+    public function test_rounds_decimal_harga_beli_and_netto_using_half_threshold(): void
+    {
+        $csvContent = <<<'CSV'
+NO,KODE BARANG,NAMA STOK,KATEGORI BARANG,Harga Beli,Netto,Disc,HET,HARGA JUAL CASH,JLH.STOK
+1,DEC-UP,PRODUK BULAT ATAS,GUITAR,100500.6,101200.51,0,150000,150000,1 Pcs
+2,DEC-DOWN,PRODUK BULAT BAWAH,GUITAR,100500.4,101200.49,0,150000,150000,1 Pcs
+3,DEC-ID-UP,PRODUK FORMAT ID ATAS,GUITAR,"Rp 250.400,75","255.600,6",0,350000,350000,1 Pcs
+4,DEC-ID-DOWN,PRODUK FORMAT ID BAWAH,GUITAR,"Rp 250.400,25","255.600,49",0,350000,350000,1 Pcs
+CSV;
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'import_decimal_') . '.csv';
+        file_put_contents($tempFile, $csvContent);
+
+        try {
+            $result = app(ImportProducts::class)->execute($tempFile, $this->branch->id);
+
+            $this->assertEquals(4, $result['imported']);
+            $this->assertEquals(0, $result['failed']);
+
+            $up = ProductVariant::where('sku', 'DEC-UP')->firstOrFail();
+            $this->assertEquals(100501, $up->cost_price);
+            $this->assertEquals(101201, $up->hpp);
+
+            $down = ProductVariant::where('sku', 'DEC-DOWN')->firstOrFail();
+            $this->assertEquals(100500, $down->cost_price);
+            $this->assertEquals(101200, $down->hpp);
+
+            $idUp = ProductVariant::where('sku', 'DEC-ID-UP')->firstOrFail();
+            $this->assertEquals(250401, $idUp->cost_price);
+            $this->assertEquals(255601, $idUp->hpp);
+
+            $idDown = ProductVariant::where('sku', 'DEC-ID-DOWN')->firstOrFail();
+            $this->assertEquals(250400, $idDown->cost_price);
+            $this->assertEquals(255600, $idDown->hpp);
+        } finally {
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+        }
+    }
 }
 

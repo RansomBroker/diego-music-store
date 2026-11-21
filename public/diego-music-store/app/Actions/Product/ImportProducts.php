@@ -625,12 +625,13 @@ class ImportProducts
     }
 
     /**
-     * Sanitize numeric string values from Excel/CSV (e.g. "383,000", "535.000,00", or "Rp 383.000").
+     * Sanitize numeric values (floats, formatted Indonesian/US currency strings) and round decimals
+     * (> 0.5 / >= 0.5 up, < 0.5 down).
      */
     protected function sanitizeNumber(mixed $value): int
     {
         if (is_numeric($value)) {
-            return (int) round((float) $value);
+            return (int) round((float) $value, 0, PHP_ROUND_HALF_UP);
         }
 
         $raw = trim((string) $value);
@@ -638,15 +639,50 @@ class ImportProducts
             return 0;
         }
 
-        // Strip decimal cents when formatted as "535.000,00" or "535,000.00"
-        $normalized = preg_replace('/[.,]\d{1,2}$/', '', preg_replace('/[^\d.,]/', '', $raw) ?? '') ?? '';
-        if (preg_match('/^\d{1,3}([.,]\d{3})+$/', trim(preg_replace('/[^\d.,]/', '', $raw) ?? '')) === 1) {
-            $normalized = preg_replace('/[^\d.,]/', '', $raw) ?? '';
+        $numericChars = preg_replace('/[^\d.,-]/', '', $raw) ?? '';
+        if ($numericChars === '' || $numericChars === '-') {
+            return 0;
         }
 
-        $cleaned = preg_replace('/[^0-9]/', '', $normalized);
+        $dotCount = substr_count($numericChars, '.');
+        $commaCount = substr_count($numericChars, ',');
 
-        return $cleaned !== '' ? (int) $cleaned : 0;
+        if ($dotCount > 0 && $commaCount > 0) {
+            // Whichever separator appears last is the decimal separator
+            $lastDot = strrpos($numericChars, '.');
+            $lastComma = strrpos($numericChars, ',');
+            if ($lastComma > $lastDot) {
+                $floatStr = str_replace(',', '.', str_replace('.', '', $numericChars));
+            } else {
+                $floatStr = str_replace(',', '', $numericChars);
+            }
+
+            return (int) round((float) $floatStr, 0, PHP_ROUND_HALF_UP);
+        }
+
+        if ($commaCount === 1 && $dotCount === 0) {
+            [$intPart, $decPart] = explode(',', $numericChars, 2);
+            if (strlen($decPart) !== 3) {
+                return (int) round((float) ($intPart . '.' . $decPart), 0, PHP_ROUND_HALF_UP);
+            }
+
+            // Exactly 3 digits after single comma (e.g. "383,000") is treated as thousands separator
+            return (int) preg_replace('/[^0-9-]/', '', $numericChars);
+        }
+
+        if ($dotCount === 1 && $commaCount === 0) {
+            [$intPart, $decPart] = explode('.', $numericChars, 2);
+            if (strlen($decPart) !== 3) {
+                return (int) round((float) $numericChars, 0, PHP_ROUND_HALF_UP);
+            }
+
+            // Exactly 3 digits after single dot in currency strings (e.g. "Rp 383.000") is thousands separator
+            return (int) preg_replace('/[^0-9-]/', '', $numericChars);
+        }
+
+        $cleaned = preg_replace('/[^0-9-]/', '', $numericChars);
+
+        return ($cleaned !== '' && $cleaned !== '-') ? (int) $cleaned : 0;
     }
 
     /**

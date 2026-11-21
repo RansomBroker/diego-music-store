@@ -466,7 +466,15 @@ class SpreadsheetImportHelper
 
             foreach ($colMap as $colLetter => $headerName) {
                 $cell = $sheet->getCell($colLetter . $row);
-                $value = $cell->getValue();
+                if ($cell->isFormula()) {
+                    try {
+                        $value = $cell->getCalculatedValue();
+                    } catch (Exception $e) {
+                        $value = $cell->getValue();
+                    }
+                } else {
+                    $value = $cell->getValue();
+                }
 
                 if (SpreadsheetDate::isDateTime($cell) && is_numeric($value)) {
                     try {
