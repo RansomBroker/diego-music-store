@@ -18,11 +18,11 @@ class PosNavbarHelper
      * @param string|null $backUrl
      * @return array
      */
-    public static function getContext(?array $activeSessionInfo = null, ?string $backUrl = null): array
+    public static function getContext(?array $activeSessionInfo = null, ?string $backUrl = null, $branches = null): array
     {
         $resolvedBackUrl = $backUrl ?? route('pos.front-office');
         $sessionInfo = static::resolveActiveSession($activeSessionInfo);
-        $branchContext = static::resolveBranchContext();
+        $branchContext = static::resolveBranchContext($branches);
 
         $isOwner = Auth::check() && Auth::user()->hasRole(['owner', 'Owner']);
         $attendanceContext = static::resolveAttendanceContext($branchContext['currentBranchModel'], $isOwner);
@@ -81,14 +81,20 @@ class PosNavbarHelper
      *
      * @return array
      */
-    public static function resolveBranchContext(): array
+    public static function resolveBranchContext($preloadedBranches = null): array
     {
+        $preloadedCollection = $preloadedBranches instanceof Collection
+            ? $preloadedBranches
+            : (is_iterable($preloadedBranches) ? collect($preloadedBranches) : collect());
+
         if (!Auth::check()) {
-            $defaultBranch = null;
-            try {
-                $defaultBranch = Branch::where('is_active', true)->first();
-            } catch (\Throwable $e) {
-                // Table might not exist in unit tests or during bootstrap
+            $defaultBranch = $preloadedCollection->firstWhere('is_active', true);
+            if (!$defaultBranch) {
+                try {
+                    $defaultBranch = Branch::where('is_active', true)->first();
+                } catch (\Throwable $e) {
+                    // Table might not exist in unit tests or during bootstrap
+                }
             }
 
             return [
@@ -104,6 +110,26 @@ class PosNavbarHelper
             $isManagement = BranchHelper::canAccessAllBranches($user);
         } catch (\Throwable $e) {
             $isManagement = false;
+        }
+
+        if ($isManagement && $preloadedCollection->isNotEmpty()) {
+            $userBranchList = $preloadedCollection->where('is_active', true)->sortBy('name')->values();
+            $sessionBranchId = session('pos_active_branch_id');
+            $currentBranchModel = $sessionBranchId
+                ? $userBranchList->firstWhere('id', (int) $sessionBranchId)
+                : null;
+            if (!$currentBranchModel) {
+                $currentBranchModel = $userBranchList->first();
+                if ($currentBranchModel) {
+                    session(['pos_active_branch_id' => $currentBranchModel->id]);
+                }
+            }
+
+            return [
+                'currentActiveBranchId' => $currentBranchModel?->id,
+                'currentBranchModel'    => $currentBranchModel,
+                'userBranchList'        => $userBranchList,
+            ];
         }
 
         try {
@@ -132,20 +158,23 @@ class PosNavbarHelper
             }
         }
 
-        $currentBranchModel = null;
-        if ($currentActiveBranchId) {
-            try {
-                $currentBranchModel = Branch::find($currentActiveBranchId);
-            } catch (\Throwable $e) {
-                $currentBranchModel = null;
-            }
-        }
-
         $userBranchList = collect();
         try {
             $userBranchList = BranchHelper::getAllowedBranchesQuery()->get();
         } catch (\Throwable $e) {
             $userBranchList = collect();
+        }
+
+        $currentBranchModel = null;
+        if ($currentActiveBranchId) {
+            $currentBranchModel = $userBranchList->firstWhere('id', (int) $currentActiveBranchId);
+            if (!$currentBranchModel) {
+                try {
+                    $currentBranchModel = Branch::find($currentActiveBranchId);
+                } catch (\Throwable $e) {
+                    $currentBranchModel = null;
+                }
+            }
         }
 
         return [
@@ -183,10 +212,11 @@ class PosNavbarHelper
 
         if ($currentEmployee) {
             try {
+                // Hitung used_off_days_this_month sekali saja, hindari 3x query COUNT(*) terpisah
                 $usedOffDays = $currentEmployee->used_off_days_this_month;
                 $quotaOffDays = $currentEmployee->monthly_off_days_quota;
-                $isOverQuota = $currentEmployee->is_off_days_over_quota;
-                $overCount = $currentEmployee->off_days_over_count;
+                $isOverQuota = $usedOffDays > $quotaOffDays;
+                $overCount = max(0, $usedOffDays - $quotaOffDays);
 
                 $todayAttendance = EmployeeAttendance::where('employee_id', $currentEmployee->id)
                     ->where('date', $todayDate)
@@ -223,25 +253,8 @@ class PosNavbarHelper
             }
         }
 
+        // Pertahankan key 'allBranchEmployees' untuk backward compatibility tanpa query berat yang tidak dipakai navbar
         $allBranchEmployees = collect();
-        if ($isOwner && $currentBranchModel) {
-            try {
-                $allBranchEmployees = Employee::with(['attendances' => function ($q) use ($todayDate) {
-                    $q->where('date', $todayDate);
-                }, 'user'])
-                ->where('is_active', true)
-                ->whereDoesntHave('user.roles', function ($q) {
-                    $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
-                })
-                ->where(function ($q) use ($currentBranchModel) {
-                    $q->where('branch_id', $currentBranchModel->id)
-                      ->orWhereNull('branch_id');
-                })
-                ->get();
-            } catch (\Throwable $e) {
-                $allBranchEmployees = collect();
-            }
-        }
 
         return [
             'currentEmployee'    => $currentEmployee,

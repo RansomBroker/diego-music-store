@@ -144,12 +144,13 @@ trait WithPaymentHandling
                 }
             }
 
-            // Compile human-readable payment method name
+            // Compile human-readable payment method name (batch lookup to avoid N+1)
+            $dbMethodsMap = PaymentMethod::whereIn('code', $selectedPaymentMethods)->get()->keyBy('code');
             $methodNames = [];
             foreach ($selectedPaymentMethods as $m) {
                 $amount = intval($paymentAmounts[$m] ?? ($m === 'cash' ? $amountCash : ($m === 'debit' ? $amountDebit : ($m === 'credit' ? $amountCredit : 0))));
                 if ($amount > 0) {
-                    $dbMethod = PaymentMethod::where('code', $m)->first();
+                    $dbMethod = $dbMethodsMap->get($m);
                     $baseName = $dbMethod ? $dbMethod->name : ($m === 'cash' ? 'Tunai' : ($m === 'debit' ? 'Debit Card' : ($m === 'credit' ? 'Piutang' : ucfirst($m))));
                     $subValue = $paymentSubMethods[$m] ?? null;
                     if (!empty($subValue)) {
@@ -252,6 +253,10 @@ trait WithPaymentHandling
             $this->amountPaid = 0;
             $this->usePoints = false;
             
+            // Refresh cached session sales total and notify wire:ignored header
+            cache()->forget('pos_today_sales_' . $activeSession->id);
+            $this->dispatch('pos-today-sales-updated', formatted: number_format($this->todaySalesTotal, 0, ',', '.'));
+
             // Dispatch print event for thermal receipt printing
             $this->lastSaleId = $sale->id;
             $this->dispatch('print-receipt', saleId: $sale->id);

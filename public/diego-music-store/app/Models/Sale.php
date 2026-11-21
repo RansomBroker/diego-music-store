@@ -75,7 +75,10 @@ class Sale extends Model
     public static function generateInvoiceNumber(string $categoryName = null): string
     {
         if ($categoryName) {
-            $category = \App\Models\SaleCategory::where('name', $categoryName)->first();
+            $cachedCategories = cache()->get('pos_sale_categories');
+            $category = $cachedCategories
+                ? $cachedCategories->firstWhere('name', $categoryName)
+                : \App\Models\SaleCategory::where('name', $categoryName)->first();
             if ($category && !empty($category->prefix)) {
                 $prefix = $category->prefix;
                 $startAlphabet = strtoupper($category->start_alphabet ?? 'A');

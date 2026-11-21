@@ -39,7 +39,7 @@
         @if ($editingSaleId)
             <div class="mb-3 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl flex items-center justify-between gap-2 transition-colors duration-200">
                 <div class="flex items-center gap-2 text-amber-700 dark:text-amber-450">
-                    <i class="ph-fill ph-warning-circle text-base animate-pulse"></i>
+                    <i class="ph-fill ph-warning-circle text-base"></i>
                     <div class="text-[10px] leading-tight">
                         <span class="font-extrabold block">Mode Edit Transaksi</span>
                         <span class="font-medium text-slate-500 dark:text-slate-400 block">Perubahan akan diperbarui saat checkout.</span>
@@ -119,7 +119,6 @@
                             @php $hCount = $heldTransactionsCount ?? count($heldTransactions); @endphp
                             @if ($hCount > 0)
                                 <span class="absolute -top-1.5 -right-1.5 flex h-4 w-4 pointer-events-none">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-4 w-4 bg-rose-600 items-center justify-center text-[9px] font-bold text-white shadow-xs border border-rose-700">
                                         {{ $hCount }}
                                     </span>
@@ -431,7 +430,56 @@
                             $rowSubtotal = ($item['price'] * $item['qty']) - intval($item['discount_amount'] ?? 0); 
                             $itemVariant = $cartVariants[$id] ?? null;
                         @endphp
-                        <tr wire:key="cart-item-row-{{ $id }}" class="border-b border-slate-250 dark:border-slate-700 hover:bg-slate-100/40 dark:hover:bg-slate-700/30 transition-colors">
+                        <tr
+                            wire:key="cart-item-row-{{ $id }}"
+                            x-data="{
+                                qty: {{ (int) $item['qty'] }},
+                                timer: null,
+                                notes: @js($item['notes'] ?? ''),
+                                originalNotes: @js($item['notes'] ?? ''),
+                                discountVal: @js(($item['discount_value'] ?? 0) > 0 ? (string)$item['discount_value'] : ''),
+                                originalDiscount: @js(($item['discount_value'] ?? 0) > 0 ? (string)$item['discount_value'] : ''),
+                                taxVal: @js(($item['tax_value'] ?? 0) > 0 ? (string)$item['tax_value'] : ''),
+                                originalTax: @js(($item['tax_value'] ?? 0) > 0 ? (string)$item['tax_value'] : ''),
+                                changeQty(diff) {
+                                    let next = this.qty + diff;
+                                    if (next < 0) next = 0;
+                                    this.qty = next;
+                                    clearTimeout(this.timer);
+                                    this.timer = setTimeout(() => {
+                                        $wire.setCartQty({{ $id }}, this.qty);
+                                    }, 300);
+                                },
+                                setDirectQty(val) {
+                                    let parsed = parseInt(val) || 0;
+                                    if (parsed < 0) parsed = 0;
+                                    this.qty = parsed;
+                                    clearTimeout(this.timer);
+                                    this.timer = setTimeout(() => {
+                                        $wire.setCartQty({{ $id }}, this.qty);
+                                    }, 300);
+                                },
+                                saveNotes() {
+                                    if (this.notes !== this.originalNotes) {
+                                        this.originalNotes = this.notes;
+                                        $wire.updateItemNote({{ $id }}, this.notes);
+                                    }
+                                },
+                                saveDiscount() {
+                                    if (this.discountVal !== this.originalDiscount) {
+                                        this.originalDiscount = this.discountVal;
+                                        $wire.updateItemDiscountValue({{ $id }}, this.discountVal || 0);
+                                    }
+                                },
+                                saveTax() {
+                                    if (this.taxVal !== this.originalTax) {
+                                        this.originalTax = this.taxVal;
+                                        $wire.updateItemTaxValue({{ $id }}, this.taxVal || 0);
+                                    }
+                                }
+                            }"
+                            class="border-b border-slate-250 dark:border-slate-700 hover:bg-slate-100/40 dark:hover:bg-slate-700/30 transition-colors"
+                        >
                             <td class="py-2 px-2 text-xs font-extrabold text-slate-700 dark:text-slate-300 align-middle">{{ $loop->iteration }}</td>
                             <td class="py-2 px-2 align-middle min-w-[150px]">
                                 <div class="flex items-center gap-1.5">
@@ -463,25 +511,13 @@
                             </td>
                             <!-- Dedicated Catatan Column -->
                             <td class="py-2 px-2 align-middle">
-                                <div 
-                                    x-data="{ 
-                                        notes: @js($item['notes'] ?? ''),
-                                        originalNotes: @js($item['notes'] ?? ''),
-                                        save() {
-                                            if (this.notes !== this.originalNotes) {
-                                                this.originalNotes = this.notes;
-                                                $wire.updateItemNote({{ $id }}, this.notes);
-                                            }
-                                        }
-                                    }"
-                                    class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-full max-w-[160px]"
-                                >
+                                <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-full max-w-[160px]">
                                     <i class="ph ph-note-pencil text-slate-500 dark:text-slate-400 text-[10px] absolute left-1.5 pointer-events-none"></i>
                                     <input 
                                         type="text" 
                                         placeholder="Catatan..." 
                                         x-model="notes"
-                                        @blur="save()"
+                                        @blur="saveNotes()"
                                         @keydown.enter.prevent="$el.blur()"
                                         class="w-full pl-6 pr-2 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-0"
                                     >
@@ -507,31 +543,7 @@
                             </td>
                             <td class="py-2 px-2 text-[11px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/20">{{ \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>
                             <td class="py-2 px-2 align-middle">
-                                <div 
-                                    x-data="{
-                                        qty: {{ (int) $item['qty'] }},
-                                        timer: null,
-                                        changeQty(diff) {
-                                            let next = this.qty + diff;
-                                            if (next < 0) next = 0;
-                                            this.qty = next;
-                                            clearTimeout(this.timer);
-                                            this.timer = setTimeout(() => {
-                                                $wire.setCartQty({{ $id }}, this.qty);
-                                            }, 300);
-                                        },
-                                        setDirectQty(val) {
-                                            let parsed = parseInt(val) || 0;
-                                            if (parsed < 0) parsed = 0;
-                                            this.qty = parsed;
-                                            clearTimeout(this.timer);
-                                            this.timer = setTimeout(() => {
-                                                $wire.setCartQty({{ $id }}, this.qty);
-                                            }, 300);
-                                        }
-                                    }"
-                                    class="flex items-center justify-center gap-0.5 bg-slate-100 dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-md p-0.5 mx-auto w-fit select-none"
-                                >
+                                <div class="flex items-center justify-center gap-0.5 bg-slate-100 dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-md p-0.5 mx-auto w-fit select-none">
                                     <button 
                                         type="button"
                                         @click.stop="changeQty(-1)" 
@@ -560,24 +572,12 @@
                             </td>
                             <td class="py-2 px-2 align-middle">
                                 <div class="flex items-center justify-end gap-1">
-                                    <div 
-                                        x-data="{
-                                            discountVal: @js(($item['discount_value'] ?? 0) > 0 ? (string)$item['discount_value'] : ''),
-                                            originalVal: @js(($item['discount_value'] ?? 0) > 0 ? (string)$item['discount_value'] : ''),
-                                            save() {
-                                                if (this.discountVal !== this.originalVal) {
-                                                    this.originalVal = this.discountVal;
-                                                    $wire.updateItemDiscountValue({{ $id }}, this.discountVal || 0);
-                                                }
-                                            }
-                                        }"
-                                        class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20"
-                                    >
+                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20">
                                         <input 
                                             type="number" 
                                             placeholder="0" 
                                             x-model="discountVal"
-                                            @blur="save()"
+                                            @blur="saveDiscount()"
                                             @keydown.enter.prevent="$el.blur()"
                                             class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" 
                                             min="0"
@@ -588,24 +588,12 @@
                             </td>
                             <td class="py-2 px-2 align-middle">
                                 <div class="flex items-center justify-end gap-1">
-                                    <div 
-                                        x-data="{
-                                            taxVal: @js(($item['tax_value'] ?? 0) > 0 ? (string)$item['tax_value'] : ''),
-                                            originalVal: @js(($item['tax_value'] ?? 0) > 0 ? (string)$item['tax_value'] : ''),
-                                            save() {
-                                                if (this.taxVal !== this.originalVal) {
-                                                    this.originalVal = this.taxVal;
-                                                    $wire.updateItemTaxValue({{ $id }}, this.taxVal || 0);
-                                                }
-                                            }
-                                        }"
-                                        class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20"
-                                    >
+                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20">
                                         <input 
                                             type="number" 
                                             placeholder="0" 
                                             x-model="taxVal"
-                                            @blur="save()"
+                                            @blur="saveTax()"
                                             @keydown.enter.prevent="$el.blur()"
                                             class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" 
                                             min="0"

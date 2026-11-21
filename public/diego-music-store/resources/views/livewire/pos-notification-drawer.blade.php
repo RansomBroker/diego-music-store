@@ -3,7 +3,7 @@
      @keydown.escape.window="open = false"
      class="relative z-[100]"
      x-cloak
-     wire:poll.15s>
+     wire:poll.60s.visible>
     
     <!-- Backdrop -->
     <div x-show="open"
@@ -14,7 +14,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @click="open = false"
-         class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity">
+         class="fixed inset-0 bg-slate-900/65 transition-opacity">
     </div>
 
     <!-- Slide-over panel -->

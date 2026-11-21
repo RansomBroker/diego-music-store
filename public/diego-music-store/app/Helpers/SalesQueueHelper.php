@@ -9,6 +9,18 @@ use Illuminate\Database\Eloquent\Collection;
 class SalesQueueHelper
 {
     /**
+     * Get all daily queue members for a branch and date in a single query.
+     */
+    public static function getDailyQueueMembers(int $branchId, ?string $date = null): Collection
+    {
+        $targetDate = $date ?? now()->toDateString();
+        return SalesQueueMember::with(['user.employee', 'currentDutyLog'])
+            ->where('branch_id', $branchId)
+            ->where('date', $targetDate)
+            ->get();
+    }
+
+    /**
      * Get active queue members for a branch and date.
      */
     public static function getActiveQueue(int $branchId, ?string $date = null): Collection

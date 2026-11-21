@@ -50,7 +50,7 @@ class PaymentModal extends Component
 
     public function getPaymentMethodsProperty()
     {
-        return PaymentMethod::with('children')->get();
+        return PaymentMethod::with(['children', 'parent'])->get();
     }
 
     public function togglePaymentMethod($method)

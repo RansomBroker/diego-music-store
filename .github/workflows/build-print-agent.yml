@@ -1,0 +1,140 @@
+name: Build Diego Print Agent (.exe)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/diego-print-agent/**'
+      - '.github/workflows/build-print-agent.yml'
+    tags:
+      - 'print-agent-v*'
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Publish a GitHub Release alongside the workflow artifact'
+        required: false
+        type: boolean
+        default: false
+      release_tag:
+        description: 'Release tag (used only when Create Release is checked)'
+        required: false
+        type: string
+        default: 'print-agent-v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-exe:
+    name: Build Windows x64 (.exe)
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        working-directory: tools/diego-print-agent
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: tools/diego-print-agent/requirements-build.txt
+
+      - name: Verify agent syntax
+        run: python -m py_compile agent.py
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-build.txt
+
+      - name: Compile diego-print-agent.exe with PyInstaller
+        run: |
+          python -m PyInstaller --onefile --console --clean --noconfirm `
+            --name diego-print-agent `
+            --hidden-import=win32print `
+            --hidden-import=win32api `
+            --hidden-import=pywintypes `
+            agent.py
+
+      - name: Smoke test compiled executable
+        shell: pwsh
+        run: |
+          .\dist\diego-print-agent.exe --help | Out-Null
+
+          $proc = Start-Process -FilePath ".\dist\diego-print-agent.exe" -ArgumentList "--port 18921" -PassThru -NoNewWindow
+          try {
+            $ok = $false
+            for ($i = 0; $i -lt 15; $i++) {
+              Start-Sleep -Seconds 1
+              try {
+                $resp = Invoke-RestMethod -Uri "http://127.0.0.1:18921/api/status" -TimeoutSec 2
+                if ($resp.status -eq "ok") {
+                  $ok = $true
+                  Write-Host "Smoke test OK: $($resp | ConvertTo-Json -Compress)"
+                  break
+                }
+              } catch {
+              }
+            }
+            if (-not $ok) {
+              throw "Compiled diego-print-agent.exe failed to respond on /api/status"
+            }
+          } finally {
+            if ($proc -and -not $proc.HasExited) {
+              Stop-Process -Id $proc.Id -Force
+            }
+          }
+
+      - name: Package Windows bundle (.zip)
+        shell: pwsh
+        run: |
+          $stageDir = "dist\package"
+          New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
+          Copy-Item "dist\diego-print-agent.exe" $stageDir
+          Copy-Item "run_agent.bat" $stageDir
+          Copy-Item "README.md" $stageDir
+          Compress-Archive -Path "$stageDir\*" -DestinationPath "dist\diego-print-agent-windows.zip" -Force
+
+      - name: Upload diego-print-agent.exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: diego-print-agent-exe
+          path: tools/diego-print-agent/dist/diego-print-agent.exe
+          if-no-files-found: error
+
+      - name: Upload Windows zip bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: diego-print-agent-windows-zip
+          path: tools/diego-print-agent/dist/diego-print-agent-windows.zip
+          if-no-files-found: error
+
+      - name: Determine release tag
+        if: startsWith(github.ref, 'refs/tags/print-agent-v') || inputs.create_release == true
+        id: release_meta
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}".StartsWith("refs/tags/")) {
+            $tag = "${{ github.ref_name }}"
+          } else {
+            $tag = "${{ inputs.release_tag }}"
+          }
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/print-agent-v') || inputs.create_release == true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_meta.outputs.tag }}
+          name: Diego Print Agent (${{ steps.release_meta.outputs.tag }})
+          generate_release_notes: true
+          files: |
+            tools/diego-print-agent/dist/diego-print-agent.exe
+            tools/diego-print-agent/dist/diego-print-agent-windows.zip
+

@@ -26,19 +26,11 @@ trait WithCustomerManagement
             if ($customer->pricing_tier_id) {
                 $this->selectedPricingTierId = $customer->pricing_tier_id;
             } else {
-                // Fallback to default retail tier
-                $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
-                    ->orWhere('name', 'like', '%umum%')
-                    ->first() ?? \App\Models\PricingTier::first();
-                $this->selectedPricingTierId = $defaultTier ? $defaultTier->id : null;
+                $this->selectedPricingTierId = $this->getDefaultRetailPricingTierId();
             }
         } else {
             $this->customerPoints = 0;
-            // Fallback to default retail tier
-            $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
-                ->orWhere('name', 'like', '%umum%')
-                ->first() ?? \App\Models\PricingTier::first();
-            $this->selectedPricingTierId = $defaultTier ? $defaultTier->id : null;
+            $this->selectedPricingTierId = $this->getDefaultRetailPricingTierId();
         }
         $this->updatedSelectedPricingTierId($this->selectedPricingTierId);
     }
@@ -54,11 +46,7 @@ trait WithCustomerManagement
         $this->customerPoints = 0;
         $this->usePoints = false;
 
-        // Fallback to default retail tier
-        $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
-            ->orWhere('name', 'like', '%umum%')
-            ->first() ?? \App\Models\PricingTier::first();
-        $this->selectedPricingTierId = $defaultTier ? $defaultTier->id : null;
+        $this->selectedPricingTierId = $this->getDefaultRetailPricingTierId();
         $this->updatedSelectedPricingTierId($this->selectedPricingTierId);
     }
 
@@ -69,10 +57,7 @@ trait WithCustomerManagement
         $this->newCustomerEmail = '';
         $this->newCustomerAddress = '';
         
-        $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
-            ->orWhere('name', 'like', '%umum%')
-            ->first() ?? \App\Models\PricingTier::first();
-        $this->newCustomerPricingTierId = $defaultTier ? $defaultTier->id : null;
+        $this->newCustomerPricingTierId = $this->getDefaultRetailPricingTierId();
         $this->newCustomerIsLoyaltyMember = true;
         
         $this->showCreateCustomerModal = true;

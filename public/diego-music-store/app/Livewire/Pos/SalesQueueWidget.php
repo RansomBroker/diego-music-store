@@ -187,11 +187,27 @@ class SalesQueueWidget extends Component
 
     public function render()
     {
+        $allMembers = SalesQueueHelper::getDailyQueueMembers($this->branchId);
+
+        $onDutyMembers = $allMembers
+            ->filter(fn ($m) => $m->is_active && $m->status === 'on_duty')
+            ->sortBy('duty_started_at')
+            ->values();
+
+        $waitingMembers = $allMembers
+            ->filter(fn ($m) => $m->is_active && $m->status === 'waiting')
+            ->sortBy('queue_order')
+            ->values();
+
+        $offDutyMembers = $allMembers
+            ->where('status', 'off_duty')
+            ->values();
+
         return view('livewire.pos.sales-queue-widget', [
-            'onDutyMembers' => $this->onDutyMembers,
-            'waitingMembers' => $this->waitingMembers,
-            'nextSales' => $this->nextSales,
-            'offDutyMembers' => $this->offDutyMembers,
+            'onDutyMembers' => $onDutyMembers,
+            'waitingMembers' => $waitingMembers,
+            'nextSales' => $waitingMembers->first(),
+            'offDutyMembers' => $offDutyMembers,
         ]);
     }
 }

@@ -28,6 +28,10 @@ trait WithDraftTransactions
 
     public function getHeldTransactionsCountProperty(): int
     {
+        if ($this->showHeldModal) {
+            return $this->heldTransactions->count();
+        }
+
         return PosHeldTransaction::where('user_id', Auth::id())
             ->where('branch_id', $this->resolveHeldTransactionBranchId())
             ->whereNotNull('cart_data')

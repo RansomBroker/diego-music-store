@@ -16,12 +16,27 @@ trait WithCartManagement
 
     public function addToCart($variantId)
     {
+        $branchId = $this->selectedBranchId;
         $variant = ProductVariant::with([
             'product:id,name,type,category',
-            'branchStocks:id,product_variant_id,branch_id,stock',
+            'branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock')
+                ->when($branchId, fn($sq) => $sq->where('branch_id', $branchId)),
             'tierPrices:id,product_variant_id,pricing_tier_id,price',
+            'bundleItems.childVariant.product:id,name,type',
+            'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock')
+                ->when($branchId, fn($sq) => $sq->where('branch_id', $branchId)),
         ])->findOrFail($variantId);
-        
+
+        $this->addVariantToCart($variant);
+    }
+
+    /**
+     * Add an already-loaded ProductVariant to the cart without re-querying.
+     */
+    protected function addVariantToCart(ProductVariant $variant): bool
+    {
+        $variantId = $variant->id;
+
         // Check stock for physical products and bundles
         if ($variant->product->isPhysical() || $variant->product->isBundle()) {
             $stock = $variant->stockForBranch($this->selectedBranchId);
@@ -32,7 +47,7 @@ trait WithCartManagement
                     ->body("Stok untuk {$variant->product->name} ({$variant->name}) tersisa {$stock} pcs.")
                     ->warning()
                     ->send();
-                return;
+                return false;
             }
         }
 
@@ -47,8 +62,7 @@ trait WithCartManagement
             }
             $tierId = $this->selectedPricingTierId;
             if ($tierId === 'custom') {
-                $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')->first() ?? \App\Models\PricingTier::first();
-                $tierId = $defaultTier ? $defaultTier->id : null;
+                $tierId = $this->getDefaultRetailPricingTierId();
             }
 
             $tierPricesMap = [];
@@ -83,6 +97,7 @@ trait WithCartManagement
         }
 
         $this->autoSaveDraft();
+        return true;
     }
 
     public function setCartQty($variantId, $newQty)
@@ -103,10 +118,14 @@ trait WithCartManagement
 
         // Check stock only when increasing quantity (skip DB query entirely when decreasing)
         if ($newQty > $oldQty) {
+            $branchId = $this->selectedBranchId;
             $variant = ProductVariant::with([
                 'product:id,name,type',
-                'branchStocks:id,product_variant_id,branch_id,stock',
-                'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
+                'branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock')
+                    ->when($branchId, fn($sq) => $sq->where('branch_id', $branchId)),
+                'bundleItems.childVariant.product:id,name,type',
+                'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock')
+                    ->when($branchId, fn($sq) => $sq->where('branch_id', $branchId)),
             ])->find($variantId);
 
             if ($variant && ($variant->product->isPhysical() || $variant->product->isBundle())) {
@@ -153,10 +172,15 @@ trait WithCartManagement
             return;
         }
 
+        $branchId = $this->selectedBranchId;
         $variant = ProductVariant::with([
             'product:id,name,type,category,is_active',
-            'branchStocks:id,product_variant_id,branch_id,stock',
+            'branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock')
+                ->when($branchId, fn($sq) => $sq->where('branch_id', $branchId)),
             'tierPrices:id,product_variant_id,pricing_tier_id,price',
+            'bundleItems.childVariant.product:id,name,type',
+            'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock')
+                ->when($branchId, fn($sq) => $sq->where('branch_id', $branchId)),
         ])
         ->where('is_active', true)
         ->where(function ($q) use ($barcode) {
@@ -174,13 +198,13 @@ trait WithCartManagement
             return;
         }
 
-        $this->addToCart($variant->id);
-
-        Notification::make()
-            ->title('Produk Ditambahkan')
-            ->body("{$variant->product->name} berhasil ditambahkan ke keranjang.")
-            ->success()
-            ->send();
+        if ($this->addVariantToCart($variant)) {
+            Notification::make()
+                ->title('Produk Ditambahkan')
+                ->body("{$variant->product->name} berhasil ditambahkan ke keranjang.")
+                ->success()
+                ->send();
+        }
     }
 
     public function updateItemPricingTier($variantId, $tierId)

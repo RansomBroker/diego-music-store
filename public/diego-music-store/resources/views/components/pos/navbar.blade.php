@@ -34,12 +34,17 @@
 ])
 
 @php
-    extract(\App\Helpers\PosNavbarHelper::getContext($activeSessionInfo, $backUrl));
+    extract(\App\Helpers\PosNavbarHelper::getContext($activeSessionInfo, $backUrl, $branches));
 @endphp
 
 <header 
-    x-data="{ mobileMenuOpen: false, unreadCount: {{ auth()->user()?->unreadNotifications->count() ?? 0 }} }"
+    x-data="{
+        mobileMenuOpen: false,
+        unreadCount: {{ $showNotifications && Auth::check() ? (auth()->user()?->unreadNotifications()->count() ?? 0) : 0 }},
+        todaySales: @js(number_format($todaySalesTotal ?? 0, 0, ',', '.'))
+    }"
     @notifications-updated.window="unreadCount = $event.detail.count"
+    @pos-today-sales-updated.window="todaySales = $event.detail.formatted"
     class="bg-white dark:bg-slate-800 px-3 sm:px-6 py-2.5 sm:py-3.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 z-30 transition-colors flex-shrink-0 w-full min-w-0 shadow-xs"
 >
 
@@ -298,7 +303,6 @@
                     <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/50 dark:border-emerald-800/40 rounded-xl text-left"
                          title="Sesi ID: #{{ $activeSessionInfo['id'] }} • Dibuka: {{ $activeSessionInfo['opened_by'] ?? 'Kasir' }} • Modal: Rp {{ number_format($activeSessionInfo['opening_cash'], 0, ',', '.') }}">
                         <span class="relative flex h-2 w-2 flex-shrink-0">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                         </span>
                         <div class="leading-none">
@@ -351,7 +355,6 @@
                 <i class="ph-bold ph-bell text-base"></i>
                 {{-- Notification Badge Indicator --}}
                 <span x-show="unreadCount > 0" x-cloak class="absolute top-1 right-1 flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white dark:border-slate-700"></span>
                 </span>
                 <!-- Number Counter (Desktop) -->
@@ -402,13 +405,13 @@
                         @if ($todaySalesTotal !== null)
                             <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate max-w-[120px]">
                                 Penjualan:
-                                <span class="text-emerald-600 dark:text-emerald-400 font-extrabold">
+                                <span class="text-emerald-600 dark:text-emerald-400 font-extrabold" x-text="'Rp ' + todaySales">
                                     Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}
                                 </span>
                             </div>
                         @else
                             <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate max-w-[120px]">
-                                {{ auth()->user()?->roles()->first()?->name ?? 'Kasir' }}
+                                {{ auth()->user()?->roles->first()?->name ?? 'Kasir' }}
                             </div>
                         @endif
                     </div>
@@ -440,11 +443,11 @@
                                 {{ auth()->user()->name ?? 'Pengguna' }}
                             </div>
                             <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate">
-                                {{ auth()->user()?->roles()->first()?->name ?? 'Kasir' }} • {{ $currentBranchModel?->name ?: 'Belum Ditugaskan' }}
+                                {{ auth()->user()?->roles->first()?->name ?? 'Kasir' }} • {{ $currentBranchModel?->name ?: 'Belum Ditugaskan' }}
                             </div>
                             @if ($todaySalesTotal !== null)
                                 <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                                    Penjualan: Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}
+                                    Penjualan: <span x-text="'Rp ' + todaySales">Rp {{ number_format($todaySalesTotal, 0, ',', '.') }}</span>
                                 </div>
                             @endif
                         </div>
@@ -565,7 +568,6 @@
                 <i class="ph-bold ph-bell text-base"></i>
                 {{-- Notification Badge Indicator --}}
                 <span x-show="unreadCount > 0" x-cloak class="absolute top-1 right-1 flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white dark:border-slate-700"></span>
                 </span>
                 <!-- Number Counter (Mobile) -->
@@ -625,7 +627,7 @@
             x-transition:leave="transition-opacity ease-in duration-150"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
+            class="fixed inset-0 bg-slate-950/75"
         ></div>
 
         <!-- Bottom Sheet Panel -->
@@ -658,7 +660,7 @@
                             {{ auth()->user()->name ?? 'Pengguna' }}
                         </div>
                         <div class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 truncate">
-                            {{ auth()->user()?->roles()->first()?->name ?? 'Kasir' }} &bull; {{ $currentBranchModel?->name ?: 'Belum Ditugaskan' }}
+                            {{ auth()->user()?->roles->first()?->name ?? 'Kasir' }} &bull; {{ $currentBranchModel?->name ?: 'Belum Ditugaskan' }}
                         </div>
                     </div>
                 </div>

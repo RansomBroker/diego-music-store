@@ -53,8 +53,10 @@
     @keydown.window.escape="showShortcuts = false"
     class="flex flex-col h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200 relative"
 >
-    <!-- Header -->
-    <x-pos-page::header :branches="$this->branches" :selectedBranchId="$selectedBranchId" :selectedStoreName="$selectedStoreName" :selectedBranchName="$selectedBranchName" :activeSessionInfo="$activeSessionInfo" :todaySalesTotal="$this->todaySalesTotal" />
+    <!-- Header (wire:ignore agar perubahan keranjang tidak memicu morph ulang 800+ baris navbar) -->
+    <div wire:ignore class="flex-shrink-0">
+        <x-pos-page::header :branches="$this->branches" :selectedBranchId="$selectedBranchId" :selectedStoreName="$selectedStoreName" :selectedBranchName="$selectedBranchName" :activeSessionInfo="$activeSessionInfo" :todaySalesTotal="$this->todaySalesTotal" />
+    </div>
 
     <!-- Full-Screen Transaction Area -->
     <x-pos-page::cart-sidebar 

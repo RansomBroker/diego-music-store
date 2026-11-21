@@ -4,10 +4,6 @@
     'pricingTiers' => []
 ])
 
-@php
-    $itemVariant = \App\Models\ProductVariant::find($id);
-@endphp
-
 <div class="flex flex-col gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-700/50 last:border-b-0 last:pb-0">
     <div class="flex items-center gap-3">
         <div class="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
@@ -81,8 +77,11 @@
                         class="w-full pl-7 pr-6 py-0 h-full bg-transparent border-none text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-0 cursor-pointer appearance-none"
                     >
                         @foreach ($pricingTiers as $tier)
+                            @php
+                                $tierPrice = $item['tier_prices'][$tier->id] ?? ($item['base_price'] ?? ($item['price'] ?? 0));
+                            @endphp
                             <option value="{{ $tier->id }}" {{ ($item['pricing_tier_id'] ?? '') == $tier->id ? 'selected' : '' }} class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
-                                {{ $tier->name }} ({{ \App\Helpers\FormatHelper::rupiah($itemVariant ? $itemVariant->priceForTier($tier->id) : 0) }})
+                                {{ $tier->name }} ({{ \App\Helpers\FormatHelper::rupiah($tierPrice) }})
                             </option>
                         @endforeach
                     </select>

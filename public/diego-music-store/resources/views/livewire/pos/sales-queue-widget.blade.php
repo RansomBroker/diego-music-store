@@ -1,5 +1,5 @@
 <div 
-    wire:poll.8s 
+    wire:poll.30s.visible 
     class="relative flex items-stretch flex-shrink-0 select-none"
 >
     {{-- ==================== TAB ANTRIAN & MELAYANI TRIGGER STRIP ==================== --}}
@@ -39,7 +39,7 @@
             title="Klik untuk membuka Tab Sales Sedang Melayani"
         >
             <div class="w-6 h-6 rounded-md flex items-center justify-center {{ $isExpanded && $activeTab === 'on_duty' ? 'bg-white/20 text-white' : 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' }}">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 {{ $onDutyMembers->isNotEmpty() ? 'animate-ping' : '' }}"></span>
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
             </div>
             <div class="flex flex-col text-left leading-tight min-w-0">
                 <div class="flex items-center gap-1.5">
@@ -62,7 +62,7 @@
     {{-- ==================== DROPDOWN POPOVER PANEL (JIKA KASIR KLIK DETAIL / TITIK TIGA) ==================== --}}
     @if ($isExpanded)
         <div 
-            class="absolute top-full left-0 mt-2 w-88 sm:w-96 bg-white dark:bg-slate-900 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[75vh] z-50 transition-all animate-in fade-in slide-in-from-top-2 duration-150"
+            class="absolute top-full left-0 mt-2 w-88 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[75vh] z-50 transition-all"
             @click.away="$wire.isExpanded ? $wire.toggleExpanded() : null"
         >
             {{-- Header Modal --}}
@@ -75,7 +75,7 @@
                             {{ $waitingMembers->count() }}
                         </span>
                     @else
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 {{ $onDutyMembers->isNotEmpty() ? 'animate-ping' : '' }}"></span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                         <span class="font-extrabold text-xs">Sedang Melayani</span>
                         <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold">
                             {{ $onDutyMembers->count() }}
@@ -130,7 +130,7 @@
                                             {{ $member->user->name }}
                                         </span>
                                         @if ($isNext)
-                                            <span class="px-1.5 py-0.2 rounded-md bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider animate-pulse flex-shrink-0">
+                                            <span class="px-1.5 py-0.2 rounded-md bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider flex-shrink-0">
                                                 NEXT
                                             </span>
                                         @endif
@@ -165,7 +165,7 @@
                                 class="p-2 rounded-xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-950/20 transition-all flex items-center justify-between gap-2"
                             >
                                 <div class="flex items-center gap-2 min-w-0">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
                                     <div class="min-w-0">
                                         <div class="font-extrabold text-xs text-slate-900 dark:text-slate-100 truncate">
                                             {{ $member->user->name }}

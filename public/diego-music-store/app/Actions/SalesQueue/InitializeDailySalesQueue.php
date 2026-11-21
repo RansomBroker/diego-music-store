@@ -53,6 +53,7 @@ class InitializeDailySalesQueue
             }
 
             $currentMaxOrder = $existingMembers->max('queue_order') ?? 0;
+            $insertedAny = false;
 
             foreach ($branchSalesUsers as $salesUser) {
                 if (!in_array($salesUser->id, $existingUserIds)) {
@@ -68,7 +69,13 @@ class InitializeDailySalesQueue
                         'is_active' => true,
                         'date' => $targetDate,
                     ]);
+                    $insertedAny = true;
                 }
+            }
+
+            if (!$insertedAny) {
+                $existingMembers->loadMissing('currentDutyLog');
+                return $existingMembers;
             }
 
             return SalesQueueMember::with(['user', 'currentDutyLog'])

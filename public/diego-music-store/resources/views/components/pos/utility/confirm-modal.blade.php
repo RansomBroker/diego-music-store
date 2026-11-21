@@ -40,7 +40,7 @@
     @keydown.window.escape="isOpen = false"
     x-show="isOpen"
     x-cloak
-    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/75"
     x-transition:enter="transition ease-out duration-200"
     x-transition:enter-start="opacity-0"
     x-transition:enter-end="opacity-100"

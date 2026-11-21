@@ -128,17 +128,14 @@ class POS extends Component
         // Lock selected branch to the active session's branch
         $this->selectedBranchId = $activeSession->branch_id;
 
-        // Initialize pricing tiers
-        $defaultTier = \App\Models\PricingTier::where('name', 'like', '%retail%')
-            ->orWhere('name', 'like', '%umum%')
-            ->first() ?? \App\Models\PricingTier::first();
-        $this->selectedPricingTierId = $defaultTier ? $defaultTier->id : null;
+        // Initialize pricing tiers from cached collection
+        $this->selectedPricingTierId = $this->getDefaultRetailPricingTierId();
 
         // Initialize sales representatives and invoice date
         $this->selectedSalesRepId = Auth::id();
         $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
         $this->invoiceDate = now()->format('Y-m-d');
-        $defaultCategory = \App\Models\SaleCategory::first();
+        $defaultCategory = $this->saleCategories->first();
         $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
         $this->updatePreviewInvoiceNumber();
         $this->viewMode = session('pos_view_mode', 'grid');
@@ -154,7 +151,7 @@ class POS extends Component
         // Load sale for editing if query parameter is present
         $saleId = request()->query('edit');
         if ($saleId) {
-            $sale = \App\Models\Sale::with(['items.variant.product', 'customer', 'salesRep'])->find($saleId);
+            $sale = \App\Models\Sale::with(['items.variant.product', 'items.variant.tierPrices', 'customer', 'salesRep'])->find($saleId);
             if ($sale) {
                 if ($sale->branch_id !== $this->selectedBranchId) {
                     Notification::make()
@@ -197,13 +194,23 @@ class POS extends Component
                         if ($v->name) {
                             $name .= ' (' . $v->name . ')';
                         }
+
+                        $tierPricesMap = [];
+                        if ($v->relationLoaded('tierPrices')) {
+                            foreach ($v->tierPrices as $tp) {
+                                $tierPricesMap[$tp->pricing_tier_id] = (int) $tp->price;
+                            }
+                        }
                         
                         $this->cart[$v->id] = [
                             'variant_id' => $v->id,
                             'name' => $name,
                             'price' => $item->unit_price,
+                            'base_price' => (int) $v->price,
+                            'tier_prices' => $tierPricesMap,
                             'qty' => $item->quantity,
                             'type' => $v->product->type,
+                            'category' => $v->product->category ?? null,
                             'emoji' => $v->product->isService() ? '🛠️' : ($v->product->isBundle() ? '📦' : '🎸'),
                             'notes' => $item->notes ?? '',
                             'discount_value' => $item->discount_amount / max(1, $item->quantity),
@@ -222,10 +229,7 @@ class POS extends Component
             }
         } else {
             // Automatically open held transactions modal if any exist and we're not editing an existing sale
-            $heldCount = \App\Models\PosHeldTransaction::where('user_id', Auth::id())
-                ->where('branch_id', $this->selectedBranchId)
-                ->count();
-            if ($heldCount > 0) {
+            if ($this->heldTransactionsCount > 0) {
                 $this->showHeldModal = true;
                 $this->isHeldModalMandatory = true;
             }
@@ -331,16 +335,19 @@ class POS extends Component
             return collect();
         }
 
-        $take = self::PRODUCTS_PER_PAGE * $this->productPage;
+        $branchId = $this->selectedBranchId;
 
         $query = ProductVariant::query()
             ->select('product_variants.*')
             ->join('products', 'products.id', '=', 'product_variants.product_id')
             ->with([
                 'product:id,name,type,category,is_active',
-                'branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
+                'branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock')
+                    ->when($branchId, fn($sq) => $sq->where('branch_id', $branchId)),
                 'tierPrices' => fn($q) => $q->select('id', 'product_variant_id', 'pricing_tier_id', 'price'),
-                'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock'),
+                'bundleItems.childVariant.product:id,name,type',
+                'bundleItems.childVariant.branchStocks' => fn($q) => $q->select('id', 'product_variant_id', 'branch_id', 'stock')
+                    ->when($branchId, fn($sq) => $sq->where('branch_id', $branchId)),
             ])
             ->where('product_variants.is_active', true)
             ->where('products.is_active', true);
@@ -412,34 +419,46 @@ class POS extends Component
     {
         if (empty($this->customerSearch)) {
             return cache()->remember('pos_default_customers_' . $this->customerLimit, 300, function () {
-                return Customer::orderBy('name')->limit($this->customerLimit)->get();
+                return Customer::select(['id', 'name', 'phone', 'is_loyalty_member'])
+                    ->orderBy('name')
+                    ->limit($this->customerLimit)
+                    ->get();
             });
         }
 
-        $search = '%' . $this->customerSearch . '%';
-        return Customer::where('name', 'like', $search)
-            ->orWhere('phone', 'like', $search)
+        $search = '%' . trim($this->customerSearch) . '%';
+        return Customer::select(['id', 'name', 'phone', 'is_loyalty_member'])
+            ->where(function ($q) use ($search) {
+                $q->where('name', 'like', $search)
+                  ->orWhere('phone', 'like', $search);
+            })
+            ->orderBy('name')
             ->limit($this->customerLimit)
             ->get();
     }
 
-    // Get matching users with "sales" role for live search dropdown
     // Get matching users with "sales" role for live search dropdown
     public function getSalesRepsProperty()
     {
         if (!empty($this->salesSearch)) {
             $search = '%' . trim($this->salesSearch) . '%';
             return \App\Models\User::role('sales')
+                ->select(['users.id', 'users.name', 'users.email'])
                 ->where(function ($q) use ($search) {
                     $q->where('name', 'like', $search)
                       ->orWhere('email', 'like', $search);
                 })
+                ->orderBy('name')
                 ->limit(5)
                 ->get();
         }
 
         return cache()->remember('pos_sales_reps_default', 300, function () {
-            return \App\Models\User::role('sales')->orderBy('name')->limit(5)->get();
+            return \App\Models\User::role('sales')
+                ->select(['users.id', 'users.name', 'users.email'])
+                ->orderBy('name')
+                ->limit(5)
+                ->get();
         });
     }
 
@@ -479,6 +498,20 @@ class POS extends Component
     public function getPricingTiersProperty()
     {
         return cache()->remember('pos_pricing_tiers', 86400, fn() => \App\Models\PricingTier::all());
+    }
+
+    /**
+     * Resolve default Retail/Umum pricing tier ID from cached tiers without issuing extra DB queries.
+     */
+    protected function getDefaultRetailPricingTierId(): ?int
+    {
+        $tiers = $this->pricingTiers;
+        $defaultTier = $tiers->first(function ($tier) {
+            $name = strtolower((string) $tier->name);
+            return str_contains($name, 'retail') || str_contains($name, 'umum');
+        }) ?? $tiers->first();
+
+        return $defaultTier ? (int) $defaultTier->id : null;
     }
 
     // Get total sales of the active cash session
@@ -557,10 +590,10 @@ class POS extends Component
             return collect();
         }
 
-        // Only query variants that don't have tier_prices cached in cart
+        // Only query variants that don't have tier_prices cached in cart (note: empty array [] means already resolved with no overrides)
         $missingIds = [];
         foreach ($this->cart as $id => $item) {
-            if (empty($item['tier_prices'])) {
+            if (!array_key_exists('tier_prices', $item)) {
                 $missingIds[] = $id;
             }
         }

@@ -35,7 +35,7 @@
     x-data="{ show: @entangle($attributes->wire('model')) }"
     x-show="show"
     x-on:keydown.escape.window="show = false"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75"
     style="display: none;"
     x-transition:enter="transition ease-out duration-300"
     x-transition:enter-start="opacity-0"

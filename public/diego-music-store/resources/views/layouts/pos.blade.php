@@ -17,9 +17,12 @@
     <!-- Tailwind CSS compiled via Vite -->
     @vite('resources/css/app.css')
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- Leaflet.js Map Library -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    @if (request()->is('pos/attendances*', 'pos/attendance-radiuses*', 'pos/store-profile*'))
+        <!-- Leaflet.js Map Library (hanya dimuat di halaman presensi/radius/profil toko) -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    @endif
+    @stack('head')
     <style>
         [x-cloak] {
             display: none !important;
