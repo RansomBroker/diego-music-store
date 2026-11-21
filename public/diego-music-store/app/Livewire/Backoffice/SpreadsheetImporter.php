@@ -79,6 +79,8 @@ class SpreadsheetImporter extends Component
     public array $manualMappings = [];
     /** @var array{deleted_products?: int, deleted_variants?: int, deleted_journals?: int} */
     public array $resetSummary = [];
+    /** @var array<int, string> */
+    public array $createdRoles = [];
 
     public function mount(string $type = 'customer'): void
     {
@@ -88,11 +90,17 @@ class SpreadsheetImporter extends Component
             'supplier'      => ImportSuppliers::REQUIRED_HEADERS,
             'supplier_debt' => \App\Actions\Supplier\ImportSupplierDebts::REQUIRED_HEADERS,
             'product'       => \App\Actions\Product\ImportProducts::REQUIRED_HEADERS,
+            'employee'      => \App\Actions\Employee\ImportEmployees::REQUIRED_HEADERS,
             default         => [],
         };
 
+        if (in_array($this->type, ['product', 'supplier_debt', 'employee'], true)) {
+            $this->branchId = auth()->check()
+                ? \App\Helpers\BranchHelper::getActiveBranchId()
+                : \App\Models\Branch::where('is_active', true)->first()?->id;
+        }
+
         if ($this->type === 'product' || $this->type === 'supplier_debt') {
-            $this->branchId = \App\Models\Branch::where('is_active', true)->first()?->id;
             $modalAcc = \App\Helpers\AccountHelper::findByCode('311101003');
             $this->contraAccountId = $modalAcc?->id ?? \App\Helpers\AccountHelper::findByCode('311201001')?->id;
         }
@@ -324,6 +332,10 @@ class SpreadsheetImporter extends Component
             $branchId = $this->branchId ?: (\App\Models\Branch::where('is_active', true)->first()?->id ?? 1);
             $result = app(\App\Actions\Product\ImportProducts::class)->executeRows($rows, $branchId, auth()->id(), $this->hppColumn);
             $this->totalStockValue += ($result['total_value'] ?? 0);
+        } elseif ($this->type === 'employee') {
+            $branchId = $this->branchId ?: (\App\Models\Branch::where('is_active', true)->first()?->id ?? 1);
+            $result = app(\App\Actions\Employee\ImportEmployees::class)->execute($rows, $branchId);
+            $this->createdRoles = array_values(array_unique(array_merge($this->createdRoles, $result['created_roles'] ?? [])));
         } else {
             $result = ['imported' => 0, 'skipped' => 0, 'errors' => []];
         }
@@ -390,6 +402,7 @@ class SpreadsheetImporter extends Component
         $noun = match($this->type) {
             'product'       => 'produk',
             'supplier_debt' => 'faktur hutang',
+            'employee'      => 'karyawan',
             default         => 'data',
         };
         $resetPrefix = '';
@@ -397,6 +410,9 @@ class SpreadsheetImporter extends Component
             $resetPrefix = "{$this->resetSummary['deleted_products']} produk lama dihapus. ";
         }
         $notificationBody = $resetPrefix . "{$this->importedCount} {$noun} berhasil diimpor" . ($this->skippedCount > 0 ? ", {$this->skippedCount} dilewati." : ".");
+        if ($this->type === 'employee' && ! empty($this->createdRoles)) {
+            $notificationBody .= ' Role baru otomatis dibuat: ' . implode(', ', $this->createdRoles) . '.';
+        }
         if ($this->generatedJournalNumber) {
             $val = $this->type === 'supplier_debt' ? $this->totalDebtValue : $this->totalStockValue;
             $formattedValue = 'Rp ' . number_format($val, 0, ',', '.');
@@ -438,6 +454,7 @@ class SpreadsheetImporter extends Component
         $this->generatedJournalNumber = null;
         $this->resetBeforeImport = false;
         $this->resetSummary = [];
+        $this->createdRoles = [];
         $this->resetImportState();
     }
 
@@ -456,6 +473,7 @@ class SpreadsheetImporter extends Component
         $this->lastSupplierName = null;
         $this->generatedJournalNumber = null;
         $this->resetSummary = [];
+        $this->createdRoles = [];
     }
 
     public function render()

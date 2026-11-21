@@ -153,6 +153,20 @@ class SpreadsheetImportHelper
         'sisa'              => 'sisa_hutang',
         'saldo_hutang'      => 'sisa_hutang',
         'sisa_tagihan'      => 'sisa_hutang',
+
+        // Employee & User account mappings
+        'nama_karyawan'     => 'nama',
+        'nama_lengkap'      => 'nama',
+        'employee_name'     => 'nama',
+        'username'          => 'user',
+        'user_name'         => 'user',
+        'userid'            => 'user',
+        'user_id'           => 'user',
+        'peran'             => 'role',
+        'jabatan'           => 'role',
+        'pass'              => 'password',
+        'kata_sandi'        => 'password',
+        'sandi'             => 'password',
     ];
 
     /**
@@ -254,7 +268,21 @@ class SpreadsheetImportHelper
         }
 
         if ($normalized === 'no' || in_array($normalized, $requiredHeaders, true)) {
-            return $normalized;
+            // Apply contextual mappings when importing employees + users
+        $isEmployeeContext = in_array('nama', $requiredHeaders, true) && in_array('user', $requiredHeaders, true);
+        if ($isEmployeeContext) {
+            if (in_array($normalized, ['name', 'employee'], true)) {
+                return 'nama';
+            }
+            if (in_array($normalized, ['nama_user', 'akun', 'login'], true)) {
+                return 'user';
+            }
+            if (in_array($normalized, ['hak_akses', 'level', 'posisi'], true)) {
+                return 'role';
+            }
+        }
+
+        return $normalized;
         }
 
         $cleaned = strtolower(self::cleanHeaderText($header));
@@ -284,6 +312,20 @@ class SpreadsheetImportHelper
             $productMatch = self::matchProductHeaderByTokens($expandedTokens, $collapsed);
             if ($productMatch !== null) {
                 return $productMatch;
+            }
+        }
+
+        // Apply contextual mappings when importing employees + users
+        $isEmployeeContext = in_array('nama', $requiredHeaders, true) && in_array('user', $requiredHeaders, true);
+        if ($isEmployeeContext) {
+            if (in_array($normalized, ['name', 'employee'], true)) {
+                return 'nama';
+            }
+            if (in_array($normalized, ['nama_user', 'akun', 'login'], true)) {
+                return 'user';
+            }
+            if (in_array($normalized, ['hak_akses', 'level', 'posisi'], true)) {
+                return 'role';
             }
         }
 

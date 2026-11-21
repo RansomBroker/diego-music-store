@@ -4,6 +4,7 @@
         'supplier'      => 'Supplier',
         'supplier_debt' => 'Saldo Awal Faktur Hutang Supplier',
         'product'       => 'Produk & Stok Awal',
+        'employee'      => 'Karyawan & User',
         default         => ucfirst($type),
     };
     $csvUrl = asset(match($type) {
@@ -11,6 +12,7 @@
         'supplier'      => 'templates/template_import_supplier.csv',
         'supplier_debt' => 'templates/template_import_hutang_supplier.csv',
         'product'       => 'templates/template_import_produk.csv',
+        'employee'      => 'templates/template_import_karyawan.csv',
         default         => '',
     });
     $xlsxUrl = asset(match($type) {
@@ -18,6 +20,7 @@
         'supplier'      => 'templates/template_import_supplier.xlsx',
         'supplier_debt' => 'templates/template_import_hutang_supplier.xlsx',
         'product'       => 'templates/template_import_produk.xlsx',
+        'employee'      => 'templates/template_import_karyawan.xlsx',
         default         => '',
     });
 @endphp
@@ -279,6 +282,32 @@
         </div>
     @endif
 
+    @if($type === 'employee' && !$isImporting && !$importFinished)
+        <!-- Employee & User Account Import Configuration -->
+        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-white/5 space-y-3 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h5 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                        Konfigurasi Akun User, Role &amp; Cabang Karyawan
+                    </h5>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                        Role yang sudah ada dipakai ulang (case-insensitive); role baru dibuat otomatis dan dapat diatur izinnya di menu Hak Akses.
+                    </p>
+                </div>
+                <div class="sm:w-64 shrink-0">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                        Cabang Penempatan Karyawan
+                    </label>
+                    <select wire:model.live="branchId" class="w-full text-xs font-medium rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 shadow-xs">
+                        @foreach(\App\Models\Branch::where('is_active', true)->get() as $b)
+                            <option value="{{ $b->id }}">{{ $b->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
+    @endif
+
 
     @if(!$filePath && !$importFinished)
         <!-- File Upload Area -->
@@ -438,7 +467,7 @@
                     <div>
                         <h4 class="text-sm font-bold text-rose-900 dark:text-rose-300">Format Kolom Tidak Sesuai Template!</h4>
                         <p class="text-xs text-rose-700 dark:text-rose-400/90 mt-0.5">
-                            Header dibaca dari baris #{{ $headerRowIndex }}. Harap sesuaikan nama kolom berkas{{ $type === 'product' ? ' atau gunakan pemetaan kolom manual di bawah' : ' dengan template' }}.
+                            Header dibaca dari baris #{{ $headerRowIndex }}. Harap sesuaikan nama kolom berkas{{ in_array($type, ['product', 'employee'], true) ? ' atau gunakan pemetaan kolom manual di bawah' : ' dengan template' }}.
                         </p>
                     </div>
                 </div>
@@ -484,7 +513,7 @@
             </div>
         @endif
 
-        @if($type === 'product' && !empty($rawColumnHeaders) && !$isImporting)
+        @if(in_array($type, ['product', 'employee'], true) && !empty($rawColumnHeaders) && !$isImporting)
             <!-- Interactive Manual Column Remapping Fallback -->
             <div x-data="{ openMapping: {{ !$validation['is_valid'] ? 'true' : 'false' }} }" class="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900/40 shadow-xs">
                 <button type="button" @click="openMapping = !openMapping" class="w-full px-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/40 flex items-center justify-between text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/80 transition cursor-pointer">
@@ -691,6 +720,19 @@
                                 <span class="font-semibold text-gray-800 dark:text-gray-200">Rp {{ number_format($totalStockValue, 0, ',', '.') }}</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+            @endif
+
+            @if($type === 'employee' && !empty($createdRoles))
+                <div class="p-3.5 bg-white/90 dark:bg-gray-800/90 border border-blue-200 dark:border-blue-900/50 rounded-xl text-left space-y-1.5 max-w-md mx-auto shadow-xs">
+                    <span class="text-xs font-bold text-blue-900 dark:text-blue-300">Role Baru yang Dibuat Otomatis:</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach($createdRoles as $createdRole)
+                            <span class="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">
+                                {{ $createdRole }}
+                            </span>
+                        @endforeach
                     </div>
                 </div>
             @endif
