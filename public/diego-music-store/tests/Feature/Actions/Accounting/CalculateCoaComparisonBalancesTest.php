@@ -163,7 +163,12 @@ class CalculateCoaComparisonBalancesTest extends TestCase
 
     public function test_financial_comparison_chart_widget_renders_and_handles_interactions(): void
     {
-        $component = Livewire::test(FinancialComparisonChartWidget::class)
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $user = \App\Models\User::factory()->create(['is_active' => true]);
+        $user->assignRole($ownerRole);
+
+        $component = Livewire::actingAs($user)
+            ->test(FinancialComparisonChartWidget::class)
             ->assertStatus(200)
             ->assertSee('Komparasi Keuangan (COA)')
             ->assertSee('Liabilitas vs Aset')

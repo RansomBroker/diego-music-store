@@ -6,6 +6,7 @@ use App\Actions\Commission\ApproveCommissionRecap;
 use App\Actions\Commission\ApproveGroupCommission;
 use App\Actions\Commission\EvaluateGroupCommission;
 use App\Helpers\BranchHelper;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use App\Models\CommissionGroup;
 use App\Models\CommissionGroupMember;
@@ -26,8 +27,7 @@ class PosCommissions extends Component
 
     public function boot(): void
     {
-        // Sales staff have read-only access to the product catalog only.
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.commissions.view'), 403);
     }
 
     // ── Filter State ─────────────────────────────────────────────────────
@@ -501,8 +501,7 @@ class PosCommissions extends Component
 
     private function isManagementUser(): bool
     {
-        return auth()->check()
-            && auth()->user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        return PermissionHelper::can(auth()->user(), 'fo.commissions.manage');
     }
 
     public function render()

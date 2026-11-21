@@ -36,9 +36,11 @@ class PosPerformanceOptimizationTest extends TestCase
         Account::firstOrCreate(['code' => '4-1000'], ['name' => 'Pendapatan Penjualan', 'classification' => 'Revenue', 'is_active' => true]);
         Account::firstOrCreate(['code' => '5-1000'], ['name' => 'Harga Pokok Penjualan', 'classification' => 'Expense', 'is_active' => true]);
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
 
         $this->user = User::factory()->create();
+        $this->user->assignRole($ownerRole);
         $this->actingAs($this->user);
 
         $this->branch = Branch::create([

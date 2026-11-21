@@ -32,18 +32,14 @@ class StockOpnamePresetsTable
                 EditAction::make()
                     ->modalWidth('lg')
                     ->mutateFormDataUsing(function (array $data, StockOpnamePreset $record): array {
-                        $user = auth()->user();
-                        $allowedRoles = ['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'];
-                        if (!$user || !$user->hasRole($allowedRoles)) {
-                            abort(403);
-                        }
+                        abort_unless(\App\Filament\Resources\StockOpnamePresets\StockOpnamePresetResource::canEdit($record), 403);
 
                         $data['branch_id'] = $record->branch_id;
 
                         return $data;
                     }),
                 DeleteAction::make()
-                    ->visible(fn (StockOpnamePreset $record) => $record->assignments()->doesntExist()),
+                    ->visible(fn (StockOpnamePreset $record) => $record->assignments()->doesntExist() && \App\Filament\Resources\StockOpnamePresets\StockOpnamePresetResource::canDelete($record)),
             ]);
     }
 }

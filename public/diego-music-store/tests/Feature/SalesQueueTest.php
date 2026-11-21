@@ -35,9 +35,9 @@ class SalesQueueTest extends TestCase
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-        $salesRole = Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
-        $cashierRole = Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+        $salesRole = Role::findByName('sales');
+        $cashierRole = Role::findByName('karyawan');
 
         $this->branch = Branch::create([
             'name' => 'Cabang Utama Diego',

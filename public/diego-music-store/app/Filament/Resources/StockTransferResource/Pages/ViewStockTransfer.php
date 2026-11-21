@@ -22,11 +22,12 @@ class ViewStockTransfer extends ViewRecord
                 ->label('Ajukan')
                 ->icon('heroicon-o-paper-airplane')
                 ->color('warning')
-                ->visible(fn ($record) => $record->status === 'DRAFT')
+                ->visible(fn ($record) => $record->status === 'DRAFT' && StockTransferResource::canEdit($record))
                 ->requiresConfirmation()
                 ->modalHeading('Ajukan Transfer Barang')
                 ->modalDescription('Apakah Anda yakin ingin mengajukan transfer ini ke status PENDING?')
                 ->action(function ($record) {
+                    abort_unless(StockTransferResource::canEdit($record), 403);
                     try {
                         app(SubmitStockTransfer::class)->execute($record);
                         Notification::make()->title('Transfer Berhasil Diajukan')->success()->send();
@@ -40,11 +41,12 @@ class ViewStockTransfer extends ViewRecord
                 ->label('Approve')
                 ->icon('heroicon-o-check-circle')
                 ->color('info')
-                ->visible(fn ($record) => $record->status === 'PENDING')
+                ->visible(fn ($record) => $record->status === 'PENDING' && StockTransferResource::canEdit($record))
                 ->requiresConfirmation()
                 ->modalHeading('Setujui Transfer Barang')
                 ->modalDescription('Apakah Anda yakin ingin menyetujui transfer ini?')
                 ->action(function ($record) {
+                    abort_unless(StockTransferResource::canEdit($record), 403);
                     try {
                         app(ApproveStockTransfer::class)->execute($record);
                         Notification::make()->title('Transfer Berhasil Disetujui')->success()->send();
@@ -58,11 +60,12 @@ class ViewStockTransfer extends ViewRecord
                 ->label('Proses Transfer')
                 ->icon('heroicon-o-truck')
                 ->color('success')
-                ->visible(fn ($record) => $record->status === 'APPROVED')
+                ->visible(fn ($record) => $record->status === 'APPROVED' && StockTransferResource::canEdit($record))
                 ->requiresConfirmation()
                 ->modalHeading('Proses Transfer Barang')
                 ->modalDescription('Stok fisik akan dipindahkan dan jurnal akuntansi 4 sisi akan otomatis diposting. Lanjutkan?')
                 ->action(function ($record) {
+                    abort_unless(StockTransferResource::canEdit($record), 403);
                     try {
                         app(CompleteStockTransfer::class)->execute($record);
                         Notification::make()->title('Transfer Selesai')->body('Stok telah dipindahkan dan Jurnal Akuntansi berhasil diposting.')->success()->send();
@@ -76,11 +79,12 @@ class ViewStockTransfer extends ViewRecord
                 ->label('Batalkan')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(fn ($record) => in_array($record->status, ['DRAFT', 'PENDING']))
+                ->visible(fn ($record) => in_array($record->status, ['DRAFT', 'PENDING']) && StockTransferResource::canEdit($record))
                 ->requiresConfirmation()
                 ->modalHeading('Batalkan Transfer')
                 ->modalDescription('Apakah Anda yakin ingin membatalkan transaksi transfer ini?')
                 ->action(function ($record) {
+                    abort_unless(StockTransferResource::canEdit($record), 403);
                     try {
                         app(CancelStockTransfer::class)->execute($record);
                         Notification::make()->title('Transfer Dibatalkan')->success()->send();
@@ -91,7 +95,7 @@ class ViewStockTransfer extends ViewRecord
                 }),
 
             Actions\EditAction::make()
-                ->visible(fn ($record) => in_array($record->status, ['DRAFT'])),
+                ->visible(fn ($record) => in_array($record->status, ['DRAFT']) && StockTransferResource::canEdit($record)),
         ];
     }
 }

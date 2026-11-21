@@ -1,6 +1,6 @@
 @php
-    $canViewProfit = auth()->check() && (auth()->user()->can('sales.view_profit') || auth()->user()->hasRole(['owner', 'super_admin']));
-    $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+    $canViewProfit = \App\Helpers\PermissionHelper::can(auth()->user(), 'sales.view_profit');
+    $canViewCost = \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost');
 @endphp
 
 <!-- Executive KPI Cards Grid (Laba Rugi, Stok, Pelanggan, Omset) -->

@@ -8,6 +8,7 @@ use App\Models\CashSession;
 use App\Actions\CashSession\OpenCashSession;
 use App\Actions\CashSession\CloseCashSession;
 use App\Actions\CashSession\ReopenCashSession;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Filament\Notifications\Notification;
@@ -49,7 +50,7 @@ class POSCashSession extends Component
 
     public function boot(): void
     {
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.cash_session.view'), 403);
     }
 
     public function mount()
@@ -117,6 +118,7 @@ class POSCashSession extends Component
 
     public function openSession()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.cash_session.open'), 403);
         $this->validate([
             'selectedBranchId' => 'required|exists:branches,id',
             'openingCash' => 'required|integer|min:0',
@@ -153,6 +155,7 @@ class POSCashSession extends Component
 
     public function confirmCloseSession()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.cash_session.close'), 403);
         $this->validate([
             'actualCash' => 'required|integer|min:0',
         ], [
@@ -176,6 +179,9 @@ class POSCashSession extends Component
 
     public function authorizeAndClose()
     {
+        $requiredPerm = $this->supervisorAction === 'reopen' ? 'fo.cash_session.reopen' : 'fo.cash_session.close';
+        abort_unless(PermissionHelper::can(Auth::user(), $requiredPerm), 403);
+
         $this->validate([
             'supervisorEmail' => 'required|email',
             'supervisorPassword' => 'required',
@@ -193,8 +199,8 @@ class POSCashSession extends Component
             return;
         }
 
-        // Check if user has supervisor authority (owner or admin role)
-        if (!$supervisor->hasAnyRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+        // Check if supervisor holds permission to authorize close/reopen
+        if (!PermissionHelper::can($supervisor, ['fo.cash_session.close', 'fo.cash_session.reopen'])) {
             $this->addError('supervisorEmail', 'User ini tidak memiliki wewenang supervisor/admin.');
             return;
         }
@@ -209,6 +215,7 @@ class POSCashSession extends Component
 
     public function requestReopenSession(int $sessionId)
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.cash_session.reopen'), 403);
         $session = CashSession::query()
             ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())
             ->find($sessionId);
@@ -251,6 +258,7 @@ class POSCashSession extends Component
 
     protected function reopenSession()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.cash_session.reopen'), 403);
         try {
             $session = CashSession::query()
                 ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())
@@ -321,7 +329,7 @@ class POSCashSession extends Component
             ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())
             ->findOrFail($sessionId);
         $user = Auth::user();
-        $isManagement = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $isManagement = PermissionHelper::can($user, ['fo.cash_session.close', 'fo.cash_session.reopen']);
         abort_unless($isManagement || (int) $session->user_id === (int) Auth::id(), 403);
         $this->selectedSessionId = $session->id;
 

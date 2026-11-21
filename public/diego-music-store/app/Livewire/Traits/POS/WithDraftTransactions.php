@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Traits\POS;
 
+use App\Helpers\PermissionHelper;
 use App\Models\PosHeldTransaction;
 use App\Models\Customer;
 use Filament\Notifications\Notification;
@@ -60,13 +61,14 @@ trait WithDraftTransactions
 
     public function openHeldTransactionsModal()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.hold'), 403);
         $this->showHeldModal = true;
         $this->isHeldModalMandatory = false;
     }
 
     public function holdTransaction()
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.hold'), 403);
         if (empty($this->cart) && !$this->selectedCustomerId) {
             Notification::make()
                 ->title('Keranjang Kosong')
@@ -87,7 +89,7 @@ trait WithDraftTransactions
 
     public function restoreHeldTransaction($holdId)
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.hold'), 403);
         $held = PosHeldTransaction::query()
             ->where('user_id', Auth::id())
             ->where('branch_id', $this->resolveHeldTransactionBranchId())
@@ -129,7 +131,7 @@ trait WithDraftTransactions
 
     public function deleteHeldTransaction($holdId)
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.hold'), 403);
         $held = PosHeldTransaction::find($holdId);
         if ($held) {
             $held->delete();
@@ -144,6 +146,7 @@ trait WithDraftTransactions
 
     public function reprintLastReceipt()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.print'), 403);
         if (!$this->lastSaleId) {
             Notification::make()
                 ->title('Tidak Ada Transaksi')
@@ -164,6 +167,7 @@ trait WithDraftTransactions
 
     public function printLastInvoice()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.print'), 403);
         if (!$this->lastSaleId) {
             Notification::make()
                 ->title('Tidak Ada Transaksi Terakhir')
@@ -185,16 +189,19 @@ trait WithDraftTransactions
 
     public function reprintLastInvoice()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.print'), 403);
         $this->printLastInvoice();
     }
 
     public function printBill()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.print'), 403);
         $this->printDraft('bill');
     }
 
     public function printDraft($format = 'bill')
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.print'), 403);
         $this->resolveHeldTransactionBranchId();
         if (empty($this->cart)) {
             Notification::make()

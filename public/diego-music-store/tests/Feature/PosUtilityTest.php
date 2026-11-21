@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ReceiptSetting;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 use App\Livewire\PosPrivileges;
 use App\Livewire\PosStoreProfile;
 use App\Livewire\PosReceiptSettings;
@@ -33,6 +34,8 @@ class PosUtilityTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed(RoleAndPermissionSeeder::class);
+
         $this->branch = Branch::create([
             'name' => 'Main Branch',
             'store_name' => 'Diego Store Test',
@@ -47,6 +50,7 @@ class PosUtilityTest extends TestCase
             'email' => 'admin@test.com',
             'is_active' => true,
         ]);
+        $this->user->assignRole('owner');
 
         $this->user->branches()->attach($this->branch->id);
 
@@ -127,12 +131,52 @@ class PosUtilityTest extends TestCase
     }
 
     /** @test */
-    public function pos_privileges_component_can_render()
+    public function pos_privileges_component_can_render_and_manage_two_section_roles()
     {
         Livewire::actingAs($this->user)
             ->test(PosPrivileges::class)
             ->assertStatus(200)
-            ->assertSee('Setting Privilege User');
+            ->assertSee('Setting Privilege & Hak Akses User')
+            ->call('openCreate')
+            ->set('roleName', 'Kasir Outlet FO')
+            ->set('accessFo', true)
+            ->set('accessBo', false)
+            ->call('selectGroupPermissions', 'frontoffice', 'fo_main')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $role = Role::findByName('Kasir Outlet FO');
+        $this->assertTrue($role->hasPermissionTo('fo.access'));
+        $this->assertTrue($role->hasPermissionTo('fo.pos.view'));
+        $this->assertFalse($role->hasPermissionTo('bo.access'));
+
+        Livewire::actingAs($this->user)
+            ->test(PosPrivileges::class)
+            ->call('openEdit', $role->id)
+            ->assertSet('accessFo', true)
+            ->assertSet('accessBo', false)
+            ->call('deselectGroupPermissions', 'frontoffice', 'fo_main')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $role->refresh();
+        $this->assertFalse($role->hasPermissionTo('fo.pos.view'));
+    }
+
+    /** @test */
+    public function pos_privileges_forbids_mutating_roles_without_manage_permission()
+    {
+        $viewerRole = Role::create(['name' => 'Viewer FO Privileges', 'guard_name' => 'web']);
+        $viewerRole->givePermissionTo(['fo.access', 'fo.privileges.view']);
+        $viewer = User::factory()->create(['is_active' => true]);
+        $viewer->assignRole($viewerRole);
+        $viewer->branches()->attach($this->branch->id);
+
+        Livewire::actingAs($viewer)
+            ->test(PosPrivileges::class)
+            ->assertStatus(200)
+            ->call('openCreate')
+            ->assertForbidden();
     }
 
     /** @test */

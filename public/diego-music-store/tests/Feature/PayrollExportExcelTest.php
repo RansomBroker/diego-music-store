@@ -158,7 +158,9 @@ class PayrollExportExcelTest extends TestCase
     public function test_export_payroll_excel_route_works_for_authenticated_user(): void
     {
         $branch = Branch::create(['name' => 'Cabang Test 2', 'code' => 'CBG-EXP-02', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
 
         $payroll = Payroll::create([
             'payroll_code'       => 'PAY-2026-09-002',
@@ -183,11 +185,14 @@ class PayrollExportExcelTest extends TestCase
 
     public function test_export_payroll_item_excel_route_works_for_authenticated_user(): void
     {
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
         $branch = Branch::create(['name' => 'Cabang Test 4', 'code' => 'CBG-EXP-04', 'is_active' => true]);
         $user = User::factory()->create();
+        $user->assignRole('karyawan');
+        $user->branches()->attach($branch->id);
 
-        $employee = Employee::create([
-            'user_id'             => $user->id,
+        $employee = $user->employee;
+        $employee->update([
             'branch_id'           => $branch->id,
             'nik'                 => 'EMP-EXP-04',
             'name'                => 'Ahmad Staf',

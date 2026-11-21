@@ -77,7 +77,7 @@
                                 <span class="text-amber-600 dark:text-amber-400">Rp {{ number_format($row['pending_total'], 0, ',', '.') }}</span>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                @if ($row['pending_count'] > 0)
+                                @if ($row['pending_count'] > 0 && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.commissions.manage'))
                                     <x-pos.utility.button
                                         type="button"
                                         variant="success"
@@ -88,6 +88,10 @@
                                     >
                                         Approve ({{ $row['pending_count'] }})
                                     </x-pos.utility.button>
+                                @elseif ($row['pending_count'] > 0)
+                                    <x-pos.utility.pill variant="warning" size="sm">
+                                        Pending ({{ $row['pending_count'] }})
+                                    </x-pos.utility.pill>
                                 @else
                                     <x-pos.utility.pill variant="success" size="sm">
                                         <i class="ph-bold ph-check-circle mr-1"></i>

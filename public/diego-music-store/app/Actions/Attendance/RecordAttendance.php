@@ -18,7 +18,7 @@ class RecordAttendance
     public function execute(Employee $employee, array $data): EmployeeAttendance
     {
         $user = auth()->user();
-        abort_unless($user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']), 403);
+        abort_unless($user && \App\Helpers\PermissionHelper::can($user, 'fo.attendances.manage'), 403);
         $branchId = (int) ($data['branch_id'] ?? $employee->branch_id ?? 0);
         abort_unless($employee->branch_id && $branchId === (int) $employee->branch_id, 403);
         abort_unless(\App\Helpers\BranchHelper::getAllowedBranchesQuery()->where('branches.id', $branchId)->exists(), 403);

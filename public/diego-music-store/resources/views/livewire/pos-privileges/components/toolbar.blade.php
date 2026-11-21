@@ -21,7 +21,12 @@
         </ol>
     </nav>
     <!-- Page Title -->
-    <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Setting Privilege User</h1>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Setting Privilege &amp; Hak Akses User</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Atur akses panel Front Office (FO) &amp; Backoffice (BO) serta izin detail per menu/fitur (centang = aktif &amp; tampil).</p>
+        </div>
+    </div>
 </div>
 
 <!-- Toolbar (Search & Actions) Card Header -->
@@ -39,12 +44,13 @@
         >
     </div>
 
-    <!-- Add Action -->
-    <x-pos.utility.button
-        variant="primary"
-        icon="ph-plus"
-        wire:click="openCreate"
-    >
-        Tambah Role Baru
-    </x-pos.utility.button>
+    @if ($canManagePrivileges)
+        <x-pos.utility.button
+            variant="primary"
+            icon="ph-plus"
+            wire:click="openCreate"
+        >
+            Tambah Role Baru
+        </x-pos.utility.button>
+    @endif
 </div>

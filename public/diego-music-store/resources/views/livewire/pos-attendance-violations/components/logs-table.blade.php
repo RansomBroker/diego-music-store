@@ -90,7 +90,7 @@
                                 @endif
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                @if ($l->status === 'pending')
+                                @if ($l->status === 'pending' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'))
                                     <div class="inline-flex items-center justify-center gap-1">
                                         <x-pos.utility.button
                                             type="button"
@@ -109,6 +109,8 @@
                                             Waive
                                         </x-pos.utility.button>
                                     </div>
+                                @elseif ($l->status === 'pending')
+                                    <span class="text-[10px] text-slate-400">Menunggu</span>
                                 @else
                                     <span class="text-[10px] text-slate-400 ">Selesai</span>
                                 @endif

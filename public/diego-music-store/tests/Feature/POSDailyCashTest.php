@@ -31,7 +31,9 @@ class POSDailyCashTest extends TestCase
         $this->capitalAccount = Account::firstOrCreate(['code' => '311101001'], ['name' => 'MODAL DISETOR', 'classification' => 'Equity', 'is_active' => true]);
         $this->expenseAccount = Account::firstOrCreate(['code' => '611101014'], ['name' => 'BEBAN UMUM LAIN-LAIN', 'classification' => 'Expense', 'is_active' => true]);
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create();
+        $this->user->assignRole($ownerRole);
         $this->actingAs($this->user);
 
         $this->branch = Branch::create([

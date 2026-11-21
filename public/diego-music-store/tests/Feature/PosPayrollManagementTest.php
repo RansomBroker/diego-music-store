@@ -21,7 +21,10 @@ class PosPayrollManagementTest extends TestCase
             'code' => 'CBG-POS-01',
             'is_active' => true,
         ]);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole('owner');
+        $user->branches()->attach($branch->id);
 
         $response = $this->actingAs($user)->get(route('pos.payroll'));
 
@@ -38,7 +41,10 @@ class PosPayrollManagementTest extends TestCase
             'is_active' => true,
         ]);
 
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole('owner');
+        $user->branches()->attach($branch->id);
 
         Employee::create([
             'user_id' => $user->id,
@@ -67,7 +73,10 @@ class PosPayrollManagementTest extends TestCase
             'is_active' => true,
         ]);
 
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole('owner');
+        $user->branches()->attach($branch->id);
 
         $employee = Employee::create([
             'user_id' => $user->id,

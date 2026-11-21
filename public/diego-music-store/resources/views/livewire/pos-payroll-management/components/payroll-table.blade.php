@@ -1,3 +1,8 @@
+@php
+    $canViewSalary = \App\Helpers\PermissionHelper::can(Auth::user(), 'hr.view_salary');
+    $canEditPayroll = \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payroll.edit');
+    $canCreatePayroll = \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payroll.create');
+@endphp
 <!-- Table Card Wrapper -->
 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden transition-colors duration-200">
     <!-- Toolbar Filters (Branch & Month) -->
@@ -51,7 +56,9 @@
                 <thead class="bg-slate-50 dark:bg-slate-800/50 text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                     <tr>
                         <x-pos.table.th>Nama Karyawan</x-pos.table.th>
-                        <x-pos.table.th class="text-right text-slate-700 dark:text-slate-300"><span class="text-slate-700 dark:text-slate-300">Gaji Pokok</span></x-pos.table.th>
+                        @if ($canViewSalary)
+                            <x-pos.table.th class="text-right text-slate-700 dark:text-slate-300"><span class="text-slate-700 dark:text-slate-300">Gaji Pokok</span></x-pos.table.th>
+                        @endif
                         <x-pos.table.th class="text-right text-emerald-600 dark:text-emerald-400"><span class="text-emerald-600 dark:text-emerald-400">Tunjangan</span></x-pos.table.th>
                         <x-pos.table.th class="text-right text-sky-600 dark:text-sky-400"><span class="text-sky-600 dark:text-sky-400">Tunj. Lembur</span></x-pos.table.th>
                         <x-pos.table.th class="text-right text-blue-600 dark:text-blue-400"><span class="text-blue-600 dark:text-blue-400">Komisi Sales</span></x-pos.table.th>
@@ -69,9 +76,11 @@
                                 {{ $item->employee->name ?? '-' }}
                                 <span class="block text-[10px] text-slate-400 font-normal">{{ $item->employee->nik ?? '' }}</span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-semibold  text-slate-700 dark:text-slate-300">
-                                <span class="text-slate-700 dark:text-slate-300">Rp {{ number_format($item->basic_salary, 0, ',', '.') }}</span>
-                            </x-pos.table.td>
+                            @if ($canViewSalary)
+                                <x-pos.table.td class="text-right font-semibold  text-slate-700 dark:text-slate-300">
+                                    <span class="text-slate-700 dark:text-slate-300">Rp {{ number_format($item->basic_salary, 0, ',', '.') }}</span>
+                                </x-pos.table.td>
+                            @endif
                             <x-pos.table.td class="text-right font-semibold  text-emerald-600 dark:text-emerald-400">
                                 <span class="text-emerald-600 dark:text-emerald-400">Rp {{ number_format($item->allowance_amount, 0, ',', '.') }}</span>
                             </x-pos.table.td>
@@ -107,17 +116,19 @@
                                         Detail
                                     </x-pos.utility.button>
 
-                                    <!-- Edit / Override Komponen Gaji -->
-                                    <x-pos.utility.button
-                                        type="button"
-                                        variant="warning"
-                                        size="xs"
-                                        icon="ph-pencil-simple"
-                                        wire:click="openEditItemModal({{ $item->id }})"
-                                        title="Edit & Override Komponen Gaji"
-                                    >
-                                        Edit
-                                    </x-pos.utility.button>
+                                    @if ($canEditPayroll)
+                                        <!-- Edit / Override Komponen Gaji -->
+                                        <x-pos.utility.button
+                                            type="button"
+                                            variant="warning"
+                                            size="xs"
+                                            icon="ph-pencil-simple"
+                                            wire:click="openEditItemModal({{ $item->id }})"
+                                            title="Edit & Override Komponen Gaji"
+                                        >
+                                            Edit
+                                        </x-pos.utility.button>
+                                    @endif
 
                                     <!-- Cetak Slip Gaji PDF -->
                                     <x-pos.utility.button
@@ -140,9 +151,11 @@
                         <x-pos.table.td class="font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                             TOTAL ({{ $currentPayroll->items->count() }} STAF)
                         </x-pos.table.td>
-                        <x-pos.table.td class="text-right font-black  text-slate-800 dark:text-slate-200">
-                            <span class="text-slate-800 dark:text-slate-200">Rp {{ number_format($currentPayroll->items->sum('basic_salary'), 0, ',', '.') }}</span>
-                        </x-pos.table.td>
+                        @if ($canViewSalary)
+                            <x-pos.table.td class="text-right font-black  text-slate-800 dark:text-slate-200">
+                                <span class="text-slate-800 dark:text-slate-200">Rp {{ number_format($currentPayroll->items->sum('basic_salary'), 0, ',', '.') }}</span>
+                            </x-pos.table.td>
+                        @endif
                         <x-pos.table.td class="text-right font-black  text-emerald-600 dark:text-emerald-400">
                             <span class="text-emerald-600 dark:text-emerald-400">Rp {{ number_format($currentPayroll->items->sum('allowance_amount'), 0, ',', '.') }}</span>
                         </x-pos.table.td>
@@ -176,15 +189,17 @@
         <div class="p-12 text-center text-slate-400">
             <i class="ph-bold ph-bank text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-sm font-bold mb-3">Belum ada rekapitulasi payroll untuk periode {{ $filterMonth }}.</p>
-            <x-pos.utility.button
-                type="button"
-                variant="primary"
-                size="sm"
-                icon="ph-arrows-clockwise"
-                wire:click="generatePayroll()"
-            >
-                Proses Payroll Sekarang
-            </x-pos.utility.button>
+            @if ($canCreatePayroll)
+                <x-pos.utility.button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    icon="ph-arrows-clockwise"
+                    wire:click="generatePayroll()"
+                >
+                    Proses Payroll Sekarang
+                </x-pos.utility.button>
+            @endif
         </div>
     @endif
 </div>

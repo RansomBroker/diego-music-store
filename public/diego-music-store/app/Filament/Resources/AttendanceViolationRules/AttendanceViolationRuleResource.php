@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -16,6 +17,10 @@ use Filament\Tables\Table;
 
 class AttendanceViolationRuleResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.attendance_violation_rules';
+
     protected static ?string $model = AttendanceViolationRule::class;
 
     protected static ?string $navigationLabel = 'Aturan Denda Presensi';

@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\ProductBranchStock;
 use App\Models\CashTransaction;
 use App\Helpers\BranchHelper;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,11 @@ use Illuminate\Support\Facades\Storage;
 class PosBranchPerformance extends Component
 {
     public $selectedBranchId = 'all';
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.branch_performance.view'), 403);
+    }
     public string $dateFrom = '';
     public string $dateTo = '';
 

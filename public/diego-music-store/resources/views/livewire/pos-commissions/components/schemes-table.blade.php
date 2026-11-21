@@ -9,15 +9,17 @@
             </h3>
             <p class="text-xs text-slate-400 mt-0.5">Konfigurasi persentase komisi per produk, kategori, atau transaksi umum</p>
         </div>
-        <x-pos.utility.button
-            type="button"
-            variant="primary"
-            size="sm"
-            icon="ph-plus-circle"
-            wire:click="openSchemeModal"
-        >
-            Tambah Skema Baru
-        </x-pos.utility.button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.commissions.manage'))
+            <x-pos.utility.button
+                type="button"
+                variant="primary"
+                size="sm"
+                icon="ph-plus-circle"
+                wire:click="openSchemeModal"
+            >
+                Tambah Skema Baru
+            </x-pos.utility.button>
+        @endif
     </div>
 
     @if ($schemes->isNotEmpty())
@@ -85,37 +87,45 @@
                                 @endif
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                <button
-                                    type="button"
-                                    wire:click="toggleSchemeStatus({{ $sch->id }})"
-                                    class="cursor-pointer transition hover:opacity-80"
-                                    title="Klik untuk ubah status"
-                                >
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.commissions.manage'))
+                                    <button
+                                        type="button"
+                                        wire:click="toggleSchemeStatus({{ $sch->id }})"
+                                        class="cursor-pointer transition hover:opacity-80"
+                                        title="Klik untuk ubah status"
+                                    >
+                                        <x-pos.utility.pill variant="{{ $sch->is_active ? 'success' : 'default' }}" size="xs">
+                                            {{ $sch->is_active ? 'Aktif' : 'Non-Aktif' }}
+                                        </x-pos.utility.pill>
+                                    </button>
+                                @else
                                     <x-pos.utility.pill variant="{{ $sch->is_active ? 'success' : 'default' }}" size="xs">
                                         {{ $sch->is_active ? 'Aktif' : 'Non-Aktif' }}
                                     </x-pos.utility.pill>
-                                </button>
+                                @endif
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                <div class="flex items-center justify-center gap-1.5">
-                                    <x-pos.utility.button
-                                        type="button"
-                                        variant="warning"
-                                        size="sm"
-                                        icon="ph-pencil-simple"
-                                        wire:click="openSchemeModal({{ $sch->id }})"
-                                        title="Edit Skema"
-                                    />
-                                    <x-pos.utility.button
-                                        type="button"
-                                        variant="danger"
-                                        size="sm"
-                                        icon="ph-trash"
-                                        wire:click="deleteScheme({{ $sch->id }})"
-                                        wire:confirm="Yakin ingin menghapus skema komisi ini?"
-                                        title="Hapus Skema"
-                                    />
-                                </div>
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.commissions.manage'))
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <x-pos.utility.button
+                                            type="button"
+                                            variant="warning"
+                                            size="sm"
+                                            icon="ph-pencil-simple"
+                                            wire:click="openSchemeModal({{ $sch->id }})"
+                                            title="Edit Skema"
+                                        />
+                                        <x-pos.utility.button
+                                            type="button"
+                                            variant="danger"
+                                            size="sm"
+                                            icon="ph-trash"
+                                            wire:click="deleteScheme({{ $sch->id }})"
+                                            wire:confirm="Yakin ingin menghapus skema komisi ini?"
+                                            title="Hapus Skema"
+                                        />
+                                    </div>
+                                @endif
                             </x-pos.table.td>
                         </x-pos.table.tr>
                     @endforeach
@@ -127,15 +137,17 @@
         <div class="p-12 text-center text-slate-400 dark:text-slate-500">
             <i class="ph ph-sliders text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-sm font-medium mb-3">Belum ada skema komisi yang dikonfigurasi.</p>
-            <x-pos.utility.button
-                type="button"
-                variant="primary"
-                size="sm"
-                icon="ph-plus-circle"
-                wire:click="openSchemeModal"
-            >
-                Buat Skema Pertama
-            </x-pos.utility.button>
+            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.commissions.manage'))
+                <x-pos.utility.button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    icon="ph-plus-circle"
+                    wire:click="openSchemeModal"
+                >
+                    Buat Skema Pertama
+                </x-pos.utility.button>
+            @endif
         </div>
     @endif
 </div>

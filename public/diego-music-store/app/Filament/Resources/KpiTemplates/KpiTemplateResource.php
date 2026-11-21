@@ -8,6 +8,7 @@ use BackedEnum;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -18,6 +19,10 @@ use Filament\Tables\Table;
 
 class KpiTemplateResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.kpi_templates';
+
     protected static ?string $model = KpiTemplate::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTrophy;

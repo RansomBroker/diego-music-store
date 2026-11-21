@@ -22,12 +22,17 @@ class EmployeeTaskTest extends TestCase
         Notification::fake();
 
         // Arrange
+        $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $owner = User::factory()->create();
+        $owner->assignRole($ownerRole);
         $employeeUser1 = User::factory()->create();
         $employeeUser2 = User::factory()->create();
 
-        $employee1 = Employee::create(['user_id' => $employeeUser1->id, 'is_active' => true, 'nik' => '123', 'name' => 'A']);
-        $employee2 = Employee::create(['user_id' => $employeeUser2->id, 'is_active' => true, 'nik' => '456', 'name' => 'B']);
+        $employee1 = $employeeUser1->employee;
+        $employee1->update(['branch_id' => $branch->id, 'is_active' => true, 'nik' => '123', 'name' => 'A']);
+        $employee2 = $employeeUser2->employee;
+        $employee2->update(['branch_id' => $branch->id, 'is_active' => true, 'nik' => '456', 'name' => 'B']);
 
         // Act
         Livewire::actingAs($owner)
@@ -92,10 +97,13 @@ class EmployeeTaskTest extends TestCase
     public function test_owner_can_approve_completed_task()
     {
         // Arrange
+        $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $owner = User::factory()->create();
+        $owner->assignRole($ownerRole);
         $task = EmployeeTask::create([
             'owner_id' => $owner->id,
-            'employee_id' => Employee::create(['is_active' => true, 'nik' => '123', 'name' => 'A'])->id,
+            'employee_id' => Employee::create(['branch_id' => $branch->id, 'is_active' => true, 'nik' => '123', 'name' => 'A'])->id,
             'title' => 'Tugas A',
             'status' => 'completed',
         ]);
@@ -117,9 +125,13 @@ class EmployeeTaskTest extends TestCase
         Notification::fake();
 
         // Arrange
+        $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $owner = User::factory()->create();
+        $owner->assignRole($ownerRole);
         $employeeUser = User::factory()->create();
-        $employee = Employee::create(['user_id' => $employeeUser->id, 'is_active' => true, 'nik' => '123', 'name' => 'A']);
+        $employee = $employeeUser->employee;
+        $employee->update(['branch_id' => $branch->id, 'is_active' => true, 'nik' => '123', 'name' => 'A']);
 
         $task = EmployeeTask::create([
             'owner_id' => $owner->id,

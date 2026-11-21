@@ -20,16 +20,14 @@
             <div class="w-full space-y-6">
 
                 @php
-                    $isOwnerUser = auth()->check() && auth()->user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+                    $canViewOwnerWidgets = \App\Helpers\PermissionHelper::can(auth()->user(), 'fo.dashboard.owner_widgets');
                 @endphp
 
                 <!-- 1. Card Status User Login & Presensi -->
                 @include('livewire.front-office-dashboard.components.user-status-card')
 
-                <!-- 2. Quick Navigation Tiles (Khusus Owner) -->
-                @if ($isOwnerUser)
-                    @include('livewire.front-office-dashboard.components.navigation-tiles')
-                @endif
+                <!-- 2. Quick Navigation Tiles (Sesuai Hak Akses Role) -->
+                @include('livewire.front-office-dashboard.components.navigation-tiles')
 
                 <!-- 3. Executive Owner Dashboard Widgets Section -->
                 <livewire:owner-dashboard-widgets />
@@ -37,8 +35,8 @@
                 <!-- 4. Sales & Employee Performance Dashboard Widgets Section -->
                 <livewire:sales-employee-dashboard-widgets />
 
-                <!-- 5. Presensi Karyawan Cabang Hari Ini (Owner Only) -->
-                @if ($isOwnerUser)
+                <!-- 5. Presensi Karyawan Cabang Hari Ini -->
+                @if ($canViewOwnerWidgets)
                     @include('livewire.front-office-dashboard.components.today-branch-attendances')
                 @endif
 

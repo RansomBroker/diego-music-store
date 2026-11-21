@@ -38,15 +38,17 @@
                         <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Pelunasan Piutang Pelanggan</h1>
                     </div>
 
-                    <!-- Add Action -->
-                    <x-pos.utility.button
-                        type="button"
-                        variant="primary"
-                        icon="ph-plus"
-                        wire:click="openCreate"
-                    >
-                        Pelunasan Piutang
-                    </x-pos.utility.button>
+                    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customer_payments.create'))
+                        <!-- Add Action -->
+                        <x-pos.utility.button
+                            type="button"
+                            variant="primary"
+                            icon="ph-plus"
+                            wire:click="openCreate"
+                        >
+                            Pelunasan Piutang
+                        </x-pos.utility.button>
+                    @endif
                 </div>
 
                 <!-- Filters & Table Card -->

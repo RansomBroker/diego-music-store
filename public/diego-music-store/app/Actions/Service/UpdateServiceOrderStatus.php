@@ -21,7 +21,7 @@ class UpdateServiceOrderStatus
     {
         $user = Auth::user();
         abort_unless($user, 403);
-        abort_if($user->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission($user, 'fo.service.edit');
         abort_unless(\App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->where('branches.id', $serviceOrder->branch_id)->exists(), 403);
 

@@ -29,7 +29,7 @@ class UserActionsTest extends TestCase
         $branch1 = Branch::create(['name' => 'Branch A', 'phone' => '123', 'address' => 'Addr A', 'is_active' => true]);
         $branch2 = Branch::create(['name' => 'Branch B', 'phone' => '456', 'address' => 'Addr B', 'is_active' => true]);
         
-        $roleAdmin = Role::findByName('admin');
+        $roleOwner = Role::findByName('owner');
         $roleCashier = Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
 
         $data = [
@@ -38,7 +38,7 @@ class UserActionsTest extends TestCase
             'email' => 'john@example.com',
             'password' => 'secret123',
             'branches' => [$branch1->id, $branch2->id],
-            'roles' => [$roleAdmin->id, $roleCashier->id],
+            'roles' => [$roleOwner->id, $roleCashier->id],
         ];
 
         /** @var CreateUser $action */
@@ -58,7 +58,7 @@ class UserActionsTest extends TestCase
         $this->assertTrue($user->branches->contains($branch2));
 
         // Assert roles synced
-        $this->assertTrue($user->hasRole('admin'));
+        $this->assertTrue($user->hasRole('owner'));
         $this->assertTrue($user->hasRole('cashier'));
     }
 
@@ -67,7 +67,7 @@ class UserActionsTest extends TestCase
         $branch1 = Branch::create(['name' => 'Branch A', 'phone' => '123', 'address' => 'Addr A', 'is_active' => true]);
         $branch2 = Branch::create(['name' => 'Branch B', 'phone' => '456', 'address' => 'Addr B', 'is_active' => true]);
 
-        $roleAdmin = Role::findByName('admin');
+        $roleOwner = Role::findByName('owner');
         $roleCashier = Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
 
         // Create initial user
@@ -78,14 +78,14 @@ class UserActionsTest extends TestCase
             'password' => 'oldpassword',
         ]);
         $user->branches()->sync([$branch1->id]);
-        $user->assignRole($roleAdmin);
+        $user->assignRole($roleOwner);
 
         $updateData = [
             'name' => 'New Name',
             'username' => 'newusername',
             'email' => 'new@example.com',
             'branches' => [$branch2->id], // Switch branch from A to B
-            'roles' => [$roleCashier->id], // Switch role from admin to cashier
+            'roles' => [$roleCashier->id], // Switch role from owner to cashier
         ];
 
         /** @var UpdateUser $action */
@@ -104,7 +104,7 @@ class UserActionsTest extends TestCase
         $this->assertTrue($updatedUser->branches->contains($branch2));
 
         // Assert old roles removed, new roles added
-        $this->assertFalse($updatedUser->hasRole('admin'));
+        $this->assertFalse($updatedUser->hasRole('owner'));
         $this->assertTrue($updatedUser->hasRole('cashier'));
     }
 

@@ -9,6 +9,7 @@ use App\Filament\Resources\PurchaseOrders\Schemas\PurchaseOrderForm;
 use App\Filament\Resources\PurchaseOrders\Tables\PurchaseOrdersTable;
 use App\Models\PurchaseOrder;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,6 +17,10 @@ use Filament\Tables\Table;
 
 class PurchaseOrderResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.purchase_orders';
+
     protected static ?string $model = PurchaseOrder::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;

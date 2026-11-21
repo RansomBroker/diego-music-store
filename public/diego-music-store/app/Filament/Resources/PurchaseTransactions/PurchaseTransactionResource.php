@@ -9,6 +9,7 @@ use App\Filament\Resources\PurchaseTransactions\Schemas\PurchaseTransactionForm;
 use App\Filament\Resources\PurchaseTransactions\Tables\PurchaseTransactionsTable;
 use App\Models\PurchaseTransaction;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,6 +17,10 @@ use Filament\Tables\Table;
 
 class PurchaseTransactionResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.purchase_transactions';
+
     protected static ?string $model = PurchaseTransaction::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;

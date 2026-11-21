@@ -20,7 +20,7 @@ class UpdateCustomerDeposit
      */
     public function execute(CustomerDeposit $deposit, array $data, ?User $user = null): CustomerDeposit
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission($user ?: Auth::user(), 'fo.customer_deposits.edit');
         abort_unless((int) $deposit->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
 
         return DB::transaction(function () use ($deposit, $data, $user) {

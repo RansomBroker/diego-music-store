@@ -95,7 +95,7 @@
                                     </div>
                                     @if ($selectedPeriod->status === \App\Models\StockOpnamePeriod::STATUS_COMPLETED)
                                         <div class="text-right"><span class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"><i class="ph-bold ph-check-circle"></i> Sudah difinalisasi</span>@if ($selectedPeriod->finalStockOpname)<p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Dokumen: <strong>{{ $selectedPeriod->finalStockOpname->opname_number }}</strong></p>@endif</div>
-                                    @elseif ($canFinalize)
+                                    @elseif ($canFinalize && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.stock_opname_review.approve'))
                                         <x-pos.utility.button wire:click="openFinalizeModal({{ $selectedPeriod->id }})" wire:loading.attr="disabled" class="!rounded-xl !px-4 !py-2">
                                             <i class="ph-bold ph-lock-key mr-1"></i> Finalisasi periode
                                         </x-pos.utility.button>
@@ -188,14 +188,16 @@
                                             <textarea id="review-notes" wire:model="reviewNotes" rows="3" maxlength="2000" placeholder="Opsional jika disetujui; wajib jika meminta revisi..." class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white"></textarea>
                                             @error('reviewNotes') <p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p> @enderror
                                         </div>
-                                        <div class="flex flex-wrap justify-end gap-2">
-                                            <x-pos.utility.button wire:click="requestRevision({{ $selectedAssignment->id }})" wire:confirm="Kirim tugas ini kembali ke karyawan untuk direvisi?" wire:loading.attr="disabled" class="!rounded-xl !bg-rose-600 hover:!bg-rose-700">
-                                                <i class="ph-bold ph-arrow-counter-clockwise mr-1"></i> Minta revisi
-                                            </x-pos.utility.button>
-                                            <x-pos.utility.button wire:click="approveAssignment({{ $selectedAssignment->id }})" wire:loading.attr="disabled" class="!rounded-xl">
-                                                <i class="ph-bold ph-check mr-1"></i> Setujui tugas
-                                            </x-pos.utility.button>
-                                        </div>
+                                        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.stock_opname_review.approve'))
+                                            <div class="flex flex-wrap justify-end gap-2">
+                                                <x-pos.utility.button wire:click="requestRevision({{ $selectedAssignment->id }})" wire:confirm="Kirim tugas ini kembali ke karyawan untuk direvisi?" wire:loading.attr="disabled" class="!rounded-xl !bg-rose-600 hover:!bg-rose-700">
+                                                    <i class="ph-bold ph-arrow-counter-clockwise mr-1"></i> Minta revisi
+                                                </x-pos.utility.button>
+                                                <x-pos.utility.button wire:click="approveAssignment({{ $selectedAssignment->id }})" wire:loading.attr="disabled" class="!rounded-xl">
+                                                    <i class="ph-bold ph-check mr-1"></i> Setujui tugas
+                                                </x-pos.utility.button>
+                                            </div>
+                                        @endif
                                     </div>
                                 </section>
                             @endif

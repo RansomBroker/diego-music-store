@@ -24,7 +24,7 @@
             @include('livewire.pos-branch-performance.components.kpi-summary')
 
             <!-- Breakdown Laba Rugi Multi-Step Cabang -->
-            @if (auth()->check() && (auth()->user()->can('sales.view_profit') || auth()->user()->hasRole(['owner', 'super_admin'])))
+            @if (\App\Helpers\PermissionHelper::can(auth()->user(), 'sales.view_profit'))
                 @include('livewire.pos-branch-performance.components.profit-loss-breakdown')
             @endif
 

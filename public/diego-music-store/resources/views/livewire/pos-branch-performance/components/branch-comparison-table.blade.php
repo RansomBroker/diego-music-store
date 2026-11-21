@@ -17,8 +17,8 @@
     </div>
 
 @php
-    $canViewProfit = auth()->check() && (auth()->user()->can('sales.view_profit') || auth()->user()->hasRole(['owner', 'super_admin']));
-    $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+    $canViewProfit = \App\Helpers\PermissionHelper::can(auth()->user(), 'sales.view_profit');
+    $canViewCost = \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost');
     $colsCount = 3 + ($canViewProfit ? 3 : 0) + ($canViewCost ? 1 : 0);
 @endphp
 

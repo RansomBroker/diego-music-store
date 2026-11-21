@@ -7,6 +7,7 @@ use App\Filament\Resources\Accounts\Schemas\AccountForm;
 use App\Filament\Resources\Accounts\Tables\AccountsTable;
 use App\Models\Account;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -14,6 +15,10 @@ use Filament\Tables\Table;
 
 class AccountResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.accounts';
+
     protected static ?string $model = Account::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
@@ -52,7 +57,7 @@ class AccountResource extends Resource
         }
 
         $user = auth()->user();
-        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+        if ($user && !\App\Helpers\BranchHelper::canAccessAllBranches($user)) {
             return $query->whereIn('branch_id', $user->branches()->pluck('branches.id'));
         }
 

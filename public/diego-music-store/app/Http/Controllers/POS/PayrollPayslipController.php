@@ -18,9 +18,9 @@ class PayrollPayslipController extends Controller
     {
         $item = PayrollItem::with(['payroll', 'employee.branch'])->findOrFail($payrollItemId);
         $user = Auth::user();
-        $isManagement = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
-        abort_unless($isManagement || ($user?->employee?->id && (int) $user->employee->id === (int) $item->employee_id), 403);
-        if ($isManagement) {
+        $isPayrollViewer = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($user, 'fo.payroll.view');
+        abort_unless($isPayrollViewer || ($user?->employee?->id && (int) $user->employee->id === (int) $item->employee_id), 403);
+        if ($isPayrollViewer) {
             abort_unless((int) $item->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
         }
 

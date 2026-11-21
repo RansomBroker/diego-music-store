@@ -35,8 +35,12 @@ class MonthlyClosingPage extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        $user = auth()->user();
-        return (bool) ($user && ($user->can('accounting.closing') || $user->hasRole(['owner', 'Owner', 'super_admin', 'Super Admin'])));
+        return \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.monthly_closing.view');
+    }
+
+    public function boot(): void
+    {
+        abort_unless(static::canAccess(), 403);
     }
 
     public ?array $data = [];
@@ -57,6 +61,7 @@ class MonthlyClosingPage extends Page implements HasForms
 
     public function openClosingModal(): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.monthly_closing.execute'), 403);
         $this->showClosingModal = true;
     }
 
@@ -67,6 +72,7 @@ class MonthlyClosingPage extends Page implements HasForms
 
     public function openReopenModal(?int $closingId = null): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.monthly_closing.execute'), 403);
         $this->selectedClosingIdToReopen = $closingId;
         $this->showReopenModal = true;
     }
@@ -182,6 +188,7 @@ class MonthlyClosingPage extends Page implements HasForms
 
     public function executeClosing(): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.monthly_closing.execute'), 403);
         $info = $this->period_info;
 
         try {
@@ -213,6 +220,7 @@ class MonthlyClosingPage extends Page implements HasForms
 
     public function reopenPeriod(): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.monthly_closing.execute'), 403);
         $info = $this->period_info;
 
         $closing = $this->selectedClosingIdToReopen
@@ -297,6 +305,7 @@ class MonthlyClosingPage extends Page implements HasForms
 
     public function executeYearEndClosingAction(): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.monthly_closing.execute'), 403);
         $info = $this->period_info;
         $year = $info['year'];
         $branchId = $info['branch_id'];

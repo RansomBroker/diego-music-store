@@ -53,8 +53,11 @@ class PosPaymentMethodsSeederAndSettlementTest extends TestCase
 
     public function test_can_process_customer_ar_piutang_settlement_on_pos_transactions(): void
     {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         $branch = \App\Models\Branch::create(['name' => 'Branch Test', 'code' => 'BR-TEST', 'is_active' => true]);
+        $user->branches()->attach($branch->id);
         $customer = Customer::create(['name' => 'Budi Piutang', 'code' => 'CUST-PIUTANG-01']);
 
         $sale = Sale::create([

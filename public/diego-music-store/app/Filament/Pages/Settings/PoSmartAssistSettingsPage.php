@@ -30,8 +30,12 @@ class PoSmartAssistSettingsPage extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        $user = auth()->user();
-        return (bool) ($user && ($user->can('utility.store') || $user->hasRole(['owner', 'Owner', 'super_admin', 'Super Admin'])));
+        return \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.po_smart_assist.view');
+    }
+
+    public function boot(): void
+    {
+        abort_unless(static::canAccess(), 403);
     }
 
     public ?array $data = [];
@@ -100,6 +104,7 @@ class PoSmartAssistSettingsPage extends Page implements HasForms
 
     public function save(): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.po_smart_assist.edit'), 403);
         $formData = $this->form->getState();
 
         $action = new UpdatePoSmartAssistSettings();

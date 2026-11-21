@@ -9,6 +9,7 @@ use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,6 +17,10 @@ use Filament\Tables\Table;
 
 class UserResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.users';
+
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
@@ -54,8 +59,8 @@ class UserResource extends Resource
         $query = parent::getEloquentQuery();
         $authUser = auth()->user();
 
-        // Owner dan Super Admin memiliki akses global melihat seluruh pengguna lintas cabang
-        if ($authUser && $authUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+        // Owner memiliki akses global melihat seluruh pengguna lintas cabang
+        if ($authUser && \App\Helpers\PermissionHelper::isOwner($authUser)) {
             return $query;
         }
 

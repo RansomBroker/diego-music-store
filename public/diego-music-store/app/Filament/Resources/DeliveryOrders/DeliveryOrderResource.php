@@ -9,6 +9,7 @@ use App\Filament\Resources\DeliveryOrders\Schemas\DeliveryOrderForm;
 use App\Filament\Resources\DeliveryOrders\Tables\DeliveryOrdersTable;
 use App\Models\DeliveryOrder;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,6 +17,10 @@ use Filament\Tables\Table;
 
 class DeliveryOrderResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.delivery_orders';
+
     protected static ?string $model = DeliveryOrder::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;

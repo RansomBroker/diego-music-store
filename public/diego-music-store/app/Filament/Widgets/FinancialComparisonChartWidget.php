@@ -19,6 +19,11 @@ class FinancialComparisonChartWidget extends ChartWidget
 
     protected ?string $description = 'Bandingkan proporsi akun keuangan (misal: Liabilitas terhadap Aset)';
 
+    public static function canView(): bool
+    {
+        return \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.widgets.financial_chart');
+    }
+
     /**
      * Selected account codes for comparison. Default: Aset & Liabilitas.
      */

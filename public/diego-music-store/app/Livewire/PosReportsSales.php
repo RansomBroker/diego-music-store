@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Helpers\PermissionHelper;
 use App\Helpers\ReportHelper;
 use App\Models\Branch;
 use App\Models\Customer;
@@ -61,13 +62,11 @@ class PosReportsSales extends Component
      */
     public function boot(): void
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.reports.sales'), 403);
     }
 
     public function mount()
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
-
         $this->dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->dateTo = Carbon::now()->format('Y-m-d');
         if (!$this->selectedBranchId) {

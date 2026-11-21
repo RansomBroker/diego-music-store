@@ -78,7 +78,7 @@ class PurchaseTransactionsTable
             ->actions([
                 EditAction::make()
                     ->modalWidth('7xl')
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource::canEdit($record))
                     ->mutateRecordDataUsing(function (Model $record, array $data): array {
                         $data['discount_type'] = $record->discount_type ?? 'fixed';
                         $data['discount_value'] = $record->discount_value ?? 0;
@@ -138,15 +138,16 @@ class PurchaseTransactionsTable
                     }),
 
                 DeleteAction::make()
-                    ->visible(fn ($record) => $record->status === 'draft'),
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource::canDelete($record)),
 
                 Action::make('post')
                     ->label('Post')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource::canEdit($record))
                     ->action(function ($record) {
+                        abort_unless(\App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource::canEdit($record), 403);
                         app(PostPurchaseTransaction::class)->execute($record);
                     }),
 

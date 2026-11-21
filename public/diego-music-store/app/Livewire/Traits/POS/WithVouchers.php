@@ -2,13 +2,16 @@
 
 namespace App\Livewire\Traits\POS;
 
+use App\Helpers\PermissionHelper;
 use App\Models\Voucher;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Auth;
 
 trait WithVouchers
 {
     public function validateAndApplyVoucher(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), ['fo.pos.checkout', 'fo.pos.edit_sale']), 403);
         $code = strtoupper(trim($this->voucherCodeInput));
         if (empty($code)) {
             $this->voucherValidationMessage = 'Masukkan kode voucher.';

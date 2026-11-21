@@ -18,13 +18,15 @@ class SubmitBackdateAttendanceRequestTest extends TestCase
     {
         $branch = Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
         $user = User::factory()->create();
-        $employee = Employee::create([
-            'user_id'   => $user->id,
+        $user->branches()->attach($branch->id);
+        $employee = $user->employee;
+        $employee->update([
             'name'      => 'Ahmad Staf',
             'nik'       => 'EMP-0012',
             'branch_id' => $branch->id,
             'is_active' => true,
         ]);
+        $this->actingAs($user);
 
         $action = new SubmitBackdateAttendanceRequest();
         $request = $action->execute($employee, [
@@ -46,13 +48,17 @@ class SubmitBackdateAttendanceRequestTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
+        $branch = Branch::create(['name' => 'Cabang Test 2', 'is_active' => true]);
         $user = User::factory()->create();
-        $employee = Employee::create([
-            'user_id'   => $user->id,
+        $user->branches()->attach($branch->id);
+        $employee = $user->employee;
+        $employee->update([
             'name'      => 'Ahmad Staf',
             'nik'       => 'EMP-0013',
+            'branch_id' => $branch->id,
             'is_active' => true,
         ]);
+        $this->actingAs($user);
 
         $action = new SubmitBackdateAttendanceRequest();
         $action->execute($employee, [

@@ -24,14 +24,21 @@ class CashSessionActionsTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
-        $this->supervisor = User::factory()->create();
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+
+        $this->user = User::factory()->create(['is_active' => true]);
+        $this->supervisor = User::factory()->create(['is_active' => true]);
+        $this->supervisor->assignRole($ownerRole);
         $this->branch = Branch::create([
             'name' => 'Cabang Kuta',
             'address' => 'Kuta',
             'phone' => '0361-998877',
             'is_active' => true,
         ]);
+
+        $this->user->branches()->attach($this->branch->id);
+        $this->user->employee()->update(['branch_id' => $this->branch->id, 'is_active' => true]);
+        $this->actingAs($this->user);
     }
 
     public function test_it_can_open_a_cash_session(): void
@@ -128,6 +135,7 @@ class CashSessionActionsTest extends TestCase
             'closed_by_user_id' => $this->supervisor->id,
         ];
 
+        $this->actingAs($this->supervisor);
         $closedSession = app(CloseCashSession::class)->execute($session, $closeData);
 
         $this->assertEquals('closed', $closedSession->status);
@@ -150,6 +158,7 @@ class CashSessionActionsTest extends TestCase
             'status' => 'closed',
         ]);
 
+        $this->actingAs($this->supervisor);
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Hanya sesi aktif (open) yang dapat ditutup.');
 

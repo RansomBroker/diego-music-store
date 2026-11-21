@@ -114,7 +114,7 @@ class JournalEntriesTable
 
                 EditAction::make()
                     ->modalWidth('xl')
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\JournalEntries\JournalEntryResource::canEdit($record))
                     ->using(fn (Model $record, array $data): Model => app(UpdateJournalEntry::class)->execute($record, $data)),
 
                 Action::make('post')
@@ -122,13 +122,14 @@ class JournalEntriesTable
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\JournalEntries\JournalEntryResource::canEdit($record))
                     ->action(function ($record) {
+                        abort_unless(\App\Filament\Resources\JournalEntries\JournalEntryResource::canEdit($record), 403);
                         app(PostJournalEntry::class)->execute($record);
                     }),
 
                 DeleteAction::make()
-                    ->visible(fn ($record) => $record->status === 'draft'),
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\JournalEntries\JournalEntryResource::canDelete($record)),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

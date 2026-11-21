@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Actions\OwnerDashboard\GetOwnerDashboardData;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\SaleCategory;
@@ -40,7 +41,7 @@ class OwnerDashboardWidgets extends Component
     public function render(GetOwnerDashboardData $action)
     {
         $user = Auth::user();
-        $isOwner = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $isOwner = PermissionHelper::can($user, 'fo.dashboard.owner_widgets');
 
         if (!$isOwner) {
             return view('livewire.owner-dashboard-widgets', [

@@ -27,16 +27,18 @@
 
     <!-- Header Actions -->
     <div class="flex flex-wrap items-center gap-2">
-        <!-- Generate / Process Payroll Button -->
-        <x-pos.utility.button
-            type="button"
-            variant="primary"
-            size="sm"
-            icon="ph-arrows-clockwise"
-            wire:click="generatePayroll()"
-        >
-            Proses Payroll Bulanan
-        </x-pos.utility.button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payroll.create'))
+            <!-- Generate / Process Payroll Button -->
+            <x-pos.utility.button
+                type="button"
+                variant="primary"
+                size="sm"
+                icon="ph-arrows-clockwise"
+                wire:click="generatePayroll()"
+            >
+                Proses Payroll Bulanan
+            </x-pos.utility.button>
+        @endif
 
         @if ($currentPayroll)
             <!-- Cetak Semua Slip Gaji (Bulk PDF) - Tampilan persis seperti tombol proses payroll bulanan -->
@@ -62,7 +64,7 @@
             </x-pos.utility.button>
 
             <!-- Approve Payroll -->
-            @if ($currentPayroll->status === 'draft')
+            @if ($currentPayroll->status === 'draft' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payroll.edit'))
                 <x-pos.utility.button
                     type="button"
                     variant="primary"
@@ -76,28 +78,32 @@
 
             <!-- Process Payment -->
             @if ($currentPayroll->status !== 'paid' && $currentPayroll->status !== 'cancelled')
-                <x-pos.utility.button
-                    type="button"
-                    variant="success"
-                    size="sm"
-                    icon="ph-check-circle"
-                    wire:click="processPayment({{ $currentPayroll->id }})"
-                    wire:confirm="Tandai payroll periode {{ $currentPayroll->period }} sebagai PAID (Telah Dibayar)?"
-                >
-                    Tandai Paid (Bayar)
-                </x-pos.utility.button>
+                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payroll.edit'))
+                    <x-pos.utility.button
+                        type="button"
+                        variant="success"
+                        size="sm"
+                        icon="ph-check-circle"
+                        wire:click="processPayment({{ $currentPayroll->id }})"
+                        wire:confirm="Tandai payroll periode {{ $currentPayroll->period }} sebagai PAID (Telah Dibayar)?"
+                    >
+                        Tandai Paid (Bayar)
+                    </x-pos.utility.button>
+                @endif
 
-                <!-- Cancel Payroll -->
-                <x-pos.utility.button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    icon="ph-x-circle"
-                    wire:click="cancelPayroll({{ $currentPayroll->id }})"
-                    wire:confirm="Batalkan payroll periode {{ $currentPayroll->period }}? Anda dapat memproses ulang nanti."
-                >
-                    Batalkan (Cancel)
-                </x-pos.utility.button>
+                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payroll.delete'))
+                    <!-- Cancel Payroll -->
+                    <x-pos.utility.button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        icon="ph-x-circle"
+                        wire:click="cancelPayroll({{ $currentPayroll->id }})"
+                        wire:confirm="Batalkan payroll periode {{ $currentPayroll->period }}? Anda dapat memproses ulang nanti."
+                    >
+                        Batalkan (Cancel)
+                    </x-pos.utility.button>
+                @endif
             @endif
         @endif
     </div>

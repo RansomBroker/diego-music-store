@@ -18,10 +18,7 @@ class ListStockOpnamePresets extends ListRecords
                 ->modalWidth('lg')
                 ->mutateFormDataUsing(function (array $data): array {
                     $user = auth()->user();
-                    $allowedRoles = ['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'];
-                    if (!$user || !$user->hasRole($allowedRoles)) {
-                        abort(403);
-                    }
+                    abort_unless($user && StockOpnamePresetResource::canCreate(), 403);
 
                     $activeBranchId = BranchHelper::getActiveBranchId();
                     if ($activeBranchId && empty($data['branch_id'])) {

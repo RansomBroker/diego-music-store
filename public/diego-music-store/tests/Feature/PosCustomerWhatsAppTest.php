@@ -30,11 +30,11 @@ class PosCustomerWhatsAppTest extends TestCase
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
 
         $this->user = User::factory()->create();
-        $this->user->assignRole('admin');
+        $this->user->assignRole('owner');
 
         $this->branch = Branch::create([
             'name' => 'Cabang Utama',

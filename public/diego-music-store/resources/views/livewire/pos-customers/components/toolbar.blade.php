@@ -15,21 +15,25 @@
 
     <!-- Actions -->
     <div class="flex items-center gap-2">
-        <button
-            type="button"
-            wire:click="openBroadcastModal"
-            class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition shadow-sm cursor-pointer"
-        >
-            <i class="ph-bold ph-megaphone text-sm"></i>
-            Broadcast WA
-        </button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customers.broadcast'))
+            <button
+                type="button"
+                wire:click="openBroadcastModal"
+                class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition shadow-sm cursor-pointer"
+            >
+                <i class="ph-bold ph-megaphone text-sm"></i>
+                Broadcast WA
+            </button>
+        @endif
 
-        <x-pos.utility.button
-            variant="primary"
-            icon="ph-plus"
-            wire:click="openCreate"
-        >
-            Tambah Pelanggan
-        </x-pos.utility.button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customers.create'))
+            <x-pos.utility.button
+                variant="primary"
+                icon="ph-plus"
+                wire:click="openCreate"
+            >
+                Tambah Pelanggan
+            </x-pos.utility.button>
+        @endif
     </div>
 </div>

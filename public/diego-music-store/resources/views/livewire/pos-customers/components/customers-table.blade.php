@@ -101,46 +101,52 @@
                     <!-- Aksi Buttons -->
                     <x-pos.table.td class="whitespace-nowrap text-right">
                         <div class="flex items-center justify-end gap-1.5">
-                            <button
-                                type="button"
-                                wire:click="openCustomerMessageModal({{ $customer->id }})"
-                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition shadow-sm cursor-pointer"
-                                title="Kirim Pesan WhatsApp ke {{ $customer->name }}"
-                            >
-                                <i class="ph-bold ph-whatsapp-logo text-xs"></i>
-                                Pesan WA
-                            </button>
-                            @if ($customer->total_piutang > 0)
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customers.broadcast'))
                                 <button
                                     type="button"
-                                    wire:click="openBillingModal({{ $customer->id }})"
+                                    wire:click="openCustomerMessageModal({{ $customer->id }})"
                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition shadow-sm cursor-pointer"
-                                    title="Kirim Tagihan via WhatsApp"
+                                    title="Kirim Pesan WhatsApp ke {{ $customer->name }}"
                                 >
-                                    <i class="ph-bold ph-receipt text-xs"></i>
-                                    Tagihan WA
+                                    <i class="ph-bold ph-whatsapp-logo text-xs"></i>
+                                    Pesan WA
                                 </button>
+                                @if ($customer->total_piutang > 0)
+                                    <button
+                                        type="button"
+                                        wire:click="openBillingModal({{ $customer->id }})"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition shadow-sm cursor-pointer"
+                                        title="Kirim Tagihan via WhatsApp"
+                                    >
+                                        <i class="ph-bold ph-receipt text-xs"></i>
+                                        Tagihan WA
+                                    </button>
+                                @endif
                             @endif
-                            <x-pos.utility.button
-                                type="button"
-                                variant="warning"
-                                size="xs"
-                                icon="ph-pencil-simple"
-                                wire:click="openEdit({{ $customer->id }})"
-                                title="Ubah Pelanggan"
-                            >
-                                Ubah
-                            </x-pos.utility.button>
-                            <x-pos.utility.button
-                                type="button"
-                                variant="danger"
-                                size="xs"
-                                icon="ph-trash"
-                                wire:click="confirmDelete({{ $customer->id }})"
-                                title="Hapus Pelanggan"
-                            >
-                                Hapus
-                            </x-pos.utility.button>
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customers.edit'))
+                                <x-pos.utility.button
+                                    type="button"
+                                    variant="warning"
+                                    size="xs"
+                                    icon="ph-pencil-simple"
+                                    wire:click="openEdit({{ $customer->id }})"
+                                    title="Ubah Pelanggan"
+                                >
+                                    Ubah
+                                </x-pos.utility.button>
+                            @endif
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customers.delete'))
+                                <x-pos.utility.button
+                                    type="button"
+                                    variant="danger"
+                                    size="xs"
+                                    icon="ph-trash"
+                                    wire:click="confirmDelete({{ $customer->id }})"
+                                    title="Hapus Pelanggan"
+                                >
+                                    Hapus
+                                </x-pos.utility.button>
+                            @endif
                         </div>
                     </x-pos.table.td>
                 </x-pos.table.tr>

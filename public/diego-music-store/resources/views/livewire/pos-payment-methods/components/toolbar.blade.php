@@ -39,12 +39,14 @@
         >
     </div>
 
-    <!-- Add Action -->
-    <x-pos.utility.button
-        variant="primary"
-        icon="ph-plus"
-        wire:click="openCreate"
-    >
-        Tambah Metode
-    </x-pos.utility.button>
+    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payment_methods.create'))
+        <!-- Add Action -->
+        <x-pos.utility.button
+            variant="primary"
+            icon="ph-plus"
+            wire:click="openCreate"
+        >
+            Tambah Metode
+        </x-pos.utility.button>
+    @endif
 </div>

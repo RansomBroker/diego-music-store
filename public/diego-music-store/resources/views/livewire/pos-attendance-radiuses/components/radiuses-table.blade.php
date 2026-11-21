@@ -51,15 +51,17 @@
                         @endif
                     </x-pos.table.td>
                     <x-pos.table.td class="text-right">
-                        <x-pos.utility.button
-                            variant="warning"
-                            size="sm"
-                            icon="ph-map-pin-line"
-                            wire:click="openEditModal({{ $b->id }})"
-                            title="Edit Radius Presensi Peta Leaflet"
-                        >
-                            Edit Radius
-                        </x-pos.utility.button>
+                        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.attendance_radiuses.edit'))
+                            <x-pos.utility.button
+                                variant="warning"
+                                size="sm"
+                                icon="ph-map-pin-line"
+                                wire:click="openEditModal({{ $b->id }})"
+                                title="Edit Radius Presensi Peta Leaflet"
+                            >
+                                Edit Radius
+                            </x-pos.utility.button>
+                        @endif
                     </x-pos.table.td>
                 </tr>
             @empty

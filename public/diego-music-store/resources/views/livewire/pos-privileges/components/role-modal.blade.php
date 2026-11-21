@@ -1,59 +1,71 @@
-<!-- Modal Form Tambah / Edit Role -->
+<!-- Role Create & Edit Privilege Modal -->
 <x-pos.modal
     wire:model="showModal"
     :title="$isEditing ? 'Atur Hak Akses Role: ' . $roleName : 'Tambah Role Baru'"
-    subtitle="Kelola modul dan fitur yang dapat diakses oleh role ini"
+    subtitle="Aktifkan akses panel FO / BO dan centang fitur yang boleh diakses oleh role ini"
     icon="ph-shield-check"
-    maxWidth="2xl"
+    maxWidth="7xl"
 >
-    <form wire:submit.prevent="save" class="space-y-6">
-        <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Nama Role <span class="text-rose-500">*</span></label>
-            <input
-                type="text"
-                wire:model="roleName"
-                class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
-                placeholder="e.g. Kasir Senior / Supervisor POS"
-            >
-            @error('roleName') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
-        </div>
+    <form wire:submit="save" class="space-y-5">
+        <!-- Role Name & Live Panel Summary -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div class="lg:col-span-2">
+                <x-pos.form.input
+                    label="Nama Role"
+                    model="roleName"
+                    placeholder="Contoh: Kepala Toko, Kasir Shift 1, Admin Keuangan..."
+                    required
+                />
+            </div>
 
-        <!-- Permission Matrix Grouped -->
-        <div class="space-y-4">
-            <h4 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Daftar Hak Akses Sistem</h4>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[380px] overflow-y-auto pr-1 no-scrollbar">
-                @foreach ($permissionGroups as $groupName => $permissions)
-                    <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-950/40 space-y-3">
-                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                                <i class="ph-bold ph-folder-open text-primary"></i>
-                                {{ $groupName }}
-                            </span>
-                        </div>
-                        <div class="space-y-2">
-                            @foreach ($permissions as $permName => $permLabel)
-                                <label class="flex items-center gap-2.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 p-1.5 rounded-lg transition-colors">
-                                    <input
-                                        type="checkbox"
-                                        wire:model="selectedPermissions"
-                                        value="{{ $permName }}"
-                                        class="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300 dark:border-slate-700 dark:bg-slate-900"
-                                    >
-                                    <div>
-                                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 block">{{ $permLabel }}</span>
-                                        <span class="text-[10px] text-slate-400 dark:text-slate-500 ">{{ $permName }}</span>
-                                    </div>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-                @endforeach
+            <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ringkasan Akses</div>
+                <div class="text-sm font-black text-slate-900 dark:text-white mt-0.5">{{ $panelSummary['label'] }}</div>
+                <div class="flex items-center gap-2 mt-1.5 text-xs">
+                    <span class="px-2 py-0.5 rounded-md font-semibold {{ $accessFo ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300' : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400' }}">
+                        FO: {{ $panelSummary['fo_count'] }}/{{ $panelSummary['fo_total'] }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded-md font-semibold {{ $accessBo ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300' : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400' }}">
+                        BO: {{ $panelSummary['bo_count'] }}/{{ $panelSummary['bo_total'] }}
+                    </span>
+                </div>
             </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-800">
+        <!-- 2 Panel Gate Toggles -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="flex items-start justify-between gap-3 p-4 rounded-2xl border cursor-pointer transition {{ $accessFo ? 'border-blue-400 bg-blue-50/60 dark:border-blue-700 dark:bg-blue-950/30' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900' }}">
+                <div>
+                    <div class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="ph-bold ph-storefront text-blue-600 dark:text-blue-400"></i>
+                        <span>Akses Panel Front Office (FO)</span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Izinkan login dan mengakses halaman kasir &amp; operasional Front Office (/pos).
+                    </p>
+                </div>
+                <input type="checkbox" wire:model.live="accessFo" class="mt-1 h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary">
+            </label>
+
+            <label class="flex items-start justify-between gap-3 p-4 rounded-2xl border cursor-pointer transition {{ $accessBo ? 'border-amber-400 bg-amber-50/60 dark:border-amber-700 dark:bg-amber-950/30' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900' }}">
+                <div>
+                    <div class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="ph-bold ph-buildings text-amber-600 dark:text-amber-400"></i>
+                        <span>Akses Panel Backoffice (BO)</span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Izinkan mengakses admin Backoffice, inventory gudang, pembelian, dan akuntansi (/backoffice).
+                    </p>
+                </div>
+                <input type="checkbox" wire:model.live="accessBo" class="mt-1 h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary">
+            </label>
+        </div>
+
+        <!-- Synchronized 2-Section Tabs + Feature Matrix -->
+        @include('livewire.pos-privileges.components.permission-matrix')
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <x-pos.utility.button
                 type="button"
                 variant="secondary"
@@ -64,9 +76,9 @@
             <x-pos.utility.button
                 type="submit"
                 variant="primary"
-                icon="ph-check"
+                icon="ph-floppy-disk"
             >
-                Simpan Role & Hak Akses
+                {{ $isEditing ? 'Simpan Hak Akses' : 'Buat Role' }}
             </x-pos.utility.button>
         </div>
     </form>

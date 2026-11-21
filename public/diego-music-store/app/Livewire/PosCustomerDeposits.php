@@ -6,6 +6,7 @@ use App\Actions\CustomerDeposit\CancelCustomerDeposit;
 use App\Actions\CustomerDeposit\CreateCustomerDeposit;
 use App\Actions\CustomerDeposit\SettleCustomerDeposit;
 use App\Actions\CustomerDeposit\UpdateCustomerDeposit;
+use App\Helpers\PermissionHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Customer;
@@ -80,13 +81,11 @@ class PosCustomerDeposits extends Component
      */
     public function boot(): void
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.customer_deposits.view'), 403);
     }
 
     public function mount(): void
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
-
         $this->deposit_date = now()->format('Y-m-d');
         $this->loadDefaultAccount();
 
@@ -288,6 +287,7 @@ class PosCustomerDeposits extends Component
     // ── Form Modal Handlers ───────────────────────────────────────────────────
     public function openCreateModal(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_deposits.create'), 403);
         $this->reset([
             'editingDepositId', 'isEditMode', 'customer_id', 'customer_search', 'customer_name', 'showCustomerDropdown',
             'product_type', 'product_id', 'product_search', 'product_name',
@@ -306,6 +306,7 @@ class PosCustomerDeposits extends Component
 
     public function openEditModal(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_deposits.edit'), 403);
         $deposit = CustomerDeposit::query()->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())->findOrFail($id);
 
         if (!$deposit->isPending()) {
@@ -341,6 +342,7 @@ class PosCustomerDeposits extends Component
         CreateCustomerDeposit $createAction,
         UpdateCustomerDeposit $updateAction
     ): void {
+        abort_unless(PermissionHelper::can(Auth::user(), ($this->isEditMode && $this->editingDepositId) ? 'fo.customer_deposits.edit' : 'fo.customer_deposits.create'), 403);
         $this->validate([
             'customer_id' => 'required|exists:customers,id',
             'product_name' => 'required|string|max:255',
@@ -400,6 +402,7 @@ class PosCustomerDeposits extends Component
     // ── Pelunasan Handlers ────────────────────────────────────────────────────
     public function openSettleModal(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_deposits.edit'), 403);
         $deposit = CustomerDeposit::with('customer', 'product')->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())->findOrFail($id);
 
         if (!$deposit->isPending()) {
@@ -419,6 +422,7 @@ class PosCustomerDeposits extends Component
 
     public function processSettlement(SettleCustomerDeposit $settleAction): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_deposits.edit'), 403);
         if (!$this->settlingDepositId) return;
 
         try {
@@ -456,6 +460,7 @@ class PosCustomerDeposits extends Component
     // ── Cancel / Delete Handler ───────────────────────────────────────────────
     public function cancelDeposit(int $id, CancelCustomerDeposit $cancelAction): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_deposits.delete'), 403);
         try {
             $deposit = CustomerDeposit::query()->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId())->findOrFail($id);
             $cancelAction->execute($deposit, 'Dibatalkan oleh kasir POS', Auth::user());

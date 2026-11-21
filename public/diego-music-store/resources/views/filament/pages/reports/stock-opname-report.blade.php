@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     @php
         $data = $this->report_data;
-        $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+        $canViewCost = \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost');
     @endphp
 
     {{-- Filter Form (Native Filament Section) --}}

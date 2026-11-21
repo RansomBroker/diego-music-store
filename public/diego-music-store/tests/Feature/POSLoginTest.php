@@ -28,10 +28,21 @@ class POSLoginTest extends TestCase
         $response->assertRedirect(route('pos.login'));
     }
 
+    private function grantPosAccess(User $user): void
+    {
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'kasir_pos', 'guard_name' => 'web']);
+        foreach (['fo.access', 'fo.pos.view'] as $perm) {
+            \Spatie\Permission\Models\Permission::findOrCreate($perm, 'web');
+        }
+        $role->givePermissionTo(['fo.access', 'fo.pos.view']);
+        $user->assignRole($role);
+    }
+
     /** @test */
     public function it_redirects_to_pos_if_already_logged_in()
     {
         $user = User::factory()->create();
+        $this->grantPosAccess($user);
 
         $response = $this->actingAs($user)->get(route('pos.login'));
 
@@ -45,6 +56,7 @@ class POSLoginTest extends TestCase
             'email' => 'cashier@diegomusic.com',
             'password' => bcrypt('password123'),
         ]);
+        $this->grantPosAccess($user);
 
         Livewire::test('App\Livewire\POSLogin')
             ->set('email', 'cashier@diegomusic.com')
@@ -63,6 +75,7 @@ class POSLoginTest extends TestCase
             'email' => 'cashier@diegomusic.com',
             'password' => bcrypt('password123'),
         ]);
+        $this->grantPosAccess($user);
 
         Livewire::test('App\Livewire\POSLogin')
             ->set('email', 'cashier_diego')

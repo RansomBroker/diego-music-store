@@ -22,6 +22,8 @@ class EmployeeDayOffCalendarTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+
         $this->branch = Branch::create([
             'name' => 'Cabang Test',
             'store_name' => 'Cabang Test',
@@ -33,6 +35,8 @@ class EmployeeDayOffCalendarTest extends TestCase
     private function createEmployeeInBranch(): array
     {
         $user = User::factory()->create();
+        $user->assignRole('karyawan');
+        $user->branches()->attach($this->branch->id);
         $user->employee()->update(['branch_id' => $this->branch->id]);
 
         return [$user, $user->employee()->firstOrFail()];

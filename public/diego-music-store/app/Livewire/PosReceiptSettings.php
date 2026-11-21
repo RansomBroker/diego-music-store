@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Branch;
 use App\Models\ReceiptSetting;
 use App\Actions\Setting\UpdateReceiptSettings;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
@@ -13,6 +14,11 @@ use Filament\Notifications\Notification;
 class PosReceiptSettings extends Component
 {
     public ?int $branchId = null;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.receipt_settings.view'), 403);
+    }
 
     public string $store_display_name = '';
     public string $header_text = '';
@@ -71,6 +77,7 @@ class PosReceiptSettings extends Component
 
     public function save(UpdateReceiptSettings $updateReceiptSettings): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.receipt_settings.edit'), 403);
         $this->validate([
             'paper_width' => 'required|in:58mm,80mm,A4',
             'header_text' => 'nullable|string|max:500',

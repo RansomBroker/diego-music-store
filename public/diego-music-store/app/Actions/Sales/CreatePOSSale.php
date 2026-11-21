@@ -24,7 +24,7 @@ class CreatePOSSale
      */
     public function execute(array $data): Sale
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission(Auth::user(), 'fo.pos.checkout');
         abort_unless(Auth::check(), 403);
         $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();

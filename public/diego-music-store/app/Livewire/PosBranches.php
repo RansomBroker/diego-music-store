@@ -9,6 +9,7 @@ use App\Models\Branch;
 use App\Models\User;
 use App\Actions\Branch\CreateBranch;
 use App\Actions\Branch\UpdateBranch;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
@@ -16,6 +17,11 @@ use Filament\Notifications\Notification;
 class PosBranches extends Component
 {
     use WithPagination, WithFileUploads;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.branches.view'), 403);
+    }
 
     // Table & filter state
     public string $search = '';
@@ -78,6 +84,7 @@ class PosBranches extends Component
 
     public function openCreate()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.branches.create'), 403);
         $this->reset([
             'name', 'store_name', 'logo', 'existing_logo_path', 'address',
             'phone', 'email', 'city', 'province', 'postal_code',
@@ -93,6 +100,7 @@ class PosBranches extends Component
 
     public function openEdit(int $id)
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.branches.edit'), 403);
         $branch = Branch::findOrFail($id);
         $this->editingId              = $branch->id;
         $this->isEditing              = true;
@@ -121,6 +129,7 @@ class PosBranches extends Component
 
     public function save()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), $this->isEditing ? 'fo.branches.edit' : 'fo.branches.create'), 403);
         $this->validate([
             'name'       => 'required|string|max:255',
             'store_name' => 'required|string|max:255',

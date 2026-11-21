@@ -7,6 +7,7 @@ use App\Filament\Resources\SalesQuotations\Schemas\SalesQuotationForm;
 use App\Filament\Resources\SalesQuotations\Tables\SalesQuotationsTable;
 use App\Models\SalesQuotation;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -14,6 +15,10 @@ use Filament\Tables\Table;
 
 class SalesQuotationResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.sales_quotations';
+
     protected static ?string $model = SalesQuotation::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentCheck;

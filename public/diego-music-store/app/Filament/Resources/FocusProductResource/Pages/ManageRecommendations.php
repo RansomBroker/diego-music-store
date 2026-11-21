@@ -6,6 +6,7 @@ use App\Actions\FocusProduct\AcceptFocusRecommendation;
 use App\Actions\FocusProduct\DismissRecommendation;
 use App\Actions\FocusProduct\EvaluateFocusRules;
 use App\Filament\Resources\FocusProductResource;
+use App\Models\FocusProduct;
 use App\Models\FocusProductRecommendation;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -32,6 +33,16 @@ class ManageRecommendations extends Page implements HasTable
 
     protected string $view = 'filament.focus-products.recommendations-page';
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        return FocusProductResource::canViewAny();
+    }
+
+    public function boot(): void
+    {
+        abort_unless(FocusProductResource::canViewAny(), 403);
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -39,7 +50,9 @@ class ManageRecommendations extends Page implements HasTable
                 ->label('Jalankan Evaluasi Rule')
                 ->icon('heroicon-o-arrow-path')
                 ->color('warning')
+                ->visible(fn (): bool => FocusProductResource::canEdit(new FocusProduct()))
                 ->action(function () {
+                    abort_unless(FocusProductResource::canEdit(new FocusProduct()), 403);
                     try {
                         $result = app(EvaluateFocusRules::class)->execute();
                         Notification::make()
@@ -151,6 +164,7 @@ class ManageRecommendations extends Page implements HasTable
                     ->label('Tambahkan ke Fokus')
                     ->icon('heroicon-o-check')
                     ->color('success')
+                    ->visible(fn (): bool => FocusProductResource::canCreate())
                     ->modalHeading('Tambahkan ke Produk Fokus')
                     ->modalDescription('Tentukan periode batas aktif dan catatan untuk produk ini.')
                     ->form([
@@ -163,6 +177,7 @@ class ManageRecommendations extends Page implements HasTable
                             ->placeholder('Contoh: Adakan diskon 15% atau tawarkan sebagai bundling'),
                     ])
                     ->action(function (FocusProductRecommendation $record, array $data) {
+                        abort_unless(FocusProductResource::canCreate(), 403);
                         try {
                             app(AcceptFocusRecommendation::class)->execute(
                                 $record->id,
@@ -187,10 +202,12 @@ class ManageRecommendations extends Page implements HasTable
                     ->label('Abaikan')
                     ->icon('heroicon-o-x-mark')
                     ->color('gray')
+                    ->visible(fn (): bool => FocusProductResource::canEdit(new FocusProduct()))
                     ->requiresConfirmation()
                     ->modalHeading('Abaikan Rekomendasi')
                     ->modalDescription('Apakah Anda yakin ingin mengabaikan rekomendasi untuk produk ini?')
                     ->action(function (FocusProductRecommendation $record) {
+                        abort_unless(FocusProductResource::canEdit(new FocusProduct()), 403);
                         try {
                             app(DismissRecommendation::class)->execute($record->id, auth()->id());
                             Notification::make()
@@ -211,6 +228,7 @@ class ManageRecommendations extends Page implements HasTable
                     ->label('Tambahkan Terpilih ke Fokus')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
+                    ->visible(fn (): bool => FocusProductResource::canCreate())
                     ->modalHeading('Tambahkan Produk Terpilih ke Fokus')
                     ->form([
                         DateTimePicker::make('active_until')
@@ -222,6 +240,7 @@ class ManageRecommendations extends Page implements HasTable
                             ->placeholder('Catatan atau instruksi serentak'),
                     ])
                     ->action(function (Collection $records, array $data) {
+                        abort_unless(FocusProductResource::canCreate(), 403);
                         $count = 0;
                         $action = app(AcceptFocusRecommendation::class);
                         foreach ($records as $record) {

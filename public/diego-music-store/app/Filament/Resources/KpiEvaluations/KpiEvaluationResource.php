@@ -7,6 +7,7 @@ use App\Filament\Resources\KpiEvaluations\Pages\ListKpiEvaluations;
 use App\Helpers\BranchHelper;
 use App\Models\KpiEvaluation;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
@@ -16,6 +17,13 @@ use Illuminate\Database\Eloquent\Builder;
 
 class KpiEvaluationResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.kpi_evaluations';
+    protected static bool $hasCreatePermission = false;
+    protected static bool $hasEditPermission = false;
+    protected static bool $hasDeletePermission = false;
+
     protected static ?string $model = KpiEvaluation::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;

@@ -24,7 +24,7 @@ class PosNavbarHelper
         $sessionInfo = static::resolveActiveSession($activeSessionInfo);
         $branchContext = static::resolveBranchContext($branches);
 
-        $isOwner = Auth::check() && Auth::user()->hasRole(['owner', 'Owner']);
+        $isOwner = PermissionHelper::isOwner(Auth::user());
         $attendanceContext = static::resolveAttendanceContext($branchContext['currentBranchModel'], $isOwner);
 
         return array_merge([

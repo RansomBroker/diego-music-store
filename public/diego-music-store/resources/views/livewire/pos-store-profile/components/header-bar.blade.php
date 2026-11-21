@@ -24,12 +24,14 @@
         <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Register & Profil Toko</h1>
     </div>
 
-    <x-pos.utility.button
-        wire:click="openCreateStore"
-        variant="primary"
-        icon="ph-plus"
-        class="self-start sm:self-auto"
-    >
-        Register Toko Baru
-    </x-pos.utility.button>
+    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.store_profile.edit'))
+        <x-pos.utility.button
+            wire:click="openCreateStore"
+            variant="primary"
+            icon="ph-plus"
+            class="self-start sm:self-auto"
+        >
+            Register Toko Baru
+        </x-pos.utility.button>
+    @endif
 </div>

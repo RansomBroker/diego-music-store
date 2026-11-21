@@ -26,6 +26,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -41,6 +42,10 @@ use UnitEnum;
 
 class StockTransferResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.stock_transfers';
+
     protected static ?string $model = StockTransfer::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Persediaan';
@@ -319,17 +324,18 @@ class StockTransferResource extends Resource
                     ViewAction::make(),
 
                     EditAction::make()
-                        ->visible(fn (StockTransfer $record): bool => in_array($record->status, ['DRAFT'])),
+                        ->visible(fn (StockTransfer $record): bool => in_array($record->status, ['DRAFT']) && static::canEdit($record)),
 
                     Action::make('ajukan')
                         ->label('Ajukan')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('warning')
-                        ->visible(fn (StockTransfer $record): bool => $record->status === 'DRAFT')
+                        ->visible(fn (StockTransfer $record): bool => $record->status === 'DRAFT' && static::canEdit($record))
                         ->requiresConfirmation()
                         ->modalHeading('Ajukan Transfer Barang')
                         ->modalDescription('Apakah Anda yakin ingin mengajukan transfer ini ke status PENDING?')
                         ->action(function (StockTransfer $record) {
+                            abort_unless(static::canEdit($record), 403);
                             try {
                                 app(SubmitStockTransfer::class)->execute($record);
                                 Notification::make()->title('Transfer Berhasil Diajukan')->success()->send();
@@ -342,11 +348,12 @@ class StockTransferResource extends Resource
                         ->label('Approve')
                         ->icon('heroicon-o-check-circle')
                         ->color('info')
-                        ->visible(fn (StockTransfer $record): bool => $record->status === 'PENDING')
+                        ->visible(fn (StockTransfer $record): bool => $record->status === 'PENDING' && static::canEdit($record))
                         ->requiresConfirmation()
                         ->modalHeading('Setujui Transfer Barang')
                         ->modalDescription('Apakah Anda yakin ingin menyetujui transfer ini?')
                         ->action(function (StockTransfer $record) {
+                            abort_unless(static::canEdit($record), 403);
                             try {
                                 app(ApproveStockTransfer::class)->execute($record);
                                 Notification::make()->title('Transfer Berhasil Disetujui')->success()->send();
@@ -359,11 +366,12 @@ class StockTransferResource extends Resource
                         ->label('Proses Transfer')
                         ->icon('heroicon-o-truck')
                         ->color('success')
-                        ->visible(fn (StockTransfer $record): bool => $record->status === 'APPROVED')
+                        ->visible(fn (StockTransfer $record): bool => $record->status === 'APPROVED' && static::canEdit($record))
                         ->requiresConfirmation()
                         ->modalHeading('Proses Transfer Barang')
                         ->modalDescription('Stok fisik akan dipindahkan dan jurnal akuntansi 4 sisi akan otomatis diposting. Lanjutkan?')
                         ->action(function (StockTransfer $record) {
+                            abort_unless(static::canEdit($record), 403);
                             try {
                                 app(CompleteStockTransfer::class)->execute($record);
                                 Notification::make()->title('Transfer Selesai')->body('Stok telah dipindahkan dan Jurnal Akuntansi berhasil diposting.')->success()->send();
@@ -376,11 +384,12 @@ class StockTransferResource extends Resource
                         ->label('Batalkan')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
-                        ->visible(fn (StockTransfer $record): bool => in_array($record->status, ['DRAFT', 'PENDING']))
+                        ->visible(fn (StockTransfer $record): bool => in_array($record->status, ['DRAFT', 'PENDING']) && static::canEdit($record))
                         ->requiresConfirmation()
                         ->modalHeading('Batalkan Transfer')
                         ->modalDescription('Apakah Anda yakin ingin membatalkan transaksi transfer ini?')
                         ->action(function (StockTransfer $record) {
+                            abort_unless(static::canEdit($record), 403);
                             try {
                                 app(CancelStockTransfer::class)->execute($record);
                                 Notification::make()->title('Transfer Dibatalkan')->success()->send();
@@ -404,7 +413,7 @@ class StockTransferResource extends Resource
                         ->visible(fn (StockTransfer $record): bool => $record->status === 'COMPLETED'),
 
                     DeleteAction::make()
-                        ->visible(fn (StockTransfer $record): bool => in_array($record->status, ['DRAFT'])),
+                        ->visible(fn (StockTransfer $record): bool => in_array($record->status, ['DRAFT']) && static::canDelete($record)),
                 ])
             ])
             ->bulkActions([]);

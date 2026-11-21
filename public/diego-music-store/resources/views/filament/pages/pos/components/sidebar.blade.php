@@ -5,6 +5,7 @@
     
     // Route state checks
     $isDashboard       = request()->is('pos/front-office*');
+    $isCatalog         = request()->is('pos/catalog*');
     $isPos             = request()->is('pos') || request()->is('pos/login');
     $isSession         = request()->is('pos/session*');
     $isTransactions    = request()->is('pos/transactions*');
@@ -26,7 +27,64 @@
     $isReports         = request()->is('pos/reports*');
     $isInputData       = request()->is('pos/customers*') || request()->is('pos/users*') || request()->is('pos/units*') || request()->is('pos/customer-labels*') || request()->is('pos/sale-categories*') || request()->is('pos/payment-methods*') || request()->is('pos/vouchers*');
     $isUtility         = request()->is('pos/privileges*') || request()->is('pos/store-profile*') || request()->is('pos/receipt-settings*') || request()->is('pos/barcode-print*') || request()->is('pos/branches*') || request()->is('pos/branch-performance*') || request()->is('pos/whatsapp-settings*');
-    $canManageAdmin    = auth()->check() && auth()->user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']);
+
+    $navUser = auth()->user();
+
+    // Granular Front Office permissions (allow-list)
+    $canMenuDashboard        = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.dashboard.view');
+    $canMenuCatalog          = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.catalog.view');
+    $canMenuPos              = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.pos.view');
+    $canMenuSession          = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.cash_session.view');
+    $canMenuTransactions     = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.transactions.view');
+    $canMenuDeposits         = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.customer_deposits.view');
+    $hasMainSection          = $canMenuDashboard || $canMenuCatalog || $canMenuPos || $canMenuSession || $canMenuTransactions || $canMenuDeposits;
+
+    $canMenuDailyCash        = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.daily_cash.view');
+    $canMenuCustomerPayments = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.customer_payments.view');
+    $canMenuService          = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.service.view');
+    $hasOperationalSection   = $canMenuDailyCash || $canMenuCustomerPayments || $canMenuService;
+
+    $canMenuEmployees        = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.employees.view');
+    $canMenuEmployeeTasks    = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.employee_tasks.view');
+    $canMenuDayOff           = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.day_off.view');
+    $canMenuOpnameTasks      = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.stock_opname_tasks.view');
+    $canMenuOpnameReview     = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.stock_opname_review.view');
+    $canMenuAttendances      = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.attendances.view');
+    $canMenuRadiuses         = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.attendance_radiuses.view');
+    $canMenuViolations       = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.attendance_violations.view');
+    $canMenuCommissions      = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.commissions.view');
+    $canMenuKpi              = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.kpi.view');
+    $canMenuPayroll          = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.payroll.view');
+    $hasHrSection            = $canMenuEmployees || $canMenuEmployeeTasks || $canMenuDayOff || $canMenuOpnameTasks || $canMenuOpnameReview || $canMenuAttendances || $canMenuRadiuses || $canMenuViolations || $canMenuCommissions || $canMenuKpi || $canMenuPayroll;
+
+    $canReportSales          = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.reports.sales');
+    $canReportSalesQueue     = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.reports.sales_queue');
+    $canReportArAging        = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.reports.ar_aging');
+    $canReportArSettlement   = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.reports.ar_settlement');
+    $canReportDailyCash      = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.reports.daily_cash');
+    $canReportStockPrices    = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.reports.stock_prices');
+    $hasReportsGroup         = $canReportSales || $canReportSalesQueue || $canReportArAging || $canReportArSettlement || $canReportDailyCash || $canReportStockPrices;
+
+    $canMenuCustomers        = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.customers.view');
+    $canMenuCustomerLabels   = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.customer_labels.view');
+    $canMenuUsers            = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.users.view');
+    $canMenuUnits            = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.units.view');
+    $canMenuSaleCategories   = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.sale_categories.view');
+    $canMenuPaymentMethods   = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.payment_methods.view');
+    $canMenuVouchers         = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.vouchers.view');
+    $hasMasterGroup          = $canMenuCustomers || $canMenuCustomerLabels || $canMenuUsers || $canMenuUnits || $canMenuSaleCategories || $canMenuPaymentMethods || $canMenuVouchers;
+
+    $canMenuPrivileges       = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.privileges.view');
+    $canMenuStoreProfile     = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.store_profile.view');
+    $canMenuBranches         = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.branches.view');
+    $canMenuWhatsapp         = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.whatsapp_settings.view');
+    $canMenuBranchPerf       = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.branch_performance.view');
+    $canMenuReceiptSettings  = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.receipt_settings.view');
+    $canMenuBarcodePrint     = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($navUser, 'fo.barcode_print.view');
+    $hasUtilityGroup         = $canMenuPrivileges || $canMenuStoreProfile || $canMenuBranches || $canMenuWhatsapp || $canMenuBranchPerf || $canMenuReceiptSettings || $canMenuBarcodePrint;
+
+    $hasMasterReportSection  = $hasReportsGroup || $hasMasterGroup || $hasUtilityGroup;
+    $canAccessBackoffice     = \App\Helpers\PermissionHelper::canAccessBackoffice($navUser);
 @endphp
 
 <div
@@ -128,11 +186,13 @@
         <nav class="flex-1 px-3 py-4 space-y-5 overflow-y-auto no-scrollbar">
             
             <!-- SECTION 1: UTAMA -->
+            @if($hasMainSection)
             <div class="space-y-1">
                 <div x-show="!isCompact" class="px-3.5 text-xs font-black text-black dark:text-white uppercase tracking-wider mb-2">
                     Menu Utama
                 </div>
 
+                @if($canMenuDashboard)
                 <!-- Dashboard -->
                 <a href="/pos/front-office"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -142,7 +202,21 @@
                     <i class="ph-bold ph-layout text-xl flex-shrink-0 {{ $isDashboard ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Dashboard</span>
                 </a>
+                @endif
 
+                @if($canMenuCatalog)
+                <!-- Katalog Produk -->
+                <a href="{{ route('pos.catalog') }}"
+                   @click="if (window.innerWidth < 768) closeMobile()"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isCatalog ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   :class="isCompact ? 'justify-center px-0' : ''"
+                   :title="isCompact ? 'Katalog Produk' : ''">
+                    <i class="ph-bold ph-magnifying-glass text-xl flex-shrink-0 {{ $isCatalog ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                    <span x-show="!isCompact" class="truncate font-semibold">Katalog Produk</span>
+                </a>
+                @endif
+
+                @if($canMenuPos)
                 <!-- POS Kasir -->
                 <a href="/pos"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -152,7 +226,9 @@
                     <i class="ph-bold ph-squares-four text-xl flex-shrink-0 {{ $isPos ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">POS Kasir</span>
                 </a>
+                @endif
 
+                @if($canMenuSession)
                 <!-- Sesi Kasir -->
                 <a href="/pos/session"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -162,7 +238,9 @@
                     <i class="ph-bold ph-clock-counter-clockwise text-xl flex-shrink-0 {{ $isSession ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Sesi Kasir</span>
                 </a>
+                @endif
 
+                @if($canMenuTransactions)
                 <!-- Histori Transaksi -->
                 <a href="/pos/transactions?fromDate={{ now()->format('Y-m-d') }}&toDate={{ now()->format('Y-m-d') }}"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -172,7 +250,9 @@
                     <i class="ph-bold ph-receipt text-xl flex-shrink-0 {{ $isTransactions ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Daftar Transaksi</span>
                 </a>
+                @endif
 
+                @if($canMenuDeposits)
                 <!-- Deposit Pelanggan -->
                 <a href="/pos/customer-deposits"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -182,14 +262,18 @@
                     <i class="ph-bold ph-piggy-bank text-xl flex-shrink-0 {{ $isCustomerDeposits ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Deposit Pelanggan</span>
                 </a>
+                @endif
             </div>
+            @endif
 
             <!-- SECTION 2: OPERASIONAL & KAS -->
+            @if($hasOperationalSection)
             <div class="space-y-1">
                 <div x-show="!isCompact" class="px-3.5 text-xs font-black text-black dark:text-white uppercase tracking-wider mb-2">
                     Operasional & Keuangan
                 </div>
 
+                @if($canMenuDailyCash)
                 <!-- Kas Harian -->
                 <a href="/pos/daily-cash"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -199,7 +283,9 @@
                     <i class="ph-bold ph-wallet text-xl flex-shrink-0 {{ $isDailyCash ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Kas Harian</span>
                 </a>
+                @endif
 
+                @if($canMenuCustomerPayments)
                 <!-- Pelunasan Piutang -->
                 <a href="/pos/customer-payments"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -209,7 +295,9 @@
                     <i class="ph-bold ph-hand-coins text-xl flex-shrink-0 {{ $isCustomerPayments ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Pelunasan Piutang</span>
                 </a>
+                @endif
 
+                @if($canMenuService)
                 <!-- Barang Service -->
                 <a href="/pos/service-management"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -219,16 +307,19 @@
                     <i class="ph-bold ph-wrench text-xl flex-shrink-0 {{ $isServiceManagement ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Service</span>
                 </a>
+                @endif
             </div>
+            @endif
 
             <!-- SECTION 3: SDM & KARYAWAN -->
+            @if($hasHrSection)
             <div class="space-y-1">
                 <div x-show="!isCompact" class="px-3.5 text-xs font-black text-black dark:text-white uppercase tracking-wider mb-2">
                     SDM & Kehadiran
                 </div>
 
+                @if($canMenuEmployees)
                 <!-- Data Karyawan -->
-                @if($canManageAdmin)
                 <a href="/pos/employees"
                    @click="if (window.innerWidth < 768) closeMobile()"
                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isEmployees ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
@@ -239,6 +330,7 @@
                 </a>
                 @endif
 
+                @if($canMenuEmployeeTasks)
                 <!-- Tugas Karyawan -->
                 <a href="/pos/employee-tasks"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -248,7 +340,9 @@
                     <i class="ph-bold ph-clipboard-text text-xl flex-shrink-0 {{ $isEmployeeTasks ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Tugas Karyawan</span>
                 </a>
+                @endif
 
+                @if($canMenuDayOff)
                 <!-- Kalender Jadwal Off -->
                 <a href="/pos/day-off-calendar"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -258,7 +352,9 @@
                     <i class="ph-bold ph-calendar-blank text-xl flex-shrink-0 {{ $isDayOffCalendar ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Kalender Jadwal Off</span>
                 </a>
+                @endif
 
+                @if($canMenuOpnameTasks)
                 <!-- Tugas Stok Opname -->
                 <a href="/pos/stock-opname-tasks"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -268,8 +364,9 @@
                     <i class="ph-bold ph-clipboard-text text-xl flex-shrink-0 {{ $isStockOpnameTasks ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Tugas Stok Opname</span>
                 </a>
+                @endif
 
-                @if ($canManageAdmin)
+                @if($canMenuOpnameReview)
                 <!-- Review Stok Opname -->
                 <a href="/pos/stock-opname-review"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -281,6 +378,7 @@
                 </a>
                 @endif
 
+                @if($canMenuAttendances)
                 <!-- Presensi Karyawan -->
                 <a href="/pos/attendances"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -290,7 +388,33 @@
                     <i class="ph-bold ph-calendar-check text-xl flex-shrink-0 {{ $isAttendances ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Presensi</span>
                 </a>
+                @endif
 
+                @if($canMenuRadiuses)
+                <!-- Radius Presensi -->
+                <a href="{{ route('pos.attendance-radiuses') }}"
+                   @click="if (window.innerWidth < 768) closeMobile()"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isAttendanceRadiuses ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   :class="isCompact ? 'justify-center px-0' : ''"
+                   :title="isCompact ? 'Radius Presensi' : ''">
+                    <i class="ph-bold ph-map-pin text-xl flex-shrink-0 {{ $isAttendanceRadiuses ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                    <span x-show="!isCompact" class="truncate font-semibold">Radius Presensi</span>
+                </a>
+                @endif
+
+                @if($canMenuViolations)
+                <!-- Denda & Pelanggaran Presensi -->
+                <a href="{{ route('pos.attendance-violations') }}"
+                   @click="if (window.innerWidth < 768) closeMobile()"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isViolations ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
+                   :class="isCompact ? 'justify-center px-0' : ''"
+                   :title="isCompact ? 'Denda & Pelanggaran Presensi' : ''">
+                    <i class="ph-bold ph-warning-octagon text-xl flex-shrink-0 {{ $isViolations ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
+                    <span x-show="!isCompact" class="truncate font-semibold">Denda Presensi</span>
+                </a>
+                @endif
+
+                @if($canMenuCommissions)
                 <!-- Komisi Sales -->
                 <a href="/pos/commissions"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -300,7 +424,9 @@
                     <i class="ph-bold ph-percent text-xl flex-shrink-0 {{ $isCommissions ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">Komisi Sales</span>
                 </a>
+                @endif
 
+                @if($canMenuKpi)
                 <!-- KPI & Bonus -->
                 <a href="/pos/kpi-performance"
                    @click="if (window.innerWidth < 768) closeMobile()"
@@ -310,9 +436,10 @@
                     <i class="ph-bold ph-trophy text-xl flex-shrink-0 {{ $isKpi ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500' }}"></i>
                     <span x-show="!isCompact" class="truncate font-semibold">KPI & Bonus</span>
                 </a>
+                @endif
 
+                @if($canMenuPayroll)
                 <!-- Payroll Gaji -->
-                @if($canManageAdmin)
                 <a href="/pos/payroll"
                    @click="if (window.innerWidth < 768) closeMobile()"
                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors {{ $isPayroll ? 'bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-400 font-extrabold border-l-4 border-primary dark:border-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold' }}"
@@ -323,13 +450,16 @@
                 </a>
                 @endif
             </div>
+            @endif
 
             <!-- SECTION 4: MASTER DATA & LAPORAN -->
+            @if($hasMasterReportSection)
             <div class="space-y-1">
                 <div x-show="!isCompact" class="px-3.5 text-xs font-black text-black dark:text-white uppercase tracking-wider mb-2">
                     Master Data & Laporan
                 </div>
 
+                @if($hasReportsGroup)
                 <!-- Dropdown 1: Laporan ERP -->
                 <div class="space-y-1">
                     <button
@@ -347,34 +477,53 @@
 
                     <!-- Submenu Connector -->
                     <div x-show="openReports && !isCompact" x-cloak class="ml-4 pl-3.5 border-l-2 border-slate-200 dark:border-slate-700/80 space-y-1 text-[13.5px] pt-1.5">
+                        @if($canReportSales)
                         <a href="{{ route('pos.reports.sales') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.reports.sales') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Laporan Penjualan
                         </a>
+                        @endif
+                        @if($canReportSalesQueue)
                         <a href="{{ route('pos.reports.sales-queue') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.reports.sales-queue') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Antrian & Giliran Sales
                         </a>
+                        @endif
+                        @if($canReportArAging)
                         <a href="{{ route('pos.reports.ar-aging') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.reports.ar-aging') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Laporan Piutang
                         </a>
+                        @endif
+                        @if($canReportArSettlement)
+                        <a href="{{ route('pos.reports.ar-settlement') }}"
+                           @click="if (window.innerWidth < 768) closeMobile()"
+                           class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.reports.ar-settlement') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
+                            Laporan Pelunasan Piutang
+                        </a>
+                        @endif
+                        @if($canReportDailyCash)
                         <a href="{{ route('pos.reports.daily-cash') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.reports.daily-cash') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Laporan Kas Harian
                         </a>
+                        @endif
+                        @if($canReportStockPrices)
                         <a href="{{ route('pos.reports.stock-prices') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.reports.stock-prices') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Daftar Stok & Harga
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
+                @if($hasMasterGroup)
                 <!-- Dropdown 2: Input Master Data -->
                 <div class="space-y-1">
                     <button
@@ -392,32 +541,49 @@
 
                     <!-- Submenu Connector -->
                     <div x-show="openInputData && !isCompact" x-cloak class="ml-4 pl-3.5 border-l-2 border-slate-200 dark:border-slate-700/80 space-y-1 text-[13.5px] pt-1.5">
+                        @if($canMenuCustomers)
                         <a href="{{ route('pos.customers') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.customers') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Data Pelanggan
                         </a>
-                        @if($canManageAdmin)
+                        @endif
+                        @if($canMenuCustomerLabels)
+                        <a href="{{ route('pos.customer-labels') }}"
+                           @click="if (window.innerWidth < 768) closeMobile()"
+                           class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.customer-labels') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
+                            Label Pelanggan
+                        </a>
+                        @endif
+                        @if($canMenuUsers)
                         <a href="{{ route('pos.users') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.users') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Data User Login
                         </a>
+                        @endif
+                        @if($canMenuUnits)
                         <a href="{{ route('pos.units') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.units') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Satuan Barang
                         </a>
+                        @endif
+                        @if($canMenuSaleCategories)
                         <a href="{{ route('pos.sale-categories') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.sale-categories') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Kategori Penjualan
                         </a>
+                        @endif
+                        @if($canMenuPaymentMethods)
                         <a href="{{ route('pos.payment-methods') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.payment-methods') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Metode Pembayaran
                         </a>
+                        @endif
+                        @if($canMenuVouchers)
                         <a href="{{ route('pos.vouchers') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.vouchers') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
@@ -426,9 +592,10 @@
                         @endif
                     </div>
                 </div>
+                @endif
 
+                @if($hasUtilityGroup)
                 <!-- Dropdown 3: Pengaturan & Utility -->
-                @if($canManageAdmin)
                 <div class="space-y-1">
                     <button
                         @click="if (isCompact) { isCollapsed = false; openUtility = true; } else { openUtility = !openUtility; }"
@@ -445,50 +612,65 @@
 
                     <!-- Submenu Connector -->
                     <div x-show="openUtility && !isCompact" x-cloak class="ml-4 pl-3.5 border-l-2 border-slate-200 dark:border-slate-700/80 space-y-1 text-[13.5px] pt-1.5">
+                        @if($canMenuPrivileges)
                         <a href="{{ route('pos.privileges') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.privileges') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Privilege Role User
                         </a>
+                        @endif
+                        @if($canMenuStoreProfile)
                         <a href="{{ route('pos.store-profile') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.store-profile') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Profil & Nama Toko
                         </a>
+                        @endif
+                        @if($canMenuBranches)
                         <a href="{{ route('pos.branches') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.branches') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Manajemen Cabang
                         </a>
+                        @endif
+                        @if($canMenuWhatsapp)
                         <a href="{{ route('pos.whatsapp-settings') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.whatsapp-settings') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Setting WA Fonnte
                         </a>
+                        @endif
+                        @if($canMenuBranchPerf)
                         <a href="{{ route('pos.branch-performance') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.branch-performance') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/40 dark:bg-blue-950/40' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Performa Cabang Toko
                         </a>
+                        @endif
+                        @if($canMenuReceiptSettings)
                         <a href="{{ route('pos.receipt-settings') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.receipt-settings') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Setting Struk & Printer Hardware
                         </a>
+                        @endif
+                        @if($canMenuBarcodePrint)
                         <a href="{{ route('pos.barcode-print') }}"
                            @click="if (window.innerWidth < 768) closeMobile()"
                            class="block py-2 px-3 rounded-xl transition-colors {{ request()->routeIs('pos.barcode-print') ? 'text-primary dark:text-blue-400 font-bold bg-primary-light/50 dark:bg-blue-950/50' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/80' }}">
                             Cetak Barcode Item
                         </a>
+                        @endif
                     </div>
                 </div>
                 @endif
             </div>
+            @endif
 
         </nav>
 
         <!-- SIDEBAR FOOTER (BACKOFFICE ACCESSIBLE LINK) -->
-        @if($canManageAdmin)
+        @if($canAccessBackoffice)
         <div class="p-3 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             <a href="/backoffice"
                class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors group"

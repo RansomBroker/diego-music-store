@@ -35,6 +35,9 @@
 
 @php
     extract(\App\Helpers\PosNavbarHelper::getContext($activeSessionInfo, $backUrl, $branches));
+    $canAccessAttendanceMenu = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.attendances.view');
+    $canCloseCashSession = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.cash_session.close');
+    $canShowBack = $showBack && ($resolvedBackUrl !== '/backoffice' || \App\Helpers\PermissionHelper::canAccessBackoffice(Auth::user()));
 @endphp
 
 <header 
@@ -63,8 +66,8 @@
             </button>
         @endif
 
-        {{-- Tombol Kembali (hanya tampil jika showBack=true) --}}
-        @if ($showBack)
+        {{-- Tombol Kembali (hanya tampil jika diizinkan) --}}
+        @if ($canShowBack)
             <a href="{{ $resolvedBackUrl }}"
                class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 flex items-center justify-center transition-all group flex-shrink-0 shadow-xs active:scale-95"
                title="Kembali ke {{ $backLabel }}">
@@ -188,7 +191,7 @@
         {{ $slot }}
 
         {{-- Tombol Pintar Presensi (Smart Detection) - Khusus Karyawan --}}
-        @if ($showAttendance && Auth::check() && !$isOwner && $currentEmployee)
+        @if ($showAttendance && Auth::check() && !$isOwner && $currentEmployee && $canAccessAttendanceMenu)
             @if ($clockState === 'not_clocked_in')
                 <a
                     href="{{ route('pos.attendances') }}?action=clock_in"
@@ -227,7 +230,7 @@
         @endif
 
         {{-- Widget Presensi Karyawan & Kuota Off-Day --}}
-        @if ($showAttendance && $currentEmployee)
+        @if ($showAttendance && $currentEmployee && $canAccessAttendanceMenu)
             <div class="relative flex-shrink-0" x-data="{ openAttendanceModal: false }">
                 <button
                     @click="openAttendanceModal = !openAttendanceModal"
@@ -316,7 +319,7 @@
                     </div>
 
                     {{-- Tombol Tutup Sesi (opsional) --}}
-                    @if ($showCloseSession)
+                    @if ($showCloseSession && $canCloseCashSession)
                         <button
                             type="button"
                             @click="$dispatch('confirm-open', {
@@ -533,7 +536,7 @@
         {{ $slot }}
 
         {{-- Tombol Ringkas Presensi Clock In / Out - Khusus Karyawan --}}
-        @if ($showAttendance && Auth::check() && !$isOwner && $currentEmployee)
+        @if ($showAttendance && Auth::check() && !$isOwner && $currentEmployee && $canAccessAttendanceMenu)
             @if ($clockState === 'not_clocked_in')
                 <a
                     href="{{ route('pos.attendances') }}?action=clock_in"
@@ -691,7 +694,7 @@
                 @if (!empty($activeSessionInfo))
                     <div class="text-[11px] text-slate-600 dark:text-slate-400 flex items-center justify-between pt-1 border-t border-emerald-200/50 dark:border-emerald-800/30">
                         <span>Dibuka: {{ $activeSessionInfo['opened_by'] ?? (auth()->user()?->name ?? 'Kasir') }} ({{ !empty($activeSessionInfo['opened_at']) ? substr($activeSessionInfo['opened_at'], -5) : '--:--' }} WIB)</span>
-                        @if ($showCloseSession)
+                        @if ($showCloseSession && $canCloseCashSession)
                             <button
                                 type="button"
                                 @click="mobileMenuOpen = false; $dispatch('confirm-open', {
@@ -712,7 +715,7 @@
             @endif
 
             <!-- Status Presensi & Jatah Off-Day -->
-            @if ($showAttendance && $currentEmployee)
+            @if ($showAttendance && $currentEmployee && $canAccessAttendanceMenu)
                 <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
                     <div class="flex items-center justify-between text-xs font-bold">
                         <span class="text-slate-500 dark:text-slate-400">Presensi Hari Ini:</span>

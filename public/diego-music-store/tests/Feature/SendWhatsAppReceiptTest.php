@@ -33,10 +33,11 @@ class SendWhatsAppReceiptTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
         Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
         $this->user = User::factory()->create();
-        $this->user->assignRole('cashier');
+        $this->user->assignRole('karyawan');
 
         $this->branch = Branch::create([
             'name' => 'Cabang Utama',

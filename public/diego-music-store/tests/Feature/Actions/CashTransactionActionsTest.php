@@ -35,6 +35,7 @@ class CashTransactionActionsTest extends TestCase
             'phone' => '0361-99999',
             'is_active' => true,
         ]);
+        $this->user->branches()->attach($this->branch->id);
 
         $this->cashAccount = Account::create([
             'code' => '1-1010',

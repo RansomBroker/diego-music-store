@@ -21,7 +21,7 @@ class CreateCustomerDeposit
      */
     public function execute(array $data, ?User $user = null): CustomerDeposit
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission($user ?: Auth::user(), 'fo.customer_deposits.create');
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         abort_unless($activeBranchId, 403);
         abort_unless(!isset($data['branch_id']) || (int) $data['branch_id'] === (int) $activeBranchId, 403);

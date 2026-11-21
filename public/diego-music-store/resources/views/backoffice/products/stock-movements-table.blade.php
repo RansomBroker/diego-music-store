@@ -1,7 +1,7 @@
 <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-left text-sm text-gray-500 dark:text-gray-400">
         @php
-            $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+            $canViewCost = \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost');
         @endphp
         <thead class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-700 dark:text-gray-300">
             <tr>

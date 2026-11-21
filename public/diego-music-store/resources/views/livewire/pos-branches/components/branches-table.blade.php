@@ -63,11 +63,13 @@
                         </x-pos.table.td>
 
                         <x-pos.table.td class="text-center">
-                            <div class="flex items-center justify-center gap-1.5">
-                                <x-pos.utility.button variant="warning" size="xs" icon="ph-pencil-simple" wire:click="openEdit({{ $b->id }})">
-                                    Edit Profil
-                                </x-pos.utility.button>
-                            </div>
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.branches.edit'))
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <x-pos.utility.button variant="warning" size="xs" icon="ph-pencil-simple" wire:click="openEdit({{ $b->id }})">
+                                        Edit Profil
+                                    </x-pos.utility.button>
+                                </div>
+                            @endif
                         </x-pos.table.td>
                     </x-pos.table.tr>
                 @empty

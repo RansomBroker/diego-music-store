@@ -24,7 +24,12 @@ class DatabaseBackup extends Page
 
     public static function canAccess(): bool
     {
-        return (bool) auth()->user()?->hasRole(['owner', 'Owner', 'super_admin', 'Super Admin']);
+        return \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.database_backup.view');
+    }
+
+    public function boot(): void
+    {
+        abort_unless(static::canAccess(), 403);
     }
 
     /**
@@ -50,6 +55,7 @@ class DatabaseBackup extends Page
                 ->label('Buat Backup Baru')
                 ->icon('heroicon-o-plus-circle')
                 ->color('primary')
+                ->visible(fn (): bool => \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.database_backup.manage'))
                 ->modalHeading('Buat Backup Database Baru')
                 ->modalDescription('Pilih tipe backup yang ingin dijalankan.')
                 ->form([
@@ -63,6 +69,7 @@ class DatabaseBackup extends Page
                         ->required(),
                 ])
                 ->action(function (array $data): void {
+                    abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.database_backup.manage'), 403);
                     $onlyDb = ($data['backup_type'] ?? 'only_db') === 'only_db';
                     $action = new CreateDatabaseBackup();
                     $result = $action->execute($onlyDb);
@@ -88,6 +95,7 @@ class DatabaseBackup extends Page
 
     public function downloadBackup(string $filePath)
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.database_backup.manage'), 403);
         $diskName = config('backup.backup.destination.disks.0', 'local');
         $disk = \Illuminate\Support\Facades\Storage::disk($diskName);
 
@@ -106,6 +114,7 @@ class DatabaseBackup extends Page
 
     public function deleteBackup(string $filePath): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.database_backup.manage'), 403);
         try {
             $action = new DeleteDatabaseBackup();
             $action->execute($filePath);

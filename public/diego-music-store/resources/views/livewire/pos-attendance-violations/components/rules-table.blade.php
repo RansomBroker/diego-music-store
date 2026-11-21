@@ -35,36 +35,44 @@
                                 Rp {{ number_format($r->deduction_amount, 0, ',', '.') }}
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                <button
-                                    type="button"
-                                    wire:click="toggleRuleStatus({{ $r->id }})"
-                                    class="cursor-pointer"
-                                >
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'))
+                                    <button
+                                        type="button"
+                                        wire:click="toggleRuleStatus({{ $r->id }})"
+                                        class="cursor-pointer"
+                                    >
+                                        <x-pos.utility.pill :variant="$r->is_active ? 'success' : 'default'" size="xs">
+                                            {{ $r->is_active ? 'Aktif' : 'Non-Aktif' }}
+                                        </x-pos.utility.pill>
+                                    </button>
+                                @else
                                     <x-pos.utility.pill :variant="$r->is_active ? 'success' : 'default'" size="xs">
                                         {{ $r->is_active ? 'Aktif' : 'Non-Aktif' }}
                                     </x-pos.utility.pill>
-                                </button>
+                                @endif
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                <div class="inline-flex items-center justify-center gap-1.5">
-                                    <x-pos.utility.button
-                                        type="button"
-                                        variant="warning"
-                                        size="sm"
-                                        icon="ph-pencil-simple"
-                                        wire:click="openRuleModal({{ $r->id }})"
-                                        title="Edit Aturan"
-                                    />
-                                    <x-pos.utility.button
-                                        type="button"
-                                        variant="danger"
-                                        size="sm"
-                                        icon="ph-trash"
-                                        wire:click="deleteRule({{ $r->id }})"
-                                        wire:confirm="Yakin ingin menghapus aturan denda ini?"
-                                        title="Hapus Aturan"
-                                    />
-                                </div>
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'))
+                                    <div class="inline-flex items-center justify-center gap-1.5">
+                                        <x-pos.utility.button
+                                            type="button"
+                                            variant="warning"
+                                            size="sm"
+                                            icon="ph-pencil-simple"
+                                            wire:click="openRuleModal({{ $r->id }})"
+                                            title="Edit Aturan"
+                                        />
+                                        <x-pos.utility.button
+                                            type="button"
+                                            variant="danger"
+                                            size="sm"
+                                            icon="ph-trash"
+                                            wire:click="deleteRule({{ $r->id }})"
+                                            wire:confirm="Yakin ingin menghapus aturan denda ini?"
+                                            title="Hapus Aturan"
+                                        />
+                                    </div>
+                                @endif
                             </x-pos.table.td>
                         </tr>
                     @empty

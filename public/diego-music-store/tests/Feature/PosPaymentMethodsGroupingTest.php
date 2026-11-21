@@ -85,7 +85,9 @@ class PosPaymentMethodsGroupingTest extends TestCase
 
     public function test_pos_payment_methods_livewire_component_creates_child_method(): void
     {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         $parent = PaymentMethod::create([
             'name' => 'E-Wallet',
             'code' => 'e-wallet',
@@ -110,7 +112,9 @@ class PosPaymentMethodsGroupingTest extends TestCase
 
     public function test_cannot_delete_parent_method_if_it_has_children(): void
     {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         $parent = PaymentMethod::create([
             'name' => 'Debit Card',
             'code' => 'debit-card',

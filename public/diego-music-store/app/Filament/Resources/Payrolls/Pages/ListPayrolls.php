@@ -41,6 +41,7 @@ class ListPayrolls extends ListRecords
                 ->label('Bayar Payroll & Buat Jurnal GL')
                 ->color('success')
                 ->icon('heroicon-o-banknotes')
+                ->visible(fn (): bool => \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.payrolls.edit'))
                 ->form([
                     Forms\Components\Select::make('payroll_id')
                         ->label('Pilih Batch Payroll')
@@ -67,6 +68,7 @@ class ListPayrolls extends ListRecords
                         ->required(),
                 ])
                 ->action(function (array $data) {
+                    abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.payrolls.edit'), 403);
                     try {
                         $payroll = app(\App\Actions\Payroll\ProcessPayrollPayment::class)->execute(
                             (int) $data['payroll_id'],
@@ -93,6 +95,7 @@ class ListPayrolls extends ListRecords
                 ->label('Proses Payroll Bulanan')
                 ->color('primary')
                 ->icon('heroicon-o-arrow-path')
+                ->visible(fn (): bool => \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.payrolls.edit'))
                 ->form([
                     Forms\Components\TextInput::make('period')
                         ->label('Periode Bulan (YYYY-MM)')
@@ -105,7 +108,9 @@ class ListPayrolls extends ListRecords
                         ->placeholder('Semua Cabang (All Branches)'),
                 ])
                 ->action(function (array $data) {
+                    abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.payrolls.edit'), 403);
                     try {
+                        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.payrolls.edit'), 403);
                         $period = $data['period'] ?? now()->format('Y-m');
                         $branchId = !empty($data['branch_id']) ? (int) $data['branch_id'] : null;
 

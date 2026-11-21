@@ -3,6 +3,7 @@
         $periods = $this->periods;
         $selectedPeriod = $this->selectedPeriod;
         $selectedAssignment = $this->selectedAssignment;
+        $canApproveStockOpname = \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.stock_opname_review.approve');
     @endphp
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -117,7 +118,7 @@
                                         </p>
                                     @endif
                                 </div>
-                            @elseif ($canFinalize)
+                            @elseif ($canFinalize && $canApproveStockOpname)
                                 <x-filament::button
                                     color="success"
                                     icon="heroicon-o-lock-closed"
@@ -183,6 +184,7 @@
                         </div>
 
                         <div class="flex items-center justify-end gap-2.5 pt-1">
+                            @if ($canApproveStockOpname)
                             <x-filament::button
                                 color="danger"
                                 icon="heroicon-o-arrow-path"
@@ -201,6 +203,7 @@
                             >
                                 Setujui Tugas Lokasi
                             </x-filament::button>
+                            @endif
                         </div>
                     </div>
                 @endif

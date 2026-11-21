@@ -82,12 +82,17 @@ class ServiceOrderTest extends TestCase
     public function test_update_service_order_status_and_additional_charges()
     {
         $branch = Branch::create(['name' => 'Cabang 2', 'store_name' => 'Diego Store 2']);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::create([
             'name'     => 'Teknisi 2',
             'username' => 'teknisi2',
             'email'    => 'teknisi2@test.com',
             'password' => bcrypt('password'),
         ]);
+        $user->assignRole($ownerRole);
+        $user->branches()->attach($branch->id);
+        $user->employee()->update(['branch_id' => $branch->id, 'is_active' => true]);
+        $this->actingAs($user);
 
         $order = ServiceOrder::create([
             'ticket_code'    => 'SVC-20260802-0001',

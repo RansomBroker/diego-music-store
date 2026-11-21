@@ -18,6 +18,7 @@ class PosAttendancesTest extends TestCase
     public function test_pos_attendances_component_can_render_and_clock_in(): void
     {
         Storage::fake('public');
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
 
         $branch = Branch::create([
             'name' => 'Cabang Test',
@@ -25,8 +26,10 @@ class PosAttendancesTest extends TestCase
             'is_active' => true,
         ]);
         $user = User::factory()->create();
-        $employee = $user->employee ?: Employee::create([
-            'user_id' => $user->id,
+        $user->assignRole('karyawan');
+        $user->branches()->attach($branch->id);
+        $employee = $user->employee;
+        $employee->update([
             'branch_id' => $branch->id,
             'nik' => 'EMP-TEST-03',
             'name' => 'Agus Sales',
@@ -52,6 +55,7 @@ class PosAttendancesTest extends TestCase
     public function test_pos_attendances_component_can_clock_out(): void
     {
         Storage::fake('public');
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
 
         $branch = Branch::create([
             'name' => 'Cabang Test 2',
@@ -59,6 +63,8 @@ class PosAttendancesTest extends TestCase
             'is_active' => true,
         ]);
         $user = User::factory()->create();
+        $user->assignRole('karyawan');
+        $user->branches()->attach($branch->id);
         $employee = $user->employee;
         $employee->update(['branch_id' => $branch->id]);
 
@@ -79,12 +85,15 @@ class PosAttendancesTest extends TestCase
 
     public function test_pos_attendances_component_can_record_attendance_off_day(): void
     {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $branch = Branch::create([
             'name' => 'Cabang Test 3',
             'code' => 'CBG-TEST-04',
             'is_active' => true,
         ]);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
+        $user->branches()->attach($branch->id);
         $employee = $user->employee;
         $employee->update(['branch_id' => $branch->id]);
 
@@ -165,12 +174,15 @@ class PosAttendancesTest extends TestCase
 
     public function test_pos_attendances_component_can_switch_tabs_to_backdate_requests(): void
     {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $branch = Branch::create([
             'name' => 'Cabang Test 5',
             'code' => 'CBG-TEST-06',
             'is_active' => true,
         ]);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
+        $user->branches()->attach($branch->id);
         $employee = $user->employee;
         $employee->update(['branch_id' => $branch->id]);
 

@@ -16,7 +16,7 @@ class EditStockOpname extends EditRecord
     {
         return [
             DeleteAction::make()
-                ->visible(fn ($record) => $record->status === 'draft'),
+                ->visible(fn ($record) => $record->status === 'draft' && StockOpnameResource::canDelete($record)),
         ];
     }
 

@@ -8,12 +8,18 @@ use App\Models\CustomerLabel;
 use App\Models\Branch;
 use App\Actions\CustomerLabel\CreateCustomerLabel;
 use App\Actions\CustomerLabel\UpdateCustomerLabel;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 
 class PosCustomerLabels extends Component
 {
     use WithPagination;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.customer_labels.view'), 403);
+    }
 
     // ── State Tabel & Pencarian ──────────────────────────────────────────
     public string $search = '';
@@ -65,6 +71,7 @@ class PosCustomerLabels extends Component
     // ── Modal: Buka Form Tambah ──────────────────────────────────────────
     public function openCreate(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_labels.create'), 403);
         $this->reset(['key', 'name', 'editingId', 'isEditing']);
         $this->showModal = true;
     }
@@ -72,6 +79,7 @@ class PosCustomerLabels extends Component
     // ── Modal: Buka Form Edit ────────────────────────────────────────────
     public function openEdit(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_labels.edit'), 403);
         $label = CustomerLabel::findOrFail($id);
 
         $this->editingId = $id;
@@ -85,6 +93,7 @@ class PosCustomerLabels extends Component
     // ── Simpan (Create / Update) ─────────────────────────────────────────
     public function save(CreateCustomerLabel $createAction, UpdateCustomerLabel $updateAction): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), $this->isEditing ? 'fo.customer_labels.edit' : 'fo.customer_labels.create'), 403);
         $rules = [
             'name' => 'required|string|max:255',
             'key'  => $this->isEditing ? 'required|string|max:255' : 'required|string|max:255|unique:customer_labels,key',
@@ -129,12 +138,14 @@ class PosCustomerLabels extends Component
     // ── Konfirmasi Hapus ─────────────────────────────────────────────────
     public function confirmDelete(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_labels.delete'), 403);
         $this->deletingId      = $id;
         $this->showDeleteModal = true;
     }
 
     public function destroy(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_labels.delete'), 403);
         $label = CustomerLabel::findOrFail($this->deletingId);
 
         // Check if this label is assigned to any customers

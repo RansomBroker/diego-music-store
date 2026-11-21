@@ -14,6 +14,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Grid;
@@ -25,6 +26,10 @@ use Filament\Tables\Table;
 
 class AssetDisposalResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.asset_disposals';
+
     protected static ?string $model = AssetDisposal::class;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedTrash;
@@ -203,7 +208,7 @@ class AssetDisposalResource extends Resource
             ->actions([
                 \Filament\Actions\EditAction::make()
                     ->modalWidth('4xl')
-                    ->visible(fn (AssetDisposal $record) => $record->status === 'draft'),
+                    ->visible(fn (AssetDisposal $record) => $record->status === 'draft' && static::canEdit($record)),
 
                 Action::make('post')
                     ->label('Proses Posting')
@@ -212,14 +217,15 @@ class AssetDisposalResource extends Resource
                     ->extraAttributes([
                         'class' => '!text-white dark:!text-white',
                     ])
-                    ->visible(fn (AssetDisposal $record) => $record->status === 'draft')
+                    ->visible(fn (AssetDisposal $record) => $record->status === 'draft' && static::canEdit($record))
                     ->requiresConfirmation()
                     ->action(function (AssetDisposal $record) {
+                        abort_unless(static::canEdit($record), 403);
                         app(PostAssetDisposal::class)->execute($record);
                     }),
 
                 \Filament\Actions\DeleteAction::make()
-                    ->visible(fn (AssetDisposal $record) => $record->status === 'draft'),
+                    ->visible(fn (AssetDisposal $record) => $record->status === 'draft' && static::canDelete($record)),
             ]);
     }
 

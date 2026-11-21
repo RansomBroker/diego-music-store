@@ -11,6 +11,7 @@ use App\Models\PosHeldTransaction;
 use App\Models\Voucher;
 use App\Actions\Sales\CreatePOSSale;
 use App\Actions\Sales\UpdatePOSSale;
+use App\Helpers\PermissionHelper;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +21,8 @@ trait WithPaymentHandling
 {
     public function openPayment()
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        $requiredPerm = !empty($this->editingSaleId) ? 'fo.pos.edit_sale' : 'fo.pos.checkout';
+        abort_unless(PermissionHelper::can(Auth::user(), $requiredPerm), 403);
         if (empty($this->cart)) {
             Notification::make()
                 ->title('Keranjang Kosong')
@@ -41,7 +43,8 @@ trait WithPaymentHandling
     #[On('execute-checkout')]
     public function executeCheckout(array $paymentData, bool $sendWhatsApp = false)
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        $requiredPerm = !empty($this->editingSaleId) ? 'fo.pos.edit_sale' : 'fo.pos.checkout';
+        abort_unless(PermissionHelper::can(Auth::user(), $requiredPerm), 403);
         $selectedPaymentMethods = $paymentData['selectedPaymentMethods'] ?? ['cash'];
         $paymentAmounts = $paymentData['paymentAmounts'] ?? [];
         $amountCash = $paymentData['amountCash'] ?? 0;

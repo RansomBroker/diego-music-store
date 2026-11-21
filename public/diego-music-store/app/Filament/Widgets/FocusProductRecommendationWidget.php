@@ -15,6 +15,11 @@ class FocusProductRecommendationWidget extends Widget
 
     protected int|string|array $columnSpan = 1;
 
+    public static function canView(): bool
+    {
+        return \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.widgets.focus_products');
+    }
+
     public function getViewData(): array
     {
         $activeBranchId = BranchHelper::getActiveBranchId();

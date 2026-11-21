@@ -6,6 +6,7 @@ use App\Filament\Resources\PurchaseReturns\Pages\ListPurchaseReturns;
 use App\Filament\Resources\PurchaseReturns\Tables\PurchaseReturnsTable;
 use App\Models\PurchaseReturn;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -14,6 +15,11 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PurchaseReturnResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.purchase_returns';
+    protected static bool $hasCreatePermission = false;
+
     protected static ?string $model = PurchaseReturn::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowPath;

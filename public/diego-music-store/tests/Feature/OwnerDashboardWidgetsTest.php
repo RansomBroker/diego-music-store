@@ -24,6 +24,7 @@ class OwnerDashboardWidgetsTest extends TestCase
 
     public function test_owner_role_can_view_and_filter_owner_executive_dashboard()
     {
+        \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
         $role = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $owner = User::factory()->create();
         $owner->assignRole($role);

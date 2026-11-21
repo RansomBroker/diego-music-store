@@ -34,8 +34,12 @@ class StockOpnameReview extends Page
 
     public static function canAccess(): bool
     {
-        $user = auth()->user();
-        return (bool) ($user && $user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']));
+        return \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.stock_opname_review.view');
+    }
+
+    public function boot(): void
+    {
+        abort_unless(static::canAccess(), 403);
     }
 
     public function mount(): void
@@ -78,6 +82,7 @@ class StockOpnameReview extends Page
 
     public function approveAssignment(int $assignmentId): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.stock_opname_review.approve'), 403);
         $assignment = $this->findReviewableAssignment($assignmentId);
 
         try {
@@ -102,6 +107,7 @@ class StockOpnameReview extends Page
 
     public function requestRevision(int $assignmentId): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.stock_opname_review.approve'), 403);
         $this->validate([
             'reviewNotes' => ['required', 'string', 'min:3', 'max:2000'],
         ], [
@@ -133,6 +139,7 @@ class StockOpnameReview extends Page
 
     public function finalizePeriod(int $periodId): void
     {
+        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.stock_opname_review.approve'), 403);
         $period = $this->findReviewablePeriod($periodId);
 
         try {
@@ -171,7 +178,7 @@ class StockOpnameReview extends Page
             ]);
 
         $user = auth()->user();
-        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+        if ($user && !\App\Helpers\BranchHelper::canAccessAllBranches($user)) {
             $query->whereIn('branch_id', $user->branches()->pluck('branches.id'));
         }
 

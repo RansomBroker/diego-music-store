@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Helpers\BranchHelper;
+use App\Helpers\PermissionHelper;
 use App\Helpers\SalesQueueHelper;
 use App\Models\Branch;
 use App\Models\SalesDutyLog;
@@ -63,7 +64,7 @@ class PosReportsSalesQueue extends Component
 
     public function boot(): void
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.reports.sales_queue'), 403);
     }
 
     public function mount(): void

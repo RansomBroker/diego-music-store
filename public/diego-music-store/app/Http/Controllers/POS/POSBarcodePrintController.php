@@ -9,7 +9,7 @@ class POSBarcodePrintController extends Controller
 {
     public function show(Request $request)
     {
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(\App\Helpers\PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.barcode_print.view'), 403);
 
         $payload = null;
 

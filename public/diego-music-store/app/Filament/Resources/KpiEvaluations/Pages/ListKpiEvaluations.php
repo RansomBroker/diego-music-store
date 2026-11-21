@@ -17,7 +17,9 @@ class ListKpiEvaluations extends ListRecords
                 ->label('Kalkulasi Realtime KPI')
                 ->color('info')
                 ->icon('heroicon-o-arrow-path')
+                ->visible(fn () => KpiEvaluationResource::canViewAny())
                 ->action(function () {
+                    abort_unless(KpiEvaluationResource::canViewAny(), 403);
                     $action = app(\App\Actions\Kpi\CalculateEmployeeKpi::class);
                     $employees = \App\Models\Employee::where('is_active', true)->get();
                     $period = now()->format('Y-m');

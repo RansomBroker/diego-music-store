@@ -19,8 +19,8 @@ class POSReceiptController extends Controller
             abort(403, 'Unauthorized.');
         }
 
-        // Sales role is read-only and must not access transaction receipts by ID.
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        // Enforce permission to view/print POS receipts
+        abort_unless(\App\Helpers\PermissionHelper::canAccessFrontofficeFeature(Auth::user(), ['fo.pos.print', 'fo.transactions.view']), 403);
 
         abort_unless((int) $sale->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
 
@@ -62,8 +62,7 @@ class POSReceiptController extends Controller
             abort(403, 'Unauthorized.');
         }
 
-        // Sales role cannot access POS transaction print/preview flows.
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(\App\Helpers\PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.pos.print'), 403);
 
         $data = json_decode(base64_decode($request->query('data')), true);
         if (!$data) {

@@ -76,14 +76,16 @@
                 required
             />
 
-            <!-- Gaji Pokok -->
-            <x-pos.form.input
-                label="Gaji Pokok"
-                type="currency"
-                model="basic_salary"
-                placeholder="0"
-                required
-            />
+            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'hr.view_salary'))
+                <!-- Gaji Pokok -->
+                <x-pos.form.input
+                    label="Gaji Pokok"
+                    type="currency"
+                    model="basic_salary"
+                    placeholder="0"
+                    required
+                />
+            @endif
         </div>
 
         <!-- Alamat -->

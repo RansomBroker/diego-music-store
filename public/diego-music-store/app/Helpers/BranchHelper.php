@@ -18,31 +18,18 @@ class BranchHelper
             return false;
         }
 
-        // 1. Management and administrative roles with global branch access
-        $managementRoles = [
-            'owner', 'Owner',
-            'super_admin', 'Super Admin', 'super-admin',
-            'admin', 'Admin',
-            'manager', 'Manager',
-        ];
-        if ($user->hasRole($managementRoles)) {
+        // 1. Owner holds unconditional global branch access
+        if (PermissionHelper::isOwner($user)) {
             return true;
         }
 
         // 2. Hak akses / permissions that grant branch management or switching all branches
-        $branchPermissions = [
-            'master.branches',
-            'utility.store',
+        return PermissionHelper::can($user, [
             'branch.switch',
-        ];
-
-        foreach ($branchPermissions as $perm) {
-            if ($user->can($perm)) {
-                return true;
-            }
-        }
-
-        return false;
+            'bo.branches.view',
+            'fo.branches.view',
+            'fo.store_profile.edit',
+        ]);
     }
 
     /**

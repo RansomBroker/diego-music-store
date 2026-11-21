@@ -4,6 +4,7 @@ namespace Tests\Feature\Filament;
 
 use App\Filament\Pages\UserPrivileges;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -19,17 +20,15 @@ class UserPrivilegesPageTest extends TestCase
     {
         parent::setUp();
 
-        $ownerRole = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $this->seed(RoleAndPermissionSeeder::class);
+
         $this->user = User::factory()->create([
             'is_active' => true,
         ]);
-        $this->user->assignRole($ownerRole);
-
-        (new UserPrivileges)->ensurePermissionsExist();
+        $this->user->assignRole('owner');
     }
 
-    /** @test */
-    public function it_can_render_user_privileges_filament_page()
+    public function test_it_can_render_user_privileges_filament_page(): void
     {
         Livewire::actingAs($this->user)
             ->test(UserPrivileges::class)
@@ -37,45 +36,78 @@ class UserPrivilegesPageTest extends TestCase
             ->assertSee('Setting Hak Akses User');
     }
 
-    /** @test */
-    public function it_can_mount_and_call_table_edit_permissions_action()
+    public function test_it_can_create_role_via_header_action_with_panel_toggles(): void
+    {
+        Livewire::actingAs($this->user)
+            ->test(UserPrivileges::class)
+            ->callAction('createRole', data: [
+                'name' => 'Manager Operasional',
+                'access_fo' => true,
+                'access_bo' => true,
+            ])
+            ->assertHasNoActionErrors();
+
+        $role = Role::findByName('Manager Operasional');
+        $this->assertTrue($role->hasPermissionTo('fo.access'));
+        $this->assertTrue($role->hasPermissionTo('bo.access'));
+    }
+
+    public function test_it_can_edit_role_permissions_using_two_section_schema(): void
     {
         $role = Role::create(['name' => 'Staff Toko', 'guard_name' => 'web']);
 
         Livewire::actingAs($this->user)
             ->test(UserPrivileges::class)
             ->callTableAction('editPermissions', $role, data: [
-                'permissions' => [
-                    'pos.access' => true,
-                    'master.customers' => true,
+                'role_name' => 'Staff Toko',
+                'access_fo' => true,
+                'access_bo' => false,
+                'perm_groups' => [
+                    'frontoffice__fo_main__fo_pos' => ['fo.pos.view', 'fo.pos.checkout'],
+                    'frontoffice__fo_master__fo_customers' => ['fo.customers.view', 'fo.customers.create'],
                 ],
             ])
             ->assertHasNoTableActionErrors();
 
-        $this->assertTrue($role->hasPermissionTo('pos.access'));
-        $this->assertTrue($role->hasPermissionTo('master.customers'));
+        $role->refresh();
+        $this->assertTrue($role->hasPermissionTo('fo.access'));
+        $this->assertFalse($role->hasPermissionTo('bo.access'));
+        $this->assertTrue($role->hasPermissionTo('fo.pos.view'));
+        $this->assertTrue($role->hasPermissionTo('fo.pos.checkout'));
+        $this->assertTrue($role->hasPermissionTo('fo.customers.create'));
+        $this->assertFalse($role->hasPermissionTo('fo.pos.discount'));
     }
 
-    /** @test */
-    public function it_can_create_role_via_header_action()
+    public function test_it_can_save_backoffice_accounting_permissions(): void
     {
+        $role = Role::create(['name' => 'Akuntan Perusahaan', 'guard_name' => 'web']);
+
         Livewire::actingAs($this->user)
             ->test(UserPrivileges::class)
-            ->callAction('createRole', data: [
-                'name' => 'Manager Operasional',
+            ->callTableAction('editPermissions', $role, data: [
+                'role_name' => 'Akuntan Perusahaan',
+                'access_fo' => false,
+                'access_bo' => true,
+                'perm_groups' => [
+                    'backoffice__bo_accounting__bo_accounts' => ['bo.accounts.view', 'bo.accounts.create'],
+                    'backoffice__bo_accounting__bo_journal_entries' => ['bo.journal_entries.view'],
+                    'backoffice__bo_financial_reports__bo_reports_balance_sheet' => ['bo.reports.balance_sheet'],
+                ],
             ])
-            ->assertHasNoActionErrors();
+            ->assertHasNoTableActionErrors();
 
-        $this->assertDatabaseHas('roles', [
-            'name' => 'Manager Operasional',
-        ]);
+        $role->refresh();
+        $this->assertFalse($role->hasPermissionTo('fo.access'));
+        $this->assertTrue($role->hasPermissionTo('bo.access'));
+        $this->assertTrue($role->hasPermissionTo('bo.accounts.view'));
+        $this->assertTrue($role->hasPermissionTo('bo.journal_entries.view'));
+        $this->assertTrue($role->hasPermissionTo('bo.reports.balance_sheet'));
     }
 
-    /** @test */
-    public function it_can_clone_role_via_table_action()
+    public function test_it_can_clone_and_delete_role_via_table_actions(): void
     {
         $role = Role::create(['name' => 'Supervisor Gudang', 'guard_name' => 'web']);
-        $role->givePermissionTo(['inventory.products', 'inventory.transfers']);
+        $role->givePermissionTo(['bo.access', 'bo.products.view', 'bo.stock_transfers.view']);
 
         Livewire::actingAs($this->user)
             ->test(UserPrivileges::class)
@@ -84,30 +116,40 @@ class UserPrivilegesPageTest extends TestCase
             ])
             ->assertHasNoTableActionErrors();
 
-        $this->assertDatabaseHas('roles', ['name' => 'Staf Gudang Junior']);
         $clonedRole = Role::findByName('Staf Gudang Junior');
-        $this->assertTrue($clonedRole->hasPermissionTo('inventory.products'));
-        $this->assertTrue($clonedRole->hasPermissionTo('inventory.transfers'));
-    }
-
-    /** @test */
-    public function it_can_save_new_erp_permissions()
-    {
-        $role = Role::create(['name' => 'Akuntan Perusahaan', 'guard_name' => 'web']);
+        $this->assertTrue($clonedRole->hasPermissionTo('bo.access'));
+        $this->assertTrue($clonedRole->hasPermissionTo('bo.products.view'));
+        $this->assertTrue($clonedRole->hasPermissionTo('bo.stock_transfers.view'));
 
         Livewire::actingAs($this->user)
             ->test(UserPrivileges::class)
-            ->callTableAction('editPermissions', $role, data: [
-                'permissions' => [
-                    'accounting.coa' => true,
-                    'accounting.journals' => true,
-                    'reports.accounting' => true,
-                ],
-            ])
+            ->callTableAction('deleteRole', $clonedRole)
             ->assertHasNoTableActionErrors();
 
-        $this->assertTrue($role->hasPermissionTo('accounting.coa'));
-        $this->assertTrue($role->hasPermissionTo('accounting.journals'));
-        $this->assertTrue($role->hasPermissionTo('reports.accounting'));
+        $this->assertDatabaseMissing('roles', ['name' => 'Staf Gudang Junior']);
+    }
+
+    public function test_owner_role_edit_and_delete_actions_are_hidden(): void
+    {
+        $ownerRole = Role::findByName('owner');
+
+        Livewire::actingAs($this->user)
+            ->test(UserPrivileges::class)
+            ->assertTableActionHidden('editPermissions', $ownerRole)
+            ->assertTableActionHidden('deleteRole', $ownerRole);
+    }
+
+    public function test_custom_user_without_manage_permission_cannot_create_or_edit_roles(): void
+    {
+        $viewerRole = Role::create(['name' => 'Viewer Akses', 'guard_name' => 'web']);
+        $viewerRole->givePermissionTo(['bo.access', 'bo.user_privileges.view']);
+
+        $viewer = User::factory()->create(['is_active' => true]);
+        $viewer->assignRole($viewerRole);
+
+        Livewire::actingAs($viewer)
+            ->test(UserPrivileges::class)
+            ->assertStatus(200)
+            ->assertActionHidden('createRole');
     }
 }

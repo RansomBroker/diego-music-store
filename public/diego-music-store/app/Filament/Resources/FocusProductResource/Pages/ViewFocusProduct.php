@@ -27,7 +27,7 @@ class ViewFocusProduct extends ViewRecord
                 ->label('Tandai Selesai')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
-                ->visible(fn (): bool => in_array($record->status, ['ACTIVE', 'EXPIRED']))
+                ->visible(fn (): bool => FocusProductResource::canEdit($record) && in_array($record->status, ['ACTIVE', 'EXPIRED']))
                 ->form([
                     Textarea::make('resolution_note')
                         ->label('Catatan Penyelesaian')
@@ -35,6 +35,7 @@ class ViewFocusProduct extends ViewRecord
                         ->required(),
                 ])
                 ->action(function (array $data) use ($record) {
+                    abort_unless(FocusProductResource::canEdit($record), 403);
                     try {
                         app(ResolveFocusProduct::class)->execute($record->id, $data['resolution_note'], auth()->id());
                         Notification::make()->title('Produk Fokus Diselesaikan')->success()->send();
@@ -48,7 +49,7 @@ class ViewFocusProduct extends ViewRecord
                 ->label('Ubah Batas Waktu')
                 ->icon('heroicon-o-clock')
                 ->color('warning')
-                ->visible(fn (): bool => in_array($record->status, ['ACTIVE', 'EXPIRED']))
+                ->visible(fn (): bool => FocusProductResource::canEdit($record) && in_array($record->status, ['ACTIVE', 'EXPIRED']))
                 ->fillForm(fn () => ['active_until' => $record->active_until])
                 ->form([
                     DateTimePicker::make('active_until')
@@ -56,6 +57,7 @@ class ViewFocusProduct extends ViewRecord
                         ->helperText('Kosongkan jika ingin dibuat tanpa batas waktu.'),
                 ])
                 ->action(function (array $data) use ($record) {
+                    abort_unless(FocusProductResource::canEdit($record), 403);
                     $activeUntil = $data['active_until'];
                     $newStatus = $record->status;
                     if ($record->status === 'EXPIRED' && ($activeUntil === null || Carbon::parse($activeUntil)->isFuture())) {
@@ -73,7 +75,7 @@ class ViewFocusProduct extends ViewRecord
                 ->label('Abaikan / Dismiss')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(fn (): bool => in_array($record->status, ['ACTIVE', 'EXPIRED']))
+                ->visible(fn (): bool => FocusProductResource::canEdit($record) && in_array($record->status, ['ACTIVE', 'EXPIRED']))
                 ->form([
                     Textarea::make('dismissal_note')
                         ->label('Alasan Diabaikan')
@@ -81,6 +83,7 @@ class ViewFocusProduct extends ViewRecord
                         ->required(),
                 ])
                 ->action(function (array $data) use ($record) {
+                    abort_unless(FocusProductResource::canEdit($record), 403);
                     try {
                         app(DismissFocusProduct::class)->execute($record->id, $data['dismissal_note'], auth()->id());
                         Notification::make()->title('Produk Fokus Diabaikan')->success()->send();

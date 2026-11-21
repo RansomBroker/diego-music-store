@@ -60,7 +60,7 @@
                                         @click.stop
                                         title="Cetak Z-Report"
                                     />
-                                    @if($loop->first)
+                                    @if($loop->first && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.cash_session.reopen'))
                                         <x-pos.utility.button
                                             type="button"
                                             variant="warning"

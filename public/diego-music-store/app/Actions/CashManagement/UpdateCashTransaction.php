@@ -12,7 +12,7 @@ class UpdateCashTransaction
 {
     public function execute(CashTransaction $cashTransaction, array $data): CashTransaction
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission(Auth::user(), ['fo.daily_cash.create', 'bo.cash_transactions.edit']);
         $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
         $targetBranchId = (int) ($data['branch_id'] ?? $cashTransaction->branch_id);

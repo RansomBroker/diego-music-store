@@ -22,6 +22,7 @@ class ListSalesReturns extends ListRecords
                 ->label('Buat Retur Penjualan')
                 ->icon('heroicon-o-arrow-path')
                 ->color('primary')
+                ->visible(fn (): bool => \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.sales_returns.view'))
                 ->modalHeading('Retur Penjualan Barang')
                 ->modalDescription('Pilih faktur transaksi dan tentukan jumlah unit barang yang dikembalikan. Tagihan/dana refund dan stok persediaan akan otomatis disesuaikan.')
                 ->modalWidth('3xl')
@@ -61,6 +62,7 @@ class ListSalesReturns extends ListRecords
                         ->required(),
                 ])
                 ->action(function (array $data, $livewire = null) {
+                    abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.sales_returns.view'), 403);
                     $sale = \App\Models\Sale::findOrFail($data['sale_id']);
                     $rawItems = $data['return_items'] 
                         ?? data_get($livewire, 'mountedActions.0.data.return_items')

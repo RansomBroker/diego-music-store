@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Models\ProductBranchStock;
 use App\Models\ProductVariant;
 use App\Models\StockOpname;
@@ -22,8 +23,7 @@ class StockOpnameTasks extends Component
 
     public function boot(): void
     {
-        // Sales staff have read-only access to the product catalog only.
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.stock_opname_tasks.view'), 403);
     }
 
     public function mount(): void

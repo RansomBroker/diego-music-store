@@ -61,6 +61,7 @@ class ListFocusProducts extends ListRecords
                 ->label('+ Tambah Produk Fokus')
                 ->icon('heroicon-o-plus')
                 ->color('primary')
+                ->visible(fn (): bool => FocusProductResource::canCreate())
                 ->modalHeading('Tambah Produk Fokus (Manual)')
                 ->form([
                     Select::make('method')
@@ -143,6 +144,7 @@ class ListFocusProducts extends ListRecords
                         ->placeholder('Catatan internal, strategi diskon, atau instruksi tim kasir/sales'),
                 ])
                 ->action(function (array $data) {
+                    abort_unless(FocusProductResource::canCreate(), 403);
                     try {
                         $method = $data['method'] ?? 'rule';
 
@@ -198,7 +200,9 @@ class ListFocusProducts extends ListRecords
                 ->label('Jalankan Evaluasi')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
+                ->visible(fn (): bool => FocusProductResource::canEdit(new FocusProduct()))
                 ->action(function () {
+                    abort_unless(FocusProductResource::canEdit(new FocusProduct()), 403);
                     try {
                         $result = app(EvaluateFocusRules::class)->execute();
                         Notification::make()

@@ -20,11 +20,13 @@ class PosVouchersTest extends TestCase
     {
         parent::setUp();
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create([
             'name' => 'Admin Voucher',
             'username' => 'admin_voucher',
             'email' => 'admin_voucher@example.com',
         ]);
+        $this->user->assignRole($ownerRole);
         $this->actingAs($this->user);
 
         $this->branch = Branch::create([

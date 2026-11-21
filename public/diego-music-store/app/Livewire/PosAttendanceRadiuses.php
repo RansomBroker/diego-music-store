@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use Filament\Notifications\Notification;
 use Livewire\Component;
@@ -10,6 +11,11 @@ use Livewire\WithPagination;
 class PosAttendanceRadiuses extends Component
 {
     use WithPagination;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.attendance_radiuses.view'), 403);
+    }
 
     // ── Table Search & Filter ────────────────────────────────────────────
     public string $search = '';
@@ -42,6 +48,7 @@ class PosAttendanceRadiuses extends Component
     // ── Open Edit Radius Modal ────────────────────────────────────────────
     public function openEditModal(int $branchId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.attendance_radiuses.edit'), 403);
         $branch = Branch::findOrFail($branchId);
 
         $this->selectedBranchId = $branch->id;
@@ -56,6 +63,7 @@ class PosAttendanceRadiuses extends Component
     // ── Save Radius Setting Action ────────────────────────────────────────
     public function saveRadius(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.attendance_radiuses.edit'), 403);
         $this->validate([
             'selectedBranchId'         => 'required|exists:branches,id',
             'latitude'                 => 'required|numeric',

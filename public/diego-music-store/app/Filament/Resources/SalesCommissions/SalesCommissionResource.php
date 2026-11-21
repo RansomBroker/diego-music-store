@@ -6,6 +6,7 @@ use App\Filament\Resources\SalesCommissions\Pages\ListSalesCommissions;
 use App\Helpers\BranchHelper;
 use App\Models\SalesCommissionLog;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
@@ -14,6 +15,13 @@ use Illuminate\Database\Eloquent\Builder;
 
 class SalesCommissionResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.sales_commissions';
+    protected static bool $hasCreatePermission = false;
+    protected static bool $hasEditPermission = false;
+    protected static bool $hasDeletePermission = false;
+
     protected static ?string $model = SalesCommissionLog::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
@@ -72,11 +80,14 @@ class SalesCommissionResource extends Resource
                     ->label('Approve')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->action(fn (SalesCommissionLog $record) => $record->update([
-                        'status' => 'approved',
-                        'approved_by' => auth()->id(),
-                    ]))
-                    ->visible(fn (SalesCommissionLog $record) => $record->status === 'pending'),
+                    ->action(function (SalesCommissionLog $record) {
+                        abort_unless(static::canViewAny(), 403);
+                        $record->update([
+                            'status' => 'approved',
+                            'approved_by' => auth()->id(),
+                        ]);
+                    })
+                    ->visible(fn (SalesCommissionLog $record) => $record->status === 'pending' && static::canViewAny()),
             ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([
@@ -84,10 +95,14 @@ class SalesCommissionResource extends Resource
                         ->label('Approve Terpilih')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
-                        ->action(fn ($records) => $records->each->update([
-                            'status' => 'approved',
-                            'approved_by' => auth()->id(),
-                        ])),
+                        ->visible(fn () => static::canViewAny())
+                        ->action(function ($records) {
+                            abort_unless(static::canViewAny(), 403);
+                            $records->each->update([
+                                'status' => 'approved',
+                                'approved_by' => auth()->id(),
+                            ]);
+                        }),
                 ]),
             ]);
     }

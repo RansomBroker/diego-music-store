@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ScheduledJournalEntries\Tables;
 
 use App\Actions\Accounting\ProcessScheduledJournalEntries;
 use App\Actions\Accounting\UpdateScheduledJournalEntry;
+use App\Helpers\PermissionHelper;
 use App\Models\ScheduledJournalEntry;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -109,8 +110,11 @@ class ScheduledJournalEntriesTable
                     ->requiresConfirmation()
                     ->modalHeading('Jalankan Jadwal Jurnal')
                     ->modalDescription('Apakah Anda yakin ingin menjalankan jadwal ini sekarang secara manual? Jurnal umum otomatis akan dibuat untuk tanggal rencana berikutnya.')
-                    ->visible(fn (ScheduledJournalEntry $record) => $record->status === 'active' && $record->next_run_at !== null)
+                    ->visible(fn (ScheduledJournalEntry $record) => $record->status === 'active'
+                        && $record->next_run_at !== null
+                        && PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.scheduled_journal_entries.edit'))
                     ->action(function (ScheduledJournalEntry $record) {
+                        abort_unless(PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.scheduled_journal_entries.edit'), 403);
                         $count = app(ProcessScheduledJournalEntries::class)->execute($record, true);
                         if ($count > 0) {
                             Notification::make()

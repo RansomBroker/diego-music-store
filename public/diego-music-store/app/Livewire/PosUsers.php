@@ -10,12 +10,18 @@ use App\Models\Branch;
 use Spatie\Permission\Models\Role;
 use App\Actions\User\CreateUser;
 use App\Actions\User\UpdateUser;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 
 class PosUsers extends Component
 {
     use WithPagination, WithFileUploads;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.users.view'), 403);
+    }
 
     // ── State Tabel & Pencarian ──────────────────────────────────────────
     public string $search = '';
@@ -73,6 +79,7 @@ class PosUsers extends Component
 
     public function openCreate(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.users.create'), 403);
         $this->reset(['name', 'username', 'email', 'password', 'avatar', 'existingAvatarUrl', 'selectedBranches', 'selectedRoles', 'editingId', 'isEditing']);
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         if ($activeBranchId) {
@@ -85,7 +92,9 @@ class PosUsers extends Component
     // ── Modal: Buka Form Edit ────────────────────────────────────────────
     public function openEdit(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.users.edit'), 403);
         $user = User::with(['branches', 'roles'])->findOrFail($id);
+        abort_if($user->hasRole(['owner', 'Owner']) && !PermissionHelper::isOwner(Auth::user()), 403);
 
         $this->editingId        = $id;
         $this->isEditing        = true;
@@ -105,6 +114,7 @@ class PosUsers extends Component
     // ── Hapus Avatar ─────────────────────────────────────────────────────
     public function removeAvatar(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.users.edit'), 403);
         $this->avatar = null;
         $this->existingAvatarUrl = null;
 
@@ -120,6 +130,14 @@ class PosUsers extends Component
     // ── Simpan (Create / Update) ─────────────────────────────────────────
     public function save(CreateUser $createUser, UpdateUser $updateUser): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), ($this->isEditing && $this->editingId) ? 'fo.users.edit' : 'fo.users.create'), 403);
+
+        $selectedRoleIds = array_map('intval', $this->selectedRoles);
+        if (!PermissionHelper::isOwner(Auth::user())) {
+            $protectedRoleIds = Role::whereIn('name', ['owner', 'Owner'])->pluck('id')->map(fn ($id) => (int) $id)->all();
+            abort_if(!empty(array_intersect($selectedRoleIds, $protectedRoleIds)), 403);
+        }
+
         $rules = [
             'name'     => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username,' . ($this->editingId ?? 'NULL'),
@@ -160,6 +178,7 @@ class PosUsers extends Component
 
         if ($this->isEditing) {
             $user = User::findOrFail($this->editingId);
+            abort_if($user->hasRole(['owner', 'Owner']) && !PermissionHelper::isOwner(Auth::user()), 403);
             $updateUser->execute($user, $data);
             Notification::make()->title('User Berhasil Diperbarui')->success()->send();
             $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'User Berhasil Diperbarui');
@@ -176,18 +195,24 @@ class PosUsers extends Component
     // ── Konfirmasi Hapus ─────────────────────────────────────────────────
     public function confirmDelete(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.users.delete'), 403);
         if (Auth::id() === $id) {
             Notification::make()->title('Gagal Hapus')->body('Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif digunakan.')->danger()->send();
             $this->dispatch('toast', type: 'danger', title: 'Gagal Hapus', body: 'Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif digunakan.');
             return;
         }
+        $targetUser = User::findOrFail($id);
+        abort_if($targetUser->hasRole(['owner', 'Owner']), 403);
         $this->deletingId      = $id;
         $this->showDeleteModal = true;
     }
 
     public function destroy(): void
     {
-        User::findOrFail($this->deletingId)->delete();
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.users.delete'), 403);
+        $targetUser = User::findOrFail($this->deletingId);
+        abort_if(Auth::id() === $targetUser->id || $targetUser->hasRole(['owner', 'Owner']), 403);
+        $targetUser->delete();
 
         Notification::make()->title('User Berhasil Dihapus')->success()->send();
         $this->dispatch('toast', type: 'success', title: 'Berhasil', body: 'User Berhasil Dihapus');
@@ -200,7 +225,7 @@ class PosUsers extends Component
     public function render()
     {
         $authUser = Auth::user();
-        $isOwner = $authUser && $authUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $isOwner = PermissionHelper::isOwner($authUser);
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
 
         $query = User::with(['branches', 'roles']);
@@ -212,7 +237,7 @@ class PosUsers extends Component
                 $userBranchIds = $authUser ? $authUser->branches()->pluck('branches.id') : [];
                 $query->whereHas('branches', fn ($q) => $q->whereIn('branches.id', $userBranchIds));
             }
-            $query->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']));
+            $query->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['owner', 'Owner']));
         }
 
         $users = $query->when($this->search, fn ($q) =>
@@ -235,7 +260,7 @@ class PosUsers extends Component
 
         $rolesList = $isOwner
             ? Role::orderBy('name')->get()
-            : Role::whereNotIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin'])->orderBy('name')->get();
+            : Role::whereNotIn('name', ['owner', 'Owner'])->orderBy('name')->get();
 
         return view('livewire.pos-users', [
             'users'           => $users,

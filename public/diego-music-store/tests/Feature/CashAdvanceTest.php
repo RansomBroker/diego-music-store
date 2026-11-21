@@ -185,6 +185,11 @@ class CashAdvanceTest extends TestCase
 
     public function test_employee_cash_advance_filament_resource_navigation_registered(): void
     {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $owner = User::factory()->create(['is_active' => true]);
+        $owner->assignRole($ownerRole);
+        $this->actingAs($owner);
+
         $this->assertTrue(EmployeeCashAdvanceResource::shouldRegisterNavigation());
         $this->assertTrue(EmployeeCashAdvanceResource::canViewAny());
         $this->assertEquals('Manajemen Karyawan', EmployeeCashAdvanceResource::getNavigationGroup());

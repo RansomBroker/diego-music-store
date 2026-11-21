@@ -21,11 +21,13 @@ class PosServiceManagementTest extends TestCase
     {
         parent::setUp();
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create([
             'name' => 'Admin Service',
             'username' => 'admin_service',
             'email' => 'admin_service@example.com',
         ]);
+        $this->user->assignRole($ownerRole);
         $this->actingAs($this->user);
 
         $this->branch = Branch::create([

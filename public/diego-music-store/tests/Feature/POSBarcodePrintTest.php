@@ -11,9 +11,18 @@ class POSBarcodePrintTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function createAuthorizedUser(): User
+    {
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $user = User::factory()->create();
+        $user->assignRole($role);
+
+        return $user;
+    }
+
     public function test_can_render_barcode_print_sheet_via_token(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAuthorizedUser();
 
         $payload = [
             'layout' => '3col',
@@ -62,7 +71,7 @@ class POSBarcodePrintTest extends TestCase
 
     public function test_returns_404_when_token_is_missing_or_expired(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAuthorizedUser();
 
         $response = $this->actingAs($user)->get(route('pos.barcode-print.sheet', ['token' => 'bc_nonexistent_or_expired']));
         $response->assertStatus(404);
@@ -70,7 +79,7 @@ class POSBarcodePrintTest extends TestCase
 
     public function test_backward_compatible_with_data_query_parameter(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAuthorizedUser();
 
         $payload = [
             'layout' => '1col',
@@ -95,7 +104,7 @@ class POSBarcodePrintTest extends TestCase
 
     public function test_can_handle_large_barcode_queue_without_url_length_issues(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAuthorizedUser();
 
         $queue = [];
         for ($i = 1; $i <= 500; $i++) {

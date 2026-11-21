@@ -41,6 +41,8 @@ class MonthlyClosingTest extends TestCase
             'is_active' => true,
         ]);
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $this->user->assignRole($ownerRole);
         $this->user->branches()->attach($this->branch->id);
 
         Account::create(['code' => '4-1000', 'name' => 'Pendapatan Penjualan', 'classification' => 'revenue', 'is_header' => false, 'is_active' => true]);

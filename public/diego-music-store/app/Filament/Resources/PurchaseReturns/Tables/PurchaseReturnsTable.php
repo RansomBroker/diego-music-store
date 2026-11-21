@@ -113,11 +113,12 @@ class PurchaseReturnsTable
                     ->label('Posting')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseReturns\PurchaseReturnResource::canEdit($record))
                     ->requiresConfirmation()
                     ->modalHeading('Posting Retur Pembelian')
                     ->modalDescription('Apakah Anda yakin ingin memposting retur ini? Stok persediaan akan otomatis berkurang dan jurnal retur akan dicatat.')
                     ->action(function (PurchaseReturn $record) {
+                        abort_unless(\App\Filament\Resources\PurchaseReturns\PurchaseReturnResource::canEdit($record), 403);
                         app(PostPurchaseReturn::class)->execute($record);
                         Notification::make()
                             ->title('Retur Pembelian Berhasil Diposting')
@@ -129,7 +130,7 @@ class PurchaseReturnsTable
                     ->label('Edit')
                     ->icon('heroicon-o-pencil-square')
                     ->color('warning')
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseReturns\PurchaseReturnResource::canEdit($record))
                     ->modalHeading(fn (PurchaseReturn $record) => "Edit Draft Retur Pembelian: {$record->return_no}")
                     ->modalWidth('3xl')
                     ->mutateRecordDataUsing(function (PurchaseReturn $record, array $data): array {
@@ -231,7 +232,7 @@ class PurchaseReturnsTable
 
                 DeleteAction::make()
                     ->label('Hapus')
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseReturns\PurchaseReturnResource::canDelete($record))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Draft Retur Pembelian')
                     ->modalDescription('Apakah Anda yakin ingin menghapus draft retur ini? Data retur beserta item barang di dalamnya akan dihapus.')

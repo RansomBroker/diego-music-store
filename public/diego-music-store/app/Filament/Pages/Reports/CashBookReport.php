@@ -35,8 +35,12 @@ class CashBookReport extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        $user = auth()->user();
-        return (bool) ($user && ($user->can('reports.accounting') || $user->hasRole(['owner', 'super_admin'])));
+        return \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.reports.cash_book');
+    }
+
+    public function boot(): void
+    {
+        abort_unless(static::canAccess(), 403);
     }
 
     public ?array $data = [];

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Models\AttendanceViolationLog;
 use App\Models\AttendanceViolationRule;
 use App\Models\Branch;
@@ -16,6 +17,11 @@ use Livewire\WithPagination;
 class PosAttendanceViolations extends Component
 {
     use WithPagination;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.attendance_violations.view'), 403);
+    }
 
     // ── Filters & Navigation ─────────────────────────────────────────────
     public ?int $filterBranchId = null;
@@ -63,6 +69,7 @@ class PosAttendanceViolations extends Component
 
     public function openRuleModal(?int $id = null): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'), 403);
         $this->resetRuleForm();
         if ($id) {
             $rule = AttendanceViolationRule::findOrFail($id);
@@ -92,6 +99,7 @@ class PosAttendanceViolations extends Component
 
     public function saveRule(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'), 403);
         $this->validate([
             'ruleName' => 'required|string|max:255',
             'violationType' => 'required|in:late_in,early_out,unexcused_absence,leave_over_quota,custom',
@@ -140,6 +148,7 @@ class PosAttendanceViolations extends Component
 
     public function toggleRuleStatus(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'), 403);
         $rule = AttendanceViolationRule::findOrFail($id);
         $rule->update(['is_active' => !$rule->is_active]);
 
@@ -152,6 +161,7 @@ class PosAttendanceViolations extends Component
 
     public function deleteRule(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'), 403);
         $rule = AttendanceViolationRule::findOrFail($id);
         $ruleName = $rule->name;
         $rule->delete();
@@ -165,6 +175,7 @@ class PosAttendanceViolations extends Component
 
     public function approveLog(int $logId): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'), 403);
         $log = AttendanceViolationLog::findOrFail($logId);
         $log->update([
             'status' => 'approved',
@@ -180,6 +191,7 @@ class PosAttendanceViolations extends Component
 
     public function waiveLog(int $logId): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'), 403);
         $log = AttendanceViolationLog::findOrFail($logId);
         $log->update([
             'status' => 'waived',
@@ -195,6 +207,7 @@ class PosAttendanceViolations extends Component
 
     public function bulkApproveLogs(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'), 403);
         if (empty($this->selectedLogIds)) {
             return;
         }

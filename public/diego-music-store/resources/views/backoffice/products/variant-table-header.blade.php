@@ -3,7 +3,7 @@
 ])
 
 @php
-    $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+    $canViewCost = \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost');
 
     // Column widths in rem (First column is 13.75rem = 220px)
     $costCols = $canViewCost ? "8.75rem 6.875rem 8.75rem " : "";

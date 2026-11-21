@@ -7,6 +7,7 @@ use App\Filament\Resources\AccountClassifications\Schemas\AccountClassificationF
 use App\Filament\Resources\AccountClassifications\Tables\AccountClassificationsTable;
 use App\Models\AccountClassification;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -14,6 +15,10 @@ use Filament\Tables\Table;
 
 class AccountClassificationResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.account_classifications';
+
     protected static ?string $model = AccountClassification::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;

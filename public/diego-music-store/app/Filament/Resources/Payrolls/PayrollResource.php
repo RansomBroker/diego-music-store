@@ -9,6 +9,7 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -19,6 +20,12 @@ use Illuminate\Support\Facades\DB;
 
 class PayrollResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.payrolls';
+    protected static bool $hasCreatePermission = false;
+    protected static bool $hasDeletePermission = false;
+
     protected static ?string $model = PayrollItem::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
@@ -31,16 +38,6 @@ class PayrollResource extends Resource
 
     protected static ?int $navigationSort = 9;
 
-    public static function shouldRegisterNavigation(): bool
-    {
-        return true;
-    }
-
-    public static function canViewAny(): bool
-    {
-        return true;
-    }
-
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $query = parent::getEloquentQuery();
@@ -51,7 +48,7 @@ class PayrollResource extends Resource
         }
 
         $user = auth()->user();
-        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+        if ($user && !\App\Helpers\BranchHelper::canAccessAllBranches($user)) {
             return $query->whereIn('branch_id', $user->branches()->pluck('branches.id'));
         }
 

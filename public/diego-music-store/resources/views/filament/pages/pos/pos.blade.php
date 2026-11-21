@@ -158,14 +158,16 @@
                                     {{ count($held->cart_data) }} item • Jam {{ $held->created_at->format('H:i') }}
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button type="button" wire:click="restoreHeldTransaction('{{ $held->id }}')" class="px-3 py-1.5 bg-primary hover:bg-primary-light text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer">
-                                    Lanjutkan
-                                </button>
-                                <button type="button" wire:click="deleteHeldTransaction('{{ $held->id }}')" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="Hapus">
-                                    <i class="ph-bold ph-trash text-sm"></i>
-                                </button>
-                            </div>
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.hold'))
+                                <div class="flex items-center gap-2">
+                                    <button type="button" wire:click="restoreHeldTransaction('{{ $held->id }}')" class="px-3 py-1.5 bg-primary hover:bg-primary-light text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer">
+                                        Lanjutkan
+                                    </button>
+                                    <button type="button" wire:click="deleteHeldTransaction('{{ $held->id }}')" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="Hapus">
+                                        <i class="ph-bold ph-trash text-sm"></i>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 @endif

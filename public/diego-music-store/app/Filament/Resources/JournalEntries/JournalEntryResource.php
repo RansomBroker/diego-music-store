@@ -8,6 +8,7 @@ use App\Filament\Resources\JournalEntries\Tables\JournalEntriesTable;
 use App\Filament\Resources\JournalEntries\Widgets\JournalEntryStats;
 use App\Models\JournalEntry;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -15,6 +16,10 @@ use Filament\Tables\Table;
 
 class JournalEntryResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.journal_entries';
+
     protected static ?string $model = JournalEntry::class;
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder

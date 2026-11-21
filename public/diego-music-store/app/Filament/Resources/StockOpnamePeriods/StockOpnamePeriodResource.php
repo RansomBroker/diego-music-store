@@ -7,6 +7,7 @@ use App\Filament\Resources\StockOpnamePeriods\Schemas\StockOpnamePeriodForm;
 use App\Filament\Resources\StockOpnamePeriods\Tables\StockOpnamePeriodsTable;
 use App\Models\StockOpnamePeriod;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -14,6 +15,10 @@ use Filament\Tables\Table;
 
 class StockOpnamePeriodResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.stock_opname_periods';
+
     protected static ?string $model = StockOpnamePeriod::class;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
     protected static ?string $recordTitleAttribute = 'name';
@@ -53,7 +58,7 @@ class StockOpnamePeriodResource extends Resource
         }
 
         $user = auth()->user();
-        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+        if ($user && !\App\Helpers\BranchHelper::canAccessAllBranches($user)) {
             return $query->whereIn('branch_id', $user->branches()->pluck('branches.id'));
         }
 

@@ -85,7 +85,7 @@
                                 wire:click="showDetails({{ $sale->id }})"
                                 title="Lihat Detail"
                             />
-                            @if ($sale->status !== 'cancelled')
+                            @if ($sale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.edit_sale'))
                                 <x-pos.utility.button
                                     href="/pos?edit={{ $sale->id }}"
                                     variant="warning"
@@ -94,7 +94,7 @@
                                     title="Edit Transaksi"
                                 />
                             @endif
-                            @if ($sale->status !== 'cancelled' && $sale->items->sum(fn($item) => $item->quantity - $item->returnItems()->sum('quantity')) > 0)
+                            @if ($sale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.transactions.return') && $sale->items->sum(fn($item) => $item->quantity - $item->returnItems()->sum('quantity')) > 0)
                                 <x-pos.utility.button
                                     type="button"
                                     variant="danger"
@@ -104,15 +104,17 @@
                                     title="Retur Barang"
                                 />
                             @endif
-                            <x-pos.utility.button
-                                type="button"
-                                variant="primary"
-                                size="xs"
-                                icon="ph-printer"
-                                wire:click="printReceipt({{ $sale->id }})"
-                                title="Cetak Struk"
-                            />
-                            @if ($sale->status === 'pending' || (str_contains(strtolower($sale->payment_method), 'piutang') && !str_contains(strtolower($sale->payment_method), 'lunas')))
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.print'))
+                                <x-pos.utility.button
+                                    type="button"
+                                    variant="primary"
+                                    size="xs"
+                                    icon="ph-printer"
+                                    wire:click="printReceipt({{ $sale->id }})"
+                                    title="Cetak Struk"
+                                />
+                            @endif
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.transactions.settle') && ($sale->status === 'pending' || (str_contains(strtolower($sale->payment_method), 'piutang') && !str_contains(strtolower($sale->payment_method), 'lunas'))))
                                 <x-pos.utility.button
                                     type="button"
                                     variant="success"

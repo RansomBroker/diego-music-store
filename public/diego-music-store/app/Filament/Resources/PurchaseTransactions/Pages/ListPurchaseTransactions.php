@@ -20,6 +20,7 @@ class ListPurchaseTransactions extends ListRecords
                 ->label('Import Saldo Awal Hutang')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('success')
+                ->visible(fn (): bool => PurchaseTransactionResource::canCreate())
                 ->modalHeading('Import Saldo Awal Faktur Hutang Supplier')
                 ->modalWidth('4xl')
                 ->modalSubmitAction(false)

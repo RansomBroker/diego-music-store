@@ -25,7 +25,9 @@ class PosBranchPerformanceTest extends TestCase
             'is_active'  => true,
         ]);
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create();
+        $this->user->assignRole($ownerRole);
         $this->user->branches()->attach($this->branch->id);
 
         $this->actingAs($this->user);

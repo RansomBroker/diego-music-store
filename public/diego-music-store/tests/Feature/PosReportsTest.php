@@ -37,12 +37,14 @@ class PosReportsTest extends TestCase
             'is_active' => true,
         ]);
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create([
             'name' => 'Test Admin',
             'username' => 'testadmin',
             'email' => 'admin@test.com',
             'is_active' => true,
         ]);
+        $this->user->assignRole($ownerRole);
 
         $this->user->branches()->attach($this->branch->id);
     }

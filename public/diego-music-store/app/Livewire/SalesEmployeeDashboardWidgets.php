@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Actions\SalesDashboard\GetSalesEmployeeDashboardData;
+use App\Helpers\PermissionHelper;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -14,7 +15,7 @@ class SalesEmployeeDashboardWidgets extends Component
     public function mount(): void
     {
         $user = Auth::user();
-        $isOwner = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $isOwner = PermissionHelper::can($user, 'fo.dashboard.owner_widgets');
 
         if ($isOwner) {
             $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
@@ -32,7 +33,7 @@ class SalesEmployeeDashboardWidgets extends Component
     public function render(GetSalesEmployeeDashboardData $action)
     {
         $currentUser = Auth::user();
-        $isOwner = $currentUser && $currentUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $isOwner = PermissionHelper::can($currentUser, 'fo.dashboard.owner_widgets');
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
 
         // Non-management users must never choose another employee through Livewire state.

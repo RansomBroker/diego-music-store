@@ -97,8 +97,16 @@ class POS extends Component
 
     public function boot(): void
     {
-        // Sales staff use the dedicated read-only catalog instead of the transactional POS.
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        $user = Auth::user();
+        abort_unless(\App\Helpers\PermissionHelper::canAccessFrontofficeFeature($user, 'fo.pos.view'), 403);
+        if ($this->editingSaleId) {
+            abort_unless(\App\Helpers\PermissionHelper::can($user, 'fo.pos.edit_sale'), 403);
+        }
+    }
+
+    public function updatedDiscountValue($value): void
+    {
+        abort_unless(\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.discount'), 403);
     }
 
     public function mount()
@@ -151,6 +159,7 @@ class POS extends Component
         // Load sale for editing if query parameter is present
         $saleId = request()->query('edit');
         if ($saleId) {
+            abort_unless(\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.edit_sale'), 403);
             $sale = \App\Models\Sale::with(['items.variant.product', 'items.variant.tierPrices', 'customer', 'salesRep'])->find($saleId);
             if ($sale) {
                 if ($sale->branch_id !== $this->selectedBranchId) {

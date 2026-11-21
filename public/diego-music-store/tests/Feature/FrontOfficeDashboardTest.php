@@ -36,7 +36,14 @@ class FrontOfficeDashboardTest extends TestCase
 
     public function test_it_renders_session_inactive_when_no_active_session(): void
     {
-        $user = User::factory()->create();
+        $role = Role::firstOrCreate(['name' => 'fo_viewer', 'guard_name' => 'web']);
+        foreach (['fo.access', 'fo.dashboard.view'] as $perm) {
+            \Spatie\Permission\Models\Permission::findOrCreate($perm, 'web');
+        }
+        $role->givePermissionTo(['fo.access', 'fo.dashboard.view']);
+
+        $user = User::factory()->create(['is_active' => true]);
+        $user->assignRole($role);
         $user->branches()->attach($this->branch->id);
 
         $response = $this->actingAs($user)->get(route('pos.front-office'));
@@ -84,6 +91,7 @@ class FrontOfficeDashboardTest extends TestCase
 
     public function test_it_renders_clock_in_button_for_regular_employee(): void
     {
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
         Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
         $user = User::factory()->create();
         $user->assignRole('karyawan');
@@ -98,15 +106,17 @@ class FrontOfficeDashboardTest extends TestCase
 
     public function test_it_hides_shortcut_navigation_menu_for_non_owner(): void
     {
-        Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
-        $karyawanUser = User::factory()->create();
-        $karyawanUser->assignRole('karyawan');
-        $karyawanUser->branches()->attach($this->branch->id);
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+        $basicRole = Role::firstOrCreate(['name' => 'fo_basic', 'guard_name' => 'web']);
+        $basicRole->syncPermissions(['fo.access', 'fo.dashboard.view']);
+        $basicUser = User::factory()->create();
+        $basicUser->assignRole($basicRole);
+        $basicUser->branches()->attach($this->branch->id);
 
-        $response = $this->actingAs($karyawanUser)->get(route('pos.front-office'));
+        $response = $this->actingAs($basicUser)->get(route('pos.front-office'));
 
         $response->assertStatus(200);
-        // Non-owner must NOT see the quick navigation shortcut tiles
+        // Role without tile permissions must NOT see the quick navigation shortcut tiles
         $response->assertDontSee('Pintasan Menu POS');
         $response->assertDontSee('Buka halaman kasir');
         $response->assertDontSee('pantau tugas');

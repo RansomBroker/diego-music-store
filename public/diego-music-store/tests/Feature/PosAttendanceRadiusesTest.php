@@ -24,7 +24,9 @@ class PosAttendanceRadiusesTest extends TestCase
             'is_active' => true,
         ]);
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         $this->actingAs($user);
 
         Livewire::test(PosAttendanceRadiuses::class)

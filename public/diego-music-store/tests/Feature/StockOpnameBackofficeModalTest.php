@@ -40,7 +40,7 @@ class StockOpnameBackofficeModalTest extends TestCase
         ]);
 
         $this->adminUser = User::factory()->create(['is_active' => true]);
-        $this->adminUser->assignRole('admin');
+        $this->adminUser->assignRole('owner');
         $this->adminUser->branches()->attach($this->branch->id);
         $this->adminUser->employee()->update([
             'branch_id' => $this->branch->id,

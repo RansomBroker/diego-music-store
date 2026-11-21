@@ -56,13 +56,9 @@ class StockOpnamePeriodsTable
 
                 EditAction::make()
                     ->modalWidth('4xl')
-                    ->visible(fn (StockOpnamePeriod $record) => $record->status === StockOpnamePeriod::STATUS_DRAFT)
+                    ->visible(fn (StockOpnamePeriod $record) => $record->status === StockOpnamePeriod::STATUS_DRAFT && \App\Filament\Resources\StockOpnamePeriods\StockOpnamePeriodResource::canEdit($record))
                     ->mutateFormDataUsing(function (array $data, StockOpnamePeriod $record): array {
-                        $user = auth()->user();
-                        $allowedRoles = ['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'];
-                        if (!$user || !$user->hasRole($allowedRoles)) {
-                            abort(403);
-                        }
+                        abort_unless(\App\Filament\Resources\StockOpnamePeriods\StockOpnamePeriodResource::canEdit($record), 403);
 
                         $data['branch_id'] = $record->branch_id;
                         $data['period'] = $record->period->toDateString();
@@ -79,13 +75,9 @@ class StockOpnamePeriodsTable
                     ->requiresConfirmation()
                     ->modalHeading('Aktifkan Periode Stock Opname?')
                     ->modalDescription('Setelah aktif, daftar penugasan dikunci dan tugas siap dikerjakan karyawan.')
-                    ->visible(fn (StockOpnamePeriod $record) => $record->status === StockOpnamePeriod::STATUS_DRAFT)
+                    ->visible(fn (StockOpnamePeriod $record) => $record->status === StockOpnamePeriod::STATUS_DRAFT && \App\Filament\Resources\StockOpnamePeriods\StockOpnamePeriodResource::canEdit($record))
                     ->action(function (StockOpnamePeriod $record): void {
-                        $user = auth()->user();
-                        $allowedRoles = ['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'];
-                        if (!$user || !$user->hasRole($allowedRoles)) {
-                            abort(403);
-                        }
+                        abort_unless(\App\Filament\Resources\StockOpnamePeriods\StockOpnamePeriodResource::canEdit($record), 403);
 
                         try {
                             app(ActivateStockOpnamePeriod::class)->execute($record);
@@ -108,7 +100,7 @@ class StockOpnamePeriodsTable
                     ->icon('heroicon-o-clipboard-document-check')
                     ->color('warning')
                     ->url(fn (StockOpnamePeriod $record) => \App\Filament\Pages\StockOpnameReview::getUrl(['period_id' => $record->id]))
-                    ->visible(fn (StockOpnamePeriod $record) => in_array($record->status, [StockOpnamePeriod::STATUS_REVIEW, StockOpnamePeriod::STATUS_ACTIVE])),
+                    ->visible(fn (StockOpnamePeriod $record) => in_array($record->status, [StockOpnamePeriod::STATUS_REVIEW, StockOpnamePeriod::STATUS_ACTIVE]) && \App\Filament\Pages\StockOpnameReview::canAccess()),
 
                 Action::make('finalize')
                     ->label('Finalisasi')
@@ -120,13 +112,10 @@ class StockOpnamePeriodsTable
                     ->modalSubmitActionLabel('Ya, Finalisasi')
                     ->visible(fn (StockOpnamePeriod $record) => in_array($record->status, [StockOpnamePeriod::STATUS_ACTIVE, StockOpnamePeriod::STATUS_REVIEW], true)
                         && $record->assignments()->exists()
-                        && $record->assignments()->where('status', '!=', StockOpnameAssignment::STATUS_COMPLETED)->doesntExist())
+                        && $record->assignments()->where('status', '!=', StockOpnameAssignment::STATUS_COMPLETED)->doesntExist()
+                        && \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), ['bo.stock_opname_periods.edit', 'bo.stock_opname_review.approve']))
                     ->action(function (StockOpnamePeriod $record): void {
-                        $user = auth()->user();
-                        $allowedRoles = ['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'];
-                        if (!$user || !$user->hasRole($allowedRoles)) {
-                            abort(403);
-                        }
+                        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), ['bo.stock_opname_periods.edit', 'bo.stock_opname_review.approve']), 403);
 
                         try {
                             $opname = app(FinalizeStockOpnamePeriod::class)->execute($record);
@@ -152,13 +141,9 @@ class StockOpnamePeriodsTable
                     ->requiresConfirmation()
                     ->modalHeading('Batalkan Periode Stock Opname?')
                     ->modalDescription('Periode ini akan ditandai dibatalkan dan tidak dapat dilanjutkan kembali.')
-                    ->visible(fn (StockOpnamePeriod $record) => in_array($record->status, [StockOpnamePeriod::STATUS_DRAFT, StockOpnamePeriod::STATUS_ACTIVE]))
+                    ->visible(fn (StockOpnamePeriod $record) => in_array($record->status, [StockOpnamePeriod::STATUS_DRAFT, StockOpnamePeriod::STATUS_ACTIVE]) && \App\Filament\Resources\StockOpnamePeriods\StockOpnamePeriodResource::canEdit($record))
                     ->action(function (StockOpnamePeriod $record): void {
-                        $user = auth()->user();
-                        $allowedRoles = ['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'];
-                        if (!$user || !$user->hasRole($allowedRoles)) {
-                            abort(403);
-                        }
+                        abort_unless(\App\Filament\Resources\StockOpnamePeriods\StockOpnamePeriodResource::canEdit($record), 403);
 
                         $record->update(['status' => StockOpnamePeriod::STATUS_CANCELLED]);
 
@@ -170,7 +155,8 @@ class StockOpnamePeriodsTable
 
                 DeleteAction::make()
                     ->visible(fn (StockOpnamePeriod $record) => $record->status === StockOpnamePeriod::STATUS_DRAFT
-                        && $record->assignments()->doesntExist()),
+                        && $record->assignments()->doesntExist()
+                        && \App\Filament\Resources\StockOpnamePeriods\StockOpnamePeriodResource::canDelete($record)),
             ]);
     }
 }

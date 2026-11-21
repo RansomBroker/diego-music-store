@@ -8,12 +8,18 @@ use App\Models\Unit;
 use App\Models\Branch;
 use App\Actions\Unit\CreateUnit;
 use App\Actions\Unit\UpdateUnit;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 
 class PosUnits extends Component
 {
     use WithPagination;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.units.view'), 403);
+    }
 
     // ── State Tabel & Pencarian ──────────────────────────────────────────
     public string $search = '';
@@ -75,6 +81,7 @@ class PosUnits extends Component
     // ── Modal: Buka Form Tambah ──────────────────────────────────────────
     public function openCreate(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.units.create'), 403);
         $this->reset(['name', 'code', 'base_unit_id', 'conversion_factor', 'editingId', 'isEditing']);
         $this->is_active = true;
         $this->showModal = true;
@@ -83,6 +90,7 @@ class PosUnits extends Component
     // ── Modal: Buka Form Edit ────────────────────────────────────────────
     public function openEdit(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.units.edit'), 403);
         $unit = Unit::findOrFail($id);
 
         $this->editingId         = $id;
@@ -99,6 +107,7 @@ class PosUnits extends Component
     // ── Simpan (Create / Update) ─────────────────────────────────────────
     public function save(CreateUnit $createUnit, UpdateUnit $updateUnit): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), $this->isEditing ? 'fo.units.edit' : 'fo.units.create'), 403);
         $rules = [
             'name'              => 'required|string|max:255',
             'code'              => 'required|string|max:255|unique:units,code,' . ($this->editingId ?? 'NULL'),
@@ -141,12 +150,14 @@ class PosUnits extends Component
     // ── Konfirmasi Hapus ─────────────────────────────────────────────────
     public function confirmDelete(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.units.delete'), 403);
         $this->deletingId      = $id;
         $this->showDeleteModal = true;
     }
 
     public function destroy(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.units.delete'), 403);
         $unit = Unit::findOrFail($this->deletingId);
 
         // Check if this unit is referenced as a base unit for others

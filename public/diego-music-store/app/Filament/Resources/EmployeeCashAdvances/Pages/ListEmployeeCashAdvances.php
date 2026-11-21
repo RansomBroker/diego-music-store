@@ -20,6 +20,7 @@ class ListEmployeeCashAdvances extends ListRecords
                 ->label('Ajukan Kasbon Karyawan')
                 ->color('primary')
                 ->icon('heroicon-o-plus')
+                ->visible(fn (): bool => \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.create'))
                 ->form([
                     Forms\Components\Select::make('employee_id')
                         ->label('Karyawan')
@@ -45,6 +46,7 @@ class ListEmployeeCashAdvances extends ListRecords
                         ->label('Alasan / Keperluan Kasbon'),
                 ])
                 ->action(function (array $data) {
+                    abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.create'), 403);
                     try {
                         $advance = app(CreateCashAdvanceRequest::class)->execute(
                             (int) $data['employee_id'],

@@ -8,12 +8,18 @@ use App\Models\Voucher;
 use App\Models\Branch;
 use App\Actions\Voucher\CreateVoucher;
 use App\Actions\Voucher\UpdateVoucher;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 
 class PosVouchers extends Component
 {
     use WithPagination;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.vouchers.view'), 403);
+    }
 
     // ── Table State ──────────────────────────────────────────────────────
     public string $search = '';
@@ -75,12 +81,14 @@ class PosVouchers extends Component
 
     public function openCreate(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.vouchers.create'), 403);
         $this->reset(['code', 'name', 'type', 'value', 'min_spend', 'valid_until', 'max_uses', 'is_active', 'editingId', 'isEditing']);
         $this->showModal = true;
     }
 
     public function openEdit(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.vouchers.edit'), 403);
         $voucher = Voucher::findOrFail($id);
 
         $this->editingId = $id;
@@ -99,6 +107,7 @@ class PosVouchers extends Component
 
     public function save(CreateVoucher $createAction, UpdateVoucher $updateAction): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), $this->isEditing ? 'fo.vouchers.edit' : 'fo.vouchers.create'), 403);
         $rules = [
             'code' => 'required|string|max:100|unique:vouchers,code,' . ($this->editingId ?? 'NULL'),
             'name' => 'required|string|max:255',
@@ -145,12 +154,14 @@ class PosVouchers extends Component
 
     public function confirmDelete(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.vouchers.delete'), 403);
         $this->deletingId = $id;
         $this->showDeleteModal = true;
     }
 
     public function destroy(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.vouchers.delete'), 403);
         $voucher = Voucher::findOrFail($this->deletingId);
         $voucher->delete();
 

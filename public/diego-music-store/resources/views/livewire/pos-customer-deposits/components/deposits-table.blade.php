@@ -109,38 +109,42 @@
                     <x-pos.table.td class="text-center">
                         <div class="inline-flex items-center gap-1.5 justify-center">
                             @if ($deposit->isPending())
-                                <!-- Pelunasan Button -->
-                                <x-pos.utility.button
-                                    type="button"
-                                    variant="success"
-                                    size="xs"
-                                    icon="ph-check-circle"
-                                    wire:click="openSettleModal({{ $deposit->id }})"
-                                    title="Pelunasan Pesanan"
-                                >
-                                    Pelunasan
-                                </x-pos.utility.button>
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customer_deposits.edit'))
+                                    <!-- Pelunasan Button -->
+                                    <x-pos.utility.button
+                                        type="button"
+                                        variant="success"
+                                        size="xs"
+                                        icon="ph-check-circle"
+                                        wire:click="openSettleModal({{ $deposit->id }})"
+                                        title="Pelunasan Pesanan"
+                                    >
+                                        Pelunasan
+                                    </x-pos.utility.button>
 
-                                <!-- Edit Button -->
-                                <x-pos.utility.button
-                                    type="button"
-                                    variant="warning"
-                                    size="xs"
-                                    icon="ph-pencil-simple"
-                                    wire:click="openEditModal({{ $deposit->id }})"
-                                    title="Edit Deposit"
-                                />
+                                    <!-- Edit Button -->
+                                    <x-pos.utility.button
+                                        type="button"
+                                        variant="warning"
+                                        size="xs"
+                                        icon="ph-pencil-simple"
+                                        wire:click="openEditModal({{ $deposit->id }})"
+                                        title="Edit Deposit"
+                                    />
+                                @endif
 
-                                <!-- Delete / Cancel Button -->
-                                <x-pos.utility.button
-                                    type="button"
-                                    variant="danger"
-                                    size="xs"
-                                    icon="ph-trash"
-                                    wire:confirm="Yakin ingin membatalkan deposit ini? Jurnal setoran akan dibatalkan."
-                                    wire:click="cancelDeposit({{ $deposit->id }})"
-                                    title="Batalkan Deposit"
-                                />
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customer_deposits.delete'))
+                                    <!-- Delete / Cancel Button -->
+                                    <x-pos.utility.button
+                                        type="button"
+                                        variant="danger"
+                                        size="xs"
+                                        icon="ph-trash"
+                                        wire:confirm="Yakin ingin membatalkan deposit ini? Jurnal setoran akan dibatalkan."
+                                        wire:click="cancelDeposit({{ $deposit->id }})"
+                                        title="Batalkan Deposit"
+                                    />
+                                @endif
                             @else
                                 <span class="text-xs text-slate-400 italic">Selesai</span>
                             @endif

@@ -18,7 +18,7 @@ class ReopenCashSession
      */
     public function execute(CashSession $session): CashSession
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission(Auth::user(), 'fo.cash_session.reopen');
         abort_unless(Auth::check(), 403);
         $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();

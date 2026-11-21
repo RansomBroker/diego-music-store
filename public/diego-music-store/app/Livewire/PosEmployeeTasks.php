@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Models\Employee;
 use App\Models\EmployeeTask;
 use App\Notifications\NewEmployeeTaskNotification;
@@ -37,6 +38,11 @@ class PosEmployeeTasks extends Component
         'employee_ids.*' => 'exists:employees,id',
     ];
 
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.employee_tasks.view'), 403);
+    }
+
     public function mount()
     {
         // Must be logged in
@@ -57,6 +63,7 @@ class PosEmployeeTasks extends Component
 
     public function openModal()
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employee_tasks.create'), 403);
         $this->resetValidation();
         $this->isEdit = false;
         $this->taskId = null;
@@ -73,6 +80,7 @@ class PosEmployeeTasks extends Component
 
     public function editTask($id)
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employee_tasks.edit'), 403);
         $this->resetValidation();
         $task = \App\Models\EmployeeTask::find($id);
         if ($task) {
@@ -87,6 +95,7 @@ class PosEmployeeTasks extends Component
 
     public function saveTask()
     {
+        abort_unless(PermissionHelper::can(auth()->user(), ($this->isEdit && $this->taskId) ? 'fo.employee_tasks.edit' : 'fo.employee_tasks.create'), 403);
         $this->validate();
 
         $owner = auth()->user();
@@ -139,6 +148,7 @@ class PosEmployeeTasks extends Component
 
     public function approveTask($id)
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employee_tasks.edit'), 403);
         $task = EmployeeTask::find($id);
         if ($task && $task->status === 'completed') {
             $task->update(['status' => 'approved']);
@@ -152,6 +162,7 @@ class PosEmployeeTasks extends Component
 
     public function rejectTask($id)
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employee_tasks.edit'), 403);
         $task = EmployeeTask::find($id);
         if ($task && ($task->status === 'completed' || $task->status === 'pending')) {
             $task->update(['status' => 'rejected']);
@@ -170,7 +181,12 @@ class PosEmployeeTasks extends Component
 
     public function markAsDone($id)
     {
-        $task = EmployeeTask::find($id);
+        $task = EmployeeTask::with('employee')->find($id);
+        abort_unless(
+            ($task && $task->employee && (int) $task->employee->user_id === (int) auth()->id())
+            || PermissionHelper::can(auth()->user(), 'fo.employee_tasks.edit'),
+            403
+        );
         if ($task && ($task->status === 'pending' || $task->status === 'rejected')) {
             $task->update(['status' => 'completed']);
             
@@ -184,12 +200,14 @@ class PosEmployeeTasks extends Component
 
     public function confirmDelete($id)
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employee_tasks.delete'), 403);
         $this->deletingId = $id;
         $this->showDeleteModal = true;
     }
 
     public function destroyTask()
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employee_tasks.delete'), 403);
         if ($this->deletingId) {
             $task = EmployeeTask::find($this->deletingId);
             if ($task) {
@@ -223,14 +241,13 @@ class PosEmployeeTasks extends Component
 
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
 
-        // If not admin/owner, maybe they only see their own tasks.
-        if ($user->hasRole(['owner', 'admin', 'super_admin'])) {
+        if (PermissionHelper::can($user, ['fo.employee_tasks.create', 'fo.employee_tasks.edit', 'fo.employee_tasks.delete'])) {
             $query->where('owner_id', $user->id);
             if ($activeBranchId) {
                 $query->whereHas('employee', fn($q) => $q->where('branch_id', $activeBranchId));
             }
         } else {
-            // Employee view (if they access this page)
+            // Employee view (sees own tasks)
             $query->whereHas('employee', function($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
@@ -241,7 +258,7 @@ class PosEmployeeTasks extends Component
             ->when($activeBranchId, fn($q) => $q->where('branch_id', $activeBranchId))
             ->whereHas('user', function ($query) {
                 $query->whereDoesntHave('roles', function ($q) {
-                    $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
+                    $q->whereIn('name', ['owner', 'Owner']);
                 });
             })
             ->get();

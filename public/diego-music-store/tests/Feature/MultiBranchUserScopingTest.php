@@ -28,6 +28,10 @@ class MultiBranchUserScopingTest extends TestCase
 
         $ownerRole = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        foreach (['fo.access', 'fo.users.view', 'bo.access', 'bo.users.view'] as $perm) {
+            \Spatie\Permission\Models\Permission::findOrCreate($perm, 'web');
+        }
+        $adminRole->givePermissionTo(['fo.access', 'fo.users.view', 'bo.access', 'bo.users.view']);
         $cashierRole = Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
 
         $this->branch1 = Branch::create(['name' => 'Cabang Jakarta', 'is_active' => true]);

@@ -16,8 +16,7 @@ class CustomErrorPagesTest extends TestCase
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
-        Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
     }
 
     /** @test */
@@ -28,7 +27,7 @@ class CustomErrorPagesTest extends TestCase
             'name'  => 'Budi Kasir',
             'email' => 'budi@diegomusic.com',
         ]);
-        $user->assignRole('cashier');
+        $user->assignRole('karyawan');
 
         $this->actingAs($user);
 

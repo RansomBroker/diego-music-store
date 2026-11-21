@@ -76,7 +76,7 @@ class SupplierPaymentsTable
             ->actions([
                 EditAction::make()
                     ->modalWidth('7xl')
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\SupplierPayments\SupplierPaymentResource::canEdit($record))
                     ->mutateRecordDataUsing(function (Model $record, array $data): array {
                         $payment = $record;
                         $data['items'] = [];
@@ -157,11 +157,12 @@ class SupplierPaymentsTable
                     ->label('Batalkan')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn ($record) => in_array($record->status, ['draft', 'posted']))
+                    ->visible(fn ($record) => in_array($record->status, ['draft', 'posted']) && \App\Filament\Resources\SupplierPayments\SupplierPaymentResource::canEdit($record))
                     ->requiresConfirmation()
                     ->modalHeading('Batalkan Pembayaran Supplier')
                     ->modalDescription('Apakah Anda yakin ingin membatalkan pembayaran ini? Saldo hutang supplier akan diperbarui dan jurnal akan dibatalkan.')
                     ->action(function ($record) {
+                        abort_unless(\App\Filament\Resources\SupplierPayments\SupplierPaymentResource::canEdit($record), 403);
                         app(CancelSupplierPayment::class)->execute($record);
                         Notification::make()
                             ->title('Pembayaran Supplier Berhasil Dibatalkan')
@@ -170,7 +171,7 @@ class SupplierPaymentsTable
                     }),
 
                 DeleteAction::make()
-                    ->visible(fn ($record) => $record->status === 'draft'),
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\SupplierPayments\SupplierPaymentResource::canDelete($record)),
 
                 Action::make('lihat_jurnal')
                     ->label('Jurnal')

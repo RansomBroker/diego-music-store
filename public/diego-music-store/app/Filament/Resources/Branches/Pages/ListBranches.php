@@ -23,10 +23,12 @@ class ListBranches extends ListRecords
                 ->label('Sinkronisasi 97 Akun COA Cabang')
                 ->icon('heroicon-o-arrow-path')
                 ->color('info')
+                ->visible(fn () => BranchResource::canEdit(new \App\Models\Branch()))
                 ->requiresConfirmation()
                 ->modalHeading('Sinkronisasi 97 Akun COA Cabang')
                 ->modalDescription('Apakah Anda ingin memastikan seluruh cabang memiliki 97 akun COA resmi (lengkap seperti cabang utama) secara otomatis?')
                 ->action(function () {
+                    abort_unless(BranchResource::canEdit(new \App\Models\Branch()), 403);
                     $count = \App\Actions\Branch\ProvisionBranchCoaAccounts::executeAll();
                     Notification::make()
                         ->title('Sinkronisasi Berhasil')

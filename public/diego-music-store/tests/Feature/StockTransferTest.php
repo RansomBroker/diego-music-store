@@ -38,7 +38,7 @@ class StockTransferTest extends TestCase
         parent::setUp();
         $this->withoutVite();
 
-        $role = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $role = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create(['is_active' => true]);
         $this->user->assignRole($role);
         $this->actingAs($this->user);

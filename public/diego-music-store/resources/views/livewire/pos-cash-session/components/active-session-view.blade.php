@@ -106,16 +106,18 @@
             </div>
         </div>
 
-        <div class="mt-8 border-t border-slate-100 dark:border-slate-700/50 pt-6">
-            <x-pos.utility.button
-                type="button"
-                variant="primary"
-                wire:click="confirmCloseSession"
-                class="w-full justify-center !py-3.5 !rounded-xl"
-                icon="ph-power"
-            >
-                Tutup Shift & Cetak Z-Report
-            </x-pos.utility.button>
-        </div>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.cash_session.close'))
+            <div class="mt-8 border-t border-slate-100 dark:border-slate-700/50 pt-6">
+                <x-pos.utility.button
+                    type="button"
+                    variant="primary"
+                    wire:click="confirmCloseSession"
+                    class="w-full justify-center !py-3.5 !rounded-xl"
+                    icon="ph-power"
+                >
+                    Tutup Shift & Cetak Z-Report
+                </x-pos.utility.button>
+            </div>
+        @endif
     </div>
 </div>

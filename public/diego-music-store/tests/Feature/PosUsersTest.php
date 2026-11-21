@@ -37,6 +37,10 @@ class PosUsersTest extends TestCase
         $this->user->branches()->attach($this->branch);
 
         $this->adminRole = Role::create(['name' => 'admin', 'guard_name' => 'web']);
+        foreach (['fo.access', 'fo.users.view', 'fo.users.create', 'fo.users.edit', 'fo.users.delete'] as $perm) {
+            \Spatie\Permission\Models\Permission::findOrCreate($perm, 'web');
+        }
+        $this->adminRole->givePermissionTo(['fo.access', 'fo.users.view', 'fo.users.create', 'fo.users.edit', 'fo.users.delete']);
         $this->user->assignRole($this->adminRole);
     }
 
@@ -81,8 +85,10 @@ class PosUsersTest extends TestCase
     /** @test */
     public function it_can_sort_users()
     {
-        User::factory()->create(['name' => 'Zack', 'username' => 'zack_sales', 'email' => 'zack@example.com']);
-        User::factory()->create(['name' => 'Abdi', 'username' => 'abdi_sales', 'email' => 'abdi@example.com']);
+        $zack = User::factory()->create(['name' => 'Zack', 'username' => 'zack_sales', 'email' => 'zack@example.com']);
+        $abdi = User::factory()->create(['name' => 'Abdi', 'username' => 'abdi_sales', 'email' => 'abdi@example.com']);
+        $zack->branches()->attach($this->branch);
+        $abdi->branches()->attach($this->branch);
 
         // Default sort is by name asc -> Abdi, Kiki, Zack
         Livewire::test('App\Livewire\PosUsers')

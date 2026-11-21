@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Helpers\PermissionHelper;
 use App\Helpers\ReportHelper;
 use App\Models\Branch;
 use Illuminate\Support\Carbon;
@@ -22,7 +23,7 @@ class PosReportsDailyCash extends Component
 
     public function boot(): void
     {
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.reports.daily_cash'), 403);
     }
 
     public function updatingPerPage(): void

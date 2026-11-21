@@ -18,10 +18,13 @@ class PayrollPayslipTest extends TestCase
 
     public function test_individual_payslip_pdf_view_renders_overtime_and_components(): void
     {
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
         $branch = Branch::create(['name' => 'Cabang Slip Test', 'code' => 'CBG-SLIP-01', 'is_active' => true]);
         $user = User::factory()->create();
-        $employee = Employee::create([
-            'user_id' => $user->id,
+        $user->assignRole('karyawan');
+        $user->branches()->attach($branch->id);
+        $employee = $user->employee;
+        $employee->update([
             'branch_id' => $branch->id,
             'nik' => 'EMP-SLIP-01',
             'name' => 'Karyawan Slip A',
@@ -59,9 +62,10 @@ class PayrollPayslipTest extends TestCase
     public function test_bulk_payslip_pdf_view_renders_all_employees(): void
     {
         $branch = Branch::create(['name' => 'Cabang Bulk Test', 'code' => 'CBG-BULK-01', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         $employee1 = Employee::create([
-            'user_id' => $user->id,
             'branch_id' => $branch->id,
             'nik' => 'EMP-BULK-01',
             'name' => 'Karyawan Bulk 1',
@@ -88,6 +92,11 @@ class PayrollPayslipTest extends TestCase
 
     public function test_payroll_resource_navigation_registered(): void
     {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $owner = User::factory()->create(['is_active' => true]);
+        $owner->assignRole($ownerRole);
+        $this->actingAs($owner);
+
         $this->assertTrue(\App\Filament\Resources\Payrolls\PayrollResource::shouldRegisterNavigation());
         $this->assertTrue(\App\Filament\Resources\Payrolls\PayrollResource::canViewAny());
         $this->assertEquals('Manajemen Karyawan', \App\Filament\Resources\Payrolls\PayrollResource::getNavigationGroup());
@@ -117,9 +126,10 @@ class PayrollPayslipTest extends TestCase
     public function test_pos_payroll_livewire_component_lifecycle(): void
     {
         $branch = Branch::create(['name' => 'Cabang LW Test', 'code' => 'CBG-LW-01', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         Employee::create([
-            'user_id' => $user->id,
             'branch_id' => $branch->id,
             'nik' => 'EMP-LW-01',
             'name' => 'Karyawan Livewire',

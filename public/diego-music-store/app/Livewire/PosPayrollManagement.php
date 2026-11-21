@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Actions\Payroll\GenerateMonthlyPayroll;
 use App\Actions\Payroll\ProcessPayrollPayment;
 use App\Helpers\BranchHelper;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use App\Models\Payroll;
 use App\Models\PayrollItem;
@@ -16,6 +17,11 @@ class PosPayrollManagement extends Component
 {
     public string $filterMonth = '';
     public string $filterBranchId = '';
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.payroll.view'), 403);
+    }
 
     // Modal Edit Payroll Item state
     public bool $showEditItemModal = false;
@@ -43,6 +49,7 @@ class PosPayrollManagement extends Component
 
     public function generatePayroll(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.payroll.create'), 403);
         try {
             $branchId = !empty($this->filterBranchId) ? (int) $this->filterBranchId : null;
             $payroll = app(GenerateMonthlyPayroll::class)->execute($this->filterMonth, $branchId, auth()->user());
@@ -87,6 +94,7 @@ class PosPayrollManagement extends Component
 
     public function openEditItemModal(int $itemId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.payroll.edit'), 403);
         $item = PayrollItem::with('employee')->findOrFail($itemId);
         $this->editingItemId = $item->id;
         $this->editingEmployeeName = $item->employee->name ?? 'Karyawan';
@@ -104,6 +112,7 @@ class PosPayrollManagement extends Component
 
     public function saveItemDetails(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.payroll.edit'), 403);
         if (!$this->editingItemId) {
             return;
         }
@@ -151,6 +160,7 @@ class PosPayrollManagement extends Component
 
     public function approvePayroll(int $payrollId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.payroll.edit'), 403);
         try {
             app(\App\Actions\Payroll\ApprovePayroll::class)->execute($payrollId, auth()->user());
 
@@ -180,6 +190,7 @@ class PosPayrollManagement extends Component
 
     public function cancelPayroll(int $payrollId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.payroll.delete'), 403);
         try {
             app(\App\Actions\Payroll\CancelPayroll::class)->execute($payrollId, auth()->user());
 
@@ -209,6 +220,7 @@ class PosPayrollManagement extends Component
 
     public function processPayment(int $payrollId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.payroll.edit'), 403);
         try {
             app(ProcessPayrollPayment::class)->execute($payrollId, auth()->user());
 

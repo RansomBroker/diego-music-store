@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\ProductVariant;
 use App\Models\Branch;
 use App\Helpers\BarcodeHelper;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
@@ -14,8 +15,7 @@ class PosBarcodePrint extends Component
 {
     public function boot(): void
     {
-        // Sales staff have read-only access to the product catalog only.
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.barcode_print.view'), 403);
     }
 
     // Modal & Product Selection Properties

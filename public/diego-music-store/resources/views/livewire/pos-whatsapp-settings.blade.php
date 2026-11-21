@@ -158,26 +158,28 @@
 
                     </div>
 
-                    <!-- Action Buttons Toolbar -->
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-700/80">
-                        <button
-                            type="button"
-                            wire:click="openTestModal"
-                            class="w-full sm:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-2xl shadow-sm hover:shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                        >
-                            <i class="ph-bold ph-paper-plane-tilt text-base"></i>
-                            <span>Test Koneksi WhatsApp Modal</span>
-                        </button>
+                    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.whatsapp_settings.edit'))
+                        <!-- Action Buttons Toolbar -->
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-700/80">
+                            <button
+                                type="button"
+                                wire:click="openTestModal"
+                                class="w-full sm:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-2xl shadow-sm hover:shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                            >
+                                <i class="ph-bold ph-paper-plane-tilt text-base"></i>
+                                <span>Test Koneksi WhatsApp Modal</span>
+                            </button>
 
-                        <button
-                            type="submit"
-                            wire:loading.attr="disabled"
-                            class="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary/90 text-white font-black text-xs rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                        >
-                            <i class="ph-bold ph-floppy-disk text-base"></i>
-                            <span>Simpan Pengaturan WA Cabang</span>
-                        </button>
-                    </div>
+                            <button
+                                type="submit"
+                                wire:loading.attr="disabled"
+                                class="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary/90 text-white font-black text-xs rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                            >
+                                <i class="ph-bold ph-floppy-disk text-base"></i>
+                                <span>Simpan Pengaturan WA Cabang</span>
+                            </button>
+                        </div>
+                    @endif
                 </form>
 
             </div>

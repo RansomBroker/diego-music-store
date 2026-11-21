@@ -9,12 +9,18 @@ use App\Models\Account;
 use App\Models\Branch;
 use App\Actions\PaymentMethod\CreatePaymentMethod;
 use App\Actions\PaymentMethod\UpdatePaymentMethod;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 
 class PosPaymentMethods extends Component
 {
     use WithPagination;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.payment_methods.view'), 403);
+    }
 
     // ── State Tabel & Pencarian ──────────────────────────────────────────
     public string $search = '';
@@ -69,6 +75,7 @@ class PosPaymentMethods extends Component
     // ── Modal: Buka Form Tambah ──────────────────────────────────────────
     public function openCreate(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.payment_methods.create'), 403);
         $this->reset(['name', 'code', 'parent_id', 'account_id', 'is_active', 'editingId', 'isEditing']);
         $this->showModal = true;
     }
@@ -76,6 +83,7 @@ class PosPaymentMethods extends Component
     // ── Modal: Buka Form Edit ────────────────────────────────────────────
     public function openEdit(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.payment_methods.edit'), 403);
         $method = PaymentMethod::findOrFail($id);
 
         $this->editingId  = $id;
@@ -92,6 +100,7 @@ class PosPaymentMethods extends Component
     // ── Simpan (Create / Update) ─────────────────────────────────────────
     public function save(CreatePaymentMethod $createAction, UpdatePaymentMethod $updateAction): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), $this->isEditing ? 'fo.payment_methods.edit' : 'fo.payment_methods.create'), 403);
         if ($this->isEditing && $this->parent_id && $this->parent_id === $this->editingId) {
             $this->addError('parent_id', 'Metode pembayaran tidak bisa menjadi parent untuk dirinya sendiri.');
             return;
@@ -137,12 +146,14 @@ class PosPaymentMethods extends Component
     // ── Konfirmasi Hapus ─────────────────────────────────────────────────
     public function confirmDelete(int $id): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.payment_methods.delete'), 403);
         $this->deletingId      = $id;
         $this->showDeleteModal = true;
     }
 
     public function destroy(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.payment_methods.delete'), 403);
         $method = PaymentMethod::findOrFail($this->deletingId);
 
         // Check if this method name is currently used by any sales

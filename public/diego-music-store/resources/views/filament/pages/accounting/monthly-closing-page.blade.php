@@ -3,6 +3,7 @@
         $info = $this->period_info;
         $history = $this->history;
         $reopenTarget = $this->selectedClosingIdToReopen ? \App\Models\MonthlyClosing::find($this->selectedClosingIdToReopen) : $info['closing'];
+        $canExecuteClosing = \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.monthly_closing.execute');
     @endphp
 
     {{-- Filter Form (Period Picker) --}}
@@ -59,6 +60,7 @@
                         Sistem akan mengunci transaksi pada periode ini dan otomatis membuat <strong>Jurnal Penutup #JV-CLOSE-{{ str_replace('-', '', $info['period_key']) }}</strong> yang mentransfer Laba/Rugi Bersih sebesar <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($info['net_income']) }}</strong> ke Akun Laba Ditahan (3-2000).
                     </div>
 
+                    @if($canExecuteClosing)
                     <button 
                         type="button" 
                         wire:click="openClosingModal"
@@ -66,6 +68,7 @@
                     >
                         Proses Tutup Buku Bulanan
                     </button>
+                    @endif
                 @else
                     <div class="text-xs text-gray-600 dark:text-gray-400">
                         <strong class="text-gray-900 dark:text-white block text-sm">Periode Keuangan Ini Telah Ditutup (Closed)</strong>
@@ -123,7 +126,7 @@
                             <div class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                                 ✓ Jurnal Penutup Tahunan: <strong>#{{ $yearEnd['journal']?->entry_no }}</strong> ({{ \Illuminate\Support\Carbon::parse($yearEnd['journal']?->date)->translatedFormat('d M Y') }})
                             </div>
-                        @else
+                        @elseif($canExecuteClosing)
                             <button
                                 type="button"
                                 wire:click="executeYearEndClosingAction"
@@ -183,6 +186,7 @@
                             </td>
                             <td class="py-2.5 px-6 text-center">
                                 @if($item['status'] === 'closed')
+                                    @if($canExecuteClosing)
                                     <button 
                                         type="button" 
                                         wire:click="openReopenModal({{ $item['id'] }})"
@@ -191,6 +195,9 @@
                                     >
                                         Buka Kembali
                                     </button>
+                                    @else
+                                        <span class="text-xs font-semibold text-gray-500">TERKUNCI</span>
+                                    @endif
                                 @else
                                     <span class="text-xs font-extrabold text-blue-600 dark:text-blue-400">TERBUKA</span>
                                 @endif

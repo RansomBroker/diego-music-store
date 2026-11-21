@@ -10,6 +10,7 @@ use App\Models\PricingTier;
 use App\Models\Branch;
 use App\Helpers\BranchHelper;
 use App\Helpers\FonnteHelper;
+use App\Helpers\PermissionHelper;
 use App\Actions\Notification\BroadcastWhatsAppMessage;
 use App\Actions\Notification\SendWhatsAppBillingReminder;
 use Illuminate\Support\Facades\Auth;
@@ -21,8 +22,7 @@ class PosCustomers extends Component
 
     public function boot(): void
     {
-        // Sales staff may browse the read-only product catalog, not customer records or messaging tools.
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.customers.view'), 403);
     }
 
     // ── State Tabel & Pencarian ──────────────────────────────────────────
@@ -101,6 +101,7 @@ class PosCustomers extends Component
     // ── Modal: Buka Form Tambah ──────────────────────────────────────────
     public function openCreate(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.create'), 403);
         $this->reset(['name','phone','email','address','date_of_birth',
                        'customer_label_id','pricing_tier_id','is_loyalty_member','loyalty_points',
                        'editingId','isEditing']);
@@ -110,6 +111,7 @@ class PosCustomers extends Component
     // ── Modal: Buka Form Edit ────────────────────────────────────────────
     public function openEdit(int $id): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.edit'), 403);
         $customer = Customer::findOrFail($id);
 
         $this->editingId          = $id;
@@ -130,6 +132,7 @@ class PosCustomers extends Component
     // ── Simpan (Create / Update) ─────────────────────────────────────────
     public function save(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), ($this->isEditing && $this->editingId) ? 'fo.customers.edit' : 'fo.customers.create'), 403);
         $this->validate([
             'name'            => 'required|string|max:255',
             'phone'           => 'nullable|string|max:20|unique:customers,phone,' . ($this->editingId ?? 'NULL'),
@@ -179,12 +182,14 @@ class PosCustomers extends Component
     // ── Konfirmasi Hapus ─────────────────────────────────────────────────
     public function confirmDelete(int $id): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.delete'), 403);
         $this->deletingId      = $id;
         $this->showDeleteModal = true;
     }
 
     public function destroy(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.delete'), 403);
         Customer::findOrFail($this->deletingId)->delete();
 
         Notification::make()->title('Pelanggan Dihapus')->success()->send();
@@ -201,6 +206,7 @@ class PosCustomers extends Component
     // ── WhatsApp Broadcast Handlers ──────────────────────────────────────
     public function openBroadcastModal(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.broadcast'), 403);
         if (empty($this->broadcastMessage)) {
             $this->applyTemplate('promo');
         }
@@ -246,6 +252,7 @@ class PosCustomers extends Component
 
     public function sendBroadcast(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.broadcast'), 403);
         $this->validate([
             'broadcastMessage' => 'required|string|min:5',
         ], [
@@ -286,6 +293,7 @@ class PosCustomers extends Component
     // ── WhatsApp Tagihan Handlers ─────────────────────────────────────────
     public function openBillingModal(int $customerId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.broadcast'), 403);
         $customer = Customer::findOrFail($customerId);
         $this->selectedBillingCustomerId = $customerId;
         $this->billingCustomer = $customer;
@@ -301,6 +309,7 @@ class PosCustomers extends Component
 
     public function sendBillingReminder(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.broadcast'), 403);
         if (!$this->billingCustomer) {
             return;
         }
@@ -330,6 +339,7 @@ class PosCustomers extends Component
     // ── WhatsApp Pesan Khusus Pelanggan Handlers ──────────────────────────
     public function openCustomerMessageModal(int $customerId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.broadcast'), 403);
         $this->selectedCustomerId = $customerId;
         $this->selectedCustomer = Customer::findOrFail($customerId);
         $this->applyCustomerTemplate('promo');
@@ -364,6 +374,7 @@ class PosCustomers extends Component
 
     public function sendCustomerMessage(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.broadcast'), 403);
         $this->validate([
             'customerMessage' => 'required|string|min:5',
         ], [

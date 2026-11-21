@@ -17,6 +17,7 @@ Peta komponen arsitektur Diego Music Store (ERP, POS & Accounting). Jaga file in
 - `Employee/`, `Payroll/`, `Attendance/`, `Commission/`: HRIS, absensi/radius, hitung komisi sales, & penggajian.
 - `Customer/` & `Supplier/`: Master data kontak, deposit pelanggan, & histori transaksi.
 - `Branch/`: Konfigurasi multi-cabang, prefix nota, pengaturan toko, & provisioning replikasi COA per cabang.
+- `Privilege/` & `Helpers/PermissionHelper`: Manajemen role, sinkronisasi hak akses panel Front Office (`fo.*`) & Backoffice (`bo.*`), serta helper otorisasi allow-list.
 
 ## Key Models (`app/Models/`)
 - Sales & POS: `Sale`, `SaleItem`, `PosHeldTransaction`, `PaymentMethod`, `Voucher`, `SalesQueueMember`, `SalesDutyLog`

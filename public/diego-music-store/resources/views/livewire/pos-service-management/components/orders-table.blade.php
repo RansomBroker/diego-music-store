@@ -88,9 +88,11 @@
 
                         <x-pos.table.td class="text-center">
                             <div class="flex items-center justify-center gap-1.5">
-                                <x-pos.utility.button variant="warning" size="xs" icon="ph-pencil-simple" wire:click="openEditModal({{ $so->id }})" title="Update Status & Catatan">
-                                    Update
-                                </x-pos.utility.button>
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.service.edit'))
+                                    <x-pos.utility.button variant="warning" size="xs" icon="ph-pencil-simple" wire:click="openEditModal({{ $so->id }})" title="Update Status & Catatan">
+                                        Update
+                                    </x-pos.utility.button>
+                                @endif
 
                                 @if ($so->tracking_url)
                                     <x-pos.utility.button variant="info" size="xs" icon="ph-arrow-square-out" href="{{ $so->tracking_url }}" target="_blank" title="Buka Link Tracking Publik">

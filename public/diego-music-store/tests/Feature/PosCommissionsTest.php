@@ -16,9 +16,18 @@ class PosCommissionsTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function createOwner(): User
+    {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $user = User::factory()->create();
+        $user->assignRole($ownerRole);
+
+        return $user;
+    }
+
     public function test_pos_commissions_page_renders_successfully(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createOwner();
 
         $this->actingAs($user)
             ->get(route('pos.commissions'))
@@ -27,7 +36,7 @@ class PosCommissionsTest extends TestCase
 
     public function test_user_can_create_commission_scheme(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createOwner();
 
         Livewire::actingAs($user)
             ->test(PosCommissions::class)
@@ -48,7 +57,7 @@ class PosCommissionsTest extends TestCase
 
     public function test_user_can_toggle_scheme_status(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createOwner();
         $scheme = CommissionScheme::create([
             'name' => 'Skema Toggle Test',
             'calculation_type' => 'percentage',
@@ -70,7 +79,7 @@ class PosCommissionsTest extends TestCase
 
     public function test_user_can_delete_scheme(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createOwner();
         $scheme = CommissionScheme::create([
             'name' => 'Skema Delete Test',
             'calculation_type' => 'fixed_amount',
@@ -96,9 +105,14 @@ class PosCommissionsTest extends TestCase
             'code' => 'CBG-COMM-01',
             'is_active' => true,
         ]);
-        $user = User::factory()->create();
-        $employee = $user->employee;
-        $employee->update(['branch_id' => $branch->id]);
+        $user = $this->createOwner();
+        $employee = Employee::create([
+            'user_id' => User::factory()->create()->id,
+            'branch_id' => $branch->id,
+            'nik' => 'EMP-COMM-01',
+            'name' => 'Sales Komisi',
+            'is_active' => true,
+        ]);
 
         $log = SalesCommissionLog::create([
             'employee_id' => $employee->id,
@@ -123,7 +137,7 @@ class PosCommissionsTest extends TestCase
 
     public function test_user_can_switch_tabs(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createOwner();
 
         Livewire::actingAs($user)
             ->test(PosCommissions::class)

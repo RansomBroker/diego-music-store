@@ -17,7 +17,10 @@ class PosKpiPerformanceTest extends TestCase
 
     public function test_pos_kpi_performance_page_renders_successfully(): void
     {
+        Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole('owner');
 
         $response = $this->actingAs($user)->get(route('pos.kpi-performance'));
 
@@ -30,7 +33,10 @@ class PosKpiPerformanceTest extends TestCase
 
     public function test_livewire_component_can_create_kpi_template(): void
     {
+        Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole('owner');
 
         Livewire::actingAs($user)
             ->test(PosKpiPerformance::class)
@@ -56,7 +62,9 @@ class PosKpiPerformanceTest extends TestCase
 
     public function test_livewire_can_switch_tabs_and_filter(): void
     {
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole('owner');
         $branch = Branch::create([
             'name' => 'Cabang Test',
             'address' => 'Jl. Test',
@@ -80,7 +88,10 @@ class PosKpiPerformanceTest extends TestCase
 
     public function test_template_modal_handles_currency_and_modal_state(): void
     {
+        Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole('owner');
 
         $component = Livewire::actingAs($user)
             ->test(PosKpiPerformance::class)

@@ -21,6 +21,7 @@ class ListPurchaseReturns extends ListRecords
                 ->label('Buat Retur Pembelian')
                 ->icon('heroicon-o-arrow-path')
                 ->color('primary')
+                ->visible(fn (): bool => \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.purchase_returns.edit'))
                 ->modalHeading('Retur Pembelian Barang ke Supplier')
                 ->modalDescription('Pilih transaksi pembelian supplier dan tentukan jumlah unit barang yang dikembalikan. Stok persediaan dan tagihan hutang supplier akan otomatis disesuaikan.')
                 ->modalWidth('3xl')
@@ -123,6 +124,7 @@ class ListPurchaseReturns extends ListRecords
                         ->required(),
                 ])
                 ->action(function (array $data, $livewire = null) {
+                    abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.purchase_returns.edit'), 403);
                     $pt = \App\Models\PurchaseTransaction::findOrFail($data['purchase_transaction_id']);
                     $rawItems = $data['return_items'] 
                         ?? data_get($livewire, 'mountedActions.0.data.return_items')

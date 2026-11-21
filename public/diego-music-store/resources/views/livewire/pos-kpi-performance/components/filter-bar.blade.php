@@ -38,15 +38,17 @@
             Kalkulasi Realtime
         </x-pos.utility.button>
 
-        <!-- Tambah Template KPI -->
-        <x-pos.utility.button
-            type="button"
-            variant="primary"
-            size="sm"
-            icon="ph-plus-circle"
-            wire:click="openTemplateModal()"
-        >
-            Template KPI Baru
-        </x-pos.utility.button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.kpi.manage'))
+            <!-- Tambah Template KPI -->
+            <x-pos.utility.button
+                type="button"
+                variant="primary"
+                size="sm"
+                icon="ph-plus-circle"
+                wire:click="openTemplateModal()"
+            >
+                Template KPI Baru
+            </x-pos.utility.button>
+        @endif
     </div>
 </div>

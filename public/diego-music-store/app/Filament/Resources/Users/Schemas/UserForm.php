@@ -63,7 +63,7 @@ class UserForm
                         titleAttribute: 'name',
                         modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query) {
                             $authUser = auth()->user();
-                            if ($authUser && !$authUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+                            if ($authUser && !\App\Helpers\BranchHelper::canAccessAllBranches($authUser)) {
                                 $userBranchIds = $authUser->branches()->pluck('branches.id');
                                 return $query->whereIn('branches.id', $userBranchIds);
                             }
@@ -81,15 +81,15 @@ class UserForm
                         titleAttribute: 'name',
                         modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query) {
                             $authUser = auth()->user();
-                            if ($authUser && !$authUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+                            if ($authUser && !\App\Helpers\PermissionHelper::isOwner($authUser)) {
                                 return $query->whereNotIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
                             }
                             return $query;
                         }
                     )
                     ->preload()
-                    ->disabled(fn (): bool => ! auth()->user()?->hasRole(['owner', 'Owner', 'super_admin', 'Super Admin']))
-                    ->helperText('Hanya Owner / Super Admin yang dapat mengubah role pengguna.')
+                    ->disabled(fn (): bool => ! \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), ['bo.users.create', 'bo.users.edit']))
+                    ->helperText('Non-Owner hanya dapat menetapkan role non-Owner.')
                     ->label('Roles'),
             ]);
     }

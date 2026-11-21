@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Helpers\BranchHelper;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,6 +18,11 @@ class PosCatalog extends Component
     public string $search = '';
     public string $category = '';
     public int $perPage = 20;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.catalog.view'), 403);
+    }
 
     public function updatingSearch(): void
     {

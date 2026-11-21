@@ -13,12 +13,14 @@
         >
     </div>
 
-    <!-- Add Action -->
-    <x-pos.utility.button
-        variant="primary"
-        icon="ph-plus"
-        wire:click="openCreate"
-    >
-        Tambah Label
-    </x-pos.utility.button>
+    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customer_labels.create'))
+        <!-- Add Action -->
+        <x-pos.utility.button
+            variant="primary"
+            icon="ph-plus"
+            wire:click="openCreate"
+        >
+            Tambah Label
+        </x-pos.utility.button>
+    @endif
 </div>

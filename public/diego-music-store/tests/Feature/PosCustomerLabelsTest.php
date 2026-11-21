@@ -21,11 +21,13 @@ class PosCustomerLabelsTest extends TestCase
     {
         parent::setUp();
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create([
             'name' => 'Kiki',
             'username' => 'kiki_admin',
             'email' => 'kiki@example.com',
         ]);
+        $this->user->assignRole($ownerRole);
         $this->actingAs($this->user);
 
         $this->branch = Branch::create([

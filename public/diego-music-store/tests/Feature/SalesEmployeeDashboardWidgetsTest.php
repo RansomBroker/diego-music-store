@@ -14,7 +14,9 @@ class SalesEmployeeDashboardWidgetsTest extends TestCase
 
     public function test_sales_employee_dashboard_widgets_renders_successfully()
     {
+        $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
         $user = User::factory()->create();
+        $user->branches()->attach($branch->id);
         $this->actingAs($user);
 
         Livewire::test(SalesEmployeeDashboardWidgets::class)
@@ -35,6 +37,7 @@ class SalesEmployeeDashboardWidgetsTest extends TestCase
     {
         $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
         $user = User::factory()->create();
+        $user->branches()->attach($branch->id);
         \App\Models\Employee::create([
             'user_id'                => $user->id,
             'branch_id'              => $branch->id,

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Helpers\PermissionHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Illuminate\Support\Facades\Auth;
@@ -51,13 +52,11 @@ class PosCustomerPayments extends Component
      */
     public function boot(): void
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.customer_payments.view'), 403);
     }
 
     public function mount(): void
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
-
         $this->payment_date = now()->format('Y-m-d');
         $this->branch_id = \App\Helpers\BranchHelper::getActiveBranchId();
 
@@ -104,6 +103,7 @@ class PosCustomerPayments extends Component
     // ── Open Create Form Modal ───────────────────────────────────────────
     public function openCreate(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_payments.create'), 403);
         $this->reset([
             'customer_id', 'payment_reference', 'notes', 'items'
         ]);
@@ -221,6 +221,7 @@ class PosCustomerPayments extends Component
     // ── Save Payment ───────────────────────────────────────────────────
     public function save(string $status = 'posted'): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customer_payments.create'), 403);
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         abort_unless($activeBranchId, 403);
         // Never trust a public Livewire branch_id supplied by the browser.

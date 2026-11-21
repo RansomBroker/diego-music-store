@@ -40,14 +40,16 @@
                         </h1>
                     </div>
 
-                    <!-- Add Action Button -->
-                    <x-pos.utility.button
-                        variant="primary"
-                        icon="ph-plus"
-                        wire:click="openCreateModal"
-                    >
-                        Tambah Deposit Baru
-                    </x-pos.utility.button>
+                    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customer_deposits.create'))
+                        <!-- Add Action Button -->
+                        <x-pos.utility.button
+                            variant="primary"
+                            icon="ph-plus"
+                            wire:click="openCreateModal"
+                        >
+                            Tambah Deposit Baru
+                        </x-pos.utility.button>
+                    @endif
                 </div>
 
                 <!-- Unified Table & Filters Card -->

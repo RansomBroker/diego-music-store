@@ -52,12 +52,6 @@ class BackofficePanelProvider extends PanelProvider
             ->favicon(asset('favicon.ico'))
             ->navigationGroups([
                 NavigationGroup::make()
-                     ->label('Shop')
-                     ->icon('heroicon-o-shopping-cart'),
-                NavigationGroup::make()
-                    ->label('Blog')
-                    ->icon('heroicon-o-pencil'),
-                NavigationGroup::make()
                     ->label('Master Data')
                     ->icon('heroicon-o-circle-stack'),
                 NavigationGroup::make()
@@ -94,12 +88,13 @@ class BackofficePanelProvider extends PanelProvider
                     ->url('/pos')
                     ->icon('heroicon-o-shopping-cart')
                     ->group('Penjualan')
-                    ->sort(1),
+                    ->sort(1)
+                    ->visible(fn (): bool => \App\Helpers\PermissionHelper::canAccessFrontoffice(auth()->user())),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
-                Dashboard::class,
+                \App\Filament\Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([

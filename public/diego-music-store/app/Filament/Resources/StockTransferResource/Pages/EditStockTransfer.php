@@ -14,7 +14,7 @@ class EditStockTransfer extends EditRecord
     {
         return [
             Actions\DeleteAction::make()
-                ->visible(fn ($record) => in_array($record->status, ['DRAFT'])),
+                ->visible(fn ($record) => in_array($record->status, ['DRAFT']) && StockTransferResource::canDelete($record)),
         ];
     }
 

@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Sale;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
@@ -61,7 +62,7 @@ class POSTransactions extends Component
      */
     public function boot(): void
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.transactions.view'), 403);
     }
 
     private function resolveAuthorizedBranchId(): int
@@ -84,9 +85,6 @@ class POSTransactions extends Component
 
     public function mount(): void
     {
-        // Sales is read-only and must not browse or mutate transaction/cash records.
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
-
         // Default date range is today
         $this->fromDate = now()->format('Y-m-d');
         $this->toDate = now()->format('Y-m-d');
@@ -185,12 +183,14 @@ class POSTransactions extends Component
 
     public function printReceipt(int $saleId): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), ['fo.pos.print', 'fo.transactions.view']), 403);
         Sale::query()->where('branch_id', $this->resolveAuthorizedBranchId())->findOrFail($saleId);
         $this->dispatch('print-receipt', saleId: $saleId);
     }
 
     public function startReturn(int $saleId): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.transactions.return'), 403);
         $sale = Sale::with(['items.variant.product'])
             ->where('branch_id', $this->resolveAuthorizedBranchId())
             ->findOrFail($saleId);
@@ -249,6 +249,7 @@ class POSTransactions extends Component
 
     public function processReturn(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.transactions.return'), 403);
         // Check active cash session
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         $activeSession = \App\Models\CashSession::where('branch_id', $activeBranchId)
@@ -337,6 +338,7 @@ class POSTransactions extends Component
 
     public function openSettlementModal(int $saleId): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.transactions.settle'), 403);
         $sale = Sale::with('customer')->where('branch_id', $this->resolveAuthorizedBranchId())->findOrFail($saleId);
         $this->settlementSale = $sale;
         $this->settlementDate = now()->format('Y-m-d');
@@ -362,6 +364,7 @@ class POSTransactions extends Component
 
     public function processSettlement(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.transactions.settle'), 403);
         if (!$this->settlementSale) {
             return;
         }

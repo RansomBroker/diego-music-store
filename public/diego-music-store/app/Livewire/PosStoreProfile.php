@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Branch;
 use App\Actions\Store\UpdateBranchProfile;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
@@ -29,6 +30,11 @@ class PosStoreProfile extends Component
     public ?string $currentLogoUrl = null;
 
     public bool $showCreateModal = false;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.store_profile.view'), 403);
+    }
 
     public function mount(): void
     {
@@ -63,6 +69,7 @@ class PosStoreProfile extends Component
 
     public function save(UpdateBranchProfile $updateBranchProfile): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.store_profile.edit'), 403);
         $this->validate([
             'store_name' => 'required|string|max:255',
             'name'       => 'required|string|max:255',
@@ -106,6 +113,7 @@ class PosStoreProfile extends Component
 
     public function openCreateStore(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.store_profile.edit'), 403);
         $this->reset(['store_name', 'name', 'address', 'phone', 'logo', 'currentLogoUrl']);
         $this->is_active = true;
         $this->showCreateModal = true;
@@ -113,6 +121,7 @@ class PosStoreProfile extends Component
 
     public function createStore(UpdateBranchProfile $updateBranchProfile): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.store_profile.edit'), 403);
         $this->validate([
             'store_name' => 'required|string|max:255',
             'name'       => 'required|string|max:255',

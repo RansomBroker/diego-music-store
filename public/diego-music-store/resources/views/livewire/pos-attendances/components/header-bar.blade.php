@@ -48,13 +48,15 @@
             Request Backdate
         </x-pos.utility.button>
 
-        <x-pos.utility.button
-            variant="primary"
-            size="sm"
-            icon="ph-calendar-plus"
-            wire:click="openRecordModal()"
-        >
-            Catat Off Day / Izin
-        </x-pos.utility.button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.attendances.manage'))
+            <x-pos.utility.button
+                variant="primary"
+                size="sm"
+                icon="ph-calendar-plus"
+                wire:click="openRecordModal()"
+            >
+                Catat Off Day / Izin
+            </x-pos.utility.button>
+        @endif
     </div>
 </div>

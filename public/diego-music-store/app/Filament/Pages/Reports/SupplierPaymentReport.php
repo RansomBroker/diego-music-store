@@ -35,8 +35,12 @@ class SupplierPaymentReport extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        $user = auth()->user();
-        return (bool) ($user && ($user->can('reports.purchases') || $user->hasRole(['owner', 'super_admin'])));
+        return \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.reports.supplier_payment');
+    }
+
+    public function boot(): void
+    {
+        abort_unless(static::canAccess(), 403);
     }
 
     public ?array $data = [];

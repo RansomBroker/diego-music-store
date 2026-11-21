@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Products\Tables;
 use App\Actions\Product\DuplicateProduct;
 use App\Actions\Product\UpdateProduct as UpdateProductAction;
 use App\Helpers\FormatHelper;
+use App\Helpers\PermissionHelper;
 use App\Helpers\ProductHelper;
 use App\Filament\Resources\StockMovements\StockMovementResource;
 use Filament\Actions\Action;
@@ -301,10 +302,12 @@ class ProductsTable
                     ->label('Copy Produk')
                     ->icon('heroicon-o-document-duplicate')
                     ->color('warning')
+                    ->visible(fn () => PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.products.create'))
                     ->requiresConfirmation()
                     ->modalHeading('Copy Produk')
                     ->modalDescription('Apakah Anda yakin ingin menyalin produk ini? Semua varian dan harga tingkatan akan disalin dengan SKU dan Barcode baru.')
                     ->action(function ($record) {
+                        abort_unless(PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.products.create'), 403);
                         if ($record->product) {
                             $duplicateAction = app(DuplicateProduct::class);
                             $newProduct = $duplicateAction->execute($record->product);

@@ -8,15 +8,17 @@
             </h3>
             <p class="text-xs text-slate-400">Aturan bobot performa dan batas maksimum bonus per posisi/karyawan</p>
         </div>
-        <x-pos.utility.button
-            type="button"
-            variant="primary"
-            size="sm"
-            icon="ph-plus-circle"
-            wire:click="openTemplateModal()"
-        >
-            Buat Template KPI Baru
-        </x-pos.utility.button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.kpi.manage'))
+            <x-pos.utility.button
+                type="button"
+                variant="primary"
+                size="sm"
+                icon="ph-plus-circle"
+                wire:click="openTemplateModal()"
+            >
+                Buat Template KPI Baru
+            </x-pos.utility.button>
+        @endif
     </div>
 
     @if ($templates->isNotEmpty())
@@ -80,16 +82,18 @@
                                 </x-pos.utility.pill>
                             </x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                <x-pos.utility.button
-                                    type="button"
-                                    variant="warning"
-                                    size="xs"
-                                    icon="ph-pencil-simple"
-                                    wire:click="openTemplateModal({{ $tpl->id }})"
-                                    title="Edit Template KPI"
-                                >
-                                    Edit
-                                </x-pos.utility.button>
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.kpi.manage'))
+                                    <x-pos.utility.button
+                                        type="button"
+                                        variant="warning"
+                                        size="xs"
+                                        icon="ph-pencil-simple"
+                                        wire:click="openTemplateModal({{ $tpl->id }})"
+                                        title="Edit Template KPI"
+                                    >
+                                        Edit
+                                    </x-pos.utility.button>
+                                @endif
                             </x-pos.table.td>
                         </x-pos.table.tr>
                     @endforeach
@@ -101,15 +105,17 @@
         <div class="p-12 text-center text-slate-400">
             <i class="ph-bold ph-sliders-horizontal text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
             <p class="text-sm font-bold mb-3">Belum ada master template KPI.</p>
-            <x-pos.utility.button
-                type="button"
-                variant="primary"
-                size="sm"
-                icon="ph-plus-circle"
-                wire:click="openTemplateModal()"
-            >
-                Buat Template KPI Pertama
-            </x-pos.utility.button>
+            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.kpi.manage'))
+                <x-pos.utility.button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    icon="ph-plus-circle"
+                    wire:click="openTemplateModal()"
+                >
+                    Buat Template KPI Pertama
+                </x-pos.utility.button>
+            @endif
         </div>
     @endif
 </div>

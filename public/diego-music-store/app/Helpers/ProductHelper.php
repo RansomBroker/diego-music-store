@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class ProductHelper
@@ -22,7 +23,15 @@ class ProductHelper
                 $basePrefix = trim($branch->sku_prefix);
             }
         } else {
-            $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+            if (Auth::check()) {
+                try {
+                    $activeBranchId = BranchHelper::getActiveBranchId();
+                } catch (\Throwable) {
+                    $activeBranchId = Branch::where('is_active', true)->value('id');
+                }
+            } else {
+                $activeBranchId = Branch::where('is_active', true)->value('id');
+            }
             if ($activeBranchId) {
                 $branch = Branch::find($activeBranchId);
                 if ($branch && !empty($branch->sku_prefix)) {

@@ -38,15 +38,17 @@
             Export CSV
         </x-pos.utility.button>
 
-        <!-- Button Tambah Skema -->
-        <x-pos.utility.button
-            type="button"
-            variant="primary"
-            size="sm"
-            icon="ph-plus-circle"
-            wire:click="openSchemeModal"
-        >
-            Tambah Skema Baru
-        </x-pos.utility.button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.commissions.manage'))
+            <!-- Button Tambah Skema -->
+            <x-pos.utility.button
+                type="button"
+                variant="primary"
+                size="sm"
+                icon="ph-plus-circle"
+                wire:click="openSchemeModal"
+            >
+                Tambah Skema Baru
+            </x-pos.utility.button>
+        @endif
     </div>
 </div>

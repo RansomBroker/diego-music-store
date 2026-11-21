@@ -20,7 +20,7 @@
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Catat dan pantau transaksi kas masuk & keluar di luar penjualan toko.</p>
     </div>
 
-    @if($activeSession)
+    @if($activeSession && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.daily_cash.create'))
         <div class="flex items-center gap-3">
             <button
                 wire:click="openInModal"

@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Actions\Kpi\ApproveKpiEvaluation;
 use App\Actions\Kpi\CalculateEmployeeKpi;
 use App\Helpers\BranchHelper;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\KpiEvaluation;
@@ -19,8 +20,7 @@ class PosKpiPerformance extends Component
 
     public function boot(): void
     {
-        // Sales staff have read-only access to the product catalog only.
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.kpi.view'), 403);
     }
 
     public string $activeTab = 'recap'; // 'recap', 'dashboard', 'templates'
@@ -213,8 +213,7 @@ class PosKpiPerformance extends Component
 
     private function isManagementUser(): bool
     {
-        return auth()->check()
-            && auth()->user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        return PermissionHelper::can(auth()->user(), 'fo.kpi.manage');
     }
 
     public function render()

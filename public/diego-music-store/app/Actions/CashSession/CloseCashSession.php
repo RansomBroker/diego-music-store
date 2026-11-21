@@ -21,11 +21,11 @@ class CloseCashSession
     {
         $user = Auth::user();
         abort_unless($user, 403);
-        abort_if($user->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission($user, 'fo.cash_session.close');
         $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
         abort_unless(in_array((int) $session->branch_id, $allowedBranchIds, true), 403);
-        $isManagement = $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $isManagement = \App\Helpers\PermissionHelper::isOwner($user) || \App\Helpers\PermissionHelper::can($user, 'fo.cash_session.reopen');
         abort_unless($isManagement || (int) $session->user_id === (int) $user->id, 403);
 
         if ($session->status !== 'open') {

@@ -22,6 +22,7 @@ class ListProducts extends ListRecords
                 ->label('Import Excel / CSV')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('success')
+                ->visible(fn (): bool => ProductResource::canCreate())
                 ->modalHeading('Import Data Produk & Saldo Awal Stok')
                 ->modalWidth('4xl')
                 ->modalSubmitAction(false)

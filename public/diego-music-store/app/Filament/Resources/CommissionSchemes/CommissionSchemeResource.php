@@ -6,6 +6,7 @@ use App\Filament\Resources\CommissionSchemes\Pages\ListCommissionSchemes;
 use App\Models\CommissionScheme;
 use BackedEnum;
 use Filament\Forms;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -14,6 +15,10 @@ use Filament\Tables\Table;
 
 class CommissionSchemeResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.commission_schemes';
+
     protected static ?string $model = CommissionScheme::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAdjustmentsHorizontal;
@@ -161,7 +166,7 @@ class CommissionSchemeResource extends Resource
         }
 
         $user = auth()->user();
-        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+        if ($user && !\App\Helpers\BranchHelper::canAccessAllBranches($user)) {
             $userBranchIds = $user->branches()->pluck('branches.id');
             return $query->where(function ($q) use ($userBranchIds) {
                 $q->whereIn('branch_id', $userBranchIds)

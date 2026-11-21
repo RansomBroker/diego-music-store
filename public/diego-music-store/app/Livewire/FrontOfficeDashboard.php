@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Helpers\BranchHelper;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use App\Models\CashSession;
 use App\Models\Employee;
@@ -13,6 +14,11 @@ use Livewire\Component;
 
 class FrontOfficeDashboard extends Component
 {
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.dashboard.view'), 403);
+    }
+
     public function render()
     {
         $activeSession = CashSession::with('user')
@@ -35,7 +41,7 @@ class FrontOfficeDashboard extends Component
             ? Storage::url($branch->logo_path)
             : null;
 
-        $isOwner = Auth::check() && Auth::user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $isOwner = PermissionHelper::can(Auth::user(), 'fo.dashboard.owner_widgets');
         $currentUserEmployee = Auth::user()?->employee;
 
         // Load presensi cabang hari ini (khusus karyawan operasional, kecualikan Owner)
@@ -45,7 +51,7 @@ class FrontOfficeDashboard extends Component
         }])
         ->where('is_active', true)
         ->whereDoesntHave('user.roles', function ($q) {
-            $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']);
+            $q->whereIn('name', ['owner', 'Owner']);
         })
         ->when(!$isOwner, function ($q) {
             $q->where('user_id', Auth::id());

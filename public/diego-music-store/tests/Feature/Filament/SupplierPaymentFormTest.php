@@ -30,7 +30,9 @@ class SupplierPaymentFormTest extends TestCase
         parent::setUp();
 
         // 1. Create a user and authenticate
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create();
+        $this->user->assignRole($ownerRole);
         $this->actingAs($this->user);
 
         // 2. Create master data

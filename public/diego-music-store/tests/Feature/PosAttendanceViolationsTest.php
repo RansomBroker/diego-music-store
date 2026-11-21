@@ -14,7 +14,10 @@ class PosAttendanceViolationsTest extends TestCase
 
     public function test_pos_attendance_violations_page_renders_successfully(): void
     {
+        \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
 
         $response = $this->actingAs($user)->get(route('pos.attendance-violations'));
 
@@ -26,7 +29,10 @@ class PosAttendanceViolationsTest extends TestCase
 
     public function test_livewire_component_can_create_violation_rule(): void
     {
+        \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
 
         Livewire::actingAs($user)
             ->test(PosAttendanceViolations::class)

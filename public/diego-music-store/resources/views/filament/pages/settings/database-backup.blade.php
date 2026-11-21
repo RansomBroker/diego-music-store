@@ -61,6 +61,7 @@
                                         {{ $backup['size'] }}
                                     </td>
                                     <td class="px-6 py-4 text-right space-x-2">
+                                        @if (\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.database_backup.manage'))
                                         <button wire:click="downloadBackup('{{ $backup['path'] }}')" type="button" class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1.5 rounded-md transition-colors">
                                             <x-heroicon-o-arrow-down-tray class="w-3.5 h-3.5" />
                                             Download
@@ -73,6 +74,7 @@
                                             <x-heroicon-o-trash class="w-3.5 h-3.5" />
                                             Hapus
                                         </button>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

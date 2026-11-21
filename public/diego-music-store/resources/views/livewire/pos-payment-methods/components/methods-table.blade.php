@@ -75,26 +75,30 @@
                     <!-- Actions -->
                     <x-pos.table.td class="whitespace-nowrap text-right">
                         <div class="flex items-center justify-end gap-1.5">
-                            <x-pos.utility.button
-                                type="button"
-                                variant="warning"
-                                size="xs"
-                                icon="ph-pencil-simple"
-                                wire:click="openEdit({{ $row->id }})"
-                                title="Ubah"
-                            >
-                                Ubah
-                            </x-pos.utility.button>
-                            <x-pos.utility.button
-                                type="button"
-                                variant="danger"
-                                size="xs"
-                                icon="ph-trash"
-                                wire:click="confirmDelete({{ $row->id }})"
-                                title="Hapus"
-                            >
-                                Hapus
-                            </x-pos.utility.button>
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payment_methods.edit'))
+                                <x-pos.utility.button
+                                    type="button"
+                                    variant="warning"
+                                    size="xs"
+                                    icon="ph-pencil-simple"
+                                    wire:click="openEdit({{ $row->id }})"
+                                    title="Ubah"
+                                >
+                                    Ubah
+                                </x-pos.utility.button>
+                            @endif
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payment_methods.delete'))
+                                <x-pos.utility.button
+                                    type="button"
+                                    variant="danger"
+                                    size="xs"
+                                    icon="ph-trash"
+                                    wire:click="confirmDelete({{ $row->id }})"
+                                    title="Hapus"
+                                >
+                                    Hapus
+                                </x-pos.utility.button>
+                            @endif
                         </div>
                     </x-pos.table.td>
                 </x-pos.table.tr>

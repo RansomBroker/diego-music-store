@@ -247,17 +247,19 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-                <x-pos.utility.button
-                    type="submit"
-                    variant="primary"
-                    size="base"
-                    icon="ph-floppy-disk"
-                >
-                    Simpan Profil Toko
-                </x-pos.utility.button>
-            </div>
+            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.store_profile.edit'))
+                <!-- Action Buttons -->
+                <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                    <x-pos.utility.button
+                        type="submit"
+                        variant="primary"
+                        size="base"
+                        icon="ph-floppy-disk"
+                    >
+                        Simpan Profil Toko
+                    </x-pos.utility.button>
+                </div>
+            @endif
         </form>
     </div>
 </div>

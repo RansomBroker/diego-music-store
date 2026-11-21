@@ -150,7 +150,7 @@
 
                 <!-- Modal Footer -->
                 <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-850 flex items-center justify-end gap-3">
-                    @if ($selectedSale->status !== 'cancelled')
+                    @if ($selectedSale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.edit_sale'))
                         <x-pos.utility.button
                             variant="warning"
                             href="/pos?edit={{ $selectedSale->id }}"
@@ -159,7 +159,7 @@
                             Edit Transaksi
                         </x-pos.utility.button>
                     @endif
-                    @if ($selectedSale->status !== 'cancelled' && $selectedSale->items->sum(fn($item) => $item->quantity - $item->returnItems()->sum('quantity')) > 0)
+                    @if ($selectedSale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.transactions.return') && $selectedSale->items->sum(fn($item) => $item->quantity - $item->returnItems()->sum('quantity')) > 0)
                         <x-pos.utility.button
                             type="button"
                             variant="danger"
@@ -169,14 +169,16 @@
                             Retur Barang
                         </x-pos.utility.button>
                     @endif
-                    <x-pos.utility.button
-                        type="button"
-                        variant="success"
-                        wire:click="printReceipt({{ $selectedSale->id }})"
-                        icon="ph-printer"
-                    >
-                        Cetak Struk
-                    </x-pos.utility.button>
+                    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.print'))
+                        <x-pos.utility.button
+                            type="button"
+                            variant="success"
+                            wire:click="printReceipt({{ $selectedSale->id }})"
+                            icon="ph-printer"
+                        >
+                            Cetak Struk
+                        </x-pos.utility.button>
+                    @endif
                     <x-pos.utility.button
                         type="button"
                         variant="secondary"

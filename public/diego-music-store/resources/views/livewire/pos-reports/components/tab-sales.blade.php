@@ -1,5 +1,5 @@
 @php
-    $canViewProfit = auth()->check() && (auth()->user()->can('sales.view_profit') || auth()->user()->hasRole(['owner', 'super_admin']));
+    $canViewProfit = \App\Helpers\PermissionHelper::can(auth()->user(), 'sales.view_profit');
 @endphp
 
 <!-- ========================================================================= -->

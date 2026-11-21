@@ -107,10 +107,16 @@
                     </x-pos.table.td>
                     <!-- Actions -->
                     <x-pos.table.td class="whitespace-nowrap text-right">
+                        @php
+                            $canManageTarget = ! $row->hasRole('owner') || \App\Helpers\PermissionHelper::isOwner();
+                            $canEditUser = $canManageTarget && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.users.edit');
+                            $canDeleteUser = $canManageTarget && Auth::id() !== $row->id && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.users.delete');
+                        @endphp
                         <x-pos.table.actions
-                            :editAction="'openEdit(' . $row->id . ')'"
-                            :deleteAction="Auth::id() !== $row->id ? 'confirmDelete(' . $row->id . ')' : null"
-                            :showDelete="Auth::id() !== $row->id"
+                            :editAction="$canEditUser ? 'openEdit(' . $row->id . ')' : null"
+                            :deleteAction="$canDeleteUser ? 'confirmDelete(' . $row->id . ')' : null"
+                            :showEdit="$canEditUser"
+                            :showDelete="$canDeleteUser"
                         />
                     </x-pos.table.td>
                 </x-pos.table.tr>

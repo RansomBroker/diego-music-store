@@ -26,7 +26,7 @@ class CreateSalesReturn
      */
     public function execute(array $data): SalesReturn
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission(Auth::user(), 'fo.transactions.return');
         $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
 

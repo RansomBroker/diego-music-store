@@ -38,10 +38,12 @@
                         <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Manajemen Tugas Karyawan</h1>
                     </div>
                     
-                    <button wire:click="openModal" class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:shadow-primary/20 focus:ring-4 focus:ring-primary/20">
-                        <i class="ph-bold ph-plus text-lg"></i>
-                        Buat Tugas Baru
-                    </button>
+                    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.employee_tasks.create'))
+                        <button wire:click="openModal" class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:shadow-primary/20 focus:ring-4 focus:ring-primary/20">
+                            <i class="ph-bold ph-plus text-lg"></i>
+                            Buat Tugas Baru
+                        </button>
+                    @endif
                 </div>
 
                 <!-- Table Card Wrapper (Filament Style) -->
@@ -98,13 +100,18 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 text-right">
+                                            @php
+                                                $canManageTaskEdit = \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.employee_tasks.edit');
+                                                $canManageTaskDelete = \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.employee_tasks.delete');
+                                                $isOwnTask = $task->employee && (int) $task->employee->user_id === (int) auth()->id();
+                                            @endphp
                                             <div class="flex items-center justify-end gap-2">
-                                                @if($task->status === 'pending' || $task->status === 'rejected')
+                                                @if(($task->status === 'pending' || $task->status === 'rejected') && ($isOwnTask || $canManageTaskEdit))
                                                     <button wire:click="markAsDone({{ $task->id }})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Tandai Selesai">
                                                         <i class="ph-bold ph-check-circle text-lg"></i>
                                                     </button>
                                                 @endif
-                                                @if($task->status === 'completed')
+                                                @if($task->status === 'completed' && $canManageTaskEdit)
                                                     <button wire:click="approveTask({{ $task->id }})" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Setujui">
                                                         <i class="ph-bold ph-check text-lg"></i>
                                                     </button>
@@ -113,13 +120,17 @@
                                                     </button>
                                                 @endif
                                                 
-                                                <button wire:click="editTask({{ $task->id }})" class="p-2 text-slate-400 hover:text-primary hover:bg-primary-50 rounded-lg transition-colors" title="Edit Tugas">
-                                                    <i class="ph-bold ph-pencil-simple text-lg"></i>
-                                                </button>
+                                                @if ($canManageTaskEdit)
+                                                    <button wire:click="editTask({{ $task->id }})" class="p-2 text-slate-400 hover:text-primary hover:bg-primary-50 rounded-lg transition-colors" title="Edit Tugas">
+                                                        <i class="ph-bold ph-pencil-simple text-lg"></i>
+                                                    </button>
+                                                @endif
 
-                                                <button wire:click="confirmDelete({{ $task->id }})" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Hapus Tugas">
-                                                    <i class="ph-bold ph-trash text-lg"></i>
-                                                </button>
+                                                @if ($canManageTaskDelete)
+                                                    <button wire:click="confirmDelete({{ $task->id }})" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Hapus Tugas">
+                                                        <i class="ph-bold ph-trash text-lg"></i>
+                                                    </button>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>

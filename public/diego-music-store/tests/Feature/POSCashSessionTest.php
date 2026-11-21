@@ -23,7 +23,9 @@ class POSCashSessionTest extends TestCase
     {
         parent::setUp();
 
+        $ownerRole = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create();
+        $this->user->assignRole($ownerRole);
         $this->actingAs($this->user);
 
         $this->branch = Branch::create([
@@ -35,6 +37,10 @@ class POSCashSessionTest extends TestCase
         $this->user->branches()->attach($this->branch);
 
         $this->adminRole = Role::create(['name' => 'admin', 'guard_name' => 'web']);
+        foreach (['fo.access', 'fo.cash_session.view', 'fo.cash_session.close', 'fo.cash_session.reopen'] as $perm) {
+            \Spatie\Permission\Models\Permission::findOrCreate($perm, 'web');
+        }
+        $this->adminRole->givePermissionTo(['fo.access', 'fo.cash_session.view', 'fo.cash_session.close', 'fo.cash_session.reopen']);
     }
 
     /** @test */

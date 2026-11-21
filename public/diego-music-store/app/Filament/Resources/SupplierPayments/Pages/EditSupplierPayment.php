@@ -23,11 +23,12 @@ class EditSupplierPayment extends EditRecord
                 ->label('Batalkan Pembayaran')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(fn () => in_array($this->record->status, ['draft', 'posted']))
+                ->visible(fn () => in_array($this->record->status, ['draft', 'posted']) && SupplierPaymentResource::canEdit($this->record))
                 ->requiresConfirmation()
                 ->modalHeading('Batalkan Pembayaran Supplier')
                 ->modalDescription('Apakah Anda yakin ingin membatalkan pembayaran ini? Saldo hutang supplier akan diperbarui dan jurnal akan dibatalkan.')
                 ->action(function () {
+                    abort_unless(SupplierPaymentResource::canEdit($this->record), 403);
                     app(CancelSupplierPayment::class)->execute($this->record);
                     Notification::make()
                         ->title('Pembayaran Supplier Berhasil Dibatalkan')
@@ -36,7 +37,7 @@ class EditSupplierPayment extends EditRecord
                     $this->redirect($this->getResource()::getUrl('index'));
                 }),
             DeleteAction::make()
-                ->visible(fn ($record) => $record->status === 'draft'),
+                ->visible(fn ($record) => $record->status === 'draft' && SupplierPaymentResource::canDelete($record)),
         ];
     }
 

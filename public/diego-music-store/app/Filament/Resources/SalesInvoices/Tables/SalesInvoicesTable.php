@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SalesInvoices\Tables;
 
 use App\Actions\Sales\PostSalesInvoice;
 use App\Actions\Sales\UpdateSalesInvoice;
+use App\Helpers\PermissionHelper;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -94,11 +95,12 @@ class SalesInvoicesTable
                     ->label('Post (Posting)')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.sales_invoices.edit'))
                     ->requiresConfirmation()
                     ->modalHeading('Posting Faktur Penjualan')
                     ->modalDescription('Apakah Anda yakin ingin memposting faktur ini? Stok barang akan otomatis berkurang dan jurnal akuntansi akan dibuat.')
                     ->action(function ($record) {
+                        abort_unless(PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.sales_invoices.edit'), 403);
                         app(PostSalesInvoice::class)->execute($record);
                         Notification::make()
                             ->title('Faktur Berhasil Diposting')

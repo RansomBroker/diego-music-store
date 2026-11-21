@@ -67,7 +67,7 @@
     </div>
 
     @php
-        $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+        $canViewCost = \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost');
     @endphp
 
     <!-- Summary -->

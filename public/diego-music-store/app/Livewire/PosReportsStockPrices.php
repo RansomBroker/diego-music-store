@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Actions\Inventory\GenerateStockListReport;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,7 @@ class PosReportsStockPrices extends Component
 
     public function boot(): void
     {
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.reports.stock_prices'), 403);
     }
 
     public function updatingPerPage(): void

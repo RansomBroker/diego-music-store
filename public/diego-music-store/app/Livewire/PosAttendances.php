@@ -7,6 +7,7 @@ use App\Actions\Attendance\ClockOut;
 use App\Actions\Attendance\ProcessBackdateAttendanceApproval;
 use App\Actions\Attendance\RecordAttendance;
 use App\Actions\Attendance\SubmitBackdateAttendanceRequest;
+use App\Helpers\PermissionHelper;
 use App\Models\AttendanceBackdateRequest;
 use App\Models\Branch;
 use App\Models\Employee;
@@ -24,8 +25,7 @@ class PosAttendances extends Component
 
     public function boot(): void
     {
-        // Sales staff have read-only access to the product catalog only.
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.attendances.view'), 403);
     }
 
     // ── Tab State ────────────────────────────────────────────────────────
@@ -194,6 +194,7 @@ class PosAttendances extends Component
 
     public function openRecordModal(): void
     {
+        abort_unless($this->isManagementUser(), 403);
         $this->selectedEmployeeId = auth()->user()?->employee?->id;
         $this->attendanceDate = now()->format('Y-m-d');
         $this->status = 'off_day';
@@ -328,8 +329,7 @@ class PosAttendances extends Component
 
     private function isManagementUser(): bool
     {
-        return auth()->check()
-            && auth()->user()->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        return PermissionHelper::can(auth()->user(), 'fo.attendances.manage');
     }
 
     public function render()

@@ -19,6 +19,7 @@ class ListCustomers extends ListRecords
                 ->label('Import Excel / CSV')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('success')
+                ->visible(fn (): bool => CustomerResource::canCreate())
                 ->modalHeading('Import Data Pelanggan')
                 ->modalWidth('4xl')
                 ->modalSubmitAction(false)

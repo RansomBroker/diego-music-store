@@ -55,10 +55,10 @@ class ZReportController extends Controller
      */
     public function show(Request $request, CashSession $cashSession)
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(\App\Helpers\PermissionHelper::canAccessFrontofficeFeature(Auth::user(), ['fo.cash_session.view', 'fo.cash_session.close']), 403);
         abort_unless((int) $cashSession->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
-        // Enforce that only authorized users or the cashier themselves can view the report
-        if (Auth::id() !== $cashSession->user_id && !Auth::user()->hasAnyRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+        // Enforce that only authorized managers or the cashier themselves can view the report
+        if (Auth::id() !== $cashSession->user_id && !\App\Helpers\PermissionHelper::can(Auth::user(), ['fo.cash_session.close', 'fo.cash_session.reopen'])) {
             abort(403, 'Anda tidak diizinkan untuk melihat Z-Report ini.');
         }
 
@@ -76,10 +76,10 @@ class ZReportController extends Controller
      */
     public function downloadPdf(CashSession $cashSession)
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(\App\Helpers\PermissionHelper::canAccessFrontofficeFeature(Auth::user(), ['fo.cash_session.view', 'fo.cash_session.close']), 403);
         abort_unless((int) $cashSession->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
-        // Enforce that only authorized users or the cashier themselves can view the report
-        if (Auth::id() !== $cashSession->user_id && !Auth::user()->hasAnyRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+        // Enforce that only authorized managers or the cashier themselves can view the report
+        if (Auth::id() !== $cashSession->user_id && !\App\Helpers\PermissionHelper::can(Auth::user(), ['fo.cash_session.close', 'fo.cash_session.reopen'])) {
             abort(403, 'Anda tidak diizinkan untuk melihat Z-Report ini.');
         }
 

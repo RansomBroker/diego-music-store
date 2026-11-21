@@ -8,6 +8,7 @@ use App\Models\ServiceOrder;
 use App\Models\Branch;
 use App\Models\User;
 use App\Actions\Service\UpdateServiceOrderStatus;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,8 +18,7 @@ class PosServiceManagement extends Component
 
     public function boot(): void
     {
-        // Sales staff have read-only access to the product catalog only.
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.service.view'), 403);
     }
 
     private function resolveAuthorizedBranchId(): int
@@ -92,6 +92,7 @@ class PosServiceManagement extends Component
 
     public function openEditModal(int $orderId)
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.service.edit'), 403);
         $order = ServiceOrder::query()->where('branch_id', $this->resolveAuthorizedBranchId())->findOrFail($orderId);
         $this->editingOrderId = $order->id;
         $this->editStatus = $order->status;
@@ -112,6 +113,7 @@ class PosServiceManagement extends Component
 
     public function addAdditionalChargeRow()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.service.edit'), 403);
         $this->editAdditionalCharges[] = [
             'name'   => '',
             'amount' => 0,
@@ -120,12 +122,14 @@ class PosServiceManagement extends Component
 
     public function removeAdditionalChargeRow(int $index)
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.service.edit'), 403);
         unset($this->editAdditionalCharges[$index]);
         $this->editAdditionalCharges = array_values($this->editAdditionalCharges);
     }
 
     public function saveServiceOrder()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.service.edit'), 403);
         if (!$this->editingOrderId) {
             return;
         }

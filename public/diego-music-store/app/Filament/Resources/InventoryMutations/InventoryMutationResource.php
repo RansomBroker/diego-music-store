@@ -7,6 +7,7 @@ use App\Filament\Resources\InventoryMutations\Schemas\InventoryMutationForm;
 use App\Filament\Resources\InventoryMutations\Tables\InventoryMutationsTable;
 use App\Models\InventoryMutation;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -14,6 +15,10 @@ use Filament\Tables\Table;
 
 class InventoryMutationResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.inventory_mutations';
+
     protected static ?string $model = InventoryMutation::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowPath;

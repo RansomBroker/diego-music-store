@@ -150,7 +150,7 @@ class ProductForm
                                             'pricingTiers' => $pricingTiers,
                                         ]))
                                         ->extraAttributes(function () use ($pricingTiers) {
-                                            $canViewCost = auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']));
+                                            $canViewCost = \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost');
                                             $baseWidth = $canViewCost ? 1490 : 1100;
                                             return [
                                                 'style' => 'min-width: ' . ($baseWidth + (140 * count($pricingTiers)) + 56) . 'px;'
@@ -187,7 +187,7 @@ class ProductForm
 
                                                 TextInput::make('cost_price')
                                                     ->numeric()
-                                                    ->required(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin'])))
+                                                    ->required(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost'))
                                                     ->prefix('Rp')
                                                     ->reactive()
                                                     ->afterStateUpdated(function ($get, $set) use ($pricingTiers) {
@@ -201,7 +201,7 @@ class ProductForm
                                                     })
                                                     ->hiddenLabel()
                                                     ->placeholder('Harga Beli')
-                                                    ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                                    ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                                 TextInput::make('estimated_shipping')
                                                     ->numeric()
@@ -211,7 +211,7 @@ class ProductForm
                                                     ->default(0)
                                                     ->hiddenLabel()
                                                     ->placeholder('Ongkir')
-                                                    ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                                    ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                                 TextInput::make('hpp')
                                                     ->numeric()
@@ -219,7 +219,7 @@ class ProductForm
                                                     ->readOnly()
                                                     ->hiddenLabel()
                                                     ->placeholder('HPP')
-                                                    ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                                    ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                                 TextInput::make('discount_value')
                                                     ->numeric()
@@ -298,7 +298,7 @@ class ProductForm
 
                                          TextInput::make('cost_price')
                                             ->numeric()
-                                            ->required(fn ($get): bool => ! $get('has_variants') && auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin'])))
+                                            ->required(fn ($get): bool => ! $get('has_variants') && \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost'))
                                             ->prefix('Rp')
                                             ->reactive()
                                             ->afterStateUpdated(function ($get, $set) use ($pricingTiers) {
@@ -311,7 +311,7 @@ class ProductForm
                                                 }
                                             })
                                             ->label('Harga Beli Dasar')
-                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                            ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                         TextInput::make('estimated_shipping')
                                             ->numeric()
@@ -320,14 +320,14 @@ class ProductForm
                                             ->dehydrated(false)
                                             ->default(0)
                                             ->label('Estimasi Ongkir per Unit')
-                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                            ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                         TextInput::make('hpp')
                                             ->numeric()
                                             ->prefix('Rp')
                                             ->readOnly()
                                             ->label('HPP Awal setelah Ongkir')
-                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                            ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                         TextInput::make('discount_value')
                                             ->numeric()
@@ -398,13 +398,13 @@ class ProductForm
                                             ->numeric()
                                             ->prefix('Rp')
                                             ->label('Biaya/Modal Jasa')
-                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                            ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                         TextInput::make('hpp')
                                             ->numeric()
                                             ->prefix('Rp')
                                             ->label('HPP Jasa')
-                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                            ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                         TextInput::make('discount_value')
                                             ->numeric()
@@ -470,13 +470,13 @@ class ProductForm
                                             ->numeric()
                                             ->prefix('Rp')
                                             ->label('Harga Beli Dasar Paket')
-                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                            ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                         TextInput::make('hpp')
                                             ->numeric()
                                             ->prefix('Rp')
                                             ->label('HPP Awal Paket')
-                                            ->visible(fn () => auth()->check() && (auth()->user()->can('inventory.view_cost') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                                            ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'inventory.view_cost')),
 
                                         TextInput::make('discount_value')
                                             ->numeric()

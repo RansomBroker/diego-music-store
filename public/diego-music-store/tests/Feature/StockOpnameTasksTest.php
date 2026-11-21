@@ -27,7 +27,10 @@ class StockOpnameTasksTest extends TestCase
             'is_active' => true,
         ]);
 
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
         $employeeUser = User::factory()->create();
+        $employeeUser->assignRole('karyawan');
+        $employeeUser->branches()->attach($branch->id);
         $employeeUser->employee()->update([
             'branch_id' => $branch->id,
             'is_active' => true,
@@ -122,7 +125,10 @@ class StockOpnameTasksTest extends TestCase
         ]);
 
         $owner = User::factory()->create();
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
         $employeeUser = User::factory()->create();
+        $employeeUser->assignRole('karyawan');
+        $employeeUser->branches()->attach($branch->id);
         $otherAssignedUser = User::factory()->create();
         $employeeUser->employee()->update(['branch_id' => $branch->id, 'is_active' => true]);
         $otherAssignedUser->employee()->update(['branch_id' => $branch->id, 'is_active' => true]);

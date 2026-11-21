@@ -65,7 +65,7 @@ class EmployeeForm
                                 titleAttribute: 'name',
                                 modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query) {
                                     $authUser = auth()->user();
-                                    if ($authUser && !$authUser->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin'])) {
+                                    if ($authUser && !\App\Helpers\BranchHelper::canAccessAllBranches($authUser)) {
                                         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
                                         if ($activeBranchId) {
                                             return $query->whereHas('branches', fn ($q) => $q->where('branches.id', $activeBranchId));
@@ -96,7 +96,7 @@ class EmployeeForm
                             ->default(0)
                             ->required()
                             ->label('Gaji Pokok')
-                            ->visible(fn () => auth()->check() && (auth()->user()->can('hr.view_salary') || auth()->user()->hasRole(['owner', 'super_admin']))),
+                            ->visible(fn () => \App\Helpers\PermissionHelper::can(auth()->user(), 'hr.view_salary')),
 
                         Toggle::make('is_active')
                             ->label('Status Karyawan Aktif')

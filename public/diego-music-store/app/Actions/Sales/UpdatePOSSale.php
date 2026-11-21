@@ -24,7 +24,7 @@ class UpdatePOSSale
      */
     public function execute(Sale $sale, array $data): Sale
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission(Auth::user(), 'fo.pos.edit_sale');
         abort_unless(Auth::check(), 403);
         $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();

@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Actions\Notification\TestFonnteConnection;
 use App\Helpers\BranchHelper;
 use App\Helpers\FonnteHelper;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +29,11 @@ class PosWhatsAppSettings extends Component
     public ?array $test_result = null;
     public bool $is_testing = false;
     public ?array $device_status = null;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.whatsapp_settings.view'), 403);
+    }
 
     public function mount(): void
     {
@@ -61,6 +67,7 @@ class PosWhatsAppSettings extends Component
 
     public function save(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.whatsapp_settings.edit'), 403);
         $this->validate([
             'fonnte_token'           => 'nullable|string|max:255',
             'fonnte_whatsapp_number' => 'nullable|string|max:50',
@@ -103,6 +110,7 @@ class PosWhatsAppSettings extends Component
 
     public function openTestModal(): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.whatsapp_settings.edit'), 403);
         $branch = Branch::find($this->selectedBranchId);
         $this->test_number = Auth::user()?->phone ?? '';
         $this->test_message = "[Diego Music Store]\n\n"
@@ -114,6 +122,7 @@ class PosWhatsAppSettings extends Component
 
     public function sendTestMessage(TestFonnteConnection $testFonnteConnection): void
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.whatsapp_settings.edit'), 403);
         $this->validate([
             'test_number' => 'required|string|min:8|max:20',
             'test_message' => 'required|string|max:1000',

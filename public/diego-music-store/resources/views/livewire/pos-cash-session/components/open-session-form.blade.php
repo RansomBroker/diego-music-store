@@ -51,13 +51,19 @@
         </div>
 
         <!-- Submit -->
-        <x-pos.utility.button
-            type="submit"
-            variant="primary"
-            class="w-full justify-center !py-3.5 !rounded-xl"
-            icon="ph-keyhole"
-        >
-            Buka Sesi & Mulai Transaksi
-        </x-pos.utility.button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.cash_session.open'))
+            <x-pos.utility.button
+                type="submit"
+                variant="primary"
+                class="w-full justify-center !py-3.5 !rounded-xl"
+                icon="ph-keyhole"
+            >
+                Buka Sesi & Mulai Transaksi
+            </x-pos.utility.button>
+        @else
+            <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs font-semibold text-amber-700 dark:text-amber-300 text-center">
+                Anda hanya memiliki izin melihat halaman sesi kasir tanpa hak membuka sesi baru.
+            </div>
+        @endif
     </form>
 </div>

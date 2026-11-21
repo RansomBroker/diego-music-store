@@ -24,13 +24,14 @@ class EditPurchaseTransaction extends EditRecord
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->visible(fn () => $this->record->status === 'draft')
+                ->visible(fn () => $this->record->status === 'draft' && PurchaseTransactionResource::canEdit($this->record))
                 ->action(function () {
+                    abort_unless(PurchaseTransactionResource::canEdit($this->record), 403);
                     app(PostPurchaseTransaction::class)->execute($this->record);
                     $this->redirect($this->getResource()::getUrl('index'));
                 }),
             DeleteAction::make()
-                ->visible(fn () => $this->record->status === 'draft'),
+                ->visible(fn () => $this->record->status === 'draft' && PurchaseTransactionResource::canDelete($this->record)),
         ];
     }
 

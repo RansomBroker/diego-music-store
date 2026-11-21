@@ -12,14 +12,16 @@
             </p>
         </div>
 
-        <button
-            type="button"
-            wire:click="openGroupModal"
-            class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white bg-primary hover:bg-primaryHover active:scale-[0.98] transition shadow-sm cursor-pointer whitespace-nowrap"
-        >
-            <i class="ph-bold ph-plus text-sm"></i>
-            Tambah Grup Komisi
-        </button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.commissions.manage'))
+            <button
+                type="button"
+                wire:click="openGroupModal"
+                class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white bg-primary hover:bg-primaryHover active:scale-[0.98] transition shadow-sm cursor-pointer whitespace-nowrap"
+            >
+                <i class="ph-bold ph-plus text-sm"></i>
+                Tambah Grup Komisi
+            </button>
+        @endif
     </div>
 
     <!-- Table Container -->
@@ -120,40 +122,42 @@
                                     Progress
                                 </button>
 
-                                <!-- Tombol Klaim / Setujui Komisi -->
-                                @if ($g['is_unlocked'] && $g['commission_amount'] > 0)
-                                    <button
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.commissions.manage'))
+                                    <!-- Tombol Klaim / Setujui Komisi -->
+                                    @if ($g['is_unlocked'] && $g['commission_amount'] > 0)
+                                        <button
+                                            type="button"
+                                            wire:click="claimGroupCommission({{ $g['group_id'] }})"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-sm cursor-pointer"
+                                            title="Klaim & Alokasikan Komisi Grup ke Slip Gaji"
+                                        >
+                                            <i class="ph-bold ph-check text-xs"></i>
+                                            Klaim Komisi
+                                        </button>
+                                    @endif
+
+                                    <x-pos.utility.button
                                         type="button"
-                                        wire:click="claimGroupCommission({{ $g['group_id'] }})"
-                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-sm cursor-pointer"
-                                        title="Klaim & Alokasikan Komisi Grup ke Slip Gaji"
+                                        variant="warning"
+                                        size="xs"
+                                        icon="ph-pencil-simple"
+                                        wire:click="openGroupModal({{ $g['group_id'] }})"
+                                        title="Ubah Grup"
                                     >
-                                        <i class="ph-bold ph-check text-xs"></i>
-                                        Klaim Komisi
-                                    </button>
+                                        Ubah
+                                    </x-pos.utility.button>
+
+                                    <x-pos.utility.button
+                                        type="button"
+                                        variant="danger"
+                                        size="xs"
+                                        icon="ph-trash"
+                                        wire:click="deleteGroup({{ $g['group_id'] }})"
+                                        title="Hapus Grup"
+                                    >
+                                        Hapus
+                                    </x-pos.utility.button>
                                 @endif
-
-                                <x-pos.utility.button
-                                    type="button"
-                                    variant="warning"
-                                    size="xs"
-                                    icon="ph-pencil-simple"
-                                    wire:click="openGroupModal({{ $g['group_id'] }})"
-                                    title="Ubah Grup"
-                                >
-                                    Ubah
-                                </x-pos.utility.button>
-
-                                <x-pos.utility.button
-                                    type="button"
-                                    variant="danger"
-                                    size="xs"
-                                    icon="ph-trash"
-                                    wire:click="deleteGroup({{ $g['group_id'] }})"
-                                    title="Hapus Grup"
-                                >
-                                    Hapus
-                                </x-pos.utility.button>
                             </div>
                         </x-pos.table.td>
                     </x-pos.table.tr>

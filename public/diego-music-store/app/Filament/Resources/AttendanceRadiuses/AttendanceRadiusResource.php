@@ -7,6 +7,7 @@ use App\Models\Branch;
 use BackedEnum;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,6 +17,12 @@ use Filament\Tables\Table;
 
 class AttendanceRadiusResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.attendance_radiuses';
+    protected static bool $hasCreatePermission = false;
+    protected static bool $hasDeletePermission = false;
+
     protected static ?string $model = Branch::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
@@ -149,7 +156,7 @@ class AttendanceRadiusResource extends Resource
         }
 
         $user = auth()->user();
-        if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+        if ($user && !\App\Helpers\BranchHelper::canAccessAllBranches($user)) {
             return $query->whereIn('id', $user->branches()->pluck('branches.id'));
         }
 

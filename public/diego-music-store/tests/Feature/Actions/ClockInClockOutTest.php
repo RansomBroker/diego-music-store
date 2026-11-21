@@ -24,14 +24,16 @@ class ClockInClockOutTest extends TestCase
             'is_active' => true,
         ]);
         $user = User::factory()->create();
-        $employee = Employee::create([
-            'user_id' => $user->id,
+        $user->branches()->attach($branch->id);
+        $employee = $user->employee;
+        $employee->update([
             'branch_id' => $branch->id,
             'nik' => 'EMP-TEST-01',
             'name' => 'Budi Staf',
             'monthly_off_days_quota' => 4,
             'is_active' => true,
         ]);
+        $this->actingAs($user);
 
         $clockInAction = app(ClockIn::class);
         $attendance = $clockInAction->execute($employee, $branch->id, 'Masuk shift pagi');
@@ -51,9 +53,20 @@ class ClockInClockOutTest extends TestCase
 
     public function test_record_attendance_action_sets_off_day_and_calculates_quota(): void
     {
+        $branch = Branch::create([
+            'name' => 'Cabang Record Test',
+            'code' => 'CBG-REC-01',
+            'is_active' => true,
+        ]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $manager = User::factory()->create();
+        $manager->assignRole($ownerRole);
+        $this->actingAs($manager);
+
         $user = User::factory()->create();
         $employee = Employee::create([
             'user_id' => $user->id,
+            'branch_id' => $branch->id,
             'nik' => 'EMP-TEST-02',
             'name' => 'Siti Kasir',
             'monthly_off_days_quota' => 2,
@@ -87,13 +100,15 @@ class ClockInClockOutTest extends TestCase
             'is_active' => true,
         ]);
         $user = User::factory()->create();
-        $employee = Employee::create([
-            'user_id' => $user->id,
+        $user->branches()->attach($branch->id);
+        $employee = $user->employee;
+        $employee->update([
             'branch_id' => $branch->id,
             'nik' => 'EMP-TEST-09',
             'name' => 'Budi Monas',
             'is_active' => true,
         ]);
+        $this->actingAs($user);
 
         $this->expectException(\InvalidArgumentException::class);
 

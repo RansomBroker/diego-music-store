@@ -8,6 +8,7 @@ use App\Models\CashSession;
 use App\Models\CashTransaction;
 use App\Models\Account;
 use App\Actions\CashManagement\CreateCashTransaction;
+use App\Helpers\PermissionHelper;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 use Livewire\WithPagination;
@@ -63,7 +64,7 @@ class POSDailyCash extends Component
      */
     public function boot(): void
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(Auth::user(), 'fo.daily_cash.view'), 403);
     }
 
     private function resolveAuthorizedBranchId(): int
@@ -86,8 +87,6 @@ class POSDailyCash extends Component
 
     public function mount()
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
-
         $this->branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->get();
         $this->selectedBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
         $this->checkActiveSession();
@@ -138,6 +137,7 @@ class POSDailyCash extends Component
 
     public function openInModal()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.daily_cash.create'), 403);
         $this->inAmount = '';
         $this->inNotes = '';
         $this->showInModal = true;
@@ -152,6 +152,7 @@ class POSDailyCash extends Component
 
     public function openOutModal()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.daily_cash.create'), 403);
         $this->outAmount = '';
         $this->outNotes = '';
         $this->showOutModal = true;
@@ -159,6 +160,7 @@ class POSDailyCash extends Component
 
     public function saveInflow()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.daily_cash.create'), 403);
         $branchId = $this->resolveAuthorizedBranchId();
         $this->checkActiveSession();
         abort_unless($this->activeSession && (int) $this->activeSession->branch_id === $branchId, 403);
@@ -221,6 +223,7 @@ class POSDailyCash extends Component
 
     public function saveOutflow()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.daily_cash.create'), 403);
         $branchId = $this->resolveAuthorizedBranchId();
         $this->checkActiveSession();
         abort_unless($this->activeSession && (int) $this->activeSession->branch_id === $branchId, 403);

@@ -25,9 +25,11 @@ class AttendanceRadiusResourceTest extends TestCase
             'is_active' => true,
         ]);
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create([
             'is_active' => true,
         ]);
+        $user->assignRole($ownerRole);
 
         Livewire::actingAs($user)
             ->test(ListAttendanceRadiuses::class)

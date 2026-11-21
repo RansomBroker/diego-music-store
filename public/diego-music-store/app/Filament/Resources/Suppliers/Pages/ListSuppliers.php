@@ -19,6 +19,7 @@ class ListSuppliers extends ListRecords
                 ->label('Import Excel / CSV')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('success')
+                ->visible(fn (): bool => SupplierResource::canCreate())
                 ->modalHeading('Import Data Supplier')
                 ->modalWidth('4xl')
                 ->modalSubmitAction(false)

@@ -73,12 +73,20 @@ class MultiBranchManagementTest extends TestCase
         $b1 = Branch::create(['name' => 'Cabang Pusat', 'store_name' => 'Diego Pusat']);
         $b2 = Branch::create(['name' => 'Cabang Siantan', 'store_name' => 'Diego Siantan']);
 
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'kasir_pos', 'guard_name' => 'web']);
+        foreach (['fo.access', 'fo.pos.view'] as $perm) {
+            \Spatie\Permission\Models\Permission::findOrCreate($perm, 'web');
+        }
+        $role->givePermissionTo(['fo.access', 'fo.pos.view']);
+
         $user = User::create([
             'name'     => 'Kasir Multi',
             'username' => 'kasirmulti',
             'email'    => 'kasirmulti@test.com',
             'password' => bcrypt('password'),
+            'is_active' => true,
         ]);
+        $user->assignRole($role);
 
         $user->branches()->attach([$b1->id, $b2->id]);
 

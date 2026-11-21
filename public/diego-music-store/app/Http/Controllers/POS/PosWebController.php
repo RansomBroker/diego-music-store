@@ -23,7 +23,23 @@ class PosWebController extends Controller
 
     public function redirectReports(): RedirectResponse
     {
-        return redirect()->route('pos.reports.sales');
+        $user = Auth::user();
+        $reportRoutes = [
+            'fo.reports.sales' => 'pos.reports.sales',
+            'fo.reports.sales_queue' => 'pos.reports.sales-queue',
+            'fo.reports.ar_aging' => 'pos.reports.ar-aging',
+            'fo.reports.ar_settlement' => 'pos.reports.ar-settlement',
+            'fo.reports.daily_cash' => 'pos.reports.daily-cash',
+            'fo.reports.stock_prices' => 'pos.reports.stock-prices',
+        ];
+
+        foreach ($reportRoutes as $permission => $routeName) {
+            if (\App\Helpers\PermissionHelper::canAccessFrontofficeFeature($user, $permission)) {
+                return redirect()->route($routeName);
+            }
+        }
+
+        abort(403, 'Anda tidak memiliki hak akses ke laporan Front Office.');
     }
 
     public function switchBranch(Branch $branch): RedirectResponse

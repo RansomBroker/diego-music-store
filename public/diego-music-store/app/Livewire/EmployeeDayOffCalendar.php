@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Helpers\BranchHelper;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use App\Models\EmployeeDayOff;
 use Carbon\Carbon;
@@ -13,8 +15,7 @@ class EmployeeDayOffCalendar extends Component
 {
     public function boot(): void
     {
-        // Sales staff have read-only access to the product catalog only.
-        abort_if(auth()->user()?->hasRole(['sales', 'Sales']), 403);
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.day_off.view'), 403);
     }
 
     public string $month = '';
@@ -215,7 +216,7 @@ class EmployeeDayOffCalendar extends Component
 
     private function isOwner(): bool
     {
-        return auth()->check() && auth()->user()->hasRole(['owner', 'Owner']);
+        return PermissionHelper::can(auth()->user(), 'fo.day_off.manage');
     }
 
     private function activeBranchId(): ?int
@@ -223,8 +224,8 @@ class EmployeeDayOffCalendar extends Component
         $user = auth()->user();
         $employee = $user?->employee;
 
-        // Staff always use their assigned employee branch, never an implicit global fallback.
-        if ($user && !$this->isOwner()) {
+        // Staff without multi-branch access always use their assigned employee branch.
+        if ($user && !BranchHelper::canAccessAllBranches($user) && !$this->isOwner()) {
             if ($employee) {
                 return $employee->branch_id ? (int) $employee->branch_id : null;
             }
@@ -240,7 +241,7 @@ class EmployeeDayOffCalendar extends Component
             ->where('branches.is_active', true)
             ->value('branches.id');
 
-        if (!$branchId) {
+        if (!$branchId && BranchHelper::canAccessAllBranches($user)) {
             $branchId = Branch::query()->where('is_active', true)->value('id');
         }
 

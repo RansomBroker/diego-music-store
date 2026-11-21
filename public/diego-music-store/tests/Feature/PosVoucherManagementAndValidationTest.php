@@ -94,8 +94,10 @@ class PosVoucherManagementAndValidationTest extends TestCase
     public function test_pos_livewire_validates_and_applies_voucher(): void
     {
         \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'sales']);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
 
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         $branch = Branch::create(['name' => 'Branch Test', 'code' => 'BR-TEST', 'is_active' => true]);
         $user->branches()->attach($branch->id);
 

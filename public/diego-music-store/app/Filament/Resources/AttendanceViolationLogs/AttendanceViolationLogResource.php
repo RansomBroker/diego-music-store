@@ -9,6 +9,7 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -18,6 +19,11 @@ use Illuminate\Support\Facades\Auth;
 
 class AttendanceViolationLogResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.attendance_violation_logs';
+    protected static bool $hasEditPermission = false;
+
     protected static ?string $model = AttendanceViolationLog::class;
 
     protected static ?string $navigationLabel = 'Log Denda Presensi';
@@ -110,8 +116,9 @@ class AttendanceViolationLogResource extends Resource
                     ->label('Approve')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->visible(fn ($record) => $record->status === 'pending' && static::canViewAny())
                     ->action(function ($record) {
+                        abort_unless(static::canViewAny(), 403);
                         $record->update([
                             'status' => 'approved',
                             'approved_by' => Auth::id(),
@@ -121,8 +128,9 @@ class AttendanceViolationLogResource extends Resource
                     ->label('Waive')
                     ->icon('heroicon-o-x-circle')
                     ->color('gray')
-                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->visible(fn ($record) => $record->status === 'pending' && static::canViewAny())
                     ->action(function ($record) {
+                        abort_unless(static::canViewAny(), 403);
                         $record->update([
                             'status' => 'waived',
                             'approved_by' => Auth::id(),

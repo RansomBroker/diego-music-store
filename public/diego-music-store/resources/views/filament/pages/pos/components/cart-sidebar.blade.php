@@ -93,64 +93,80 @@
                 <!-- Kumpulan Tombol Utility -->
                 <div class="flex flex-col gap-1.5 justify-center w-full lg:w-auto lg:flex-1 min-w-0">
                     <!-- Baris 1: Aksi Utama & Navigasi (5 Kolom Penuh: Transaksi, Tunda, Simpan, Struk, Reset) -->
+                    @php
+                        $posUser = Auth::user();
+                        $canPosTransactions = \App\Helpers\PermissionHelper::can($posUser, 'fo.transactions.view');
+                        $canPosHold = \App\Helpers\PermissionHelper::can($posUser, 'fo.pos.hold');
+                        $canPosPrint = \App\Helpers\PermissionHelper::can($posUser, 'fo.pos.print');
+                        $canPosDiscount = \App\Helpers\PermissionHelper::can($posUser, 'fo.pos.discount');
+                        $canPosCheckout = $editingSaleId
+                            ? \App\Helpers\PermissionHelper::can($posUser, 'fo.pos.edit_sale')
+                            : \App\Helpers\PermissionHelper::can($posUser, 'fo.pos.checkout');
+                    @endphp
                     <div class="grid grid-cols-3 sm:grid-cols-5 gap-1 sm:gap-1.5 w-full">
-                        <!-- 1. Daftar Transaksi (Hari Ini) -->
-                        <x-pos.utility.button 
-                            href="/pos/transactions?fromDate={{ now()->format('Y-m-d') }}&toDate={{ now()->format('Y-m-d') }}" 
-                            variant="info" 
-                            size="xs" 
-                            icon="ph-bold ph-list-dashes" 
-                            title="Daftar Transaksi Hari Ini"
-                            class="!w-full !bg-indigo-500 hover:!bg-indigo-600 dark:!bg-indigo-600 dark:hover:!bg-indigo-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
-                        >
-                            <span>Transaksi</span>
-                        </x-pos.utility.button>
+                        @if ($canPosTransactions)
+                            <!-- 1. Daftar Transaksi (Hari Ini) -->
+                            <x-pos.utility.button 
+                                href="/pos/transactions?fromDate={{ now()->format('Y-m-d') }}&toDate={{ now()->format('Y-m-d') }}" 
+                                variant="info" 
+                                size="xs" 
+                                icon="ph-bold ph-list-dashes" 
+                                title="Daftar Transaksi Hari Ini"
+                                class="!w-full !bg-indigo-500 hover:!bg-indigo-600 dark:!bg-indigo-600 dark:hover:!bg-indigo-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                            >
+                                <span>Transaksi</span>
+                            </x-pos.utility.button>
+                        @endif
 
-                        <!-- 2. Daftar Transaksi Tunda (Hold / List) -->
-                        <x-pos.utility.button 
-                            wire:click="openHeldTransactionsModal" 
-                            variant="warning" 
-                            size="xs" 
-                            icon="ph-bold ph-folder-open" 
-                            title="Daftar Transaksi Tunda"
-                            class="!w-full !bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
-                        >
-                            <span>Tunda</span>
-                            @php $hCount = $heldTransactionsCount ?? count($heldTransactions); @endphp
-                            @if ($hCount > 0)
-                                <span class="absolute -top-1.5 -right-1.5 flex h-4 w-4 pointer-events-none">
-                                    <span class="relative inline-flex rounded-full h-4 w-4 bg-rose-600 items-center justify-center text-[9px] font-bold text-white shadow-xs border border-rose-700">
-                                        {{ $hCount }}
+                        @if ($canPosHold)
+                            <!-- 2. Daftar Transaksi Tunda (Hold / List) -->
+                            <x-pos.utility.button 
+                                wire:click="openHeldTransactionsModal" 
+                                variant="warning" 
+                                size="xs" 
+                                icon="ph-bold ph-folder-open" 
+                                title="Daftar Transaksi Tunda"
+                                class="!w-full !bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                            >
+                                <span>Tunda</span>
+                                @php $hCount = $heldTransactionsCount ?? count($heldTransactions); @endphp
+                                @if ($hCount > 0)
+                                    <span class="absolute -top-1.5 -right-1.5 flex h-4 w-4 pointer-events-none">
+                                        <span class="relative inline-flex rounded-full h-4 w-4 bg-rose-600 items-center justify-center text-[9px] font-bold text-white shadow-xs border border-rose-700">
+                                            {{ $hCount }}
+                                        </span>
                                     </span>
-                                </span>
-                            @endif
-                        </x-pos.utility.button>
+                                @endif
+                            </x-pos.utility.button>
 
-                        <!-- 3. Simpan Transaksi Saat Ini -->
-                        <x-pos.utility.button 
-                            wire:click="holdTransaction" 
-                            variant="warning" 
-                            size="xs" 
-                            icon="ph-bold ph-folder-simple-plus" 
-                            title="Simpan Transaksi Sekarang (Hold)" 
-                            :disabled="empty($cart)"
-                            class="!w-full !bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
-                        >
-                            <span>Simpan</span>
-                        </x-pos.utility.button>
+                            <!-- 3. Simpan Transaksi Saat Ini -->
+                            <x-pos.utility.button 
+                                wire:click="holdTransaction" 
+                                variant="warning" 
+                                size="xs" 
+                                icon="ph-bold ph-folder-simple-plus" 
+                                title="Simpan Transaksi Sekarang (Hold)" 
+                                :disabled="empty($cart)"
+                                class="!w-full !bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                            >
+                                <span>Simpan</span>
+                            </x-pos.utility.button>
+                        @endif
 
-                        <!-- 4. Print Struk Terakhir -->
-                        <x-pos.utility.button 
-                            wire:click="reprintLastReceipt" 
-                            variant="success" 
-                            size="xs" 
-                            icon="ph-bold ph-printer" 
-                            title="Cetak Struk Terakhir" 
-                            :disabled="!$lastSaleId"
-                            class="!w-full !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
-                        >
-                            <span>Struk</span>
-                        </x-pos.utility.button>
+                        @if ($canPosPrint)
+                            <!-- 4. Print Struk Terakhir -->
+                            <x-pos.utility.button 
+                                wire:click="reprintLastReceipt" 
+                                variant="success" 
+                                size="xs" 
+                                icon="ph-bold ph-printer" 
+                                title="Cetak Struk Terakhir" 
+                                :disabled="!$lastSaleId"
+                                class="!w-full !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                            >
+                                <span>Struk</span>
+                            </x-pos.utility.button>
+                        @endif
 
                         <!-- 5. Reset Transaksi -->
                         <x-pos.utility.button 
@@ -171,60 +187,62 @@
                         </x-pos.utility.button>
                     </div>
 
-                    <!-- Baris 2: Cetak Dokumen (4 Kolom Penuh: Bill, Large Bill, Penawaran, Invoice) -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-1.5 w-full">
-                        <!-- 1. Print Bill -->
-                        <x-pos.utility.button 
-                            wire:click="printDraft('bill')" 
-                            variant="info" 
-                            size="xs" 
-                            icon="ph-bold ph-receipt" 
-                            title="Cetak Bill Sementara" 
-                            :disabled="empty($cart)"
-                            class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
-                        >
-                            <span>Bill</span>
-                        </x-pos.utility.button>
+                    @if ($canPosPrint)
+                        <!-- Baris 2: Cetak Dokumen (4 Kolom Penuh: Bill, Large Bill, Penawaran, Invoice) -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-1.5 w-full">
+                            <!-- 1. Print Bill -->
+                            <x-pos.utility.button 
+                                wire:click="printDraft('bill')" 
+                                variant="info" 
+                                size="xs" 
+                                icon="ph-bold ph-receipt" 
+                                title="Cetak Bill Sementara" 
+                                :disabled="empty($cart)"
+                                class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                            >
+                                <span>Bill</span>
+                            </x-pos.utility.button>
 
-                        <!-- 2. Print Large Bill -->
-                        <x-pos.utility.button 
-                            wire:click="printDraft('large')" 
-                            variant="info" 
-                            size="xs" 
-                            icon="ph-bold ph-file-text" 
-                            title="Cetak Large Bill" 
-                            :disabled="empty($cart)"
-                            class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
-                        >
-                            <span>Large Bill</span>
-                        </x-pos.utility.button>
+                            <!-- 2. Print Large Bill -->
+                            <x-pos.utility.button 
+                                wire:click="printDraft('large')" 
+                                variant="info" 
+                                size="xs" 
+                                icon="ph-bold ph-file-text" 
+                                title="Cetak Large Bill" 
+                                :disabled="empty($cart)"
+                                class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                            >
+                                <span>Large Bill</span>
+                            </x-pos.utility.button>
 
-                        <!-- 3. Print Penawaran -->
-                        <x-pos.utility.button 
-                            wire:click="printDraft('penawaran')" 
-                            variant="info" 
-                            size="xs" 
-                            icon="ph-bold ph-handshake" 
-                            title="Cetak Penawaran Harga" 
-                            :disabled="empty($cart)"
-                            class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
-                        >
-                            <span>Penawaran</span>
-                        </x-pos.utility.button>
+                            <!-- 3. Print Penawaran -->
+                            <x-pos.utility.button 
+                                wire:click="printDraft('penawaran')" 
+                                variant="info" 
+                                size="xs" 
+                                icon="ph-bold ph-handshake" 
+                                title="Cetak Penawaran Harga" 
+                                :disabled="empty($cart)"
+                                class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                            >
+                                <span>Penawaran</span>
+                            </x-pos.utility.button>
 
-                        <!-- 4. Print Invoice -->
-                        <x-pos.utility.button 
-                            wire:click="printLastInvoice" 
-                            variant="success" 
-                            size="xs" 
-                            icon="ph-bold ph-file-arrow-up" 
-                            title="Cetak Invoice Transaksi Terakhir" 
-                            :disabled="!$lastSaleId"
-                            class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
-                        >
-                            <span>Invoice</span>
-                        </x-pos.utility.button>
-                    </div>
+                            <!-- 4. Print Invoice -->
+                            <x-pos.utility.button 
+                                wire:click="printLastInvoice" 
+                                variant="success" 
+                                size="xs" 
+                                icon="ph-bold ph-file-arrow-up" 
+                                title="Cetak Invoice Transaksi Terakhir" 
+                                :disabled="!$lastSaleId"
+                                class="!w-full !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
+                            >
+                                <span>Invoice</span>
+                            </x-pos.utility.button>
+                        </div>
+                    @endif
                 </div>
         </div>
         </div>
@@ -299,10 +317,12 @@
                                 </div>
                             @endif
                             </div>
-                            <button type="button" wire:click="openCreateCustomerModal" @click="isOpen = false" class="w-full px-4 py-3 text-left text-xs bg-slate-50 dark:bg-slate-900/60 text-primary dark:text-blue-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-2 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
-                                <i class="ph-bold ph-plus-circle text-sm"></i>
-                                <span>{{ $customerSearch ? 'Daftarkan "' . $customerSearch . '" sebagai Pelanggan Baru' : 'Daftarkan Pelanggan Baru' }}</span>
-                            </button>
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.customers.create'))
+                                <button type="button" wire:click="openCreateCustomerModal" @click="isOpen = false" class="w-full px-4 py-3 text-left text-xs bg-slate-50 dark:bg-slate-900/60 text-primary dark:text-blue-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-2 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
+                                    <i class="ph-bold ph-plus-circle text-sm"></i>
+                                    <span>{{ $customerSearch ? 'Daftarkan "' . $customerSearch . '" sebagai Pelanggan Baru' : 'Daftarkan Pelanggan Baru' }}</span>
+                                </button>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -571,20 +591,26 @@
                                 </div>
                             </td>
                             <td class="py-2 px-2 align-middle">
-                                <div class="flex items-center justify-end gap-1">
-                                    <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20">
-                                        <input 
-                                            type="number" 
-                                            placeholder="0" 
-                                            x-model="discountVal"
-                                            @blur="saveDiscount()"
-                                            @keydown.enter.prevent="$el.blur()"
-                                            class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" 
-                                            min="0"
-                                        >
-                                        <button type="button" wire:click="toggleItemDiscountType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-1.5 bg-slate-150 dark:bg-slate-800 text-[9px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['discount_type'] ?? 'percent') === 'percent' ? '%' : 'Rp' }}</button>
+                                @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.discount'))
+                                    <div class="flex items-center justify-end gap-1">
+                                        <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7 w-20">
+                                            <input 
+                                                type="number" 
+                                                placeholder="0" 
+                                                x-model="discountVal"
+                                                @blur="saveDiscount()"
+                                                @keydown.enter.prevent="$el.blur()"
+                                                class="w-full pl-1.5 pr-6 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-0" 
+                                                min="0"
+                                            >
+                                            <button type="button" wire:click="toggleItemDiscountType({{ $id }})" class="absolute right-0 top-0 bottom-0 px-1.5 bg-slate-150 dark:bg-slate-800 text-[9px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center">{{ ($item['discount_type'] ?? 'percent') === 'percent' ? '%' : 'Rp' }}</button>
+                                        </div>
                                     </div>
-                                </div>
+                                @else
+                                    <div class="text-right text-xs text-slate-400 dark:text-slate-500 font-semibold">
+                                        {{ intval($item['discount_amount'] ?? 0) > 0 ? 'Rp ' . number_format(intval($item['discount_amount']), 0, ',', '.') : '-' }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="py-2 px-2 align-middle">
                                 <div class="flex items-center justify-end gap-1">
@@ -668,39 +694,41 @@
                         </div>
                     @endif
 
-                    <div class="flex items-center justify-between text-sm sm:text-base gap-2 pt-0.5">
-                        <span class="text-sm sm:text-base font-black text-slate-700 dark:text-slate-200">
-                            Diskon Transaksi
-                        </span>
-                        <div class="w-36 flex-shrink-0">
-                            <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7">
-                                <i class="ph ph-tag text-slate-500 dark:text-slate-400 text-[10px] absolute left-2 pointer-events-none z-10"></i>
-                                @if ($discountType === 'fixed')
-                                    <x-money-input 
-                                        wire:model.live.debounce.500ms="discountValue"
-                                        class="w-full pl-6 pr-8 py-0 h-full bg-transparent border-none text-xs font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
-                                        placeholder="0"
-                                    />
-                                @else
-                                    <input 
-                                        type="number" 
-                                        placeholder="0 %" 
-                                        wire:model.live.debounce.500ms="discountValue"
-                                        class="w-full pl-6 pr-8 py-0 h-full bg-transparent border-none text-xs font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
-                                        min="0"
+                    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.discount'))
+                        <div class="flex items-center justify-between text-sm sm:text-base gap-2 pt-0.5">
+                            <span class="text-sm sm:text-base font-black text-slate-700 dark:text-slate-200">
+                                Diskon Transaksi
+                            </span>
+                            <div class="w-36 flex-shrink-0">
+                                <div class="relative flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-400 dark:border-slate-600 overflow-hidden h-7">
+                                    <i class="ph ph-tag text-slate-500 dark:text-slate-400 text-[10px] absolute left-2 pointer-events-none z-10"></i>
+                                    @if ($discountType === 'fixed')
+                                        <x-money-input 
+                                            wire:model.live.debounce.500ms="discountValue"
+                                            class="w-full pl-6 pr-8 py-0 h-full bg-transparent border-none text-xs font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
+                                            placeholder="0"
+                                        />
+                                    @else
+                                        <input 
+                                            type="number" 
+                                            placeholder="0 %" 
+                                            wire:model.live.debounce.500ms="discountValue"
+                                            class="w-full pl-6 pr-8 py-0 h-full bg-transparent border-none text-xs font-black text-slate-900 dark:text-slate-100 outline-none focus:ring-0"
+                                            min="0"
+                                        >
+                                    @endif
+                                    <button 
+                                        type="button"
+                                        wire:click="toggleGlobalDiscountType"
+                                        class="absolute right-0 top-0 bottom-0 px-2 bg-slate-150 dark:bg-slate-800 text-[10px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center select-none z-10"
+                                        title="Klik untuk mengubah jenis diskon (Nominal / Persentase)"
                                     >
-                                @endif
-                                <button 
-                                    type="button"
-                                    wire:click="toggleGlobalDiscountType"
-                                    class="absolute right-0 top-0 bottom-0 px-2 bg-slate-150 dark:bg-slate-800 text-[10px] font-black border-l border-slate-400 dark:border-slate-600 text-primary dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center select-none z-10"
-                                    title="Klik untuk mengubah jenis diskon (Nominal / Persentase)"
-                                >
-                                    {{ $discountType === 'percent' ? '%' : 'Rp' }}
-                                </button>
+                                        {{ $discountType === 'percent' ? '%' : 'Rp' }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
 
                 <!-- Total Tagihan -->
@@ -710,21 +738,28 @@
                 </div>
             </div>
 
-            <!-- Right Column: Payment Box Button -->
-            <div class="w-32 sm:w-36 flex-shrink-0 flex">
-                <button 
-                    type="button"
-                    wire:click="openPayment"
-                    @if(empty($cart)) disabled @endif
-                    class="w-full h-full min-h-[90px] bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-slate-250 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 dark:disabled:text-slate-600 rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center text-center transition-all duration-200 shadow-lg shadow-emerald-600/25 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed group"
-                >
-                    <div class="w-10 h-10 rounded-lg bg-white/20 dark:bg-white/10 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
-                        <i class="ph-bold ph-credit-card text-xl text-white"></i>
-                    </div>
-                    <span class="font-black text-sm leading-tight">Bayar</span>
-                    <span class="text-[10px] text-white/95 mt-1 font-black bg-white/20 px-2 py-0.5 rounded-md">F9</span>
-                </button>
-            </div>
+            @php
+                $canPosPay = $editingSaleId
+                    ? \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.edit_sale')
+                    : \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.checkout');
+            @endphp
+            @if ($canPosPay)
+                <!-- Right Column: Payment Box Button -->
+                <div class="w-32 sm:w-36 flex-shrink-0 flex">
+                    <button 
+                        type="button"
+                        wire:click="openPayment"
+                        @if(empty($cart)) disabled @endif
+                        class="w-full h-full min-h-[90px] bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-slate-250 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 dark:disabled:text-slate-600 rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center text-center transition-all duration-200 shadow-lg shadow-emerald-600/25 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed group"
+                    >
+                        <div class="w-10 h-10 rounded-lg bg-white/20 dark:bg-white/10 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                            <i class="ph-bold ph-credit-card text-xl text-white"></i>
+                        </div>
+                        <span class="font-black text-sm leading-tight">Bayar</span>
+                        <span class="text-[10px] text-white/95 mt-1 font-black bg-white/20 px-2 py-0.5 rounded-md">F9</span>
+                    </button>
+                </div>
+            @endif
         </div>
     </div>
 </div>

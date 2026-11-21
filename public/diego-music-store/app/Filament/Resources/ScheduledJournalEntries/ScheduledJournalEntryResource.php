@@ -8,6 +8,7 @@ use App\Filament\Resources\ScheduledJournalEntries\Tables\ScheduledJournalEntrie
 use App\Helpers\BranchHelper;
 use App\Models\ScheduledJournalEntry;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,6 +17,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ScheduledJournalEntryResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.scheduled_journal_entries';
+
     protected static ?string $model = ScheduledJournalEntry::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendar;

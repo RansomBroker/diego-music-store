@@ -9,6 +9,7 @@ use App\Filament\Resources\CashTransactions\Schemas\CashTransactionForm;
 use App\Filament\Resources\CashTransactions\Tables\CashTransactionsTable;
 use App\Models\CashTransaction;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,6 +17,10 @@ use Filament\Tables\Table;
 
 class CashTransactionResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.cash_transactions';
+
     protected static ?string $model = CashTransaction::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;

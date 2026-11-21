@@ -61,7 +61,9 @@ class POSReceiptTest extends TestCase
 
     public function test_authenticated_user_can_access_receipt_page(): void
     {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         $this->actingAs($user);
 
         $branch = Branch::create([

@@ -15,6 +15,8 @@ class PosEmployeesTest extends TestCase
 
     public function test_pos_employees_component_can_render_and_create_employee(): void
     {
+        \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::create([
             'name' => 'Admin Test',
             'username' => 'admintest',
@@ -22,6 +24,7 @@ class PosEmployeesTest extends TestCase
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
+        $user->assignRole($ownerRole);
 
         $this->actingAs($user);
 
@@ -43,6 +46,8 @@ class PosEmployeesTest extends TestCase
 
     public function test_pos_employees_component_can_update_and_delete_with_toast(): void
     {
+        $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::create([
             'name' => 'Admin Test 2',
             'username' => 'admintest2',
@@ -50,10 +55,12 @@ class PosEmployeesTest extends TestCase
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
+        $user->assignRole($ownerRole);
 
         $this->actingAs($user);
 
         $employee = Employee::create([
+            'branch_id' => $branch->id,
             'nik' => 'EMP-001',
             'name' => 'Budi Santoso',
             'phone' => '08123456789',

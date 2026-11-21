@@ -68,7 +68,7 @@ class PurchaseOrdersTable
             ->actions([
                 EditAction::make()
                     ->modalWidth('7xl')
-                    ->visible(fn (Model $record) => $record->status === 'draft')
+                    ->visible(fn (Model $record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseOrders\PurchaseOrderResource::canEdit($record))
                     ->mutateRecordDataUsing(function (Model $record, array $data): array {
                         $data['discount_type'] = $record->discount_type ?? 'fixed';
                         $data['discount_value'] = $record->discount_value ?? 0;
@@ -115,7 +115,7 @@ class PurchaseOrdersTable
                     ->label('Bayar DP')
                     ->icon('heroicon-o-banknotes')
                     ->color('warning')
-                    ->visible(fn (Model $record) => $record->status === 'approved' && ($record->dp_amount ?? 0) == 0)
+                    ->visible(fn (Model $record) => $record->status === 'approved' && ($record->dp_amount ?? 0) == 0 && \App\Filament\Resources\PurchaseOrders\PurchaseOrderResource::canEdit($record))
                     ->modalHeading(fn (Model $record) => "Setor Uang Muka (DP) - PO #{$record->po_number}")
                     ->modalDescription(fn (Model $record) => "Grand Total PO: Rp " . number_format($record->grand_total, 0, ',', '.') . " ke " . ($record->supplier?->name ?? 'Supplier'))
                     ->modalWidth('lg')
@@ -192,7 +192,7 @@ class PurchaseOrdersTable
                     ->openUrlInNewTab(),
 
                 DeleteAction::make()
-                    ->visible(fn (Model $record) => $record->status === 'draft'),
+                    ->visible(fn (Model $record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseOrders\PurchaseOrderResource::canDelete($record)),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

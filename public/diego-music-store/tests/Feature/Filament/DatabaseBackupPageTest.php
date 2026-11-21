@@ -22,9 +22,11 @@ class DatabaseBackupPageTest extends TestCase
     {
         parent::setUp();
 
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create([
             'is_active' => true,
         ]);
+        $this->user->assignRole($ownerRole);
     }
 
     /** @test */

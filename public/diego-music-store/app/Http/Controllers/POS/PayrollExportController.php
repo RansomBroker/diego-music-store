@@ -22,7 +22,7 @@ class PayrollExportController extends Controller
     public function export(int $payrollId, ExportPayrollToExcel $action): BinaryFileResponse
     {
         $user = Auth::user();
-        abort_unless($user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']), 403);
+        abort_unless(\App\Helpers\PermissionHelper::canAccessFrontofficeFeature($user, 'fo.payroll.view'), 403);
         $payroll = Payroll::findOrFail($payrollId);
         abort_unless((int) $payroll->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
 
@@ -40,9 +40,9 @@ class PayrollExportController extends Controller
     {
         $item = PayrollItem::query()->with('employee')->findOrFail($itemId);
         $user = Auth::user();
-        $isManagement = $user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
-        abort_unless($isManagement || ($user?->employee?->id && (int) $user->employee->id === (int) $item->employee_id), 403);
-        if ($isManagement) {
+        $isPayrollViewer = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature($user, 'fo.payroll.view');
+        abort_unless($isPayrollViewer || ($user?->employee?->id && (int) $user->employee->id === (int) $item->employee_id), 403);
+        if ($isPayrollViewer) {
             abort_unless((int) $item->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
         }
 

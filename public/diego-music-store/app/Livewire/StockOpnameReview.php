@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Actions\StockOpname\FinalizeStockOpnamePeriod;
+use App\Helpers\PermissionHelper;
 use App\Models\StockOpnameAssignment;
 use App\Models\StockOpnamePeriod;
 use App\Models\Branch;
@@ -19,11 +20,14 @@ class StockOpnameReview extends Component
     public bool $showFinalizeModal = false;
     public ?int $periodIdToFinalize = null;
 
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.stock_opname_review.view'), 403);
+    }
+
     public function mount(): void
     {
-        abort_unless(auth()->check() && auth()->user()->hasRole([
-            'owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin',
-        ]), 403);
+        // Enforced by boot() & route middleware
     }
 
     public function selectPeriod(int $periodId): void
@@ -45,6 +49,7 @@ class StockOpnameReview extends Component
 
     public function approveAssignment(int $assignmentId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.stock_opname_review.approve'), 403);
         $assignment = $this->findReviewableAssignment($assignmentId);
 
         app(\App\Actions\StockOpname\ApproveStockOpnameAssignment::class)->execute($assignment, $this->reviewNotes);
@@ -56,6 +61,7 @@ class StockOpnameReview extends Component
 
     public function requestRevision(int $assignmentId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.stock_opname_review.approve'), 403);
         $validated = $this->validate([
             'reviewNotes' => ['required', 'string', 'min:3', 'max:2000'],
         ], [
@@ -72,6 +78,7 @@ class StockOpnameReview extends Component
 
     public function openFinalizeModal(int $periodId): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.stock_opname_review.approve'), 403);
         $this->periodIdToFinalize = $periodId;
         $this->showFinalizeModal = true;
     }
@@ -84,6 +91,7 @@ class StockOpnameReview extends Component
 
     public function finalizePeriod(?int $periodId = null): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.stock_opname_review.approve'), 403);
         $id = $periodId ?? $this->periodIdToFinalize ?? $this->selectedPeriodId;
         if (!$id) {
             return;

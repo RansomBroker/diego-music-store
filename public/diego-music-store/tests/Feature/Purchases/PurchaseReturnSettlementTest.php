@@ -33,7 +33,9 @@ class PurchaseReturnSettlementTest extends TestCase
 
         $this->branch = Branch::create(['name' => 'Cabang Utama', 'store_name' => 'Diego Music Store']);
         $this->supplier = Supplier::create(['name' => 'PT Yamaha Musik Indonesia']);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $this->user = User::factory()->create();
+        $this->user->assignRole($ownerRole);
         $this->user->branches()->attach($this->branch->id);
         $this->actingAs($this->user);
 

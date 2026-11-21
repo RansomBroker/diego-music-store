@@ -24,7 +24,9 @@
                         Rp {{ number_format($previewItem->basic_salary + $previewItem->allowance_amount + $previewItem->overtime_amount + $previewItem->commission_amount + $previewItem->kpi_bonus_amount, 0, ',', '.') }}
                     </div>
                     <ul class="text-xs text-slate-600 dark:text-slate-400 space-y-0.5 pt-2 border-t border-emerald-200/60 dark:border-emerald-800">
-                        <li>• Gaji Pokok: Rp {{ number_format($previewItem->basic_salary, 0, ',', '.') }}</li>
+                        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'hr.view_salary'))
+                            <li>• Gaji Pokok: Rp {{ number_format($previewItem->basic_salary, 0, ',', '.') }}</li>
+                        @endif
                         <li>• Tunjangan Tetap: Rp {{ number_format($previewItem->allowance_amount, 0, ',', '.') }}</li>
                         <li>• Tunjangan Lembur: Rp {{ number_format($previewItem->overtime_amount, 0, ',', '.') }}</li>
                         <li>• Komisi Sales: Rp {{ number_format($previewItem->commission_amount, 0, ',', '.') }}</li>

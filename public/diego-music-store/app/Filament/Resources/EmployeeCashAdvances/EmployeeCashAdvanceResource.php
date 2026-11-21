@@ -10,6 +10,7 @@ use App\Models\EmployeeCashAdvance;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -19,6 +20,12 @@ use Filament\Tables\Table;
 
 class EmployeeCashAdvanceResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.employee_cash_advances';
+    protected static bool $hasEditPermission = false;
+    protected static bool $hasDeletePermission = false;
+
     protected static ?string $model = EmployeeCashAdvance::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
@@ -30,16 +37,6 @@ class EmployeeCashAdvanceResource extends Resource
     protected static ?string $modelLabel = 'Kasbon Karyawan';
 
     protected static ?int $navigationSort = 10;
-
-    public static function shouldRegisterNavigation(): bool
-    {
-        return true;
-    }
-
-    public static function canViewAny(): bool
-    {
-        return true;
-    }
 
     public static function getNavigationGroup(): ?string
     {
@@ -171,7 +168,7 @@ class EmployeeCashAdvanceResource extends Resource
                     ->label('Setujui & Cairkan')
                     ->color('success')
                     ->icon('heroicon-o-check-circle')
-                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->visible(fn ($record) => $record->status === 'pending' && \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.approve'))
                     ->modalHeading('Setujui & Cairkan Dana Kasbon')
                     ->modalDescription(fn ($record) => "Setujui pengajuan kasbon {$record->advance_number} untuk {$record->employee?->name} sebesar Rp " . number_format($record->amount, 0, ',', '.') . " dan bukukan ke jurnal akuntansi.")
                     ->form([
@@ -198,6 +195,7 @@ class EmployeeCashAdvanceResource extends Resource
                             ->label('Catatan Pencairan (Opsional)'),
                     ])
                     ->action(function ($record, array $data) {
+                        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.approve'), 403);
                         app(ApproveCashAdvance::class)->execute(
                             $record->id,
                             auth()->user(),
@@ -211,13 +209,14 @@ class EmployeeCashAdvanceResource extends Resource
                     ->label('Tolak')
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
-                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->visible(fn ($record) => $record->status === 'pending' && \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.approve'))
                     ->form([
                         Forms\Components\Textarea::make('reason')
                             ->required()
                             ->label('Alasan Penolakan'),
                     ])
                     ->action(function ($record, array $data) {
+                        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.approve'), 403);
                         app(RejectCashAdvance::class)->execute($record->id, auth()->user(), $data['reason'] ?? null);
                     }),
 
@@ -225,7 +224,7 @@ class EmployeeCashAdvanceResource extends Resource
                     ->label('Pelunasan Awal')
                     ->color('info')
                     ->icon('heroicon-o-currency-dollar')
-                    ->visible(fn ($record) => $record->status === 'approved' && $record->remaining_amount > 0)
+                    ->visible(fn ($record) => $record->status === 'approved' && $record->remaining_amount > 0 && \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.approve'))
                     ->form([
                         Forms\Components\TextInput::make('repayment_amount')
                             ->numeric()
@@ -261,6 +260,7 @@ class EmployeeCashAdvanceResource extends Resource
                             ->label('Catatan Pelunasan'),
                     ])
                     ->action(function ($record, array $data) {
+                        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.approve'), 403);
                         app(\App\Actions\CashAdvance\SettleCashAdvanceEarly::class)->execute(
                             $record->id,
                             (float) $data['repayment_amount'],
@@ -287,8 +287,9 @@ class EmployeeCashAdvanceResource extends Resource
                     ->color('gray')
                     ->icon('heroicon-o-x-mark')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->visible(fn ($record) => $record->status === 'pending' && \App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.approve'))
                     ->action(function ($record) {
+                        abort_unless(\App\Helpers\PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.employee_cash_advances.approve'), 403);
                         app(\App\Actions\CashAdvance\CancelCashAdvanceRequest::class)->execute($record->id, auth()->user());
                     }),
             ]);

@@ -1,24 +1,17 @@
 <x-filament-panels::page>
     <div class="space-y-6">
-        <!-- Info Banner -->
-        <div class="p-4 rounded-xl bg-blue-50 border border-blue-200 dark:bg-gray-800 dark:border-blue-900 flex items-start space-x-3">
-            <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg text-blue-600 dark:text-blue-400">
-                <x-heroicon-o-shield-check class="w-6 h-6" />
-            </div>
-            <div>
-                <h4 class="font-semibold text-blue-900 dark:text-blue-200 text-sm">Manajemen Hak Akses & Peran Pengguna (RBAC ERP)</h4>
-                <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                    Kelola peran (roles) dan hak akses (permissions) seluruh modul ERP Diego Music Store. Gunakan tombol <strong>"Atur Hak Akses"</strong> untuk mengaktifkan modul dengan tombol <em>Pilih Semua / Batal Semua</em> per-kategori, atau <strong>"Duplikasi"</strong> untuk menyalin konfigurasi peran.
-                </p>
+        <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="font-bold">Prinsip Allow-List Hak Akses (FO &amp; BO)</p>
+                    <p class="mt-0.5 text-xs opacity-90">
+                        Menu atau fitur hanya aktif dan tampil bila <strong>Akses Panel</strong> (FO / BO) serta izin fitur terkait dicentang.
+                        Item yang tidak dicentang otomatis disembunyikan dari sidebar &amp; tombol UI serta diblokir di server. Role <strong>Owner</strong> memiliki akses penuh permanen.
+                    </p>
+                </div>
             </div>
         </div>
 
-        <!-- Filament Native Table Component -->
-        <div>
-            {{ $this->table }}
-        </div>
+        {{ $this->table }}
     </div>
-
-    <!-- Render Native Filament Action Modals -->
-    <x-filament-actions::modals />
 </x-filament-panels::page>

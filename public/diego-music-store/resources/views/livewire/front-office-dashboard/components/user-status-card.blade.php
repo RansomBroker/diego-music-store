@@ -30,7 +30,18 @@
         </div>
 
         @php
-            $isOwner = $isOwner ?? (auth()->check() && auth()->user()->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin']));
+            $isOwner = \App\Helpers\PermissionHelper::isOwner(auth()->user());
+            $canAccessBo = \App\Helpers\PermissionHelper::canAccessBackoffice(auth()->user());
+            $canAccessFoReports = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature(auth()->user(), [
+                'fo.reports.sales',
+                'fo.reports.sales_queue',
+                'fo.reports.ar_aging',
+                'fo.reports.ar_settlement',
+                'fo.reports.daily_cash',
+                'fo.reports.stock_prices',
+            ]);
+            $canAccessAttendances = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.attendances.view');
+            $canAccessCommissions = \App\Helpers\PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.commissions.view');
         @endphp
 
         @if ($isOwner)
@@ -49,14 +60,18 @@
                 </div>
 
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    <a href="/backoffice" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-sm hover:shadow transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i class="ph-bold ph-gauge text-base"></i>
-                        <span>Backoffice</span>
-                    </a>
-                    <a href="/pos/reports" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-extrabold text-xs rounded-xl transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i class="ph-bold ph-chart-line-up text-base"></i>
-                        <span>Laporan</span>
-                    </a>
+                    @if ($canAccessBo)
+                        <a href="/backoffice" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-sm hover:shadow transition flex items-center gap-1.5 whitespace-nowrap">
+                            <i class="ph-bold ph-gauge text-base"></i>
+                            <span>Backoffice</span>
+                        </a>
+                    @endif
+                    @if ($canAccessFoReports)
+                        <a href="/pos/reports" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-extrabold text-xs rounded-xl transition flex items-center gap-1.5 whitespace-nowrap">
+                            <i class="ph-bold ph-chart-line-up text-base"></i>
+                            <span>Laporan</span>
+                        </a>
+                    @endif
                 </div>
             </div>
         @else
@@ -84,31 +99,41 @@
                             @if ($currentUserEmployee->is_off_days_over_quota)
                                 <span class="px-1.5 py-0.5 bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 rounded text-[9px] font-black uppercase">OVER {{ $currentUserEmployee->off_days_over_count }} HARI!</span>
                             @endif
-                            <span>&bull;</span>
-                            <a href="/pos/commissions" class="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-extrabold">
-                                <i class="ph-bold ph-percent text-xs"></i>
-                                <span>Komisi: <strong class=" text-slate-900 dark:text-slate-100">Rp {{ number_format($currentUserMonthlyCommission, 0, ',', '.') }}</strong></span>
-                            </a>
+                            @if ($canAccessCommissions)
+                                <span>&bull;</span>
+                                <a href="/pos/commissions" class="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-extrabold">
+                                    <i class="ph-bold ph-percent text-xs"></i>
+                                    <span>Komisi: <strong class=" text-slate-900 dark:text-slate-100">Rp {{ number_format($currentUserMonthlyCommission, 0, ',', '.') }}</strong></span>
+                                </a>
+                            @endif
                         </div>
                     @endif
                 </div>
 
-                <div class="flex-shrink-0">
-                    @if (!$currentUserTodayAttendance || !$currentUserTodayAttendance->clock_in)
-                        <a href="{{ route('pos.attendances') }}?action=clock_in" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm hover:shadow transition flex items-center gap-2 whitespace-nowrap">
-                            <i class="ph-bold ph-sign-in text-base"></i>
-                            <span>Clock In (Masuk)</span>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    @if ($canAccessBo)
+                        <a href="/backoffice" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-sm hover:shadow transition flex items-center gap-1.5 whitespace-nowrap">
+                            <i class="ph-bold ph-gauge text-base"></i>
+                            <span>Backoffice</span>
                         </a>
-                    @elseif (!$currentUserTodayAttendance->clock_out)
-                        <a href="{{ route('pos.attendances') }}?action=clock_out" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs rounded-xl shadow-sm hover:shadow transition flex items-center gap-2 whitespace-nowrap">
-                            <i class="ph-bold ph-sign-out text-base"></i>
-                            <span>Clock Out (Pulang)</span>
-                        </a>
-                    @else
-                        <div class="px-3.5 py-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl flex items-center gap-2 whitespace-nowrap">
-                            <i class="ph-bold ph-check-circle text-emerald-500 text-base"></i>
-                            <span>Selesai</span>
-                        </div>
+                    @endif
+                    @if ($canAccessAttendances)
+                        @if (!$currentUserTodayAttendance || !$currentUserTodayAttendance->clock_in)
+                            <a href="{{ route('pos.attendances') }}?action=clock_in" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm hover:shadow transition flex items-center gap-2 whitespace-nowrap">
+                                <i class="ph-bold ph-sign-in text-base"></i>
+                                <span>Clock In (Masuk)</span>
+                            </a>
+                        @elseif (!$currentUserTodayAttendance->clock_out)
+                            <a href="{{ route('pos.attendances') }}?action=clock_out" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs rounded-xl shadow-sm hover:shadow transition flex items-center gap-2 whitespace-nowrap">
+                                <i class="ph-bold ph-sign-out text-base"></i>
+                                <span>Clock Out (Pulang)</span>
+                            </a>
+                        @else
+                            <div class="px-3.5 py-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl flex items-center gap-2 whitespace-nowrap">
+                                <i class="ph-bold ph-check-circle text-emerald-500 text-base"></i>
+                                <span>Selesai</span>
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>

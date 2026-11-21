@@ -12,16 +12,24 @@
         />
     </div>
 
-    <!-- Add Action -->
-    <x-pos.utility.button
-        type="button"
-        variant="primary"
-        size="sm"
-        icon="ph-plus"
-        wire:click="openCreate"
-    >
-        Tambah Karyawan
-    </x-pos.utility.button>
+@php
+    $canViewSalary = \App\Helpers\PermissionHelper::can(Auth::user(), 'hr.view_salary');
+    $canCreateEmployee = \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.employees.create');
+    $canEditEmployee = \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.employees.edit');
+    $canDeleteEmployee = \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.employees.delete');
+@endphp
+    @if ($canCreateEmployee)
+        <!-- Add Action -->
+        <x-pos.utility.button
+            type="button"
+            variant="primary"
+            size="sm"
+            icon="ph-plus"
+            wire:click="openCreate"
+        >
+            Tambah Karyawan
+        </x-pos.utility.button>
+    @endif
 </div>
 
 <!-- Table Container -->
@@ -47,9 +55,11 @@
                 <x-pos.table.th sortable field="monthly_off_days_quota" :sortField="$sortField" :sortDirection="$sortDirection">
                     Quota Off Day
                 </x-pos.table.th>
-                <x-pos.table.th sortable field="basic_salary" :sortField="$sortField" :sortDirection="$sortDirection">
-                    Gaji Pokok
-                </x-pos.table.th>
+                @if ($canViewSalary)
+                    <x-pos.table.th sortable field="basic_salary" :sortField="$sortField" :sortDirection="$sortDirection">
+                        Gaji Pokok
+                    </x-pos.table.th>
+                @endif
                 <x-pos.table.th sortable field="is_active" :sortField="$sortField" :sortDirection="$sortDirection">
                     Status
                 </x-pos.table.th>
@@ -115,10 +125,12 @@
                         </x-pos.utility.pill>
                     </x-pos.table.td>
 
-                    <!-- Gaji Pokok -->
-                    <x-pos.table.td class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                        Rp {{ number_format($emp->basic_salary, 0, ',', '.') }}
-                    </x-pos.table.td>
+                    @if ($canViewSalary)
+                        <!-- Gaji Pokok -->
+                        <x-pos.table.td class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                            Rp {{ number_format($emp->basic_salary, 0, ',', '.') }}
+                        </x-pos.table.td>
+                    @endif
 
                     <!-- Status -->
                     <x-pos.table.td>
@@ -136,31 +148,35 @@
                     <!-- Actions -->
                     <x-pos.table.td align="right">
                         <div class="flex items-center justify-end gap-1.5">
-                            <x-pos.utility.button
-                                type="button"
-                                variant="warning"
-                                size="xs"
-                                icon="ph-pencil-simple"
-                                wire:click="openEdit({{ $emp->id }})"
-                                title="Ubah"
-                            >
-                                Ubah
-                            </x-pos.utility.button>
-                            <x-pos.utility.button
-                                type="button"
-                                variant="danger"
-                                size="xs"
-                                icon="ph-trash"
-                                wire:click="confirmDelete({{ $emp->id }})"
-                                title="Hapus"
-                            >
-                                Hapus
-                            </x-pos.utility.button>
+                            @if ($canEditEmployee)
+                                <x-pos.utility.button
+                                    type="button"
+                                    variant="warning"
+                                    size="xs"
+                                    icon="ph-pencil-simple"
+                                    wire:click="openEdit({{ $emp->id }})"
+                                    title="Ubah"
+                                >
+                                    Ubah
+                                </x-pos.utility.button>
+                            @endif
+                            @if ($canDeleteEmployee)
+                                <x-pos.utility.button
+                                    type="button"
+                                    variant="danger"
+                                    size="xs"
+                                    icon="ph-trash"
+                                    wire:click="confirmDelete({{ $emp->id }})"
+                                    title="Hapus"
+                                >
+                                    Hapus
+                                </x-pos.utility.button>
+                            @endif
                         </div>
                     </x-pos.table.td>
                 </x-pos.table.tr>
             @empty
-                <x-pos.table.empty colspan="9" icon="ph-user-group" message="Belum ada data karyawan" />
+                <x-pos.table.empty :colspan="$canViewSalary ? 9 : 8" icon="ph-user-group" message="Belum ada data karyawan" />
             @endforelse
         </tbody>
     </x-pos.table>

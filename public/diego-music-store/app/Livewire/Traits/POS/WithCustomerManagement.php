@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Traits\POS;
 
+use App\Helpers\PermissionHelper;
 use App\Models\Customer;
 use App\Actions\Customer\CreateCustomer;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Auth;
 
 trait WithCustomerManagement
 {
@@ -52,6 +54,7 @@ trait WithCustomerManagement
 
     public function openCreateCustomerModal()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customers.create'), 403);
         $this->newCustomerName = $this->customerSearch;
         $this->newCustomerPhone = '';
         $this->newCustomerEmail = '';
@@ -65,6 +68,7 @@ trait WithCustomerManagement
 
     public function createCustomer(CreateCustomer $createCustomerAction)
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.customers.create'), 403);
         $this->validate([
             'newCustomerName' => 'required|string|max:255',
             'newCustomerPhone' => 'nullable|string|max:255',

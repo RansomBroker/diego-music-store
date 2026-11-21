@@ -45,8 +45,7 @@ class POSQueryOptimizationTest extends TestCase
         Account::firstOrCreate(['code' => '4-1000'], ['name' => 'Pendapatan Penjualan', 'classification' => 'Revenue', 'is_active' => true]);
         Account::firstOrCreate(['code' => '5-1000'], ['name' => 'Harga Pokok Penjualan', 'classification' => 'Expense', 'is_active' => true]);
 
-        Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
-        Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
 
         $this->user = User::factory()->create();
         $this->user->assignRole('karyawan');

@@ -44,11 +44,13 @@
                             <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Kelola Cabang & Lokasi Outlet Toko</h1>
                         </div>
 
-                        <div>
-                            <x-pos.utility.button variant="primary" size="md" icon="ph-plus" wire:click="openCreate">
-                                Tambah Cabang Baru
-                            </x-pos.utility.button>
-                        </div>
+                        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.branches.create'))
+                            <div>
+                                <x-pos.utility.button variant="primary" size="md" icon="ph-plus" wire:click="openCreate">
+                                    Tambah Cabang Baru
+                                </x-pos.utility.button>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Filter Toolbar -->

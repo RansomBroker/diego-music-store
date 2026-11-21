@@ -9,6 +9,7 @@ use App\Filament\Resources\PricingTiers\Schemas\PricingTierForm;
 use App\Filament\Resources\PricingTiers\Tables\PricingTiersTable;
 use App\Models\PricingTier;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,6 +17,10 @@ use Filament\Tables\Table;
 
 class PricingTierResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.pricing_tiers';
+
     protected static ?string $model = PricingTier::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;

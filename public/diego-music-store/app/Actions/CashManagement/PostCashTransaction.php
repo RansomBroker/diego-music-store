@@ -14,7 +14,7 @@ class PostCashTransaction
 {
     public function execute(CashTransaction $cashTransaction): CashTransaction
     {
-        abort_if(Auth::user()?->hasRole(['sales', 'Sales']), 403);
+        \App\Helpers\PermissionHelper::enforceActionPermission(Auth::user(), ['fo.daily_cash.create', 'bo.cash_transactions.create', 'bo.cash_transactions.edit']);
         $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
         abort_unless(in_array((int) $cashTransaction->branch_id, $allowedBranchIds, true), 403);

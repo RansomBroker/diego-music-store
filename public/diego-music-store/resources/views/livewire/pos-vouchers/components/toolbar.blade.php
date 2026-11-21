@@ -13,13 +13,15 @@
         >
     </div>
 
-    <!-- Add Button -->
-    <x-pos.utility.button
-        type="button"
-        variant="primary"
-        icon="ph-plus"
-        wire:click="openCreate"
-    >
-        Tambah Voucher
-    </x-pos.utility.button>
+    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.vouchers.create'))
+        <!-- Add Button -->
+        <x-pos.utility.button
+            type="button"
+            variant="primary"
+            icon="ph-plus"
+            wire:click="openCreate"
+        >
+            Tambah Voucher
+        </x-pos.utility.button>
+    @endif
 </div>

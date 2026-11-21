@@ -17,7 +17,7 @@ class BulkPayrollPayslipController extends Controller
     public function show(int $payrollId)
     {
         $user = Auth::user();
-        abort_unless($user && $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']), 403);
+        abort_unless(\App\Helpers\PermissionHelper::canAccessFrontofficeFeature($user, 'fo.payroll.view'), 403);
         $payroll = Payroll::with(['items.employee.branch', 'branch', 'items.payroll'])->findOrFail($payrollId);
         abort_unless((int) $payroll->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
 

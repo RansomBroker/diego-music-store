@@ -36,7 +36,8 @@ class ClockIn
     ): EmployeeAttendance {
         $user = Auth::user();
         abort_unless($user, 403);
-        $isManagement = $user->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        \App\Helpers\PermissionHelper::enforceActionPermission($user, ['fo.attendances.view', 'fo.attendances.manage', 'fo.cash_session.open']);
+        $isManagement = \App\Helpers\PermissionHelper::can($user, 'fo.attendances.manage');
         if (!$isManagement) {
             abort_unless($user->employee && (int) $user->employee->id === (int) $employee->id, 403);
             abort_unless($employee->branch_id && (!$branchId || (int) $branchId === (int) $employee->branch_id), 403);

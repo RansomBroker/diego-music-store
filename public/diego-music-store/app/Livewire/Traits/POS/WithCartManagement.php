@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Traits\POS;
 
+use App\Helpers\PermissionHelper;
 use App\Models\ProductVariant;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
@@ -250,6 +251,7 @@ trait WithCartManagement
 
     public function updateItemDiscountValue($variantId, $value)
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.discount'), 403);
         if (isset($this->cart[$variantId])) {
             $this->cart[$variantId]['discount_value'] = max(0, intval($value));
             $this->recalculateItemDiscountAmount($variantId);
@@ -259,6 +261,7 @@ trait WithCartManagement
 
     public function toggleItemDiscountType($variantId)
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.discount'), 403);
         if (isset($this->cart[$variantId])) {
             $currentType = $this->cart[$variantId]['discount_type'] ?? 'percent';
             $this->cart[$variantId]['discount_type'] = $currentType === 'percent' ? 'fixed' : 'percent';
@@ -339,6 +342,7 @@ trait WithCartManagement
 
     public function toggleGlobalDiscountType()
     {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.discount'), 403);
         $this->discountType = $this->discountType === 'fixed' ? 'percent' : 'fixed';
     }
 

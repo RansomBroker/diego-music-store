@@ -9,6 +9,7 @@ use App\Filament\Resources\SupplierPayments\Schemas\SupplierPaymentForm;
 use App\Filament\Resources\SupplierPayments\Tables\SupplierPaymentsTable;
 use App\Models\SupplierPayment;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,6 +17,10 @@ use Filament\Tables\Table;
 
 class SupplierPaymentResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.supplier_payments';
+
     protected static ?string $model = SupplierPayment::class;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
     protected static ?string $recordTitleAttribute = 'payment_no';

@@ -7,6 +7,7 @@ use App\Filament\Resources\CustomerLabels\Schemas\CustomerLabelForm;
 use App\Filament\Resources\CustomerLabels\Tables\CustomerLabelsTable;
 use App\Models\CustomerLabel;
 use BackedEnum;
+use App\Filament\Concerns\HasResourcePermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -14,6 +15,10 @@ use Filament\Tables\Table;
 
 class CustomerLabelResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static string $permissionPrefix = 'bo.customer_labels';
+
     protected static ?string $model = CustomerLabel::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookmark;

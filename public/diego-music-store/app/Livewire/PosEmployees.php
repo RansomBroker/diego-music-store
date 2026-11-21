@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Actions\Employee\CreateEmployee;
 use App\Actions\Employee\UpdateEmployee;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\User;
@@ -14,6 +15,11 @@ use Livewire\WithPagination;
 class PosEmployees extends Component
 {
     use WithPagination;
+
+    public function boot(): void
+    {
+        abort_unless(PermissionHelper::canAccessFrontofficeFeature(auth()->user(), 'fo.employees.view'), 403);
+    }
 
     // ── State Tabel & Pencarian ──────────────────────────────────────────
     public string $search = '';
@@ -74,6 +80,7 @@ class PosEmployees extends Component
     // ── Modal: Buka Form Tambah ──────────────────────────────────────────
     public function openCreate(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employees.create'), 403);
         $this->reset([
             'nik', 'name', 'phone', 'email', 'address', 'join_date',
             'branch_id', 'user_id', 'editingId', 'isEditing'
@@ -89,6 +96,7 @@ class PosEmployees extends Component
     // ── Modal: Buka Form Edit ────────────────────────────────────────────
     public function openEdit(int $id): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employees.edit'), 403);
         $employee = Employee::findOrFail($id);
 
         $this->editingId              = $id;
@@ -100,7 +108,7 @@ class PosEmployees extends Component
         $this->address                = $employee->address ?? '';
         $this->join_date              = $employee->join_date?->format('Y-m-d');
         $this->monthly_off_days_quota = $employee->monthly_off_days_quota ?? 4;
-        $this->basic_salary           = (float) ($employee->basic_salary ?? 0);
+        $this->basic_salary           = PermissionHelper::can(auth()->user(), 'hr.view_salary') ? (float) ($employee->basic_salary ?? 0) : 0;
         $this->branch_id              = $employee->branch_id;
         $this->user_id                = $employee->user_id;
         $this->is_active              = (bool) $employee->is_active;
@@ -111,13 +119,15 @@ class PosEmployees extends Component
     // ── Simpan (Create / Update) ─────────────────────────────────────────
     public function save(CreateEmployee $createEmployee, UpdateEmployee $updateEmployee): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), ($this->isEditing && $this->editingId) ? 'fo.employees.edit' : 'fo.employees.create'), 403);
+        $canViewSalary = PermissionHelper::can(auth()->user(), 'hr.view_salary');
         $rules = [
             'name'                   => 'required|string|max:255',
             'nik'                    => 'nullable|string|max:50|unique:employees,nik,' . ($this->editingId ?? 'NULL'),
             'phone'                  => 'nullable|string|max:50',
             'email'                  => 'nullable|email|max:255',
             'monthly_off_days_quota' => 'required|integer|min:0',
-            'basic_salary'           => 'required|numeric|min:0',
+            'basic_salary'           => $canViewSalary ? 'required|numeric|min:0' : 'nullable|numeric|min:0',
             'branch_id'              => 'nullable|exists:branches,id',
             'user_id'                => 'nullable|exists:users,id',
         ];
@@ -130,6 +140,9 @@ class PosEmployees extends Component
         try {
             if ($this->isEditing && $this->editingId) {
                 $employee = Employee::findOrFail($this->editingId);
+                if (! $canViewSalary) {
+                    $validated['basic_salary'] = (float) ($employee->basic_salary ?? 0);
+                }
                 $updateEmployee->execute($employee, $validated);
 
                 $this->dispatch('toast', [
@@ -144,6 +157,9 @@ class PosEmployees extends Component
                     ->success()
                     ->send();
             } else {
+                if (! $canViewSalary) {
+                    $validated['basic_salary'] = 0;
+                }
                 $createEmployee->execute($validated);
 
                 $this->dispatch('toast', [
@@ -172,12 +188,14 @@ class PosEmployees extends Component
     // ── Hapus ────────────────────────────────────────────────────────────
     public function confirmDelete(int $id): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employees.delete'), 403);
         $this->deletingId      = $id;
         $this->showDeleteModal = true;
     }
 
     public function delete(): void
     {
+        abort_unless(PermissionHelper::can(auth()->user(), 'fo.employees.delete'), 403);
         if ($this->deletingId) {
             try {
                 $employee = Employee::findOrFail($this->deletingId);
@@ -230,11 +248,11 @@ class PosEmployees extends Component
 
         $branches = \App\Helpers\BranchHelper::getAllowedBranchesQuery()->where('is_active', true)->get();
 
-        $isOwner = auth()->user()?->hasRole(['owner', 'super_admin', 'Owner', 'Super Admin']);
+        $isOwner = PermissionHelper::isOwner(auth()->user());
         $usersQuery = User::where('is_active', true);
         if (!$isOwner) {
             $usersQuery->when($activeBranchId, fn ($q) => $q->whereHas('branches', fn ($sq) => $sq->where('branches.id', $activeBranchId)))
-                ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['owner', 'Owner', 'super_admin', 'Super Admin']));
+                ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['owner', 'Owner']));
         }
         $users = $usersQuery->orderBy('name')->get();
 

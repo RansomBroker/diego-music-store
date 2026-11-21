@@ -49,14 +49,15 @@ class BranchSwitchAccessTest extends TestCase
 
     public function test_admin_can_switch_to_all_active_branches(): void
     {
-        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-        $admin = User::factory()->create(['is_active' => true]);
-        $admin->assignRole($adminRole);
+        $multiBranchRole = Role::firstOrCreate(['name' => 'branch_manager', 'guard_name' => 'web']);
+        $multiBranchRole->givePermissionTo(['fo.access', 'branch.switch']);
+        $manager = User::factory()->create(['is_active' => true]);
+        $manager->assignRole($multiBranchRole);
 
-        $this->assertTrue($admin->canAccessAllBranches());
-        $this->assertTrue(BranchHelper::canUserSwitchToBranch($admin, $this->branch2));
+        $this->assertTrue($manager->canAccessAllBranches());
+        $this->assertTrue(BranchHelper::canUserSwitchToBranch($manager, $this->branch2));
 
-        $this->actingAs($admin)->get(route('pos.switch-branch', $this->branch2->id));
+        $this->actingAs($manager)->get(route('pos.switch-branch', $this->branch2->id));
         $this->assertSame($this->branch2->id, session('pos_active_branch_id'));
     }
 

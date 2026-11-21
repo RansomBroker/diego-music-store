@@ -21,7 +21,7 @@ class StockOpnamePresetForm
                 ->options(function () {
                     $user = auth()->user();
                     $query = Branch::query()->where('is_active', true)->orderBy('name');
-                    if ($user && !$user->hasRole(['owner', 'admin', 'super_admin', 'Owner', 'Admin', 'Super Admin'])) {
+                    if ($user && !BranchHelper::canAccessAllBranches($user)) {
                         $query->whereIn('id', $user->branches()->pluck('branches.id'));
                     } else {
                         $activeBranchId = BranchHelper::getActiveBranchId();

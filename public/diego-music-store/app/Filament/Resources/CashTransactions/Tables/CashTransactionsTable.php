@@ -83,7 +83,7 @@ class CashTransactionsTable
             ->actions([
                 EditAction::make(),
                 DeleteAction::make()
-                    ->visible(fn ($record) => $record->status === 'draft'),
+                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\CashTransactions\CashTransactionResource::canDelete($record)),
 
                 Action::make('lihat_jurnal')
                     ->label('Jurnal')

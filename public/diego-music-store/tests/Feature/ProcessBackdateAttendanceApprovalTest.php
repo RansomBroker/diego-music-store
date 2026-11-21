@@ -16,8 +16,11 @@ class ProcessBackdateAttendanceApprovalTest extends TestCase
 
     public function test_owner_approval_creates_attendance_record_and_approves_request()
     {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $branch = Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
         $owner = User::factory()->create();
+        $owner->assignRole($ownerRole);
+        $this->actingAs($owner);
         $user = User::factory()->create();
         $employee = Employee::create([
             'user_id'   => $user->id,

@@ -2,12 +2,13 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
+use App\Helpers\PermissionHelper;
 use App\Models\Branch;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Filament\Notifications\Notification;
+use Livewire\Component;
 
 class POSLogin extends Component
 {
@@ -34,7 +35,10 @@ class POSLogin extends Component
     public function mount()
     {
         if (Auth::check()) {
-            return redirect()->to('/pos');
+            $targetUrl = PermissionHelper::resolveFirstAccessibleFrontofficeUrl(Auth::user());
+            if ($targetUrl) {
+                return redirect()->to($targetUrl);
+            }
         }
     }
 
@@ -56,6 +60,16 @@ class POSLogin extends Component
             RateLimiter::clear($throttleKey);
 
             $user = Auth::user();
+            if (! $user->is_active || ! PermissionHelper::canAccessFrontoffice($user)) {
+                Auth::logout();
+                $message = ! $user->is_active
+                    ? 'Akun Anda sedang nonaktif.'
+                    : 'Akun Anda tidak memiliki hak akses ke Front Office.';
+                $this->addError('email', $message);
+                $this->dispatch('toast', type: 'danger', title: 'Akses Ditolak', body: $message);
+                return;
+            }
+
             $branches = $user->branches()->where('is_active', true)->get();
 
             // If user has access to multiple branches, show branch select step
@@ -78,7 +92,7 @@ class POSLogin extends Component
                 ->send();
             $this->dispatch('toast', type: 'success', title: 'Berhasil Masuk', body: 'Selamat datang kembali di sistem kasir.');
 
-            return $this->redirect('/pos');
+            return $this->redirect(PermissionHelper::resolveFirstAccessibleFrontofficeUrl($user) ?? '/pos/front-office');
         }
 
         RateLimiter::hit($throttleKey, 60);
@@ -89,14 +103,19 @@ class POSLogin extends Component
 
     public function selectBranchAndCompleteLogin()
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return $this->redirect('/pos/login');
         }
 
         $user = Auth::user();
+        if (! PermissionHelper::canAccessFrontoffice($user)) {
+            Auth::logout();
+            return $this->redirect('/pos/login');
+        }
+
         $branch = $user->branches()->where('branches.id', $this->selectedBranchId)->first();
 
-        if (!$branch && !$user->hasRole(['owner', 'admin', 'super_admin'])) {
+        if (! $branch && ! \App\Helpers\BranchHelper::canAccessAllBranches($user)) {
             $this->addError('selectedBranchId', 'Anda tidak memiliki hak akses ke lokasi cabang ini.');
             $this->dispatch('toast', type: 'danger', title: 'Akses Ditolak', body: 'Anda tidak memiliki hak akses ke lokasi cabang ini.');
             return;
@@ -111,7 +130,7 @@ class POSLogin extends Component
             ->send();
         $this->dispatch('toast', type: 'success', title: 'Berhasil Masuk', body: 'Cabang Aktif: ' . ($branch?->name ?: 'POS Store'));
 
-        return $this->redirect('/pos');
+        return $this->redirect(PermissionHelper::resolveFirstAccessibleFrontofficeUrl($user) ?? '/pos/front-office');
     }
 
     public function backToCredentials()

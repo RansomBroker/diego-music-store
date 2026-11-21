@@ -50,15 +50,17 @@
             Export Rekap CSV
         </x-pos.utility.button>
 
-        <!-- Button Tambah Aturan -->
-        <x-pos.utility.button
-            type="button"
-            variant="primary"
-            size="sm"
-            icon="ph-plus-circle"
-            wire:click="openRuleModal()"
-        >
-            Tambah Aturan Denda
-        </x-pos.utility.button>
+        @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.attendance_violations.manage'))
+            <!-- Button Tambah Aturan -->
+            <x-pos.utility.button
+                type="button"
+                variant="primary"
+                size="sm"
+                icon="ph-plus-circle"
+                wire:click="openRuleModal()"
+            >
+                Tambah Aturan Denda
+            </x-pos.utility.button>
+        @endif
     </div>
 </div>
