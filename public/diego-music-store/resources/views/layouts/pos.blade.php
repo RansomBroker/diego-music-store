@@ -16,7 +16,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <!-- Tailwind CSS compiled via Vite -->
     @vite('resources/css/app.css')
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     @if (request()->is('pos/attendances*', 'pos/attendance-radiuses*', 'pos/store-profile*'))
         <!-- Leaflet.js Map Library (hanya dimuat di halaman presensi/radius/profil toko) -->
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -45,7 +44,25 @@
     <!-- Custom Top-Right Toast Container -->
     <x-pos.toast />
 
-    {{ $slot }}
+    @if (!empty($posCashierHeader))
+        <div class="flex flex-col h-screen min-h-dvh max-h-dvh w-full overflow-hidden">
+            <div class="flex-shrink-0">
+                <x-pos-page::header
+                    :branches="$posCashierHeader['branches']"
+                    :selectedBranchId="$posCashierHeader['selectedBranchId']"
+                    :selectedStoreName="$posCashierHeader['selectedStoreName']"
+                    :selectedBranchName="$posCashierHeader['selectedBranchName']"
+                    :activeSessionInfo="$posCashierHeader['activeSessionInfo']"
+                    :todaySalesTotal="$posCashierHeader['todaySalesTotal']"
+                />
+            </div>
+            <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
+                {{ $slot }}
+            </div>
+        </div>
+    @else
+        {{ $slot }}
+    @endif
 
     @livewireScripts
     <script>

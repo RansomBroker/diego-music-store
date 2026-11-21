@@ -32,10 +32,17 @@ trait WithDraftTransactions
             return $this->heldTransactions->count();
         }
 
-        return PosHeldTransaction::where('user_id', Auth::id())
-            ->where('branch_id', $this->resolveHeldTransactionBranchId())
-            ->whereNotNull('cart_data')
-            ->count();
+        $userId = Auth::id();
+        $branchId = $this->resolveHeldTransactionBranchId();
+
+        return cache()->remember(
+            PosHeldTransaction::countCacheKey($userId, $branchId),
+            60,
+            fn () => PosHeldTransaction::where('user_id', $userId)
+                ->where('branch_id', $branchId)
+                ->whereNotNull('cart_data')
+                ->count()
+        );
     }
 
     public function getHeldTransactionsProperty()
@@ -111,6 +118,7 @@ trait WithDraftTransactions
 
         $this->currentDraftId = $held->id;
         $this->showHeldModal = false;
+        $this->syncCartStateToModal();
 
         Notification::make()
             ->title('Transaksi Dimuat')
@@ -231,11 +239,13 @@ trait WithDraftTransactions
     {
         if (empty($this->cart) && !$this->selectedCustomerId) {
             if ($this->currentDraftId) {
+                $branchId = $this->resolveHeldTransactionBranchId();
                 PosHeldTransaction::query()
                     ->where('id', $this->currentDraftId)
                     ->where('user_id', Auth::id())
-                    ->where('branch_id', $this->resolveHeldTransactionBranchId())
+                    ->where('branch_id', $branchId)
                     ->delete();
+                cache()->forget(PosHeldTransaction::countCacheKey(Auth::id(), $branchId));
                 $this->currentDraftId = null;
                 $this->lastSavedDraftHash = null;
             }

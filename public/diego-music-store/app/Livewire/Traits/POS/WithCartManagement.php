@@ -47,6 +47,7 @@ trait WithCartManagement
                     ->body("Stok untuk {$variant->product->name} ({$variant->name}) tersisa {$stock} pcs.")
                     ->warning()
                     ->send();
+                $this->syncCartStateToModal();
                 return false;
             }
         }
@@ -97,6 +98,7 @@ trait WithCartManagement
         }
 
         $this->autoSaveDraft();
+        $this->syncCartStateToModal();
         return true;
     }
 
@@ -111,6 +113,7 @@ trait WithCartManagement
         if ($newQty <= 0) {
             unset($this->cart[$variantId]);
             $this->autoSaveDraft();
+            $this->syncCartStateToModal();
             return;
         }
 
@@ -136,6 +139,7 @@ trait WithCartManagement
                         ->body("Stok untuk {$variant->product->name} tersisa {$stock} pcs.")
                         ->warning()
                         ->send();
+                    $this->syncCartStateToModal();
                     return;
                 }
             }
@@ -146,6 +150,7 @@ trait WithCartManagement
         $this->recalculateItemTaxAmount($variantId);
 
         $this->autoSaveDraft();
+        $this->syncCartStateToModal();
     }
 
     public function updateQty($variantId, $change)
@@ -376,10 +381,11 @@ trait WithCartManagement
         $this->selectedSalesRepId = Auth::id();
         $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
         $this->salesSearch = '';
-        $defaultCategory = \App\Models\SaleCategory::first();
+        $defaultCategory = $this->saleCategories->first();
         $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
 
         $this->autoSaveDraft();
+        $this->syncCartStateToModal();
 
         Notification::make()
             ->title('Keranjang Direset')

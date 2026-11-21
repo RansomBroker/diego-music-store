@@ -28,8 +28,8 @@
         }
     }"
     @keydown.window="handleGlobalBarcode($event)"
-    @keydown.window.f1.prevent="$wire.openProductSearch()"
-    @keydown.window.alt.p.prevent="$wire.openProductSearch()"
+    @keydown.window.f1.prevent="Livewire.dispatch('open-pos-product-search', { pricingTierId: $wire.selectedPricingTierId })"
+    @keydown.window.alt.p.prevent="Livewire.dispatch('open-pos-product-search', { pricingTierId: $wire.selectedPricingTierId })"
     @keydown.window.f2.prevent="document.getElementById('customer-search-input')?.focus(); document.getElementById('customer-search-input')?.select()"
     @keydown.window.alt.c.prevent="document.getElementById('customer-search-input')?.focus(); document.getElementById('customer-search-input')?.select()"
     @keydown.window.f3.prevent="document.getElementById('sales-search-input')?.focus(); document.getElementById('sales-search-input')?.select()"
@@ -51,13 +51,8 @@
     })"
     @keydown.window.f12.prevent="showShortcuts = !showShortcuts"
     @keydown.window.escape="showShortcuts = false"
-    class="flex flex-col h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200 relative"
+    class="flex flex-col flex-1 min-h-0 w-full overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-200 relative"
 >
-    <!-- Header (wire:ignore agar perubahan keranjang tidak memicu morph ulang 800+ baris navbar) -->
-    <div wire:ignore class="flex-shrink-0">
-        <x-pos-page::header :branches="$this->branches" :selectedBranchId="$selectedBranchId" :selectedStoreName="$selectedStoreName" :selectedBranchName="$selectedBranchName" :activeSessionInfo="$activeSessionInfo" :todaySalesTotal="$this->todaySalesTotal" />
-    </div>
-
     <!-- Full-Screen Transaction Area -->
     <x-pos-page::cart-sidebar 
         :cart="$cart"
@@ -95,24 +90,14 @@
     />
 
 
-    <!-- Product Search Modal -->
-    @if ($showProductSearchModal)
-        <div wire:key="pos-product-search-modal-wrapper">
-            <x-pos-page::product-search-modal 
-                :show="$showProductSearchModal"
-                :products="$this->products"
-                :activeCategory="$activeCategory"
-                :search="$search"
-                :selectedBranchId="$selectedBranchId"
-                :selectedPricingTierId="$selectedPricingTierId"
-                :cart="$cart"
-                :categoryCounts="$this->categoryCounts"
-                :availableCategories="$this->availableCategories"
-                :visibleCategoryTabs="$visibleCategoryTabs"
-                :viewMode="$viewMode"
-            />
-        </div>
-    @endif
+    <!-- Product Search Modal (Isolated Livewire Component) -->
+    <livewire:pos.product-search-modal
+        :branch-id="$selectedBranchId"
+        :pricing-tier-id="$selectedPricingTierId"
+        :initial-cart-quantities="collect($cart)->mapWithKeys(fn ($item, $id) => [(string) $id => (int) ($item['qty'] ?? 0)])->all()"
+        :initial-category-counts="$this->categoryCounts"
+        wire:key="pos-product-search-modal-component"
+    />
 
     <!-- Payment Detail Modal -->
     @if ($showPaymentModal)

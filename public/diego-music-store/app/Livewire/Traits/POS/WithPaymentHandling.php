@@ -235,6 +235,7 @@ trait WithPaymentHandling
             // Reset POS State
             if ($this->currentDraftId) {
                 PosHeldTransaction::where('id', $this->currentDraftId)->delete();
+                cache()->forget(PosHeldTransaction::countCacheKey(Auth::id(), $this->selectedBranchId));
                 $this->currentDraftId = null;
                 $this->lastSavedDraftHash = null;
             }
@@ -246,12 +247,13 @@ trait WithPaymentHandling
             $this->selectedSalesRepId = Auth::id();
             $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
             $this->salesSearch = '';
-            $defaultCategory = SaleCategory::first();
+            $defaultCategory = $this->saleCategories->first();
             $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
             $this->invoiceDate = now()->format('Y-m-d');
             $this->showPaymentModal = false;
             $this->amountPaid = 0;
             $this->usePoints = false;
+            $this->syncCartStateToModal();
             
             // Refresh cached session sales total and notify wire:ignored header
             cache()->forget('pos_today_sales_' . $activeSession->id);

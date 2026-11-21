@@ -33,6 +33,22 @@ class PosHeldTransaction extends Model
         'discount_value' => 'integer'
     ];
 
+    public static function countCacheKey(int|string|null $userId, int|string|null $branchId): string
+    {
+        return "pos_held_count_{$userId}_{$branchId}";
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (PosHeldTransaction $held): void {
+            cache()->forget(static::countCacheKey($held->user_id, $held->branch_id));
+        });
+
+        static::deleted(function (PosHeldTransaction $held): void {
+            cache()->forget(static::countCacheKey($held->user_id, $held->branch_id));
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

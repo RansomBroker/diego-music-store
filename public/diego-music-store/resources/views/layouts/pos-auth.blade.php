@@ -16,8 +16,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <!-- Tailwind CSS via Vite -->
     @vite('resources/css/app.css')
-    <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     @livewireStyles
     <script>
         // Init dark mode

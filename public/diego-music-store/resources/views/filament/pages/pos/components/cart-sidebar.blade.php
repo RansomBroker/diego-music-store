@@ -81,7 +81,7 @@
 
                 <!-- Tombol Utama Tambah Produk (Expand 2 Baris) -->
                 <button 
-                    wire:click="openProductSearch"
+                    @click="Livewire.dispatch('open-pos-product-search', { pricingTierId: $wire.selectedPricingTierId })"
                     type="button" 
                     title="Tambah Produk (F1 / Klik)"
                     class="flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-black rounded-xl px-2.5 py-1.5 transition-all active:scale-[0.98] w-22 sm:w-24 flex-shrink-0 border border-emerald-500/30 group cursor-pointer shadow-xs"
@@ -403,7 +403,7 @@
             <div class="flex-1 flex flex-col items-center justify-center text-slate-400 py-16">
                 <i class="ph ph-shopping-cart text-5xl mb-3 opacity-50"></i>
                 <span class="text-sm font-medium">Keranjang belanja kosong</span>
-                <button type="button" wire:click="openProductSearch" class="mt-4 px-4 py-2 bg-primary hover:bg-primaryHover text-white text-sm font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-2">
+                <button type="button" @click="Livewire.dispatch('open-pos-product-search', { pricingTierId: $wire.selectedPricingTierId })" class="mt-4 px-4 py-2 bg-primary hover:bg-primaryHover text-white text-sm font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-2">
                     <i class="ph-bold ph-plus"></i> Tambah Produk
                 </button>
             </div>

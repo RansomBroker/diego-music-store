@@ -4,12 +4,14 @@ namespace Tests\Feature;
 
 use App\Helpers\PosNavbarHelper;
 use App\Livewire\POS;
+use App\Livewire\Pos\ProductSearchModal;
 use App\Livewire\Pos\SalesQueueWidget;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\CashSession;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\PosHeldTransaction;
 use App\Models\PricingTier;
 use App\Models\Product;
 use App\Models\ProductBranchStock;
@@ -221,20 +223,144 @@ class POSQueryOptimizationTest extends TestCase
         ]);
         ProductBranchStock::create(['product_variant_id' => $variant->id, 'branch_id' => $this->branch->id, 'stock' => 5]);
 
-        // Full page /pos should skip Leaflet CDN and use wire:ignore + relaxed polling
+        // Full page /pos should render navbar in layout, self-host Phosphor icons, skip Leaflet CDN, and use relaxed polling
         $response = $this->get('/pos');
         $response->assertStatus(200);
+        $response->assertSee('Point of Sale');
         $response->assertDontSee('leaflet@1.9.4');
-        $response->assertSee('wire:ignore', false);
+        $response->assertDontSee('unpkg.com/@phosphor-icons/web');
         $response->assertSee('wire:poll.30s.visible', false);
         $response->assertSee('wire:poll.60s.visible', false);
         $response->assertDontSee('animate-ping');
 
-        // Cart row should render consolidated single x-data handlers
+        // POS component alone (as rendered on Livewire AJAX updates) must NOT re-render the navbar header
         Livewire::test(POS::class)
             ->call('addToCart', $variant->id)
+            ->assertDontSee('<header', false)
             ->assertSee('saveNotes()', false)
             ->assertSee('saveDiscount()', false)
             ->assertSee('saveTax()', false);
+    }
+
+    /** @test */
+    public function it_runs_product_search_modal_independently_with_simple_paginate_and_no_count_query(): void
+    {
+        $p1 = Product::create(['name' => 'Fender Stratocaster', 'type' => 'physical', 'category' => 'GITAR ELECTRIC', 'is_active' => true]);
+        $v1 = ProductVariant::create([
+            'product_id' => $p1->id,
+            'sku' => 'FND-01',
+            'name' => 'Sunburst',
+            'price' => 12000000,
+            'is_active' => true,
+        ]);
+        ProductBranchStock::create(['product_variant_id' => $v1->id, 'branch_id' => $this->branch->id, 'stock' => 4]);
+
+        $p2 = Product::create(['name' => 'Senar Elixir 09', 'type' => 'physical', 'category' => 'SENAR GITAR', 'is_active' => true]);
+        $v2 = ProductVariant::create([
+            'product_id' => $p2->id,
+            'sku' => 'ELX-09',
+            'name' => 'Light',
+            'price' => 250000,
+            'is_active' => true,
+        ]);
+        ProductBranchStock::create(['product_variant_id' => $v2->id, 'branch_id' => $this->branch->id, 'stock' => 20]);
+
+        $modal = Livewire::test(ProductSearchModal::class, ['branchId' => $this->branch->id]);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $modal->call('openModal', $this->retailTier->id);
+        $products = $modal->instance()->products;
+        $countQueries = collect(DB::getQueryLog())
+            ->filter(fn ($q) => str_contains(strtolower($q['query']), 'count(') && str_contains($q['query'], 'product_variants'))
+            ->count();
+        DB::disableQueryLog();
+
+        $this->assertSame(0, $countQueries, 'simplePaginate should avoid COUNT(*) scans on product_variants.');
+        $this->assertCount(2, $products);
+
+        // Search filter
+        $modal->set('search', 'Fender');
+        $filtered = $modal->instance()->products;
+        $this->assertCount(1, $filtered);
+        $this->assertSame($v1->id, $filtered->first()->id);
+
+        // Category filter
+        $modal->set('search', '')->call('setCategory', 'SENAR GITAR');
+        $byCat = $modal->instance()->products;
+        $this->assertCount(1, $byCat);
+        $this->assertSame($v2->id, $byCat->first()->id);
+
+        // Closing clears search and returns empty collection without querying
+        $modal->call('closeModal')
+            ->assertSet('show', false)
+            ->assertSet('search', '');
+        $this->assertTrue($modal->instance()->products->isEmpty());
+    }
+
+    /** @test */
+    public function it_syncs_cart_quantities_and_category_counts_when_adding_from_modal(): void
+    {
+        $product = Product::create(['name' => 'Cajon Akustik', 'type' => 'physical', 'category' => 'PERKUSI', 'is_active' => true]);
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'CJN-01',
+            'name' => 'Natural',
+            'price' => 850000,
+            'is_active' => true,
+        ]);
+        ProductBranchStock::create(['product_variant_id' => $variant->id, 'branch_id' => $this->branch->id, 'stock' => 10]);
+
+        Livewire::test(POS::class)
+            ->call('handleAddToCartFromModal', $variant->id)
+            ->assertSet("cart.{$variant->id}.qty", 1)
+            ->assertDispatched('pos-cart-synced', quantities: [(string) $variant->id => 1], categoryCounts: ['Semua' => 1, 'PERKUSI' => 1])
+            ->call('handleSetCartQtyFromModal', $variant->id, 3)
+            ->assertSet("cart.{$variant->id}.qty", 3)
+            ->assertDispatched('pos-cart-synced', quantities: [(string) $variant->id => 3], categoryCounts: ['Semua' => 3, 'PERKUSI' => 3]);
+    }
+
+    /** @test */
+    public function it_caches_and_invalidates_held_transactions_count(): void
+    {
+        $cacheKey = PosHeldTransaction::countCacheKey($this->user->id, $this->branch->id);
+        cache()->forget($cacheKey);
+
+        $component = Livewire::test(POS::class);
+        $this->assertSame(0, $component->instance()->heldTransactionsCount);
+        $this->assertSame(0, cache()->get($cacheKey));
+
+        $held = PosHeldTransaction::create([
+            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'branch_id' => $this->branch->id,
+            'user_id' => $this->user->id,
+            'customer_name' => 'Walk-in',
+            'cart_data' => [1 => ['qty' => 1, 'price' => 10000]],
+        ]);
+
+        // Model saved observer invalidates Laravel cache; a fresh request sees 1 and caches it
+        $this->assertFalse(cache()->has($cacheKey));
+        $freshAfterCreate = Livewire::test(POS::class);
+        $this->assertSame(1, $freshAfterCreate->instance()->heldTransactionsCount);
+        $this->assertSame(1, cache()->get($cacheKey));
+
+        // Model deleted observer invalidates Laravel cache; a fresh request sees 0
+        $held->delete();
+        $this->assertFalse(cache()->has($cacheKey));
+        $freshAfterDelete = Livewire::test(POS::class);
+        $this->assertSame(0, $freshAfterDelete->instance()->heldTransactionsCount);
+    }
+
+    /** @test */
+    public function it_supports_controller_based_pos_web_routes(): void
+    {
+        $this->get('/pos/reports')
+            ->assertRedirect(route('pos.reports.sales'));
+
+        $this->get('/admin/users?tab=1')
+            ->assertRedirect('/backoffice/users?tab=1');
+
+        $this->post('/pos/logout')
+            ->assertRedirect(route('pos.login'));
     }
 }

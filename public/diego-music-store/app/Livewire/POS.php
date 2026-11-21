@@ -387,8 +387,13 @@ class POS extends Component
                 break;
         }
 
-        // Apply Pagination
-        return $query->paginate(15, ['*'], 'productPage');
+        // Apply Pagination (simplePaginate avoids slow full-table COUNT(*) scans)
+        return $query->simplePaginate(15, ['*'], 'productPage');
+    }
+
+    public function getHasMoreProductsProperty(): bool
+    {
+        return $this->showProductSearchModal && $this->products->hasMorePages();
     }
 
     // Reset paginasi produk saat search berubah
@@ -575,6 +580,29 @@ class POS extends Component
     {
         $this->showProductSearchModal = true;
         $this->resetPage('productPage');
+        $this->dispatch('open-pos-product-search', pricingTierId: $this->selectedPricingTierId);
+    }
+
+    protected function syncCartStateToModal(): void
+    {
+        $quantities = [];
+        foreach ($this->cart as $variantId => $item) {
+            $quantities[(string) $variantId] = (int) ($item['qty'] ?? 0);
+        }
+
+        $this->dispatch('pos-cart-synced', quantities: $quantities, categoryCounts: $this->categoryCounts);
+    }
+
+    #[On('pos-add-to-cart')]
+    public function handleAddToCartFromModal(int $variantId): void
+    {
+        $this->addToCart($variantId);
+    }
+
+    #[On('pos-set-cart-qty')]
+    public function handleSetCartQtyFromModal(int $variantId, int $qty): void
+    {
+        $this->setCartQty($variantId, $qty);
     }
 
     public function closeProductSearch()
@@ -633,7 +661,21 @@ class POS extends Component
 
     public function render()
     {
-        return view('filament.pages.pos.pos')
-            ->layout('layouts.pos');
+        $view = view('filament.pages.pos.pos');
+
+        if (\Livewire\Livewire::isLivewireRequest()) {
+            return $view->layout('layouts.pos');
+        }
+
+        return $view->layout('layouts.pos', [
+            'posCashierHeader' => [
+                'branches' => $this->branches,
+                'selectedBranchId' => $this->selectedBranchId,
+                'selectedStoreName' => $this->selectedStoreName,
+                'selectedBranchName' => $this->selectedBranchName,
+                'activeSessionInfo' => $this->activeSessionInfo,
+                'todaySalesTotal' => $this->todaySalesTotal,
+            ],
+        ]);
     }
 }

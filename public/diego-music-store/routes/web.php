@@ -4,9 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Livewire\POSLogin;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::view('/', 'welcome');
 
 Route::get('/backoffice/purchase-orders/{purchaseOrder}/print', [App\Http\Controllers\BackOffice\PurchaseOrderPrintController::class, 'show'])
     ->middleware('auth')
@@ -22,12 +20,7 @@ Route::get('/backoffice/sales-invoices/{salesInvoice}/print', [App\Http\Controll
 
 // Custom POS Routes
 Route::get('/pos/login', POSLogin::class)->name('pos.login');
-Route::post('/pos/logout', function () {
-    auth()->logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
-    return redirect()->route('pos.login');
-})->name('pos.logout');
+Route::post('/pos/logout', [App\Http\Controllers\POS\PosWebController::class, 'logout'])->name('pos.logout');
 
 Route::middleware('auth.pos')->group(function () {
     // General Operasional POS (Kasir, Sales, Admin, Owner)
@@ -56,7 +49,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/kpi-performance', App\Livewire\PosKpiPerformance::class)->name('pos.kpi-performance');
 
     // Laporan ERP Routes
-    Route::get('/pos/reports', fn() => redirect()->route('pos.reports.sales'))->name('pos.reports');
+    Route::get('/pos/reports', [App\Http\Controllers\POS\PosWebController::class, 'redirectReports'])->name('pos.reports');
     Route::get('/pos/reports/sales', App\Livewire\PosReportsSales::class)->name('pos.reports.sales');
     Route::get('/pos/reports/sales-queue', App\Livewire\PosReportsSalesQueue::class)->name('pos.reports.sales-queue');
     Route::get('/pos/reports/ar-aging', App\Livewire\PosReportsArAging::class)->name('pos.reports.ar-aging');
@@ -65,30 +58,7 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos/reports/stock-prices', App\Livewire\PosReportsStockPrices::class)->name('pos.reports.stock-prices');
 
     // Branch Switcher Route
-    Route::get('/pos/switch-branch/{branch}', function (\App\Models\Branch $branch) {
-        if (auth()->check()) {
-            $user = auth()->user();
-            if (\App\Helpers\BranchHelper::canUserSwitchToBranch($user, $branch)) {
-                // Cegah ganti cabang HANYA untuk kasir non-manajemen jika sedang memiliki sesi kasir aktif
-                if (!\App\Helpers\BranchHelper::canAccessAllBranches($user)) {
-                    $currentBranchId = session('pos_active_branch_id');
-                    $hasActiveSession = $currentBranchId && \App\Models\CashSession::query()
-                        ->where('branch_id', $currentBranchId)
-                        ->where('status', 'open')
-                        ->where('user_id', $user->id)
-                        ->exists();
-
-                    if ($hasActiveSession && (int) $branch->id !== (int) $currentBranchId) {
-                        return redirect()->back()->with('error', 'Tidak dapat berpindah cabang saat sesi kasir Anda sedang aktif.');
-                    }
-                }
-
-                session(['pos_active_branch_id' => $branch->id]);
-                session()->save();
-            }
-        }
-        return redirect()->back();
-    })->name('pos.switch-branch');
+    Route::get('/pos/switch-branch/{branch}', [App\Http\Controllers\POS\PosWebController::class, 'switchBranch'])->name('pos.switch-branch');
 
     // Individual payslip routes enforce employee ownership in their controllers.
     Route::get('/pos/payroll/payslip-pdf/{id}', [App\Http\Controllers\POS\PayrollPayslipController::class, 'show'])->name('pos.payroll.payslip-pdf');
@@ -130,9 +100,5 @@ Route::middleware('auth.pos')->group(function () {
 Route::get('/track-service/{ticketCode}', [App\Http\Controllers\PublicServiceTrackingController::class, 'show'])->name('public.service-tracking');
 
 // Fallback redirect for /admin URL path to /backoffice
-Route::get('/admin/{path?}', function ($path = null) {
-    $queryString = request()->getQueryString();
-    $targetUrl = '/backoffice' . ($path ? '/' . $path : '') . ($queryString ? '?' . $queryString : '');
-    return redirect($targetUrl);
-})->where('path', '.*');
+Route::get('/admin/{path?}', [App\Http\Controllers\POS\PosWebController::class, 'redirectAdmin'])->where('path', '.*');
 

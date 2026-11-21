@@ -19,7 +19,6 @@
 
     <!-- Tailwind CSS compiled via Vite -->
     @vite('resources/css/app.css')
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <!-- Alpine.js (Stand-alone support for error pages) -->
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
