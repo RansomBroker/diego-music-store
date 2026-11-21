@@ -180,7 +180,7 @@
                         </div>
                         <p class="text-[11px] leading-relaxed {{ $resetBeforeImport ? 'text-rose-700 dark:text-rose-300/90 font-medium' : 'text-gray-500 dark:text-gray-400' }}">
                             @if($resetBeforeImport)
-                                PERINGATAN AKTIF: Seluruh master produk, varian, stok cabang, pergerakan stok awal, serta jurnal saldo awal persediaan sebelumnya akan dihapus terlebih dahulu sebelum data baru dibuat ulang dari berkas ini. (Akan dibatalkan otomatis jika produk sudah memiliki riwayat transaksi penjualan/pembelian/opname/mutasi.)
+                                PERINGATAN AKTIF: Seluruh master produk, varian, stok cabang, seluruh pergerakan stok, riwayat transaksi produk (penjualan POS, transaksi pembelian produk, opname, mutasi), serta jurnal akuntansi terkait sebelumnya akan dihapus &amp; direset terlebih dahulu sebelum data baru dibuat ulang dari berkas ini.
                             @else
                                 Centang opsi ini jika ingin mengosongkan data produk lama lalu membuat ulang seluruh data produk bersih dari berkas Excel/CSV ini.
                             @endif
