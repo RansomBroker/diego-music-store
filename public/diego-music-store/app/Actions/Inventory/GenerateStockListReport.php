@@ -71,8 +71,10 @@ class GenerateStockListReport
 
             $minStock = (int) ($product->minimum_stock ?? 0);
 
+            $isNonInventory = $product->isNonInventory();
+
             // Determine stock status
-            if ($product->isService()) {
+            if ($isNonInventory) {
                 $statusKey = 'available';
                 $statusLabel = 'JASA (UNLIMITED)';
                 $badgeColor = 'info';
@@ -105,11 +107,11 @@ class GenerateStockListReport
             $hpp = (float) ($variant->hpp ?: ($variant->cost_price ?: 0));
             $retailPrice = (float) $variant->price;
 
-            $valuation = $product->isService() ? 0.0 : ($stockQty * $hpp);
-            $retailValue = $product->isService() ? 0.0 : ($stockQty * $retailPrice);
+            $valuation = $isNonInventory ? 0.0 : ($stockQty * $hpp);
+            $retailValue = $isNonInventory ? 0.0 : ($stockQty * $retailPrice);
 
             $totalVariants++;
-            if (!$product->isService()) {
+            if (!$isNonInventory) {
                 $totalPhysicalQty += $stockQty;
                 $grandTotalValuation += $valuation;
                 $grandTotalRetailValue += $retailValue;

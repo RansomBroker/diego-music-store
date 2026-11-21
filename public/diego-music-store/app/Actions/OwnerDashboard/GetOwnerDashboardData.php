@@ -238,8 +238,11 @@ class GetOwnerDashboardData
         $stockValueByCategory = [];
         foreach ($stocks as $st) {
             $variant = $st->productVariant ?? $st->variant;
-            $cat = $variant?->product?->category ?: 'Umum';
-            $hpp = $variant?->hpp ?: $variant?->cost_price ?: 0;
+            if (! $variant?->product || $variant->product->isNonInventory()) {
+                continue;
+            }
+            $cat = $variant->product->category ?: 'Umum';
+            $hpp = $variant->hpp ?: $variant->cost_price ?: 0;
             $stockValueByCategory[$cat] = ($stockValueByCategory[$cat] ?? 0) + ($st->stock * $hpp);
         }
 

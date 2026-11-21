@@ -72,18 +72,20 @@ class GenerateEndingInventoryReport
                 $stockQty = $variant->totalStock();
             }
 
-            // For services, handle unlimited indicator
-            if ($product->isService()) {
+            $isNonInventory = $product->isNonInventory();
+
+            // For non-inventory items (service / ONGKOS), exclude from qty and valuation
+            if ($isNonInventory) {
                 $endingQty = 0;
             } else {
                 $endingQty = max(0, $stockQty);
             }
 
             $costPrice = (float) ($variant->hpp ?: $variant->cost_price);
-            $valuation = $product->isService() ? 0.0 : ($endingQty * $costPrice);
+            $valuation = $isNonInventory ? 0.0 : ($endingQty * $costPrice);
 
             $totalVariants++;
-            if (!$product->isService()) {
+            if (!$isNonInventory) {
                 $totalEndingQty += $endingQty;
                 $grandTotalValuation += $valuation;
             }
@@ -116,7 +118,7 @@ class GenerateEndingInventoryReport
             }
 
             $categorySummaries[$catName]['variant_count']++;
-            if (!$product->isService()) {
+            if (!$isNonInventory) {
                 $categorySummaries[$catName]['total_qty'] += $endingQty;
                 $categorySummaries[$catName]['total_valuation'] += $valuation;
             }

@@ -4,6 +4,7 @@ namespace App\Actions\Product;
 
 use App\Helpers\AccountHelper;
 use App\Helpers\ProductHelper;
+use App\Helpers\SpreadsheetImportHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Actions\Branch\EnsureBranchCoaAccounts;
@@ -67,6 +68,11 @@ class ImportProducts
         $skippedCount = 0;
         $errors = [];
         $batchTotalValue = 0;
+        $accounts = [
+            'inventory' => $inventoryAccId,
+            'sales' => $salesAccId,
+            'cogs' => $cogsAccId,
+        ];
 
         DB::transaction(function () use (
             $rows,
@@ -74,9 +80,7 @@ class ImportProducts
             $branchId,
             $hppSource,
             $defaultUnit,
-            $inventoryAccId,
-            $salesAccId,
-            $cogsAccId,
+            $accounts,
             &$importedCount,
             &$skippedCount,
             &$errors,
@@ -85,170 +89,27 @@ class ImportProducts
             foreach ($rows as $index => $row) {
                 $rowNum = $row['_row_number'] ?? ($index + 2);
                 try {
-                    $sku = trim((string)($row['kode_barang'] ?? $row['sku'] ?? ''));
-                    $name = trim((string)($row['nama_stok'] ?? $row['name'] ?? ''));
+                    $outcome = $this->upsertImportedProductRow(
+                        $row,
+                        $rowNum,
+                        $branch,
+                        $branchId,
+                        $hppSource,
+                        $defaultUnit,
+                        $accounts
+                    );
 
-                    if ($sku === '' && $name === '') {
+                    if ($outcome['status'] === 'skipped_blank') {
                         continue;
                     }
 
-                    if ($sku === '') {
-                        // Otomatis generate SKU menggunakan prefix cabang
-                        $sku = ProductHelper::generateUniqueSku($branch->sku_prefix ?? null, $branchId);
-                    }
-
-                    if ($name === '') {
-                        $skippedCount++;
-                        $errors[] = "Baris {$rowNum}: NAMA STOK tidak boleh kosong.";
-                        continue;
-                    }
-
-                    $category = !empty($row['kategori_barang']) ? trim((string)$row['kategori_barang']) : (!empty($row['category']) ? trim((string)$row['category']) : null);
-
-                    $productType = 'physical';
-                    if ($category !== null && stripos($category, 'ONGKOS') !== false) {
-                        $productType = 'service';
-                        $category = 'Jasa/Service';
-                    }
-
-                    $costPrice = $this->sanitizeNumber($row['harga_beli'] ?? $row['cost_price'] ?? 0);
-                    $netto = $this->sanitizeNumber($row['netto'] ?? $row['hpp'] ?? 0);
-                    $price = $this->sanitizeNumber($row['harga_jual'] ?? $row['harga_jual_cash'] ?? $row['price'] ?? 0);
-
-                    if ($price === 0 && isset($row['het'])) {
-                        $price = $this->sanitizeNumber($row['het']);
-                    }
-
-                    if ($hppSource !== null && isset($row[$hppSource])) {
-                        $hpp = $this->sanitizeNumber($row[$hppSource]);
-                    } else {
-                        $hpp = $netto > 0 ? $netto : $costPrice;
-                    }
-                    $discountValue = $this->sanitizeNumber($row['disc'] ?? $row['discount'] ?? 0);
-
-                    $rawStock = (string)($row['jlh_stok'] ?? $row['stock'] ?? '0');
-                    $parsedStock = $this->parseStockAndUnit($rawStock, $defaultUnit);
-                    $qty = $parsedStock['quantity'];
-                    $unitId = $parsedStock['unit_id'];
-
-                    $variant = ProductVariant::where('sku', $sku)->first();
-
-                    if ($variant) {
-                        $product = $variant->product;
-                        $product->update([
-                            'name' => $name,
-                            'type' => $productType,
-                            'category' => $category ?: $product->category,
-                            'unit_id' => $unitId ?: $product->unit_id,
-                        ]);
-
-                        $barcode = $variant->barcode;
-                        if (empty($barcode) || $barcode === $sku) {
-                            $barcode = ProductHelper::generateUniqueBarcode();
-                        }
-
-                        $variant->update([
-                            'price' => $price > 0 ? $price : $variant->price,
-                            'cost_price' => $costPrice > 0 ? $costPrice : $variant->cost_price,
-                            'hpp' => $hpp > 0 ? $hpp : $variant->hpp,
-                            'discount_value' => $discountValue,
-                            'barcode' => $barcode,
-                        ]);
-
-                        $branchStock = ProductBranchStock::firstOrCreate([
-                            'product_variant_id' => $variant->id,
-                            'branch_id' => $branchId,
-                        ], [
-                            'stock' => 0,
-                            'hpp' => $hpp,
-                        ]);
-
-                        $prevStock = $branchStock->stock;
-                        $branchStock->update([
-                            'stock' => $qty,
-                            'hpp' => $hpp > 0 ? $hpp : $branchStock->hpp,
-                        ]);
-
-                        $diff = $qty - $prevStock;
-                        if ($diff !== 0) {
-                            StockMovement::create([
-                                'product_variant_id' => $variant->id,
-                                'branch_id' => $branchId,
-                                'type' => $diff > 0 ? 'in' : 'out',
-                                'quantity' => abs($diff),
-                                'original_quantity' => $prevStock,
-                                'unit_id' => $unitId,
-                                'unit_cost' => $hpp,
-                                'hpp' => $hpp,
-                                'reference_type' => 'InitialStock',
-                                'reference_id' => $variant->id,
-                            ]);
-
-                            if ($diff > 0) {
-                                $batchTotalValue += ($diff * $hpp);
-                            }
-                        }
-
-                        $importedCount++;
-                    } else {
-                        $product = Product::create([
-                            'name' => $name,
-                            'type' => $productType,
-                            'category' => $category,
-                            'unit_id' => $unitId,
-                            'inventory_account_id' => $inventoryAccId,
-                            'sales_account_id' => $salesAccId,
-                            'cogs_account_id' => $cogsAccId,
-                            'is_active' => true,
-                            'minimum_stock' => 0,
-                        ]);
-
-                        $barcode = ProductHelper::generateUniqueBarcode();
-
-                        $variant = ProductVariant::create([
-                            'product_id' => $product->id,
-                            'sku' => $sku,
-                            'barcode' => $barcode,
-                            'name' => null,
-                            'price' => $price,
-                            'cost_price' => $costPrice,
-                            'hpp' => $hpp,
-                            'discount_value' => $discountValue,
-                            'discount_type' => 'percent',
-                            'tax_value' => 0,
-                            'tax_type' => 'percent',
-                            'is_active' => true,
-                        ]);
-
-                        ProductBranchStock::create([
-                            'product_variant_id' => $variant->id,
-                            'branch_id' => $branchId,
-                            'stock' => $qty,
-                            'hpp' => $hpp,
-                        ]);
-
-                        if ($qty > 0) {
-                            StockMovement::create([
-                                'product_variant_id' => $variant->id,
-                                'branch_id' => $branchId,
-                                'type' => 'in',
-                                'quantity' => $qty,
-                                'original_quantity' => 0,
-                                'unit_id' => $unitId,
-                                'unit_cost' => $hpp,
-                                'hpp' => $hpp,
-                                'reference_type' => 'InitialStock',
-                                'reference_id' => $variant->id,
-                            ]);
-
-                            $batchTotalValue += ($qty * $hpp);
-                        }
-
-                        $importedCount++;
-                    }
+                    $importedCount++;
+                    $batchTotalValue += $outcome['value'];
                 } catch (Exception $e) {
                     $skippedCount++;
-                    $errors[] = "Baris {$rowNum}: " . $e->getMessage();
+                    $errors[] = str_starts_with($e->getMessage(), "Baris {$rowNum}:")
+                        ? $e->getMessage()
+                        : "Baris {$rowNum}: " . $e->getMessage();
                 }
             }
         });
@@ -401,8 +262,8 @@ class ImportProducts
         $defaultUnit = Unit::where('code', 'pcs')->first()
             ?: Unit::firstOrCreate(['code' => 'pcs'], ['name' => 'Pieces', 'is_active' => true]);
 
-        // 3. Load spreadsheet data
-        $spreadsheet = IOFactory::load($filePath);
+        // 3. Load spreadsheet data (with smart CSV/TSV delimiter detection)
+        $spreadsheet = SpreadsheetImportHelper::loadSpreadsheet($filePath);
         $worksheet = $spreadsheet->getActiveSheet();
         $rawRows = $worksheet->toArray(null, true, true, true);
 
@@ -440,17 +301,32 @@ class ImportProducts
         $failedCount = 0;
         $errors = [];
         $totalStockValue = 0;
+        $accounts = [
+            'inventory' => $inventoryAccId,
+            'sales' => $salesAccId,
+            'cogs' => $cogsAccId,
+        ];
+        $mapFieldToCanonical = [
+            'sku' => 'kode_barang',
+            'name' => 'nama_stok',
+            'category' => 'kategori_barang',
+            'cost_price' => 'harga_beli',
+            'netto' => 'netto',
+            'discount' => 'disc',
+            'het' => 'het',
+            'price' => 'harga_jual',
+            'stock' => 'jlh_stok',
+        ];
 
         DB::transaction(function () use (
             $dataRows,
             $headerMap,
+            $mapFieldToCanonical,
             $branch,
             $branchId,
             $hppSource,
             $defaultUnit,
-            $inventoryAccId,
-            $salesAccId,
-            $cogsAccId,
+            $accounts,
             &$importedCount,
             &$updatedCount,
             &$failedCount,
@@ -459,187 +335,39 @@ class ImportProducts
         ) {
             foreach ($dataRows as $rowNumber => $row) {
                 try {
-                    $sku = trim((string)($row[$headerMap['sku']] ?? ''));
-                    $name = trim((string)($row[$headerMap['name']] ?? ''));
-
-                    if ($sku === '' && $name === '') {
-                        continue; // Skip blank lines
-                    }
-
-                    if ($sku === '') {
-                        // Otomatis generate SKU menggunakan prefix cabang
-                        $sku = ProductHelper::generateUniqueSku($branch->sku_prefix ?? null, $branchId);
-                    }
-
-                    if ($name === '') {
-                        throw new Exception("Baris {$rowNumber}: NAMA STOK tidak boleh kosong.");
-                    }
-
-                    // Extract Category
-                    $category = null;
-                    if (isset($headerMap['category']) && !empty($row[$headerMap['category']])) {
-                        $category = trim((string)$row[$headerMap['category']]);
-                    }
-
-                    $productType = 'physical';
-                    if ($category !== null && stripos($category, 'ONGKOS') !== false) {
-                        $productType = 'service';
-                        $category = 'Jasa/Service';
-                    }
-
-                    // Extract Prices
-                    $costPrice = isset($headerMap['cost_price']) ? $this->sanitizeNumber($row[$headerMap['cost_price']]) : 0;
-                    $netto = isset($headerMap['netto']) ? $this->sanitizeNumber($row[$headerMap['netto']]) : 0;
-                    $price = isset($headerMap['price']) ? $this->sanitizeNumber($row[$headerMap['price']]) : 0;
-
-                    // If price is 0, check HET
-                    if ($price === 0 && isset($headerMap['het'])) {
-                        $price = $this->sanitizeNumber($row[$headerMap['het']]);
-                    }
-
-                    // HPP logic: prioritize Netto, fallback to cost_price
-                    if ($hppSource !== null && isset($headerMap[$hppSource])) {
-                        $hpp = $this->sanitizeNumber($row[$headerMap[$hppSource]]);
-                    } elseif ($hppSource !== null && isset($row[$hppSource])) {
-                        $hpp = $this->sanitizeNumber($row[$hppSource]);
-                    } else {
-                        $hpp = $netto > 0 ? $netto : $costPrice;
-                    }
-
-                    // Discount value
-                    $discountValue = isset($headerMap['discount']) ? $this->sanitizeNumber($row[$headerMap['discount']]) : 0;
-
-                    // Extract Quantity and Unit from JLH.STOK (e.g. "5 Pcs" or numeric 5)
-                    $rawStock = isset($headerMap['stock']) ? (string)$row[$headerMap['stock']] : '0';
-                    $parsedStock = $this->parseStockAndUnit($rawStock, $defaultUnit);
-                    $qty = $parsedStock['quantity'];
-                    $unitId = $parsedStock['unit_id'];
-
-                    // Check if variant already exists with this SKU
-                    $variant = ProductVariant::where('sku', $sku)->first();
-
-                    if ($variant) {
-                        // UPDATE EXISTING PRODUCT & VARIANT
-                        $product = $variant->product;
-                        $product->update([
-                            'name' => $name,
-                            'type' => $productType,
-                            'category' => $category ?: $product->category,
-                            'unit_id' => $unitId ?: $product->unit_id,
-                        ]);
-
-                        // Barcode: preserve existing if valid, otherwise generate fresh EAN-13
-                        $barcode = $variant->barcode;
-                        if (empty($barcode) || $barcode === $sku) {
-                            $barcode = ProductHelper::generateUniqueBarcode();
+                    $normalizedRow = [];
+                    foreach ($mapFieldToCanonical as $field => $canonicalKey) {
+                        if (isset($headerMap[$field])) {
+                            $normalizedRow[$canonicalKey] = $row[$headerMap[$field]] ?? null;
                         }
+                    }
 
-                        $variant->update([
-                            'price' => $price > 0 ? $price : $variant->price,
-                            'cost_price' => $costPrice > 0 ? $costPrice : $variant->cost_price,
-                            'hpp' => $hpp > 0 ? $hpp : $variant->hpp,
-                            'discount_value' => $discountValue,
-                            'barcode' => $barcode,
-                        ]);
+                    $outcome = $this->upsertImportedProductRow(
+                        $normalizedRow,
+                        (int) $rowNumber,
+                        $branch,
+                        $branchId,
+                        $hppSource,
+                        $defaultUnit,
+                        $accounts
+                    );
 
-                        // Stock Management
-                        $branchStock = ProductBranchStock::firstOrCreate([
-                            'product_variant_id' => $variant->id,
-                            'branch_id' => $branchId,
-                        ], [
-                            'stock' => 0,
-                            'hpp' => $hpp,
-                        ]);
+                    if ($outcome['status'] === 'skipped_blank') {
+                        continue;
+                    }
 
-                        $prevStock = $branchStock->stock;
-                        $branchStock->update([
-                            'stock' => $qty,
-                            'hpp' => $hpp > 0 ? $hpp : $branchStock->hpp,
-                        ]);
-
-                        $diff = $qty - $prevStock;
-                        if ($diff !== 0) {
-                            StockMovement::create([
-                                'product_variant_id' => $variant->id,
-                                'branch_id' => $branchId,
-                                'type' => $diff > 0 ? 'in' : 'out',
-                                'quantity' => abs($diff),
-                                'original_quantity' => $prevStock,
-                                'unit_id' => $unitId,
-                                'unit_cost' => $hpp,
-                                'hpp' => $hpp,
-                                'reference_type' => 'InitialStock',
-                                'reference_id' => $variant->id,
-                            ]);
-
-                            if ($diff > 0) {
-                                $totalStockValue += ($diff * $hpp);
-                            }
-                        }
-
+                    if ($outcome['status'] === 'updated') {
                         $updatedCount++;
                     } else {
-                        // CREATE NEW PRODUCT & VARIANT
-                        $product = Product::create([
-                            'name' => $name,
-                            'type' => $productType,
-                            'category' => $category,
-                            'unit_id' => $unitId,
-                            'inventory_account_id' => $inventoryAccId,
-                            'sales_account_id' => $salesAccId,
-                            'cogs_account_id' => $cogsAccId,
-                            'is_active' => true,
-                            'minimum_stock' => 0,
-                        ]);
-
-                        // Generate unique EAN-13 barcode (never equal to SKU)
-                        $barcode = ProductHelper::generateUniqueBarcode();
-
-                        $variant = ProductVariant::create([
-                            'product_id' => $product->id,
-                            'sku' => $sku,
-                            'barcode' => $barcode,
-                            'name' => null,
-                            'price' => $price,
-                            'cost_price' => $costPrice,
-                            'hpp' => $hpp,
-                            'discount_value' => $discountValue,
-                            'discount_type' => 'percent',
-                            'tax_value' => 0,
-                            'tax_type' => 'percent',
-                            'is_active' => true,
-                        ]);
-
-                        // Stock entry
-                        ProductBranchStock::create([
-                            'product_variant_id' => $variant->id,
-                            'branch_id' => $branchId,
-                            'stock' => $qty,
-                            'hpp' => $hpp,
-                        ]);
-
-                        if ($qty > 0) {
-                            StockMovement::create([
-                                'product_variant_id' => $variant->id,
-                                'branch_id' => $branchId,
-                                'type' => 'in',
-                                'quantity' => $qty,
-                                'original_quantity' => 0,
-                                'unit_id' => $unitId,
-                                'unit_cost' => $hpp,
-                                'hpp' => $hpp,
-                                'reference_type' => 'InitialStock',
-                                'reference_id' => $variant->id,
-                            ]);
-
-                            $totalStockValue += ($qty * $hpp);
-                        }
-
                         $importedCount++;
                     }
+
+                    $totalStockValue += $outcome['value'];
                 } catch (Exception $e) {
                     $failedCount++;
-                    $errors[] = "Baris {$rowNumber}: " . $e->getMessage();
+                    $errors[] = str_starts_with($e->getMessage(), "Baris {$rowNumber}:")
+                        ? $e->getMessage()
+                        : "Baris {$rowNumber}: " . $e->getMessage();
                 }
             }
         });
@@ -661,6 +389,200 @@ class ImportProducts
     }
 
     /**
+     * Upsert a single normalized product row and record physical branch stock when applicable.
+     * Service/Ongkos categories are imported as non-inventory items with zero stock/journal valuation.
+     *
+     * @param  array<string, mixed>  $row
+     * @param  array{inventory: ?int, sales: ?int, cogs: ?int}  $accounts
+     * @return array{status: string, value: int}
+     *
+     * @throws Exception
+     */
+    protected function upsertImportedProductRow(
+        array $row,
+        int $rowNumber,
+        Branch $branch,
+        int $branchId,
+        ?string $hppSource,
+        Unit $defaultUnit,
+        array $accounts
+    ): array {
+        $sku = trim((string) ($row['kode_barang'] ?? $row['sku'] ?? ''));
+        $name = trim((string) ($row['nama_stok'] ?? $row['name'] ?? ''));
+
+        if ($sku === '' && $name === '') {
+            return ['status' => 'skipped_blank', 'value' => 0];
+        }
+
+        if ($sku === '') {
+            $sku = ProductHelper::generateUniqueSku($branch->sku_prefix ?? null, $branchId);
+        }
+
+        if ($name === '') {
+            throw new Exception("Baris {$rowNumber}: NAMA STOK tidak boleh kosong.");
+        }
+
+        $category = ! empty($row['kategori_barang'])
+            ? trim((string) $row['kategori_barang'])
+            : (! empty($row['category']) ? trim((string) $row['category']) : null);
+
+        $isOngkosCategory = $category !== null && stripos($category, 'ONGKOS') !== false;
+        $productType = $isOngkosCategory ? 'service' : 'physical';
+        if ($isOngkosCategory) {
+            $category = 'Jasa/Service';
+        }
+
+        $costPrice = $this->sanitizeNumber($row['harga_beli'] ?? $row['cost_price'] ?? 0);
+        $netto = $this->sanitizeNumber($row['netto'] ?? $row['hpp'] ?? 0);
+        $price = $this->sanitizeNumber($row['harga_jual'] ?? $row['harga_jual_cash'] ?? $row['price'] ?? 0);
+
+        if ($price === 0 && isset($row['het'])) {
+            $price = $this->sanitizeNumber($row['het']);
+        }
+
+        if ($hppSource !== null && isset($row[$hppSource])) {
+            $hpp = $this->sanitizeNumber($row[$hppSource]);
+        } else {
+            $hpp = $netto > 0 ? $netto : $costPrice;
+        }
+        $discountValue = $this->sanitizeNumber($row['disc'] ?? $row['discount'] ?? 0);
+
+        $rawStock = (string) ($row['jlh_stok'] ?? $row['stock'] ?? '0');
+        $parsedStock = $this->parseStockAndUnit($rawStock, $defaultUnit);
+        $qty = $productType === 'service' ? 0 : $parsedStock['quantity'];
+        $unitId = $parsedStock['unit_id'];
+
+        $variant = ProductVariant::where('sku', $sku)->first();
+        $stockValueDelta = 0;
+
+        if ($variant) {
+            $product = $variant->product;
+            $product->update([
+                'name' => $name,
+                'type' => $productType,
+                'category' => $category ?: $product->category,
+                'unit_id' => $unitId ?: $product->unit_id,
+            ]);
+
+            $barcode = $variant->barcode;
+            if (empty($barcode) || $barcode === $sku) {
+                $barcode = ProductHelper::generateUniqueBarcode();
+            }
+
+            $variant->update([
+                'price' => $price > 0 ? $price : $variant->price,
+                'cost_price' => $costPrice > 0 ? $costPrice : $variant->cost_price,
+                'hpp' => $hpp > 0 ? $hpp : $variant->hpp,
+                'discount_value' => $discountValue,
+                'barcode' => $barcode,
+            ]);
+
+            if ($productType === 'service') {
+                ProductBranchStock::query()
+                    ->where('product_variant_id', $variant->id)
+                    ->where('branch_id', $branchId)
+                    ->update(['stock' => 0]);
+
+                return ['status' => 'updated', 'value' => 0];
+            }
+
+            $branchStock = ProductBranchStock::firstOrCreate([
+                'product_variant_id' => $variant->id,
+                'branch_id' => $branchId,
+            ], [
+                'stock' => 0,
+                'hpp' => $hpp,
+            ]);
+
+            $prevStock = $branchStock->stock;
+            $branchStock->update([
+                'stock' => $qty,
+                'hpp' => $hpp > 0 ? $hpp : $branchStock->hpp,
+            ]);
+
+            $diff = $qty - $prevStock;
+            if ($diff !== 0) {
+                StockMovement::create([
+                    'product_variant_id' => $variant->id,
+                    'branch_id' => $branchId,
+                    'type' => $diff > 0 ? 'in' : 'out',
+                    'quantity' => abs($diff),
+                    'original_quantity' => $prevStock,
+                    'unit_id' => $unitId,
+                    'unit_cost' => $hpp,
+                    'hpp' => $hpp,
+                    'reference_type' => 'InitialStock',
+                    'reference_id' => $variant->id,
+                ]);
+
+                if ($diff > 0) {
+                    $stockValueDelta = $diff * $hpp;
+                }
+            }
+
+            return ['status' => 'updated', 'value' => $stockValueDelta];
+        }
+
+        $product = Product::create([
+            'name' => $name,
+            'type' => $productType,
+            'category' => $category,
+            'unit_id' => $unitId,
+            'inventory_account_id' => $accounts['inventory'],
+            'sales_account_id' => $accounts['sales'],
+            'cogs_account_id' => $accounts['cogs'],
+            'is_active' => true,
+            'minimum_stock' => 0,
+        ]);
+
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => $sku,
+            'barcode' => ProductHelper::generateUniqueBarcode(),
+            'name' => null,
+            'price' => $price,
+            'cost_price' => $costPrice,
+            'hpp' => $hpp,
+            'discount_value' => $discountValue,
+            'discount_type' => 'percent',
+            'tax_value' => 0,
+            'tax_type' => 'percent',
+            'is_active' => true,
+        ]);
+
+        // Ongkos / Jasa items are imported into master catalog only without stock valuation or InitialStock movements.
+        if ($productType === 'service') {
+            return ['status' => 'imported', 'value' => 0];
+        }
+
+        ProductBranchStock::create([
+            'product_variant_id' => $variant->id,
+            'branch_id' => $branchId,
+            'stock' => $qty,
+            'hpp' => $hpp,
+        ]);
+
+        if ($qty > 0) {
+            StockMovement::create([
+                'product_variant_id' => $variant->id,
+                'branch_id' => $branchId,
+                'type' => 'in',
+                'quantity' => $qty,
+                'original_quantity' => 0,
+                'unit_id' => $unitId,
+                'unit_cost' => $hpp,
+                'hpp' => $hpp,
+                'reference_type' => 'InitialStock',
+                'reference_id' => $variant->id,
+            ]);
+
+            $stockValueDelta = $qty * $hpp;
+        }
+
+        return ['status' => 'imported', 'value' => $stockValueDelta];
+    }
+
+    /**
      * Inspect a row to determine if it is the header row, and return the column letters mapping.
      *
      * @param  array<string, mixed>  $row
@@ -668,34 +590,29 @@ class ImportProducts
      */
     protected function parseHeaderRow(array $row): ?array
     {
+        $canonicalToField = [
+            'kode_barang' => 'sku',
+            'nama_stok' => 'name',
+            'kategori_barang' => 'category',
+            'harga_beli' => 'cost_price',
+            'netto' => 'netto',
+            'disc' => 'discount',
+            'het' => 'het',
+            'harga_jual' => 'price',
+            'jlh_stok' => 'stock',
+        ];
+
         $map = [];
 
         foreach ($row as $colLetter => $value) {
-            if ($value === null) {
+            if ($value === null || trim((string) $value) === '') {
                 continue;
             }
 
-            // Normalize header string (remove special characters and spaces, lowercase)
-            $normalized = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string)$value));
-
-            if (in_array($normalized, ['kodebarang', 'kode', 'sku', 'kodeitem', 'kodebrg'])) {
-                $map['sku'] = $colLetter;
-            } elseif (in_array($normalized, ['namastok', 'nama', 'namabarang', 'namaproduk', 'productname'])) {
-                $map['name'] = $colLetter;
-            } elseif (in_array($normalized, ['kategoribarang', 'kategori', 'category', 'kelompok'])) {
-                $map['category'] = $colLetter;
-            } elseif (in_array($normalized, ['hargabeli', 'beli', 'costprice', 'hargabelibruto'])) {
-                $map['cost_price'] = $colLetter;
-            } elseif (in_array($normalized, ['netto', 'hpp', 'harganetto', 'modal'])) {
-                $map['netto'] = $colLetter;
-            } elseif (in_array($normalized, ['disc', 'diskon', 'discount'])) {
-                $map['discount'] = $colLetter;
-            } elseif (in_array($normalized, ['het'])) {
-                $map['het'] = $colLetter;
-            } elseif (in_array($normalized, ['hargajual', 'jual', 'price', 'sellingprice', 'hargajualcash', 'hargacash'])) {
-                $map['price'] = $colLetter;
-            } elseif (in_array($normalized, ['jlhstok', 'stok', 'jumlahstok', 'qty', 'stock'])) {
-                $map['stock'] = $colLetter;
+            $resolved = SpreadsheetImportHelper::resolveHeaderForRequired($value, self::REQUIRED_HEADERS);
+            if (isset($canonicalToField[$resolved])) {
+                $field = $canonicalToField[$resolved];
+                $map[$field] ??= $colLetter;
             }
         }
 
@@ -708,7 +625,7 @@ class ImportProducts
     }
 
     /**
-     * Sanitize numeric string values from Excel/CSV (e.g. "383,000" or "Rp 383.000").
+     * Sanitize numeric string values from Excel/CSV (e.g. "383,000", "535.000,00", or "Rp 383.000").
      */
     protected function sanitizeNumber(mixed $value): int
     {
@@ -716,7 +633,18 @@ class ImportProducts
             return (int) round((float) $value);
         }
 
-        $cleaned = preg_replace('/[^0-9]/', '', (string)$value);
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return 0;
+        }
+
+        // Strip decimal cents when formatted as "535.000,00" or "535,000.00"
+        $normalized = preg_replace('/[.,]\d{1,2}$/', '', preg_replace('/[^\d.,]/', '', $raw) ?? '') ?? '';
+        if (preg_match('/^\d{1,3}([.,]\d{3})+$/', trim(preg_replace('/[^\d.,]/', '', $raw) ?? '')) === 1) {
+            $normalized = preg_replace('/[^\d.,]/', '', $raw) ?? '';
+        }
+
+        $cleaned = preg_replace('/[^0-9]/', '', $normalized);
 
         return $cleaned !== '' ? (int) $cleaned : 0;
     }
@@ -730,12 +658,13 @@ class ImportProducts
     {
         $raw = trim($rawStock);
 
-        // Extract integer quantity
         preg_match('/(\d+)/', $raw, $matches);
-        $quantity = isset($matches[1]) ? (int)$matches[1] : 0;
+        $quantity = isset($matches[1]) ? (int) $matches[1] : 0;
 
-        // Extract unit string (remove numbers, commas, dots)
-        $unitText = trim(preg_replace('/[0-9\.,]/', '', $raw));
+        $unitRaw = trim(preg_replace('/[0-9\.,]/', '', $raw) ?? '');
+        $unitText = preg_match('/([a-zA-Z][a-zA-Z0-9\-\s]*)/', $unitRaw, $unitMatch)
+            ? trim($unitMatch[1])
+            : '';
 
         $unitId = $defaultUnit->id;
 
@@ -747,7 +676,6 @@ class ImportProducts
             if ($matchedUnit) {
                 $unitId = $matchedUnit->id;
             } else {
-                // Create unit if not recognized yet
                 $newUnit = Unit::create([
                     'name' => ucfirst(strtolower($unitText)),
                     'code' => strtolower($unitText),

@@ -97,8 +97,15 @@ class PosBranchPerformance extends Component
         $totalOperationalExpenses = (float) $expenseQuery->sum('amount');
         $netOperatingIncome = $grossProfit - $totalOperationalExpenses;
 
-        // Stock Valuation per branch
-        $stockQuery = ProductBranchStock::with('productVariant')
+        // Stock Valuation per branch (exclude service / ONGKOS non-inventory items)
+        $stockQuery = ProductBranchStock::with('productVariant.product')
+            ->whereHas('productVariant.product', function ($q) {
+                $q->where('type', '!=', 'service')
+                    ->where(function ($sq) {
+                        $sq->whereNull('category')
+                            ->orWhere('category', 'not like', '%ONGKOS%');
+                    });
+            })
             ->when($targetBranchId, fn($q) => $q->where('branch_id', $targetBranchId));
 
         $totalStockItems = (int) $stockQuery->sum('stock');
@@ -147,8 +154,17 @@ class PosBranchPerformance extends Component
                 ->sum('amount');
             $bNet = $bGross - $bExp;
 
-            // Stock valuation
-            $bStocks = ProductBranchStock::with('productVariant')->where('branch_id', $b->id)->get();
+            // Stock valuation (exclude service / ONGKOS non-inventory items)
+            $bStocks = ProductBranchStock::with('productVariant.product')
+                ->where('branch_id', $b->id)
+                ->whereHas('productVariant.product', function ($q) {
+                    $q->where('type', '!=', 'service')
+                        ->where(function ($sq) {
+                            $sq->whereNull('category')
+                                ->orWhere('category', 'not like', '%ONGKOS%');
+                        });
+                })
+                ->get();
             $bStockCount = $bStocks->sum('stock');
             $bStockVal = 0;
             foreach ($bStocks as $pbs) {

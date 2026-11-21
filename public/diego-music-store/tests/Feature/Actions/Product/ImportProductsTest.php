@@ -292,5 +292,84 @@ CSV;
             if (file_exists($tempFile)) unlink($tempFile);
         }
     }
+
+    public function test_smart_detection_handles_banner_rows_abbreviated_headers_and_indonesian_decimals(): void
+    {
+        $tsvContent = "\xEF\xBB\xBF"
+            . "LAPORAN DAFTAR STOK BARANG\n"
+            . "Cabang Pusat\n"
+            . "\n"
+            . "NO.\tKd. Brg\tNm Stok\tKategori\tHrg. Beli (Rp)\tHarga Netto\tDisc (%)\tH.E.T\tHARGA JUAL CASH\tJml. Stok\n"
+            . "1\tBRG7701\tGITAR CORT AD810\tACOUSTIC\t1.200.000,00\t1.250.000,00\t5\t1.750.000,00\t1.650.000,00\t6 Pcs\n";
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'import_smart_') . '.csv';
+        file_put_contents($tempFile, $tsvContent);
+
+        try {
+            $result = app(ImportProducts::class)->execute($tempFile, $this->branch->id);
+
+            $this->assertEquals(1, $result['imported']);
+            $this->assertEquals(0, $result['failed']);
+
+            $variant = ProductVariant::where('sku', 'BRG7701')->first();
+            $this->assertNotNull($variant);
+            $this->assertEquals('GITAR CORT AD810', $variant->product->name);
+            $this->assertEquals('ACOUSTIC', $variant->product->category);
+            $this->assertEquals(1200000, $variant->cost_price);
+            $this->assertEquals(1250000, $variant->hpp);
+            $this->assertEquals(1650000, $variant->price);
+            $this->assertEquals(5, $variant->discount_value);
+            $this->assertEquals(6, $variant->stockForBranch($this->branch->id));
+        } finally {
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+        }
+    }
+
+    public function test_ongkos_category_is_imported_as_service_without_counting_stock_or_journal_value(): void
+    {
+        $csvContent = <<<'CSV'
+NO,KODE BARANG,NAMA STOK,KATEGORI BARANG,Harga Beli,Netto,Disc,HET,HARGA JUAL CASH,JLH.STOK
+1,GIT-001,GITAR AKUSTIK YAMAHA,GUITAR,1000000,1000000,0,1500000,1450000,2 Pcs
+2,ONG-001,ONGKOS PASANG SENAR,ONGKOS SERVIS,25000,25000,0,50000,50000,10 Pcs
+CSV;
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'import_ongkos_') . '.csv';
+        file_put_contents($tempFile, $csvContent);
+
+        try {
+            $result = app(ImportProducts::class)->execute($tempFile, $this->branch->id);
+
+            $this->assertEquals(2, $result['imported']);
+            $this->assertEquals(0, $result['failed']);
+            // Total stock valuation must count only the physical item (2 * 1,000,000), NOT ONGKOS (10 * 25,000)
+            $this->assertEquals(2000000, $result['total_value']);
+
+            $ongkosVariant = ProductVariant::where('sku', 'ONG-001')->first();
+            $this->assertNotNull($ongkosVariant);
+            $this->assertEquals('service', $ongkosVariant->product->type);
+            $this->assertEquals('Jasa/Service', $ongkosVariant->product->category);
+            $this->assertEquals(50000, $ongkosVariant->price);
+
+            // Must NOT record branch stock or InitialStock stock movement for ONGKOS
+            $this->assertDatabaseMissing('product_branch_stocks', [
+                'product_variant_id' => $ongkosVariant->id,
+                'branch_id' => $this->branch->id,
+            ]);
+            $this->assertDatabaseMissing('stock_movements', [
+                'product_variant_id' => $ongkosVariant->id,
+                'branch_id' => $this->branch->id,
+            ]);
+
+            $journal = \App\Models\JournalEntry::find($result['journal_entry_id']);
+            $this->assertNotNull($journal);
+            $this->assertEquals(2000000, $journal->items()->where('debit', '>', 0)->first()?->debit);
+        } finally {
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+        }
+    }
 }
 

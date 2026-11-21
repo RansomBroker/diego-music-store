@@ -154,6 +154,40 @@
                     <div>[K] <strong>{{ $selectedContra ? ($selectedContra->code . ' - ' . $selectedContra->name) : '311101003 - MODAL PEMILIK' }}</strong> <span class="{{ $isSameAccount ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-blue-600 dark:text-blue-400' }}">{{ $isSameAccount ? '(Perhatian: Debit dan Kredit di akun yang sama, saldo akhir di neraca menjadi Rp 0)' : '(Penyeimbang Modal/Ekuitas)' }}</span></div>
                 </div>
             </div>
+
+            @php
+                $canResetProducts = !auth()->check() || \App\Helpers\PermissionHelper::can(auth()->user(), 'bo.products.delete');
+                $existingProductCount = \App\Models\Product::count();
+                $existingVariantCount = \App\Models\ProductVariant::count();
+            @endphp
+            @if($canResetProducts)
+                <label class="flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition {{ $resetBeforeImport
+                    ? 'border-rose-400 dark:border-rose-700 bg-rose-50/90 dark:bg-rose-950/30 ring-1 ring-rose-400/50'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 hover:border-rose-300 dark:hover:border-rose-800' }}">
+                    <input
+                        type="checkbox"
+                        wire:model.live="resetBeforeImport"
+                        class="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                    />
+                    <div class="flex-1 space-y-1">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-xs font-bold {{ $resetBeforeImport ? 'text-rose-800 dark:text-rose-300' : 'text-gray-800 dark:text-gray-200' }}">
+                                Hapus semua data produk yang ada &amp; buat ulang datanya
+                            </span>
+                            <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                                Data saat ini: {{ $existingProductCount }} produk ({{ $existingVariantCount }} varian)
+                            </span>
+                        </div>
+                        <p class="text-[11px] leading-relaxed {{ $resetBeforeImport ? 'text-rose-700 dark:text-rose-300/90 font-medium' : 'text-gray-500 dark:text-gray-400' }}">
+                            @if($resetBeforeImport)
+                                PERINGATAN AKTIF: Seluruh master produk, varian, stok cabang, pergerakan stok awal, serta jurnal saldo awal persediaan sebelumnya akan dihapus terlebih dahulu sebelum data baru dibuat ulang dari berkas ini. (Akan dibatalkan otomatis jika produk sudah memiliki riwayat transaksi penjualan/pembelian/opname/mutasi.)
+                            @else
+                                Centang opsi ini jika ingin mengosongkan data produk lama lalu membuat ulang seluruh data produk bersih dari berkas Excel/CSV ini.
+                            @endif
+                        </p>
+                    </div>
+                </label>
+            @endif
         </div>
     @endif
 
@@ -352,7 +386,7 @@
         <!-- Column Detection & Validation Status Card -->
         @if($validation['is_valid'])
             <div class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-950/20 space-y-3">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
                         <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -361,10 +395,12 @@
                         </div>
                         <div>
                             <h4 class="text-sm font-bold text-emerald-900 dark:text-emerald-300">Format Kolom Cocok & Sesuai Template!</h4>
-                            <p class="text-xs text-emerald-700 dark:text-emerald-400">Seluruh {{ count($requiredHeaders) }} kolom wajib terdeteksi dengan tepat pada sheet <strong>{{ $selectedSheet }}</strong>.</p>
+                            <p class="text-xs text-emerald-700 dark:text-emerald-400">
+                                Seluruh {{ count($requiredHeaders) }} kolom wajib terdeteksi pada sheet <strong>{{ $selectedSheet }}</strong> (Header baris #{{ $headerRowIndex }}).
+                            </p>
                         </div>
                     </div>
-                    <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300">
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 shrink-0">
                         {{ count($validation['matched']) }}/{{ count($requiredHeaders) }} Kolom
                     </span>
                 </div>
@@ -372,11 +408,21 @@
                 <!-- Matched Columns Pill List -->
                 <div class="flex flex-wrap gap-1.5 pt-1">
                     @foreach($validation['matched'] as $col)
+                        @php $sourceHeader = $matchedSources[$col] ?? null; @endphp
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                             <svg class="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                             </svg>
-                            {{ $col }}
+                            @if($sourceHeader && strtolower($sourceHeader) !== strtolower($col))
+                                <span class="opacity-75">{{ $sourceHeader }}</span>
+                                <span class="opacity-60">→</span>
+                            @endif
+                            <span>{{ $col }}</span>
+                        </span>
+                    @endforeach
+                    @foreach($ignoredHeaders as $ignored)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                            {{ $ignored }} (nomor urut — dilewati)
                         </span>
                     @endforeach
                 </div>
@@ -392,7 +438,7 @@
                     <div>
                         <h4 class="text-sm font-bold text-rose-900 dark:text-rose-300">Format Kolom Tidak Sesuai Template!</h4>
                         <p class="text-xs text-rose-700 dark:text-rose-400/90 mt-0.5">
-                            Sistem mendeteksi kolom yang hilang atau nama kolom yang tidak sesuai. Harap sesuaikan baris header berkas dengan template.
+                            Header dibaca dari baris #{{ $headerRowIndex }}. Harap sesuaikan nama kolom berkas{{ $type === 'product' ? ' atau gunakan pemetaan kolom manual di bawah' : ' dengan template' }}.
                         </p>
                     </div>
                 </div>
@@ -420,16 +466,53 @@
                         <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Kolom Cocok yang Ditemukan:</span>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach($validation['matched'] as $col)
+                                @php $sourceHeader = $matchedSources[$col] ?? null; @endphp
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                                     <svg class="w-2.5 h-2.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                     </svg>
-                                    {{ $col }}
+                                    @if($sourceHeader && strtolower($sourceHeader) !== strtolower($col))
+                                        <span class="opacity-75">{{ $sourceHeader }}</span>
+                                        <span class="opacity-60">→</span>
+                                    @endif
+                                    <span>{{ $col }}</span>
                                 </span>
                             @endforeach
                         </div>
                     </div>
                 @endif
+            </div>
+        @endif
+
+        @if($type === 'product' && !empty($rawColumnHeaders) && !$isImporting)
+            <!-- Interactive Manual Column Remapping Fallback -->
+            <div x-data="{ openMapping: {{ !$validation['is_valid'] ? 'true' : 'false' }} }" class="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900/40 shadow-xs">
+                <button type="button" @click="openMapping = !openMapping" class="w-full px-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/40 flex items-center justify-between text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/80 transition cursor-pointer">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                        Sesuaikan Mapping Kolom Manual (Header Baris #{{ $headerRowIndex }})
+                    </span>
+                    <svg class="w-4 h-4 text-gray-500 transform transition-transform" :class="{ 'rotate-180': openMapping }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="openMapping" class="p-3.5 grid grid-cols-1 sm:grid-cols-3 gap-2.5 border-t border-gray-100 dark:border-gray-800">
+                    @foreach($requiredHeaders as $reqKey)
+                        <div>
+                            <label class="block text-[11px] font-mono font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                                {{ $reqKey }}
+                            </label>
+                            <select wire:model.live="manualMappings.{{ $reqKey }}" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">-- Belum dipetakan --</option>
+                                @foreach($rawColumnHeaders as $colLetter => $rawLabel)
+                                    <option value="{{ $colLetter }}">{{ $colLetter }}: {{ $rawLabel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         @endif
 
@@ -508,12 +591,18 @@
                         class="px-4 py-2.5 text-xs font-semibold rounded-xl text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 transition cursor-pointer">
                     Batal
                 </button>
+                @php
+                    $isResetActive = ($type === 'product' && $resetBeforeImport);
+                    $btnBgColor = $validation['is_valid'] && $totalRows > 0
+                        ? ($isResetActive ? '#e11d48' : '#2563eb')
+                        : '#94a3b8';
+                @endphp
                 <button type="button" 
                         wire:click="startImport" 
                         @disabled(!$validation['is_valid'] || $totalRows === 0)
-                        style="background-color: {{ $validation['is_valid'] && $totalRows > 0 ? '#2563eb' : '#94a3b8' }} !important; color: #ffffff !important;"
+                        style="background-color: {{ $btnBgColor }} !important; color: #ffffff !important;"
                         class="px-5 py-2.5 text-xs font-bold rounded-xl text-white shadow-md transition flex items-center gap-2 {{ $validation['is_valid'] && $totalRows > 0 
-                            ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 cursor-pointer hover:shadow-lg' 
+                            ? ($isResetActive ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800 cursor-pointer hover:shadow-lg' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 cursor-pointer hover:shadow-lg')
                             : 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed opacity-75' }}">
                     <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -523,6 +612,8 @@
                             Konfirmasi Import (Kolom Belum Sesuai)
                         @elseif($totalRows === 0)
                             Konfirmasi Import (Tidak Ada Data)
+                        @elseif($isResetActive)
+                            Hapus Data Lama & Mulai Import ({{ $totalRows }} Data)
                         @else
                             Konfirmasi & Mulai Import ({{ $totalRows }} Data)
                         @endif
@@ -549,7 +640,13 @@
             </div>
 
             <!-- Stats -->
-            <div class="grid grid-cols-2 gap-3 max-w-sm mx-auto pt-1">
+            <div class="grid {{ ($resetSummary['deleted_products'] ?? 0) > 0 ? 'grid-cols-3 max-w-lg' : 'grid-cols-2 max-w-sm' }} gap-3 mx-auto pt-1">
+                @if(($resetSummary['deleted_products'] ?? 0) > 0)
+                    <div class="p-3 bg-white dark:bg-gray-800 rounded-xl border border-rose-200 dark:border-rose-800">
+                        <span class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Dihapus</span>
+                        <p class="text-2xl font-black text-rose-600 dark:text-rose-400">{{ $resetSummary['deleted_products'] }}</p>
+                    </div>
+                @endif
                 <div class="p-3 bg-white dark:bg-gray-800 rounded-xl border border-emerald-200 dark:border-emerald-800">
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Berhasil</span>
                     <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">{{ $importedCount }}</p>

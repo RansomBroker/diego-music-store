@@ -65,6 +65,21 @@ class SpreadsheetImporter extends Component
     public ?string $generatedJournalNumber = null;
     public ?string $hppColumn = null;
 
+    public bool $resetBeforeImport = false;
+    public int $headerRowIndex = 1;
+    /** @var array<string, string> */
+    public array $columnMap = [];
+    /** @var array<string, string> */
+    public array $rawColumnHeaders = [];
+    /** @var array<string, string> */
+    public array $matchedSources = [];
+    /** @var array<int, string> */
+    public array $ignoredHeaders = [];
+    /** @var array<string, string> */
+    public array $manualMappings = [];
+    /** @var array{deleted_products?: int, deleted_variants?: int, deleted_journals?: int} */
+    public array $resetSummary = [];
+
     public function mount(string $type = 'customer'): void
     {
         $this->type = $type;
@@ -131,23 +146,97 @@ class SpreadsheetImporter extends Component
 
         $this->sheets = $info['sheets'];
         $this->selectedSheet = $info['active_sheet'];
+        $this->headerRowIndex = $info['header_row'] ?? 1;
         $this->detectedHeaders = $info['headers'];
         $this->rawHeaders = $info['raw_headers'];
+        $this->columnMap = $info['col_map'] ?? [];
+        $this->rawColumnHeaders = $info['raw_by_col'] ?? [];
+        $this->matchedSources = $info['matched_sources'] ?? [];
+        $this->ignoredHeaders = $info['ignored_headers'] ?? [];
         $this->validation = $info['validation'];
         $this->totalRows = $info['total_rows'];
         $this->previewRows = $info['preview_rows'];
 
+        $this->manualMappings = [];
+        foreach ($this->requiredHeaders as $reqHeader) {
+            $matchedCol = array_search($reqHeader, $this->columnMap, true);
+            $this->manualMappings[$reqHeader] = $matchedCol !== false ? (string) $matchedCol : '';
+        }
+
         if ($this->type === 'product') {
-            if (in_array('netto', $this->detectedHeaders, true)) {
-                $this->hppColumn = 'netto';
-            } elseif (in_array('cost_price', $this->detectedHeaders, true)) {
-                $this->hppColumn = 'cost_price';
-            } else {
-                $this->hppColumn = null;
-            }
+            $this->syncDefaultHppColumn();
         }
 
         $this->resetImportState();
+    }
+
+    /**
+     * Re-apply column validation and preview rows when the user changes manual column mappings.
+     */
+    public function updatedManualMappings(): void
+    {
+        if (!$this->filePath || !File::exists($this->filePath) || empty($this->rawColumnHeaders)) {
+            return;
+        }
+
+        $newMap = [];
+        $usedCols = [];
+        $newMatchedSources = [];
+
+        foreach ($this->manualMappings as $targetField => $selectedCol) {
+            if ($selectedCol !== '' && isset($this->rawColumnHeaders[$selectedCol]) && !isset($usedCols[$selectedCol])) {
+                $newMap[$selectedCol] = $targetField;
+                $usedCols[$selectedCol] = true;
+                $newMatchedSources[$targetField] = $this->rawColumnHeaders[$selectedCol];
+            }
+        }
+
+        foreach ($this->rawColumnHeaders as $colLetter => $rawText) {
+            if (isset($newMap[$colLetter])) {
+                continue;
+            }
+
+            $normalized = SpreadsheetImportHelper::normalizeHeader($rawText);
+            if ($normalized === 'no') {
+                $newMap[$colLetter] = 'no';
+            } else {
+                // Keep unmapped required names from falsely claiming a required slot after manual unmapping
+                $newMap[$colLetter] = in_array($normalized, $this->requiredHeaders, true)
+                    ? $normalized . '_unmapped_' . strtolower($colLetter)
+                    : $normalized;
+            }
+        }
+
+        $this->columnMap = $newMap;
+        $this->matchedSources = $newMatchedSources;
+        $this->detectedHeaders = array_values($newMap);
+        $this->validation = SpreadsheetImportHelper::validateHeaders($this->detectedHeaders, $this->requiredHeaders);
+        $this->previewRows = SpreadsheetImportHelper::readRows(
+            $this->filePath,
+            $this->selectedSheet,
+            0,
+            3,
+            $this->headerRowIndex,
+            $this->columnMap
+        );
+
+        if ($this->type === 'product') {
+            $this->syncDefaultHppColumn();
+        }
+    }
+
+    /**
+     * Resolve default HPP source column from currently active headers.
+     */
+    protected function syncDefaultHppColumn(): void
+    {
+        if (in_array('netto', $this->detectedHeaders, true)) {
+            $this->hppColumn = 'netto';
+        } elseif (in_array('harga_beli', $this->detectedHeaders, true) || in_array('cost_price', $this->detectedHeaders, true)) {
+            $this->hppColumn = 'harga_beli';
+        } else {
+            $this->hppColumn = null;
+        }
     }
 
     public function startImport(): void
@@ -168,6 +257,21 @@ class SpreadsheetImporter extends Component
                 ->warning()
                 ->send();
             return;
+        }
+
+        $this->resetSummary = [];
+
+        if ($this->type === 'product' && $this->resetBeforeImport) {
+            try {
+                $this->resetSummary = app(\App\Actions\Product\ResetProductsForImport::class)->execute();
+            } catch (\Throwable $e) {
+                Notification::make()
+                    ->title('Gagal Menghapus Data Produk Lama')
+                    ->body($e->getMessage())
+                    ->danger()
+                    ->send();
+                return;
+            }
         }
 
         $this->isImporting = true;
@@ -191,7 +295,9 @@ class SpreadsheetImporter extends Component
             $this->filePath,
             $this->selectedSheet,
             $this->currentOffset,
-            $this->batchSize
+            $this->batchSize,
+            $this->headerRowIndex,
+            $this->columnMap ?: null
         );
 
         if (empty($rows)) {
@@ -286,7 +392,11 @@ class SpreadsheetImporter extends Component
             'supplier_debt' => 'faktur hutang',
             default         => 'data',
         };
-        $notificationBody = "{$this->importedCount} {$noun} berhasil diimpor" . ($this->skippedCount > 0 ? ", {$this->skippedCount} dilewati." : ".");
+        $resetPrefix = '';
+        if ($this->type === 'product' && ($this->resetSummary['deleted_products'] ?? 0) > 0) {
+            $resetPrefix = "{$this->resetSummary['deleted_products']} produk lama dihapus. ";
+        }
+        $notificationBody = $resetPrefix . "{$this->importedCount} {$noun} berhasil diimpor" . ($this->skippedCount > 0 ? ", {$this->skippedCount} dilewati." : ".");
         if ($this->generatedJournalNumber) {
             $val = $this->type === 'supplier_debt' ? $this->totalDebtValue : $this->totalStockValue;
             $formattedValue = 'Rp ' . number_format($val, 0, ',', '.');
@@ -312,14 +422,22 @@ class SpreadsheetImporter extends Component
         $this->originalFileName = null;
         $this->sheets = [];
         $this->selectedSheet = null;
+        $this->headerRowIndex = 1;
         $this->detectedHeaders = [];
         $this->rawHeaders = [];
+        $this->columnMap = [];
+        $this->rawColumnHeaders = [];
+        $this->matchedSources = [];
+        $this->ignoredHeaders = [];
+        $this->manualMappings = [];
         $this->totalRows = 0;
         $this->previewRows = [];
         $this->totalStockValue = 0;
         $this->totalDebtValue = 0;
         $this->lastSupplierName = null;
         $this->generatedJournalNumber = null;
+        $this->resetBeforeImport = false;
+        $this->resetSummary = [];
         $this->resetImportState();
     }
 
@@ -337,6 +455,7 @@ class SpreadsheetImporter extends Component
         $this->totalDebtValue = 0;
         $this->lastSupplierName = null;
         $this->generatedJournalNumber = null;
+        $this->resetSummary = [];
     }
 
     public function render()

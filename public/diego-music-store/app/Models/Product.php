@@ -120,6 +120,15 @@ class Product extends Model
     }
 
     /**
+     * Determine whether this product is excluded from physical inventory valuation.
+     */
+    public function isNonInventory(): bool
+    {
+        return $this->isService()
+            || ($this->category !== null && stripos($this->category, 'ONGKOS') !== false);
+    }
+
+    /**
      * Get the supplier for the product.
      */
     public function supplier(): BelongsTo
