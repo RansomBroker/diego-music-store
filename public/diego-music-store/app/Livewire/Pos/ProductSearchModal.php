@@ -173,8 +173,7 @@ class ProductSearchModal extends Component
                 break;
         }
 
-        // simplePaginate avoids full-table COUNT(*) scans during live search
-        return $query->simplePaginate(15, ['*'], 'modalProductPage');
+        return $query->paginate(15, ['*'], 'modalProductPage');
     }
 
     public function render()

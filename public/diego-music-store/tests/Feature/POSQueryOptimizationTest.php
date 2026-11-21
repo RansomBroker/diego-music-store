@@ -243,7 +243,7 @@ class POSQueryOptimizationTest extends TestCase
     }
 
     /** @test */
-    public function it_runs_product_search_modal_independently_with_simple_paginate_and_no_count_query(): void
+    public function it_runs_product_search_modal_independently_with_numbered_pagination(): void
     {
         $p1 = Product::create(['name' => 'Fender Stratocaster', 'type' => 'physical', 'category' => 'GITAR ELECTRIC', 'is_active' => true]);
         $v1 = ProductVariant::create([
@@ -267,16 +267,12 @@ class POSQueryOptimizationTest extends TestCase
 
         $modal = Livewire::test(ProductSearchModal::class, ['branchId' => $this->branch->id]);
 
-        DB::flushQueryLog();
-        DB::enableQueryLog();
         $modal->call('openModal', $this->retailTier->id);
         $products = $modal->instance()->products;
-        $countQueries = collect(DB::getQueryLog())
-            ->filter(fn ($q) => str_contains(strtolower($q['query']), 'count(') && str_contains($q['query'], 'product_variants'))
-            ->count();
-        DB::disableQueryLog();
 
-        $this->assertSame(0, $countQueries, 'simplePaginate should avoid COUNT(*) scans on product_variants.');
+        $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $products);
+        $this->assertSame(2, $products->total());
+        $this->assertSame(1, $products->lastPage());
         $this->assertCount(2, $products);
 
         // Search filter

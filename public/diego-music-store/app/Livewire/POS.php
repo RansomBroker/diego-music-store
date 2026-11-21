@@ -387,8 +387,8 @@ class POS extends Component
                 break;
         }
 
-        // Apply Pagination (simplePaginate avoids slow full-table COUNT(*) scans)
-        return $query->simplePaginate(15, ['*'], 'productPage');
+        // Apply Pagination
+        return $query->paginate(15, ['*'], 'productPage');
     }
 
     public function getHasMoreProductsProperty(): bool
