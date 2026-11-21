@@ -154,6 +154,13 @@ class SpreadsheetImportHelper
         'saldo_hutang'      => 'sisa_hutang',
         'sisa_tagihan'      => 'sisa_hutang',
 
+        'tgl_jatuh_tempo'     => 'jatuh_tempo',
+        'tanggal_jatuh_tempo' => 'jatuh_tempo',
+        'due_date'            => 'jatuh_tempo',
+        'tempo'               => 'jatuh_tempo',
+        'tgl_tempo'           => 'jatuh_tempo',
+        'tanggal_tempo'       => 'jatuh_tempo',
+
         // Employee & User account mappings
         'nama_karyawan'     => 'nama',
         'nama_lengkap'      => 'nama',
@@ -833,12 +840,42 @@ class SpreadsheetImportHelper
     }
 
     /**
+     * Detect whether slash dates in a batch predominantly use month-first (MM/DD/YYYY) notation.
+     *
+     * @param  array<int, mixed>  $values
+     */
+    public static function detectSlashMonthFirst(array $values): bool
+    {
+        $monthFirstEvidence = 0;
+        $dayFirstEvidence = 0;
+
+        foreach ($values as $val) {
+            if ($val === null || $val === '' || $val instanceof \DateTimeInterface) {
+                continue;
+            }
+
+            if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', trim((string) $val), $m)) {
+                $first = (int) $m[1];
+                $second = (int) $m[2];
+
+                if ($second > 12 && $first <= 12) {
+                    $monthFirstEvidence++;
+                } elseif ($first > 12 && $second <= 12) {
+                    $dayFirstEvidence++;
+                }
+            }
+        }
+
+        return $monthFirstEvidence > $dayFirstEvidence;
+    }
+
+    /**
      * Parse date string into standard 'Y-m-d' format.
      *
      * @param  mixed  $value
      * @return string
      */
-    public static function parseDate(mixed $value): string
+    public static function parseDate(mixed $value, bool $preferMonthFirst = false): string
     {
         if (empty($value)) {
             return now()->format('Y-m-d');
@@ -850,8 +887,25 @@ class SpreadsheetImportHelper
 
         $str = trim((string) $value);
 
-        if (preg_match('/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/', $str, $m)) {
-            return sprintf('%04d-%02d-%02d', (int) $m[3], (int) $m[2], (int) $m[1]);
+        if (preg_match('/^(\d{1,2})([-\/])(\d{1,2})([-\/])(\d{4})$/', $str, $m)) {
+            $first = (int) $m[1];
+            $separator = $m[2];
+            $second = (int) $m[3];
+            $year = (int) $m[5];
+
+            if ($first > 12 && $second <= 12) {
+                return sprintf('%04d-%02d-%02d', $year, $second, $first);
+            }
+
+            if ($second > 12 && $first <= 12) {
+                return sprintf('%04d-%02d-%02d', $year, $first, $second);
+            }
+
+            if ($separator === '/' && $preferMonthFirst) {
+                return sprintf('%04d-%02d-%02d', $year, $first, $second);
+            }
+
+            return sprintf('%04d-%02d-%02d', $year, $second, $first);
         }
 
         if (preg_match('/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/', $str, $m)) {

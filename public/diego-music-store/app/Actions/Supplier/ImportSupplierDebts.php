@@ -47,10 +47,18 @@ class ImportSupplierDebts
         $batchDebtValue = 0;
         $currentSupplierName = $lastSupplierName;
 
+        $dateSamples = [];
+        foreach ($rows as $sampleRow) {
+            $dateSamples[] = $sampleRow['tanggal'] ?? null;
+            $dateSamples[] = $sampleRow['jatuh_tempo'] ?? ($sampleRow['due_date'] ?? null);
+        }
+        $preferMonthFirst = SpreadsheetImportHelper::detectSlashMonthFirst($dateSamples);
+
         DB::transaction(function () use (
             $rows,
             $branchId,
             $userId,
+            $preferMonthFirst,
             &$currentSupplierName,
             &$importedCount,
             &$skippedCount,
@@ -60,17 +68,20 @@ class ImportSupplierDebts
             foreach ($rows as $index => $row) {
                 $rowNum = $row['_row_number'] ?? ($index + 2);
 
-                // 1. Detect subtotal / footer rows (e.g. "Total : 1.330.696")
-                $isSubtotal = false;
-                foreach ($row as $val) {
-                    if (is_string($val) && preg_match('/^\s*total\s*:?/i', $val)) {
-                        $isSubtotal = true;
-                        break;
-                    }
-                }
-
                 $rawNota = trim((string) ($row['nota'] ?? ''));
                 $rawTanggal = trim((string) ($row['tanggal'] ?? ''));
+                $rawJatuhTempo = trim((string) ($row['jatuh_tempo'] ?? $row['due_date'] ?? ''));
+
+                // 1. Detect subtotal / footer rows (e.g. "Total : 1.330.696" or "Total Semua")
+                $isSubtotal = false;
+                if ($rawNota === '') {
+                    foreach ($row as $val) {
+                        if (is_string($val) && preg_match('/^\s*total\b/i', $val)) {
+                            $isSubtotal = true;
+                            break;
+                        }
+                    }
+                }
 
                 if ($isSubtotal || ($rawNota === '' && $rawTanggal === '')) {
                     // Skip subtotal or blank separator rows
@@ -95,8 +106,11 @@ class ImportSupplierDebts
                     continue;
                 }
 
-                // 3. Parse date
-                $invoiceDate = SpreadsheetImportHelper::parseDate($rawTanggal);
+                // 3. Parse invoice date & optional due date
+                $invoiceDate = SpreadsheetImportHelper::parseDate($rawTanggal, $preferMonthFirst);
+                $dueDate = $rawJatuhTempo !== ''
+                    ? SpreadsheetImportHelper::parseDate($rawJatuhTempo, $preferMonthFirst)
+                    : null;
 
                 // 4. Parse debt amount (sisa_hutang or total_hutang)
                 $rawAmount = $row['sisa_hutang'] ?? $row['total_hutang'] ?? 0;
@@ -128,6 +142,7 @@ class ImportSupplierDebts
                         $existingPt->update([
                             'invoice_date' => $invoiceDate,
                             'transaction_date' => $invoiceDate,
+                            'due_date' => $dueDate ?? $existingPt->due_date,
                             'subtotal' => $amount,
                             'grand_total' => $amount,
                             'notes' => $notes,
@@ -153,6 +168,7 @@ class ImportSupplierDebts
                         'purchase_type' => 'Kredit',
                         'invoice_number' => $rawNota,
                         'invoice_date' => $invoiceDate,
+                        'due_date' => $dueDate,
                         'subtotal' => $amount,
                         'discount' => 0,
                         'shipping_cost' => 0,

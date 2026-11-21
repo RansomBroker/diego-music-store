@@ -34,6 +34,12 @@ class PurchaseTransactionsTable
                     ->date('d M Y')
                     ->sortable(),
 
+                TextColumn::make('due_date')
+                    ->label('Jatuh Tempo')
+                    ->date('d M Y')
+                    ->placeholder('-')
+                    ->sortable(),
+
                 TextColumn::make('purchaseOrder.po_number')
                     ->label('Rujukan PO')
                     ->searchable()

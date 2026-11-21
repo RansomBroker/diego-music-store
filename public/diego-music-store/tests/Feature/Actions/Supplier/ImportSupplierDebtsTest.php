@@ -186,4 +186,75 @@ class ImportSupplierDebtsTest extends TestCase
         $this->assertEquals(5000000, SpreadsheetImportHelper::parseDebtAmount(5000000));
         $this->assertEquals(0, SpreadsheetImportHelper::parseDebtAmount(0));
     }
+
+    public function test_imports_due_date_and_us_slash_dates_with_comma_amounts_and_total_semua(): void
+    {
+        $tsv = <<<'TSV'
+No	Supplier	Tanggal	Jatuh Tempo	Nota	Project	Total Hutang	Total Pembayaran	Sisa Hutang
+1	BANG BONG MUSIC	11/5/2026	12/5/2026	OL26110500000788	TOKO	21,600,000	0	21,600,000
+					Total : 	21,600,000	
+2	BORNEO MUSIKA JAYA	11/16/2026	12/16/2026	BMJ/161126	TOKO	1,079,598	0	1,079,598
+					Total : 	1,079,598	
+3	CV ANEKA MUSIKA STUDIO	11/14/2026	11/28/2026	NP/26-00390	TOKO	73,440,000	0	73,440,000
+					Total : 	73,440,000	
+4	MITRA CE	10/6/2026	10/27/2026	158567	TOKO	111,377,000	0	111,377,000
+		10/7/2026	10/28/2026	158584	TOKO	210,000	0	210,000
+		10/16/2026	11/6/2026	158862	TOKO	8,010,000	0	8,010,000
+					Total : 	119,597,000	
+5	PT ASIA GLOBAL PERKASA	11/5/2026	12/20/2026	SI.2026.11.00044	TOKO	74,137,500	0	74,137,500
+		11/6/2026	12/21/2026	SI.2026.11.00033	TOKO	6,750,000	0	6,750,000
+					Total : 	80,887,500	
+6	PT INDO CITRA RAYA	6/14/2024	8/13/2024	ICR-20240624	TOKO	9,453,414	0	9,453,414
+					Total : 	9,453,414	
+7	PT INSTRUMEN MUSIK BERSAMA	12/22/2025	1/21/2026	DO25123636	TOKO	22,196,000	0	22,196,000
+					Total : 	22,196,000	
+8	PT MEGAH GENTASWARA	9/15/2026	10/15/2026	F126003766	TOKO	165,720,000	0	165,720,000
+					Total : 	165,720,000	
+						Total Semua	493,973,512
+TSV;
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'debt_due_date_') . '.csv';
+        file_put_contents($tempFile, $tsv);
+
+        try {
+            $inspect = SpreadsheetImportHelper::inspectFile($tempFile, null, ImportSupplierDebts::REQUIRED_HEADERS);
+            $this->assertTrue($inspect['validation']['is_valid']);
+
+            $rows = SpreadsheetImportHelper::readRows($tempFile, null, 0, 100, $inspect['header_row'], $inspect['col_map']);
+            $result = app(ImportSupplierDebts::class)->execute($rows, $this->branch->id);
+
+            $this->assertSame(11, $result['imported']);
+            $this->assertSame(0, $result['skipped']);
+            $this->assertSame(493973512, $result['total_debt_value']);
+
+            $bangBong = PurchaseTransaction::where('invoice_number', 'OL26110500000788')->firstOrFail();
+            $this->assertSame('2026-11-05', $bangBong->invoice_date->format('Y-m-d'));
+            $this->assertSame('2026-12-05', $bangBong->due_date->format('Y-m-d'));
+            $this->assertSame(21600000, $bangBong->grand_total);
+
+            $borneo = PurchaseTransaction::where('invoice_number', 'BMJ/161126')->firstOrFail();
+            $this->assertSame('2026-11-16', $borneo->invoice_date->format('Y-m-d'));
+            $this->assertSame('2026-12-16', $borneo->due_date->format('Y-m-d'));
+            $this->assertSame(1079598, $borneo->grand_total);
+
+            $mitra3 = PurchaseTransaction::where('invoice_number', '158862')->firstOrFail();
+            $this->assertSame('MITRA CE', $mitra3->supplier->name);
+            $this->assertSame('2026-10-16', $mitra3->invoice_date->format('Y-m-d'));
+            $this->assertSame('2026-11-06', $mitra3->due_date->format('Y-m-d'));
+
+            // Re-import with updated due_date updates existing invoice cleanly
+            $bangBongRow = [[
+                'supplier' => 'BANG BONG MUSIC',
+                'tanggal' => '11/5/2026',
+                'jatuh_tempo' => '12/15/2026',
+                'nota' => 'OL26110500000788',
+                'total_hutang' => '21,600,000',
+                'sisa_hutang' => '21,600,000',
+            ]];
+            app(ImportSupplierDebts::class)->execute($bangBongRow, $this->branch->id);
+            $this->assertSame('2026-12-15', $bangBong->fresh()->due_date->format('Y-m-d'));
+        } finally {
+            @unlink($tempFile);
+        }
+    }
 }

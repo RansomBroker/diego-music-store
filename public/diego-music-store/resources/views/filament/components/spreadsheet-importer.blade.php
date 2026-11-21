@@ -276,7 +276,7 @@
                     <div>[K] <strong>211101001 - HUTANG DAGANG</strong> <span class="text-rose-600 dark:text-rose-400">(Kewajiban Hutang Supplier Bertambah)</span></div>
                 </div>
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 pt-1">
-                    * Sistem secara otomatis meneruskan nama supplier untuk baris beruntun (merged cells) dan mengabaikan baris subtotal "Total :".
+                    * Sistem otomatis meneruskan nama supplier pada baris beruntun, mengabaikan baris subtotal ("Total :" / "Total Semua"), dan menyimpan kolom opsional <code>Jatuh Tempo</code> jika tersedia.
                 </p>
             </div>
         </div>
