@@ -75,7 +75,7 @@
             </div>
             
             <!-- Toolbar Utility Buttons with Labels -->
-            <div class="flex items-stretch gap-1.5 sm:gap-2 flex-1 min-w-0">
+            <div class="flex flex-wrap lg:flex-nowrap items-stretch gap-1.5 sm:gap-2 flex-1 min-w-0">
                 <!-- Antrian Sales (Di Sebelah Kiri Tambah Produk) -->
                 <livewire:pos.sales-queue-widget :branch-id="$selectedBranchId" wire:key="pos-sales-queue-widget" />
 
@@ -84,16 +84,16 @@
                     @click="Livewire.dispatch('open-pos-product-search', { pricingTierId: $wire.selectedPricingTierId })"
                     type="button" 
                     title="Tambah Produk (F1 / Klik)"
-                    class="flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-black rounded-xl px-2.5 py-1.5 transition-all active:scale-[0.98] w-22 sm:w-24 flex-shrink-0 border border-emerald-500/30 group cursor-pointer shadow-xs"
+                    class="flex flex-row sm:flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-black rounded-xl px-2.5 py-2 sm:py-1.5 gap-1.5 sm:gap-0 transition-all active:scale-[0.98] w-full sm:w-24 flex-shrink-0 border border-emerald-500/30 group cursor-pointer shadow-xs"
                 >
-                    <i class="ph-bold ph-plus text-xl mb-1 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-[11px] font-black leading-tight text-center">Tambah<br>Produk</span>
+                    <i class="ph-bold ph-plus text-lg sm:text-xl sm:mb-1 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-[11px] font-black leading-tight text-center">Tambah<br class="hidden sm:inline"> Produk</span>
                 </button>
 
                 <!-- Kumpulan Tombol Utility -->
-                <div class="flex flex-col gap-1.5 justify-center flex-1 min-w-0">
+                <div class="flex flex-col gap-1.5 justify-center w-full lg:w-auto lg:flex-1 min-w-0">
                     <!-- Baris 1: Aksi Utama & Navigasi (5 Kolom Penuh: Transaksi, Tunda, Simpan, Struk, Reset) -->
-                    <div class="grid grid-cols-5 gap-1 sm:gap-1.5 w-full">
+                    <div class="grid grid-cols-3 sm:grid-cols-5 gap-1 sm:gap-1.5 w-full">
                         <!-- 1. Daftar Transaksi (Hari Ini) -->
                         <x-pos.utility.button 
                             href="/pos/transactions?fromDate={{ now()->format('Y-m-d') }}&toDate={{ now()->format('Y-m-d') }}" 
@@ -172,7 +172,7 @@
                     </div>
 
                     <!-- Baris 2: Cetak Dokumen (4 Kolom Penuh: Bill, Large Bill, Penawaran, Invoice) -->
-                    <div class="grid grid-cols-4 gap-1 sm:gap-1.5 w-full">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-1.5 w-full">
                         <!-- 1. Print Bill -->
                         <x-pos.utility.button 
                             wire:click="printDraft('bill')" 

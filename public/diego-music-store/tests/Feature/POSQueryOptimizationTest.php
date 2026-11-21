@@ -179,6 +179,22 @@ class POSQueryOptimizationTest extends TestCase
     }
 
     /** @test */
+    public function it_renders_sales_queue_widget_with_instant_alpine_tabs_and_responsive_layout(): void
+    {
+        $salesUser = User::factory()->create(['name' => 'Sales Responsif', 'is_active' => true]);
+        $salesUser->assignRole('sales');
+        $salesUser->branches()->attach($this->branch->id);
+
+        Livewire::test(SalesQueueWidget::class, ['branchId' => $this->branch->id])
+            ->assertSee("openTab('queue')", false)
+            ->assertSee("openTab('on_duty')", false)
+            ->assertSee('wire:loading.attr="disabled"', false)
+            ->assertSee('max-w-[calc(100vw-1.5rem)]', false)
+            ->assertSee('grid-cols-2 sm:flex', false)
+            ->assertDontSee('wire:click="openWithTab', false);
+    }
+
+    /** @test */
     public function it_avoids_duplicate_off_day_queries_in_pos_navbar_helper(): void
     {
         $employee = Employee::create([
