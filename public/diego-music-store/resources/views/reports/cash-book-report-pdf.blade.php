@@ -120,7 +120,7 @@
                         <td class="font-bold">{{ $cat['category_name'] }}</td>
                         <td class="text-right ">{{ $cat['inflow'] > 0 ? number_format($cat['inflow'], 0, ',', '.') : '-' }}</td>
                         <td class="text-right ">{{ $cat['outflow'] > 0 ? number_format($cat['outflow'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right  font-bold">{{ number_format($cat['net_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold"><x-financial-amount :amount="$cat['net_amount']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                     </tr>
                 @empty
                     <tr>
@@ -152,7 +152,7 @@
                     <td>Saldo awal kas/bank sebelum periode</td>
                     <td class="text-right ">-</td>
                     <td class="text-right ">-</td>
-                    <td class="text-right  font-bold">{{ number_format($data['initial_balance'], 0, ',', '.') }}</td>
+                    <td class="text-right  font-bold"><x-financial-amount :amount="$data['initial_balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                 </tr>
 
                 @forelse($data['rows'] as $row)
@@ -164,7 +164,7 @@
                         <td>{{ $row['description'] }}</td>
                         <td class="text-right  font-bold">{{ $row['inflow'] > 0 ? number_format($row['inflow'], 0, ',', '.') : '-' }}</td>
                         <td class="text-right ">{{ $row['outflow'] > 0 ? number_format($row['outflow'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right  font-bold">{{ number_format($row['running_balance'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold"><x-financial-amount :amount="$row['running_balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                     </tr>
                 @empty
                     <tr>
@@ -178,8 +178,8 @@
     <div class="subtotal-box">
         <table style="width: 100%;">
             <tr>
-                <td>SALDO AWAL: Rp {{ number_format($data['initial_balance'], 0, ',', '.') }} &bull; MASUK: Rp {{ number_format($data['total_inflow'], 0, ',', '.') }} &bull; KELUAR: Rp {{ number_format($data['total_outflow'], 0, ',', '.') }}</td>
-                <td class="text-right ">SALDO AKHIR: Rp {{ number_format($data['ending_balance'], 0, ',', '.') }}</td>
+                <td>SALDO AWAL: <x-financial-amount :amount="$data['initial_balance']" :pdf="true" /> &bull; MASUK: <x-financial-amount :amount="$data['total_inflow']" :pdf="true" /> &bull; KELUAR: <x-financial-amount :amount="$data['total_outflow']" :pdf="true" /></td>
+                <td class="text-right ">SALDO AKHIR: <x-financial-amount :amount="$data['ending_balance']" :pdf="true" /></td>
             </tr>
         </table>
     </div>

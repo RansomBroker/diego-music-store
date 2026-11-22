@@ -117,7 +117,7 @@
     </div>
 
     <div class="status-badge">
-        STATUS KESEIMBANGAN: {{ $data['is_balanced'] ? 'SEIMBANG (BALANCED 100%)' : 'OUT OF BALANCE (SELISIH Rp ' . number_format($data['difference'], 0, ',', '.') . ')' }}
+        STATUS KESEIMBANGAN: @if($data['is_balanced']) SEIMBANG (BALANCED 100%) @else OUT OF BALANCE (SELISIH <x-financial-amount :amount="$data['difference']" :pdf="true" />) @endif
     </div>
 
     <table class="data-table">
@@ -159,12 +159,12 @@
         <tfoot>
             <tr class="total-row">
                 <td colspan="2" class="font-bold">TOTAL GRAND TOTAL</td>
-                <td class="text-right ">{{ number_format($data['total_beginning_debit'], 0, ',', '.') }}</td>
-                <td class="text-right ">{{ number_format($data['total_beginning_credit'], 0, ',', '.') }}</td>
-                <td class="text-right ">{{ number_format($data['total_period_debit'], 0, ',', '.') }}</td>
-                <td class="text-right ">{{ number_format($data['total_period_credit'], 0, ',', '.') }}</td>
-                <td class="text-right  font-bold">{{ number_format($data['total_ending_debit'], 0, ',', '.') }}</td>
-                <td class="text-right  font-bold">{{ number_format($data['total_ending_credit'], 0, ',', '.') }}</td>
+                <td class="text-right "><x-financial-amount :amount="$data['total_beginning_debit']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                <td class="text-right "><x-financial-amount :amount="$data['total_beginning_credit']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                <td class="text-right "><x-financial-amount :amount="$data['total_period_debit']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                <td class="text-right "><x-financial-amount :amount="$data['total_period_credit']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                <td class="text-right  font-bold"><x-financial-amount :amount="$data['total_ending_debit']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                <td class="text-right  font-bold"><x-financial-amount :amount="$data['total_ending_credit']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
             </tr>
         </tfoot>
     </table>

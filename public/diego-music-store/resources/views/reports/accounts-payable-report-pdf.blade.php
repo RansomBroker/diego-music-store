@@ -128,9 +128,9 @@
                         <td class="font-bold">{{ $sup['supplier_name'] }}</td>
                         <td class="">{{ $sup['supplier_phone'] }}</td>
                         <td class="text-center  font-bold">{{ number_format($sup['count_invoices'], 0, ',', '.') }}</td>
-                        <td class="text-right ">{{ number_format($sup['grand_total'], 0, ',', '.') }}</td>
-                        <td class="text-right ">{{ number_format($sup['paid_amount'], 0, ',', '.') }}</td>
-                        <td class="text-right  font-bold">{{ number_format($sup['unpaid_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right "><x-financial-amount :amount="$sup['grand_total']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                        <td class="text-right "><x-financial-amount :amount="$sup['paid_amount']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                        <td class="text-right  font-bold"><x-financial-amount :amount="$sup['unpaid_amount']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                     </tr>
                 @empty
                     <tr>
@@ -192,9 +192,9 @@
                         <td class="">{{ \Illuminate\Support\Carbon::parse($inv['due_date'])->format('d/m/Y') }}</td>
                         <td class="font-bold">{{ $inv['supplier_name'] }}</td>
                         <td>{{ $inv['is_overdue'] ? ('Jatuh Tempo (' . $inv['overdue_days'] . ' hr)') : 'Lancar' }}</td>
-                        <td class="text-right ">{{ number_format($inv['grand_total'], 0, ',', '.') }}</td>
-                        <td class="text-right ">{{ number_format($inv['paid_amount'], 0, ',', '.') }}</td>
-                        <td class="text-right  font-bold">{{ number_format($inv['unpaid_amount'], 0, ',', '.') }}</td>
+                        <td class="text-right "><x-financial-amount :amount="$inv['grand_total']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                        <td class="text-right "><x-financial-amount :amount="$inv['paid_amount']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                        <td class="text-right  font-bold"><x-financial-amount :amount="$inv['unpaid_amount']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                     </tr>
                 @empty
                     <tr>
@@ -208,8 +208,8 @@
     <div class="subtotal-box">
         <table style="width: 100%;">
             <tr>
-                <td>RINGKASAN AP: {{ number_format($data['total_invoices'], 0, ',', '.') }} Faktur &bull; Belum Jt Tempo: Rp {{ number_format($data['total_current'], 0, ',', '.') }} &bull; Sudah Jt Tempo: Rp {{ number_format($data['total_overdue'], 0, ',', '.') }}</td>
-                <td class="text-right ">TOTAL SISA HUTANG: Rp {{ number_format($data['total_unpaid'], 0, ',', '.') }}</td>
+                <td>RINGKASAN AP: {{ number_format($data['total_invoices'], 0, ',', '.') }} Faktur &bull; Belum Jt Tempo: <x-financial-amount :amount="$data['total_current']" :pdf="true" /> &bull; Sudah Jt Tempo: <x-financial-amount :amount="$data['total_overdue']" :pdf="true" /></td>
+                <td class="text-right ">TOTAL SISA HUTANG: <x-financial-amount :amount="$data['total_unpaid']" :pdf="true" /></td>
             </tr>
         </table>
     </div>

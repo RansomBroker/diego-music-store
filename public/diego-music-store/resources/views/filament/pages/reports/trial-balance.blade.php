@@ -23,7 +23,7 @@
                 @endif
                 <div>
                     <h4 class="font-bold text-sm tracking-wide">
-                        {{ $data['is_balanced'] ? 'STATUS: SEIMBANG (BALANCED 100%)' : 'STATUS: TIDAK SEIMBANG (OUT OF BALANCE - SELISIH Rp ' . number_format($data['difference'], 0, ',', '.') . ')' }}
+                        @if($data['is_balanced']) STATUS: SEIMBANG (BALANCED 100%) @else STATUS: TIDAK SEIMBANG (OUT OF BALANCE - SELISIH <x-financial-amount :amount="$data['difference']" />) @endif
                     </h4>
                     <p class="text-xs opacity-80">
                         Periode: {{ \Illuminate\Support\Carbon::parse($data['from_date'])->translatedFormat('d F Y') }} s.d. {{ \Illuminate\Support\Carbon::parse($data['to_date'])->translatedFormat('d F Y') }} • Cabang: {{ $data['branch_name'] }} • Mode: 6-KOLOM
@@ -32,7 +32,7 @@
             </div>
             <div class="text-right">
                 <span class="text-xs font-medium uppercase opacity-75">Total Saldo Akhir Debit / Kredit</span>
-                <div class="text-base font-extrabold ">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_ending_debit']) }}</div>
+                <div class="text-base font-extrabold "><x-financial-amount :amount="$data['total_ending_debit']" /></div>
             </div>
         </div>
     </div>
@@ -112,22 +112,22 @@
                             TOTAL NERACA SALDO
                         </td>
                         <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
-                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_beginning_debit']) }}
+                            <x-financial-amount :amount="$data['total_beginning_debit']" />
                         </td>
                         <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
-                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_beginning_credit']) }}
+                            <x-financial-amount :amount="$data['total_beginning_credit']" />
                         </td>
                         <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
-                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_period_debit']) }}
+                            <x-financial-amount :amount="$data['total_period_debit']" />
                         </td>
                         <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
-                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_period_credit']) }}
+                            <x-financial-amount :amount="$data['total_period_credit']" />
                         </td>
                         <td class="py-3.5 px-3 text-right  border-r border-gray-300 dark:border-gray-700">
-                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_ending_debit']) }}
+                            <x-financial-amount :amount="$data['total_ending_debit']" />
                         </td>
                         <td class="py-3.5 px-3 text-right ">
-                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_ending_credit']) }}
+                            <x-financial-amount :amount="$data['total_ending_credit']" />
                         </td>
                     </tr>
                 </tfoot>

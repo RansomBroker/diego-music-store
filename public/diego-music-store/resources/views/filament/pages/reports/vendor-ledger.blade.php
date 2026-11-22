@@ -27,15 +27,15 @@
             <div class="text-right flex items-center gap-6">
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Total Pembelian Baru</span>
-                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_additions']) }}</div>
+                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white"><x-financial-amount :amount="$data['grand_total_additions']" /></div>
                 </div>
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Total Pelunasan</span>
-                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_payments']) }}</div>
+                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white"><x-financial-amount :amount="$data['grand_total_payments']" /></div>
                 </div>
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Saldo Akhir Hutang</span>
-                    <div class="text-base font-extrabold  text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_ending']) }}</div>
+                    <div class="text-base font-extrabold  text-gray-900 dark:text-white"><x-financial-amount :amount="$data['grand_total_ending']" /></div>
                 </div>
             </div>
         </div>
@@ -84,7 +84,7 @@
                                 </td>
                                 <td class="py-2.5 px-6 text-right  text-xs" colspan="2">-</td>
                                 <td class="py-2.5 px-6 text-right  text-xs font-extrabold text-gray-900 dark:text-white">
-                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['beginning_balance']) }}
+                                    <x-financial-amount :amount="$vendor['beginning_balance']" />
                                 </td>
                             </tr>
 
@@ -110,7 +110,7 @@
                                         {{ $tx['payment'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['payment']) : '-' }}
                                     </td>
                                     <td class="py-2 px-6 text-right  text-xs font-bold text-gray-900 dark:text-white">
-                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($tx['running_balance']) }}
+                                        <x-financial-amount :amount="$tx['running_balance']" />
                                     </td>
                                 </tr>
                             @empty
@@ -127,13 +127,13 @@
                     <div class="p-3.5 px-6 bg-gray-100 dark:bg-white/10 flex justify-between items-center text-gray-900 dark:text-white">
                         <div class="flex items-center gap-6">
                             <span class="font-bold text-xs uppercase tracking-wider">TOTAL MUTASI SUPPLIER</span>
-                            <span class="text-xs ">Pembelian: <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['total_additions']) }}</strong></span>
-                            <span class="text-xs ">Pelunasan: <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['total_payments']) }}</strong></span>
+                            <span class="text-xs ">Pembelian: <strong><x-financial-amount :amount="$vendor['total_additions']" /></strong></span>
+                            <span class="text-xs ">Pelunasan: <strong><x-financial-amount :amount="$vendor['total_payments']" /></strong></span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-xs uppercase tracking-wider">SALDO AKHIR HUTANG:</span>
                             <span class=" text-sm font-extrabold text-gray-900 dark:text-white">
-                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($vendor['ending_balance']) }}
+                                <x-financial-amount :amount="$vendor['ending_balance']" />
                             </span>
                         </div>
                     </div>

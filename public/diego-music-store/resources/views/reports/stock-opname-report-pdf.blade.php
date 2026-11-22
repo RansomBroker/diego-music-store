@@ -107,7 +107,7 @@
     @if($data['mode'] === 'detail')
         @foreach($data['opnames'] as $op)
             <div style="background-color: #111827; color: #ffffff; padding: 4px 8px; font-weight: bold; font-size: 9.5px; margin-top: 8px;">
-                OPNAME: {{ $op['opname_number'] }} &bull; Cabang: {{ $op['branch_name'] }} &bull; Tgl: {{ \Illuminate\Support\Carbon::parse($op['opname_date'])->format('d/m/Y') }} &bull; Status: {{ $op['status'] }} &bull; Nilai Adjustment: Rp {{ number_format($op['session_adjustment_value'], 0, ',', '.') }}
+                OPNAME: {{ $op['opname_number'] }} &bull; Cabang: {{ $op['branch_name'] }} &bull; Tgl: {{ \Illuminate\Support\Carbon::parse($op['opname_date'])->format('d/m/Y') }} &bull; Status: {{ $op['status'] }} &bull; Nilai Adjustment: <x-financial-amount :amount="$op['session_adjustment_value']" :pdf="true" />
             </div>
             <table class="data-table">
                 <thead>
@@ -131,8 +131,8 @@
                             <td class="text-center  font-bold">{{ number_format($item['physical_qty'], 0, ',', '.') }}</td>
                             <td class="text-center  font-bold">{{ $item['difference'] > 0 ? '+' : '' }}{{ number_format($item['difference'], 0, ',', '.') }}</td>
                             <td class="text-center font-bold">{{ $item['item_status_label'] }}</td>
-                            <td class="text-right ">{{ number_format($item['cost_price'], 0, ',', '.') }}</td>
-                            <td class="text-right  font-bold">{{ number_format($item['adjustment_value'], 0, ',', '.') }}</td>
+                            <td class="text-right "><x-financial-amount :amount="$item['cost_price']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                            <td class="text-right  font-bold"><x-financial-amount :amount="$item['adjustment_value']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -164,7 +164,7 @@
                         <td class="text-center ">{{ number_format($op['session_system_qty'], 0, ',', '.') }}</td>
                         <td class="text-center  font-bold">{{ number_format($op['session_physical_qty'], 0, ',', '.') }}</td>
                         <td class="text-center  font-bold">{{ $op['session_diff_qty'] > 0 ? '+' : '' }}{{ number_format($op['session_diff_qty'], 0, ',', '.') }}</td>
-                        <td class="text-right  font-bold">{{ number_format($op['session_adjustment_value'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold"><x-financial-amount :amount="$op['session_adjustment_value']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                     </tr>
                 @empty
                     <tr>
@@ -179,7 +179,7 @@
         <table style="width: 100%;">
             <tr>
                 <td>RINGKASAN AUDIT: {{ number_format($data['total_opname_sessions'], 0, ',', '.') }} Sesi Opname &bull; {{ number_format($data['total_items_audited'], 0, ',', '.') }} Item Audited &bull; Net Selisih Qty: {{ $data['total_net_variance_qty'] > 0 ? '+' : '' }}{{ number_format($data['total_net_variance_qty'], 0, ',', '.') }} Unit</td>
-                <td class="text-right ">TOTAL ADJUSTMENT: Rp {{ number_format($data['grand_total_adjustment_value'], 0, ',', '.') }}</td>
+                <td class="text-right ">TOTAL ADJUSTMENT: <x-financial-amount :amount="$data['grand_total_adjustment_value']" :pdf="true" /></td>
             </tr>
         </table>
     </div>

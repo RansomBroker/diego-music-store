@@ -2,6 +2,7 @@
 
 namespace App\Actions\Accounting;
 
+use App\Helpers\FinancialReportHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Illuminate\Support\Facades\DB;
@@ -32,36 +33,23 @@ class GenerateBalanceSheetReport
             $journalQuery->where('journal_entries.branch_id', $branchId);
         }
 
-        $journalSums = $journalQuery
+        $rawJournalSums = $journalQuery
             ->select(
                 'journal_items.account_id',
                 DB::raw('SUM(journal_items.debit) as total_debit'),
                 DB::raw('SUM(journal_items.credit) as total_credit')
             )
             ->groupBy('journal_items.account_id')
-            ->get()
-            ->keyBy('account_id');
-
-        // 2. Fetch all active accounts ordered by code
-        $allAccounts = Account::with('parent')
-            ->where('is_active', true)
-            ->orderBy('code')
             ->get();
 
-        // Map accounts by ID for fast parent lookup & level calculation
-        $accountsById = $allAccounts->keyBy('id');
+        // 2. Fetch canonical active accounts (1 row per code across consolidated/single branch)
+        $resolved = FinancialReportHelper::resolveConsolidatedAccounts($branchId);
+        $allAccounts = $resolved['accounts'];
+        $idToCanonicalId = $resolved['id_to_canonical_id'];
+        $parentCodeMap = $resolved['parent_code_map'];
+        $levelsById = $resolved['levels_by_id'];
 
-        // Calculate account depth level (1 = Root, 2 = Sub, 3 = Detail, etc.)
-        $getAccountLevel = function (Account $account) use ($accountsById): int {
-            $level = 1;
-            $current = $account;
-            while ($current->parent_id && isset($accountsById[$current->parent_id])) {
-                $level++;
-                $current = $accountsById[$current->parent_id];
-                if ($level > 10) break; // Safeguard against circular parent references
-            }
-            return $level;
-        };
+        $journalSums = FinancialReportHelper::consolidateAccountSums($rawJournalSums, $idToCanonicalId);
 
         // 3. Helper to calculate individual detail account balance
         $calculateAccountBalance = function (Account $account) use ($journalSums): float {
@@ -91,20 +79,10 @@ class GenerateBalanceSheetReport
         $cumulativeBalances = [];
         foreach ($allAccounts as $acc) {
             if ($acc->is_header) {
-                // Find all non-header descendants
                 $descendantSum = 0.0;
                 foreach ($allAccounts as $child) {
-                    if (!$child->is_header) {
-                        // Check if child belongs to this header
-                        $curr = $child;
-                        while ($curr->parent_id) {
-                            if ($curr->parent_id == $acc->id) {
-                                $descendantSum += $rawBalances[$child->id];
-                                break;
-                            }
-                            if (!isset($accountsById[$curr->parent_id])) break;
-                            $curr = $accountsById[$curr->parent_id];
-                        }
+                    if (!$child->is_header && FinancialReportHelper::isDescendantOfCode((string) $child->code, (string) $acc->code, $parentCodeMap)) {
+                        $descendantSum += $rawBalances[$child->id];
                     }
                 }
                 $cumulativeBalances[$acc->id] = $descendantSum;
@@ -126,8 +104,34 @@ class GenerateBalanceSheetReport
         $revenueTotal = 0.0;
         $expenseTotal = 0.0;
 
+        $isFixedAssetAccount = function (Account $acc): bool {
+            $class = strtolower((string) $acc->classification);
+            $code = strtolower((string) $acc->code);
+            $subtype = strtolower((string) $acc->account_subtype);
+
+            return str_starts_with($code, '1-2')
+                || str_starts_with($code, '1-3')
+                || str_starts_with($code, '12')
+                || in_array($subtype, ['fixed_asset', 'accumulated_depreciation', 'intangible_asset', 'accumulated_amortization'], true)
+                || str_contains($class, 'tetap')
+                || str_contains($class, 'fixed');
+        };
+
+        $isLongTermLiabilityAccount = function (Account $acc): bool {
+            $class = strtolower((string) $acc->classification);
+            $code = strtolower((string) $acc->code);
+            $subtype = strtolower((string) $acc->account_subtype);
+
+            return str_starts_with($code, '2-2')
+                || str_starts_with($code, '2-3')
+                || str_starts_with($code, '22')
+                || $subtype === 'long_term_liability'
+                || str_contains($class, 'panjang')
+                || str_contains($class, 'long');
+        };
+
         foreach ($allAccounts as $acc) {
-            $level = $getAccountLevel($acc);
+            $level = $levelsById[$acc->id] ?? 1;
             $balance = $cumulativeBalances[$acc->id];
 
             $itemData = [
@@ -137,7 +141,7 @@ class GenerateBalanceSheetReport
                 'is_header'   => $acc->is_header,
                 'level'       => $level,
                 'parent_id'   => $acc->parent_id,
-                'parent_code' => $acc->parent?->code,
+                'parent_code' => $parentCodeMap[$acc->code] ?? $acc->parent?->code,
                 'balance'     => $balance,
             ];
 
@@ -160,14 +164,14 @@ class GenerateBalanceSheetReport
 
             if ($class === 'asset' || str_starts_with($code, '1')) {
                 $allAssetItems[] = $itemData;
-                if (str_starts_with($code, '1-2') || str_starts_with($code, '1-3') || str_contains($class, 'tetap') || str_contains($class, 'fixed')) {
+                if ($isFixedAssetAccount($acc)) {
                     $fixedAssets[] = $itemData;
                 } else {
                     $currentAssets[] = $itemData;
                 }
             } elseif ($class === 'liability' || str_starts_with($code, '2')) {
                 $allLiabilityItems[] = $itemData;
-                if (str_starts_with($code, '2-2') || str_starts_with($code, '2-3') || str_contains($class, 'panjang') || str_contains($class, 'long')) {
+                if ($isLongTermLiabilityAccount($acc)) {
                     $longTermLiabilities[] = $itemData;
                 } else {
                     $currentLiabilities[] = $itemData;
@@ -193,7 +197,7 @@ class GenerateBalanceSheetReport
                 $class = strtolower($acc->classification);
                 $code = strtolower($acc->code);
                 if ($class === 'asset' || str_starts_with($code, '1')) {
-                    if (str_starts_with($code, '1-2') || str_starts_with($code, '1-3') || str_contains($class, 'tetap') || str_contains($class, 'fixed')) {
+                    if ($isFixedAssetAccount($acc)) {
                         $totalFixedAssets += $rawBalances[$acc->id];
                     } else {
                         $totalCurrentAssets += $rawBalances[$acc->id];
@@ -210,7 +214,7 @@ class GenerateBalanceSheetReport
                 $class = strtolower($acc->classification);
                 $code = strtolower($acc->code);
                 if ($class === 'liability' || str_starts_with($code, '2')) {
-                    if (str_starts_with($code, '2-2') || str_starts_with($code, '2-3') || str_contains($class, 'panjang') || str_contains($class, 'long')) {
+                    if ($isLongTermLiabilityAccount($acc)) {
                         $totalLongTermLiabilities += $rawBalances[$acc->id];
                     } else {
                         $totalCurrentLiabilities += $rawBalances[$acc->id];

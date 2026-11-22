@@ -2,6 +2,7 @@
 
 namespace App\Actions\Accounting;
 
+use App\Helpers\FinancialReportHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Illuminate\Support\Facades\DB;
@@ -39,15 +40,14 @@ class GenerateTrialBalanceReport
             $priorQuery->where('journal_entries.branch_id', $branchId);
         }
 
-        $priorSums = $priorQuery
+        $rawPriorSums = $priorQuery
             ->select(
                 'journal_items.account_id',
                 DB::raw('SUM(journal_items.debit) as total_debit'),
                 DB::raw('SUM(journal_items.credit) as total_credit')
             )
             ->groupBy('journal_items.account_id')
-            ->get()
-            ->keyBy('account_id');
+            ->get();
 
         // 2. Period sums within [$fromDate, $toDate]
         $periodQuery = DB::table('journal_items')
@@ -60,34 +60,23 @@ class GenerateTrialBalanceReport
             $periodQuery->where('journal_entries.branch_id', $branchId);
         }
 
-        $periodSums = $periodQuery
+        $rawPeriodSums = $periodQuery
             ->select(
                 'journal_items.account_id',
                 DB::raw('SUM(journal_items.debit) as total_debit'),
                 DB::raw('SUM(journal_items.credit) as total_credit')
             )
             ->groupBy('journal_items.account_id')
-            ->get()
-            ->keyBy('account_id');
-
-        // 3. Fetch active accounts
-        $allAccounts = Account::with('parent')
-            ->where('is_active', true)
-            ->orderBy('code')
             ->get();
 
-        $accountsById = Account::where('is_active', true)->get()->keyBy('id');
+        // 3. Fetch canonical active accounts (1 row per code across consolidated/single branch)
+        $resolved = FinancialReportHelper::resolveConsolidatedAccounts($branchId);
+        $allAccounts = $resolved['accounts'];
+        $idToCanonicalId = $resolved['id_to_canonical_id'];
+        $levelsById = $resolved['levels_by_id'];
 
-        $getAccountLevel = function (Account $account) use ($accountsById): int {
-            $level = 1;
-            $current = $account;
-            while ($current->parent_id && isset($accountsById[$current->parent_id])) {
-                $level++;
-                $current = $accountsById[$current->parent_id];
-                if ($level > 10) break;
-            }
-            return $level;
-        };
+        $priorSums = FinancialReportHelper::consolidateAccountSums($rawPriorSums, $idToCanonicalId);
+        $periodSums = FinancialReportHelper::consolidateAccountSums($rawPeriodSums, $idToCanonicalId);
 
         $items = [];
         $totalBeginningDebit = 0.0;
@@ -98,7 +87,7 @@ class GenerateTrialBalanceReport
         $totalEndingCredit = 0.0;
 
         foreach ($allAccounts as $acc) {
-            $level = $getAccountLevel($acc);
+            $level = $levelsById[$acc->id] ?? 1;
 
             // Account level filtering
             if ($accountLevel !== 'all') {

@@ -27,11 +27,11 @@
             <div class="text-right flex items-center gap-6">
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Total Uang Masuk</span>
-                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_in']) }}</div>
+                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white"><x-financial-amount :amount="$data['grand_total_in']" /></div>
                 </div>
                 <div>
                     <span class="text-xs font-medium uppercase opacity-75">Total Uang Keluar</span>
-                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_out']) }}</div>
+                    <div class="text-sm font-extrabold  text-gray-900 dark:text-white"><x-financial-amount :amount="$data['grand_total_out']" /></div>
                 </div>
             </div>
         </div>
@@ -79,7 +79,7 @@
                                 </td>
                                 <td class="py-2.5 px-6 text-right  text-xs" colspan="2">-</td>
                                 <td class="py-2.5 px-6 text-right  text-xs font-extrabold text-gray-900 dark:text-white">
-                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($ledger['beginning_balance']) }}
+                                    <x-financial-amount :amount="$ledger['beginning_balance']" />
                                 </td>
                             </tr>
 
@@ -102,7 +102,7 @@
                                         {{ $tx['credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['credit']) : '-' }}
                                     </td>
                                     <td class="py-2 px-6 text-right  text-xs font-bold text-gray-900 dark:text-white">
-                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($tx['running_balance']) }}
+                                        <x-financial-amount :amount="$tx['running_balance']" />
                                     </td>
                                 </tr>
                             @empty
@@ -119,13 +119,13 @@
                     <div class="p-3.5 px-6 bg-gray-100 dark:bg-white/10 flex justify-between items-center text-gray-900 dark:text-white">
                         <div class="flex items-center gap-6">
                             <span class="font-bold text-xs uppercase tracking-wider">TOTAL MUTASI REKENING</span>
-                            <span class="text-xs ">Uang Masuk: <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($ledger['total_in']) }}</strong></span>
-                            <span class="text-xs ">Uang Keluar: <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($ledger['total_out']) }}</strong></span>
+                            <span class="text-xs ">Uang Masuk: <strong><x-financial-amount :amount="$ledger['total_in']" /></strong></span>
+                            <span class="text-xs ">Uang Keluar: <strong><x-financial-amount :amount="$ledger['total_out']" /></strong></span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-xs uppercase tracking-wider">SALDO AKHIR BANK:</span>
                             <span class=" text-sm font-extrabold text-gray-900 dark:text-white">
-                                {{ \App\Helpers\FinancialReportHelper::formatRupiah($ledger['ending_balance']) }}
+                                <x-financial-amount :amount="$ledger['ending_balance']" />
                             </span>
                         </div>
                     </div>

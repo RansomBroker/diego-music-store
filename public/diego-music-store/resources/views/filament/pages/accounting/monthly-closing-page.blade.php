@@ -31,14 +31,14 @@
                 <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl">
                     <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total Pendapatan (Revenue)</span>
                     <div class="text-lg font-extrabold  text-gray-900 dark:text-white mt-1">
-                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($info['total_revenue']) }}
+                        <x-financial-amount :amount="$info['total_revenue']" />
                     </div>
                 </div>
 
                 <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl">
                     <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Total HPP & Beban Operasional</span>
                     <div class="text-lg font-extrabold  text-gray-900 dark:text-white mt-1">
-                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($info['total_cogs'] + $info['total_expense']) }}
+                        <x-financial-amount :amount="$info['total_cogs'] + $info['total_expense']" />
                     </div>
                 </div>
 
@@ -47,7 +47,7 @@
                         {{ $info['is_profit'] ? 'LABA BERSIH (NET PROFIT)' : 'RUGI BERSIH (NET LOSS)' }}
                     </span>
                     <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
-                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($info['net_income']) }}
+                        <x-financial-amount :amount="$info['net_income']" />
                     </div>
                 </div>
             </div>
@@ -57,7 +57,7 @@
                 @if(!$info['is_closed'])
                     <div class="text-xs text-gray-600 dark:text-gray-400">
                         <strong class="text-gray-900 dark:text-white block text-sm">Siap Mengeksekusi Tutup Buku Bulanan?</strong>
-                        Sistem akan mengunci transaksi pada periode ini dan otomatis membuat <strong>Jurnal Penutup #JV-CLOSE-{{ str_replace('-', '', $info['period_key']) }}</strong> yang mentransfer Laba/Rugi Bersih sebesar <strong>{{ \App\Helpers\FinancialReportHelper::formatRupiah($info['net_income']) }}</strong> ke Akun Laba Ditahan (3-2000).
+                        Sistem akan mengunci transaksi pada periode ini dan otomatis membuat <strong>Jurnal Penutup #JV-CLOSE-{{ str_replace('-', '', $info['period_key']) }}</strong> yang mentransfer Laba/Rugi Bersih sebesar <strong><x-financial-amount :amount="$info['net_income']" /></strong> ke Akun Laba Ditahan (3-2000).
                     </div>
 
                     @if($canExecuteClosing)
@@ -106,7 +106,7 @@
                 <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl">
                     <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Saldo Akun 311301001 (Laba Tahun Berjalan) Saat Ini</span>
                     <div class="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
-                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($yearEnd['current_balance']) }}
+                        <x-financial-amount :amount="$yearEnd['current_balance']" />
                     </div>
                     <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
                         Saldo ini akan dipindahkan ke akun <strong>311201001 (Laba Ditahan)</strong> saat tutup buku tahunan.
@@ -176,9 +176,9 @@
                                     {{ strtoupper($item['status']) }}
                                 </span>
                             </td>
-                            <td class="py-2.5 px-6 text-right  text-xs">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['total_revenue']) }}</td>
-                            <td class="py-2.5 px-6 text-right  text-xs">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['total_expense']) }}</td>
-                            <td class="py-2.5 px-6 text-right  text-xs font-bold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['net_income']) }}</td>
+                            <td class="py-2.5 px-6 text-right  text-xs"><x-financial-amount :amount="$item['total_revenue']" /></td>
+                            <td class="py-2.5 px-6 text-right  text-xs"><x-financial-amount :amount="$item['total_expense']" /></td>
+                            <td class="py-2.5 px-6 text-right  text-xs font-bold text-gray-900 dark:text-white"><x-financial-amount :amount="$item['net_income']" /></td>
                             <td class="py-2.5 px-6  text-xs font-semibold">{{ $item->closingJournal?->entry_no ?? '-' }}</td>
                             <td class="py-2.5 px-6 text-xs text-gray-500">
                                 {{ \Illuminate\Support\Carbon::parse($item['closed_at'])->format('d/m/Y H:i') }}
@@ -258,7 +258,7 @@
                         </div>
                         <div class="flex justify-between">
                             <span>Transfer Ke Laba Ditahan:</span>
-                            <strong class=" text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($info['net_income']) }}</strong>
+                            <strong class=" text-gray-900 dark:text-white"><x-financial-amount :amount="$info['net_income']" /></strong>
                         </div>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">

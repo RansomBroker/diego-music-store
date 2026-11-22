@@ -2,6 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Models\Account;
+use Illuminate\Support\Collection;
+
 class FinancialReportHelper
 {
     /**
@@ -19,10 +22,10 @@ class FinancialReportHelper
     /**
      * Format a numeric amount without Rp prefix with parenthesis for negative values.
      */
-    public static function formatNumber(float|int $amount): string
+    public static function formatNumber(float|int $amount, bool $zeroAsDash = true): string
     {
         if ($amount == 0) {
-            return '-';
+            return $zeroAsDash ? '-' : '0';
         }
 
         if ($amount < 0) {
@@ -52,5 +55,155 @@ class FinancialReportHelper
             'label'  => 'SELISIH NERACA: ' . self::formatRupiah(abs($difference)),
             'class'  => 'bg-gray-200 text-gray-900 dark:bg-white/10 dark:text-white border-gray-400 dark:border-gray-600',
         ];
+    }
+
+    /**
+     * Resolve active COA accounts into a single canonical row per account code
+     * so consolidated ("Semua Cabang") and branch-scoped reports never duplicate COA rows.
+     *
+     * @return array{accounts: Collection<int, Account>, id_to_canonical_id: array<int, int>, parent_code_map: array<string, string>, levels_by_id: array<int, int>}
+     */
+    public static function resolveConsolidatedAccounts(?int $branchId = null): array
+    {
+        $rawAccounts = Account::with('parent')
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get();
+
+        $groupedByCode = $rawAccounts->groupBy('code');
+        $canonicalAccounts = collect();
+        $idToCanonicalId = [];
+        $parentCodeMap = [];
+
+        foreach ($groupedByCode as $code => $group) {
+            if ($branchId !== null) {
+                $canonical = $group->firstWhere('branch_id', $branchId)
+                    ?? $group->firstWhere('branch_id', null)
+                    ?? $group->first();
+            } else {
+                $canonical = $group->firstWhere('branch_id', null)
+                    ?? $group->sortBy('branch_id')->first();
+            }
+
+            if (! $canonical) {
+                continue;
+            }
+
+            $canonicalAccounts->push($canonical);
+
+            foreach ($group as $member) {
+                $idToCanonicalId[$member->id] = $canonical->id;
+            }
+
+            $parentCode = $canonical->parent?->code;
+            if (! $parentCode) {
+                foreach ($group as $member) {
+                    if ($member->parent?->code) {
+                        $parentCode = $member->parent->code;
+                        break;
+                    }
+                }
+            }
+
+            if ($parentCode && $parentCode !== $code) {
+                $parentCodeMap[(string) $code] = (string) $parentCode;
+            }
+        }
+
+        $canonicalAccounts = $canonicalAccounts->sortBy('code')->values();
+        $levelsById = [];
+
+        foreach ($canonicalAccounts as $acc) {
+            $level = 1;
+            $currCode = (string) $acc->code;
+            $visited = [$currCode => true];
+
+            while (isset($parentCodeMap[$currCode])) {
+                $nextCode = $parentCodeMap[$currCode];
+                if (isset($visited[$nextCode])) {
+                    break;
+                }
+                $visited[$nextCode] = true;
+                $level++;
+                $currCode = $nextCode;
+                if ($level > 10) {
+                    break;
+                }
+            }
+
+            $levelsById[$acc->id] = $level;
+        }
+
+        return [
+            'accounts' => $canonicalAccounts,
+            'id_to_canonical_id' => $idToCanonicalId,
+            'parent_code_map' => $parentCodeMap,
+            'levels_by_id' => $levelsById,
+        ];
+    }
+
+    /**
+     * Consolidate journal debit/credit sums onto canonical account IDs.
+     *
+     * @param  iterable<int, object>  $rows
+     * @param  array<int, int>  $idToCanonicalId
+     * @return Collection<int, object>
+     */
+    public static function consolidateAccountSums(iterable $rows, array $idToCanonicalId): Collection
+    {
+        $totals = [];
+
+        foreach ($rows as $row) {
+            $canonicalId = $idToCanonicalId[(int) $row->account_id] ?? (int) $row->account_id;
+            if (! isset($totals[$canonicalId])) {
+                $totals[$canonicalId] = (object) [
+                    'account_id' => $canonicalId,
+                    'total_debit' => 0.0,
+                    'total_credit' => 0.0,
+                ];
+            }
+
+            $totals[$canonicalId]->total_debit += (float) $row->total_debit;
+            $totals[$canonicalId]->total_credit += (float) $row->total_credit;
+        }
+
+        return collect($totals);
+    }
+
+    /**
+     * Check whether a child account code descends from a given ancestor account code.
+     *
+     * @param  array<string, string>  $parentCodeMap
+     */
+    public static function isDescendantOfCode(string $childCode, string $ancestorCode, array $parentCodeMap): bool
+    {
+        $curr = $childCode;
+        $visited = [$curr => true];
+
+        while (isset($parentCodeMap[$curr])) {
+            $parent = $parentCodeMap[$curr];
+            if ($parent === $ancestorCode) {
+                return true;
+            }
+            if (isset($visited[$parent])) {
+                break;
+            }
+            $visited[$parent] = true;
+            $curr = $parent;
+        }
+
+        return false;
+    }
+
+    /**
+     * Inline color style for negative financial figures (red in both web UI and PDF prints).
+     */
+    public static function amountStyle(float|int $amount, bool $pdf = false): string
+    {
+        if ($amount < 0) {
+            return $pdf ? 'color: #dc2626;' : 'color: #ef4444;';
+        }
+
+        return '';
     }
 }

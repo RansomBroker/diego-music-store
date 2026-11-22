@@ -175,7 +175,7 @@
         </div>
     @else
         <div class="status-badge status-unbalanced">
-            STATUS: Terdapat Selisih (Rp {{ number_format(abs($data['difference']), 0, ',', '.') }})
+            STATUS: Terdapat Selisih (<x-financial-amount :amount="abs($data['difference'])" :pdf="true" />)
         </div>
     @endif
 
@@ -201,7 +201,7 @@
                             <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
                                 <td class="">{{ $item['code'] }}</td>
                                 <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                <td class="text-right "><x-financial-amount :amount="$item['balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                             </tr>
                         @empty
                             <tr>
@@ -213,7 +213,7 @@
                 <table style="width: 100%;" class="subtotal-row">
                     <tr>
                         <td>Total Aset Lancar</td>
-                        <td class="text-right ">Rp {{ number_format($data['assets']['total_current_assets'], 0, ',', '.') }}</td>
+                        <td class="text-right "><x-financial-amount :amount="$data['assets']['total_current_assets']" :pdf="true" /></td>
                     </tr>
                 </table>
 
@@ -233,7 +233,7 @@
                                 <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
                                     <td class="">{{ $item['code'] }}</td>
                                     <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                    <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                    <td class="text-right "><x-financial-amount :amount="$item['balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -241,7 +241,7 @@
                     <table style="width: 100%;" class="subtotal-row">
                         <tr>
                             <td>Total Aset Tetap</td>
-                            <td class="text-right ">Rp {{ number_format($data['assets']['total_fixed_assets'], 0, ',', '.') }}</td>
+                            <td class="text-right "><x-financial-amount :amount="$data['assets']['total_fixed_assets']" :pdf="true" /></td>
                         </tr>
                     </table>
                 @endif
@@ -250,7 +250,7 @@
                     <table style="width: 100%;">
                         <tr>
                             <td>TOTAL ASET (AKTIVA)</td>
-                            <td class="text-right " style="font-size: 11px;">Rp {{ number_format($data['total_assets'], 0, ',', '.') }}</td>
+                            <td class="text-right " style="font-size: 11px;"><x-financial-amount :amount="$data['total_assets']" :pdf="true" /></td>
                         </tr>
                     </table>
                 </div>
@@ -277,7 +277,7 @@
                             <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
                                 <td class="">{{ $item['code'] }}</td>
                                 <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                <td class="text-right "><x-financial-amount :amount="$item['balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                             </tr>
                         @empty
                             <tr>
@@ -289,7 +289,7 @@
                 <table style="width: 100%;" class="subtotal-row">
                     <tr>
                         <td>Total Kewajiban Jangka Pendek</td>
-                        <td class="text-right ">Rp {{ number_format($data['liabilities']['total_current_liabilities'], 0, ',', '.') }}</td>
+                        <td class="text-right "><x-financial-amount :amount="$data['liabilities']['total_current_liabilities']" :pdf="true" /></td>
                     </tr>
                 </table>
 
@@ -309,7 +309,7 @@
                                 <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
                                     <td class="">{{ $item['code'] }}</td>
                                     <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                    <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                    <td class="text-right "><x-financial-amount :amount="$item['balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -317,7 +317,7 @@
                     <table style="width: 100%;" class="subtotal-row">
                         <tr>
                             <td>Total Kewajiban Jangka Panjang</td>
-                            <td class="text-right ">Rp {{ number_format($data['liabilities']['total_long_term_liabilities'], 0, ',', '.') }}</td>
+                            <td class="text-right "><x-financial-amount :amount="$data['liabilities']['total_long_term_liabilities']" :pdf="true" /></td>
                         </tr>
                     </table>
                 @endif
@@ -326,7 +326,7 @@
                     <table style="width: 100%;">
                         <tr>
                             <td>TOTAL KEWAJIBAN</td>
-                            <td class="text-right ">Rp {{ number_format($data['total_liabilities'], 0, ',', '.') }}</td>
+                            <td class="text-right "><x-financial-amount :amount="$data['total_liabilities']" :pdf="true" /></td>
                         </tr>
                     </table>
                 </div>
@@ -346,13 +346,13 @@
                             <tr class="{{ $item['is_header'] ? 'font-bold' : '' }}">
                                 <td class="">{{ $item['code'] }}</td>
                                 <td class="{{ $item['is_header'] ? '' : 'pl-detail' }}">{{ $item['name'] }}</td>
-                                <td class="text-right ">{{ number_format($item['balance'], 0, ',', '.') }}</td>
+                                <td class="text-right "><x-financial-amount :amount="$item['balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                             </tr>
                         @endforeach
                         <tr style="background-color: #f3f4f6; font-weight: bold;">
                             <td class="">-</td>
                             <td class="pl-detail">Laba / (Rugi) Periode Berjalan</td>
-                            <td class="text-right ">{{ number_format($data['equity']['current_net_income'], 0, ',', '.') }}</td>
+                            <td class="text-right "><x-financial-amount :amount="$data['equity']['current_net_income']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                         </tr>
                     </tbody>
                 </table>
@@ -360,7 +360,7 @@
                     <table style="width: 100%;">
                         <tr>
                             <td>TOTAL EKUITAS</td>
-                            <td class="text-right ">Rp {{ number_format($data['total_equity'], 0, ',', '.') }}</td>
+                            <td class="text-right "><x-financial-amount :amount="$data['total_equity']" :pdf="true" /></td>
                         </tr>
                     </table>
                 </div>
@@ -369,7 +369,7 @@
                     <table style="width: 100%;">
                         <tr>
                             <td>TOTAL LIABILITAS & EKUITAS</td>
-                            <td class="text-right " style="font-size: 11px;">Rp {{ number_format($data['total_liabilities_and_equity'], 0, ',', '.') }}</td>
+                            <td class="text-right " style="font-size: 11px;"><x-financial-amount :amount="$data['total_liabilities_and_equity']" :pdf="true" /></td>
                         </tr>
                     </table>
                 </div>

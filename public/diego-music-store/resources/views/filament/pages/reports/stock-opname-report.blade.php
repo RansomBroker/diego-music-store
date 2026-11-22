@@ -39,7 +39,7 @@
         <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl shadow-sm">
             <span class="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider block">Grand Total Stock Adjustment</span>
             <div class="text-xl font-extrabold  text-gray-900 dark:text-white mt-1">
-                {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['grand_total_adjustment_value']) }}
+                <x-financial-amount :amount="$data['grand_total_adjustment_value']" />
             </div>
             <span class="text-xs text-gray-700 dark:text-gray-300 font-semibold">Valuasi Penyesuaian HPP</span>
         </div>
@@ -81,7 +81,7 @@
                                     <span>Cabang: <strong>{{ $op['branch_name'] }}</strong></span>
                                     <span>Item Di-audit: <strong>{{ number_format($op['items_count'], 0, ',', '.') }} SKU</strong></span>
                                     @if($canViewCost)
-                                    <span>Adjustment: <strong class=" text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($op['session_adjustment_value']) }}</strong></span>
+                                    <span>Adjustment: <strong class=" text-gray-900 dark:text-white"><x-financial-amount :amount="$op['session_adjustment_value']" /></strong></span>
                                     @endif
                                 </div>
                             </div>
@@ -117,8 +117,8 @@
                                                 </x-filament::badge>
                                             </td>
                                             @if($canViewCost)
-                                            <td class="py-2 px-6 text-right  text-gray-500">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['cost_price']) }}</td>
-                                            <td class="py-2 px-6 text-right  font-extrabold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['adjustment_value']) }}</td>
+                                            <td class="py-2 px-6 text-right  text-gray-500"><x-financial-amount :amount="$item['cost_price']" /></td>
+                                            <td class="py-2 px-6 text-right  font-extrabold text-gray-900 dark:text-white"><x-financial-amount :amount="$item['adjustment_value']" /></td>
                                             @endif
                                         </tr>
                                     @endforeach
@@ -182,7 +182,7 @@
                                 </td>
                                 @if($canViewCost)
                                 <td class="py-2.5 px-4 text-right  text-xs font-extrabold text-gray-900 dark:text-white whitespace-nowrap">
-                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($op['session_adjustment_value']) }}
+                                    <x-financial-amount :amount="$op['session_adjustment_value']" />
                                 </td>
                                 @endif
                                 <td class="py-2.5 px-4 text-xs text-gray-500 truncate max-w-xs">
@@ -268,8 +268,8 @@
                                         </x-filament::badge>
                                     </td>
                                     @if($canViewCost)
-                                    <td class="py-2 px-4 text-right  text-gray-500">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['cost_price']) }}</td>
-                                    <td class="py-2 px-4 text-right  font-extrabold text-gray-900 dark:text-white">{{ \App\Helpers\FinancialReportHelper::formatRupiah($item['adjustment_value']) }}</td>
+                                    <td class="py-2 px-4 text-right  text-gray-500"><x-financial-amount :amount="$item['cost_price']" /></td>
+                                    <td class="py-2 px-4 text-right  font-extrabold text-gray-900 dark:text-white"><x-financial-amount :amount="$item['adjustment_value']" /></td>
                                     @endif
                                 </tr>
                             @endforeach

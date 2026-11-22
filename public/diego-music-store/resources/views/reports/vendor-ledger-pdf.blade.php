@@ -138,7 +138,7 @@
                     <td>SALDO AWAL HUTANG SUPPLIER (BEGINNING BALANCE)</td>
                     <td class="text-right ">-</td>
                     <td class="text-right ">-</td>
-                    <td class="text-right ">{{ number_format($vendor['beginning_balance'], 0, ',', '.') }}</td>
+                    <td class="text-right "><x-financial-amount :amount="$vendor['beginning_balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                 </tr>
 
                 @forelse($vendor['transactions'] as $tx)
@@ -149,7 +149,7 @@
                         <td>{{ $tx['description'] }}</td>
                         <td class="text-right ">{{ $tx['addition'] > 0 ? number_format($tx['addition'], 0, ',', '.') : '-' }}</td>
                         <td class="text-right ">{{ $tx['payment'] > 0 ? number_format($tx['payment'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right  font-bold">{{ number_format($tx['running_balance'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold"><x-financial-amount :amount="$tx['running_balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                     </tr>
                 @empty
                     <tr>
@@ -162,8 +162,8 @@
         <div class="subtotal-box">
             <table style="width: 100%;">
                 <tr>
-                    <td>TOTAL MUTASI SUPPLIER: Pembelian {{ number_format($vendor['total_additions'], 0, ',', '.') }} | Pelunasan {{ number_format($vendor['total_payments'], 0, ',', '.') }}</td>
-                    <td class="text-right ">SALDO AKHIR HUTANG: Rp {{ number_format($vendor['ending_balance'], 0, ',', '.') }}</td>
+                    <td>TOTAL MUTASI SUPPLIER: Pembelian <x-financial-amount :amount="$vendor['total_additions']" :rupiah="false" :zero-as-dash="false" :pdf="true" /> | Pelunasan <x-financial-amount :amount="$vendor['total_payments']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                    <td class="text-right ">SALDO AKHIR HUTANG: <x-financial-amount :amount="$vendor['ending_balance']" :pdf="true" /></td>
                 </tr>
             </table>
         </div>

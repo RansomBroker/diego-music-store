@@ -31,7 +31,7 @@
             </div>
             <div class="text-right">
                 <span class="text-xs font-medium uppercase opacity-75">Total Balance</span>
-                <div class="text-base font-extrabold">{{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_assets']) }}</div>
+                <div class="text-base font-extrabold"><x-financial-amount :amount="$data['total_assets']" /></div>
             </div>
         </div>
     </div>
@@ -83,7 +83,7 @@
                                         </div>
                                     </td>
                                     <td class="py-2.5 px-4 text-right  text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
-                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
+                                        <x-financial-amount :amount="$item['balance']" />
                                     </td>
                                     <td class="py-2.5 px-2 text-center">
                                         @if(!$item['is_header'])
@@ -115,7 +115,7 @@
                     <div class="p-4 px-6 bg-gray-100 dark:bg-white/10 border-t-2 border-gray-400 dark:border-gray-600 flex justify-between items-center text-gray-900 dark:text-white">
                         <span class="font-extrabold text-sm uppercase tracking-wider">TOTAL ASET (AKTIVA)</span>
                         <span class=" text-base font-extrabold text-gray-900 dark:text-white">
-                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_assets']) }}
+                            <x-financial-amount :amount="$data['total_assets']" />
                         </span>
                     </div>
                 </div>
@@ -165,7 +165,7 @@
                                         </div>
                                     </td>
                                     <td class="py-2 px-4 text-right  text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
-                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
+                                        <x-financial-amount :amount="$item['balance']" />
                                     </td>
                                     <td class="py-2 px-2 text-center">
                                         @if(!$item['is_header'])
@@ -196,7 +196,7 @@
                     <div class="p-3.5 px-4 bg-gray-100 dark:bg-white/10 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center text-gray-900 dark:text-white">
                         <span class="font-bold text-xs uppercase tracking-wider">TOTAL KEWAJIBAN</span>
                         <span class=" text-sm font-bold text-gray-900 dark:text-white">
-                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_liabilities']) }}
+                            <x-financial-amount :amount="$data['total_liabilities']" />
                         </span>
                     </div>
                 </div>
@@ -242,7 +242,7 @@
                                         </div>
                                     </td>
                                     <td class="py-2 px-4 text-right  text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
-                                        {{ \App\Helpers\FinancialReportHelper::formatRupiah($item['balance']) }}
+                                        <x-financial-amount :amount="$item['balance']" />
                                     </td>
                                     <td class="py-2 px-2 text-center">
                                         @if(!$item['is_header'])
@@ -272,7 +272,7 @@
                                     </span>
                                 </td>
                                 <td class="py-2.5 px-4 text-right  text-xs font-bold text-gray-900 dark:text-white">
-                                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['equity']['current_net_income']) }}
+                                    <x-financial-amount :amount="$data['equity']['current_net_income']" />
                                 </td>
                                 <td></td>
                             </tr>
@@ -282,7 +282,7 @@
                     <div class="p-3.5 px-4 bg-gray-100 dark:bg-white/10 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center text-gray-900 dark:text-white">
                         <span class="font-bold text-xs uppercase tracking-wider">TOTAL EKUITAS</span>
                         <span class=" text-sm font-bold text-gray-900 dark:text-white">
-                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_equity']) }}
+                            <x-financial-amount :amount="$data['total_equity']" />
                         </span>
                     </div>
                 </div>
@@ -292,7 +292,7 @@
             <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl flex justify-between items-center text-gray-900 dark:text-white shadow-sm">
                 <span class="font-extrabold text-sm uppercase tracking-wider">TOTAL KEWAJIBAN & EKUITAS</span>
                 <span class=" text-base font-extrabold text-gray-900 dark:text-white">
-                    {{ \App\Helpers\FinancialReportHelper::formatRupiah($data['total_liabilities_and_equity']) }}
+                    <x-financial-amount :amount="$data['total_liabilities_and_equity']" />
                 </span>
             </div>
 
@@ -355,7 +355,7 @@
                                         <td class="py-2 px-3 text-right  text-xs">{{ $tx['debit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['debit']) : '-' }}</td>
                                         <td class="py-2 px-3 text-right  text-xs">{{ $tx['credit'] > 0 ? \App\Helpers\FinancialReportHelper::formatRupiah($tx['credit']) : '-' }}</td>
                                         <td class="py-2 px-3 text-right  text-xs font-bold text-gray-900 dark:text-white">
-                                            {{ \App\Helpers\FinancialReportHelper::formatRupiah($tx['running_balance']) }}
+                                            <x-financial-amount :amount="$tx['running_balance']" />
                                         </td>
                                     </tr>
                                 @endforeach
@@ -375,7 +375,7 @@
                 {{-- Modal Footer --}}
                 <div class="p-4 bg-gray-50/80 dark:bg-white/5 border-t border-gray-200 dark:border-white/10 flex justify-between items-center">
                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                        Total Saldo Akhir: <strong class=" text-gray-900 dark:text-white text-sm ml-1">{{ \App\Helpers\FinancialReportHelper::formatRupiah($this->selectedAccount['total_balance']) }}</strong>
+                        Total Saldo Akhir: <strong class=" text-gray-900 dark:text-white text-sm ml-1"><x-financial-amount :amount="$this->selectedAccount['total_balance']" /></strong>
                     </div>
 
                     <button 

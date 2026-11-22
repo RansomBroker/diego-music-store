@@ -2,6 +2,7 @@
 
 namespace App\Actions\Accounting;
 
+use App\Helpers\FinancialReportHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Illuminate\Support\Carbon;
@@ -80,35 +81,26 @@ class GenerateIncomeStatementReport
             ->groupBy('journal_items.account_id', 'journal_entries.branch_id')
             ->get();
 
-        // 4. Fetch revenue (4, 7) and expense/COGS (5, 6, 8) accounts
-        $allAccounts = Account::with('parent')
-            ->where('is_active', true)
-            ->where(function ($q) {
-                $q->whereIn('classification', ['revenue', 'expense'])
-                  ->orWhere('code', 'LIKE', '4%')
-                  ->orWhere('code', 'LIKE', '5%')
-                  ->orWhere('code', 'LIKE', '6%')
-                  ->orWhere('code', 'LIKE', '7%')
-                  ->orWhere('code', 'LIKE', '8%');
-            })
-            ->orderBy('code')
-            ->get();
+        // 4. Fetch canonical active revenue (4, 7) and expense/COGS (5, 6, 8) accounts
+        $resolved = FinancialReportHelper::resolveConsolidatedAccounts($branchId);
+        $idToCanonicalId = $resolved['id_to_canonical_id'];
+        $parentCodeMap = $resolved['parent_code_map'];
+        $levelsById = $resolved['levels_by_id'];
 
-        $accountsById = Account::where('is_active', true)->get()->keyBy('id');
+        $allAccounts = $resolved['accounts']->filter(function (Account $acc): bool {
+            $class = strtolower((string) $acc->classification);
+            $code = (string) $acc->code;
 
-        $getAccountLevel = function (Account $account) use ($accountsById): int {
-            $level = 1;
-            $current = $account;
-            while ($current->parent_id && isset($accountsById[$current->parent_id])) {
-                $level++;
-                $current = $accountsById[$current->parent_id];
-                if ($level > 10) break;
-            }
-            return $level;
-        };
+            return in_array($class, ['revenue', 'cost', 'expense'], true)
+                || str_starts_with($code, '4')
+                || str_starts_with($code, '5')
+                || str_starts_with($code, '6')
+                || str_starts_with($code, '7')
+                || str_starts_with($code, '8');
+        })->values();
 
         // Helper to calculate balance array [toko, gudang, total] for an account from sums collection
-        $calcBalances = function (Account $acc, $sumsCollection) use ($gudangBranchIds): array {
+        $calcBalances = function (Account $acc, $sumsCollection) use ($gudangBranchIds, $idToCanonicalId): array {
             $toko = 0.0;
             $gudang = 0.0;
 
@@ -116,8 +108,12 @@ class GenerateIncomeStatementReport
             $code = strtolower($acc->code);
             $isRevenue = ($class === 'revenue' || str_starts_with($code, '4') || str_starts_with($code, '7'));
 
-            $rows = $sumsCollection->where('account_id', $acc->id);
-            foreach ($rows as $row) {
+            foreach ($sumsCollection as $row) {
+                $canonicalId = $idToCanonicalId[(int) $row->account_id] ?? (int) $row->account_id;
+                if ($canonicalId !== $acc->id) {
+                    continue;
+                }
+
                 $debits = (float) $row->total_debit;
                 $credits = (float) $row->total_credit;
                 $bal = $isRevenue ? ($credits - $debits) : ($debits - $credits);
@@ -153,19 +149,11 @@ class GenerateIncomeStatementReport
                 $yToko = 0.0; $yGudang = 0.0;
 
                 foreach ($allAccounts as $child) {
-                    if (!$child->is_header) {
-                        $curr = $child;
-                        while ($curr->parent_id) {
-                            if ($curr->parent_id == $acc->id) {
-                                $cToko += $rawCurrent[$child->id]['toko'];
-                                $cGudang += $rawCurrent[$child->id]['gudang'];
-                                $yToko += $rawYtd[$child->id]['toko'];
-                                $yGudang += $rawYtd[$child->id]['gudang'];
-                                break;
-                            }
-                            if (!isset($accountsById[$curr->parent_id])) break;
-                            $curr = $accountsById[$curr->parent_id];
-                        }
+                    if (!$child->is_header && FinancialReportHelper::isDescendantOfCode((string) $child->code, (string) $acc->code, $parentCodeMap)) {
+                        $cToko += $rawCurrent[$child->id]['toko'];
+                        $cGudang += $rawCurrent[$child->id]['gudang'];
+                        $yToko += $rawYtd[$child->id]['toko'];
+                        $yGudang += $rawYtd[$child->id]['gudang'];
                     }
                 }
 
@@ -185,7 +173,7 @@ class GenerateIncomeStatementReport
         $otherExpenseItems     = [];
 
         foreach ($allAccounts as $acc) {
-            $level = $getAccountLevel($acc);
+            $level = $levelsById[$acc->id] ?? 1;
 
             $itemData = [
                 'id'             => $acc->id,
@@ -194,7 +182,7 @@ class GenerateIncomeStatementReport
                 'is_header'      => $acc->is_header,
                 'level'          => $level,
                 'parent_id'      => $acc->parent_id,
-                'parent_code'    => $acc->parent?->code,
+                'parent_code'    => $parentCodeMap[$acc->code] ?? $acc->parent?->code,
                 'balance'        => $cumCurrent[$acc->id]['total'],
                 'balance_toko'   => $cumCurrent[$acc->id]['toko'],
                 'balance_gudang' => $cumCurrent[$acc->id]['gudang'],

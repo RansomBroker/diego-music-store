@@ -177,10 +177,15 @@ class IncomeStatement extends Page implements HasForms
         $toDate   = $state['to_date'] ?? now()->format('Y-m-d');
         $branchId = !empty($state['branch_id']) ? (int) $state['branch_id'] : null;
 
-        // Query posted journal items for this account within [fromDate, toDate]
+        $matchingAccountIds = Account::where('code', $account->code)->pluck('id')->all();
+        if (empty($matchingAccountIds)) {
+            $matchingAccountIds = [$accountId];
+        }
+
+        // Query posted journal items for this account code within [fromDate, toDate]
         $query = DB::table('journal_items')
             ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
-            ->where('journal_items.account_id', $accountId)
+            ->whereIn('journal_items.account_id', $matchingAccountIds)
             ->where('journal_entries.status', 'posted')
             ->whereDate('journal_entries.date', '>=', $fromDate)
             ->whereDate('journal_entries.date', '<=', $toDate);

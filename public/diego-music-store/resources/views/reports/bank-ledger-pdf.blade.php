@@ -136,7 +136,7 @@
                     <td>SALDO AWAL REKENING BANK (BEGINNING BALANCE)</td>
                     <td class="text-right ">-</td>
                     <td class="text-right ">-</td>
-                    <td class="text-right ">{{ number_format($ledger['beginning_balance'], 0, ',', '.') }}</td>
+                    <td class="text-right "><x-financial-amount :amount="$ledger['beginning_balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                 </tr>
 
                 @forelse($ledger['transactions'] as $tx)
@@ -146,7 +146,7 @@
                         <td>{{ $tx['description'] }}</td>
                         <td class="text-right ">{{ $tx['debit'] > 0 ? number_format($tx['debit'], 0, ',', '.') : '-' }}</td>
                         <td class="text-right ">{{ $tx['credit'] > 0 ? number_format($tx['credit'], 0, ',', '.') : '-' }}</td>
-                        <td class="text-right  font-bold">{{ number_format($tx['running_balance'], 0, ',', '.') }}</td>
+                        <td class="text-right  font-bold"><x-financial-amount :amount="$tx['running_balance']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
                     </tr>
                 @empty
                     <tr>
@@ -159,8 +159,8 @@
         <div class="subtotal-box">
             <table style="width: 100%;">
                 <tr>
-                    <td>TOTAL MUTASI REKENING: Masuk {{ number_format($ledger['total_in'], 0, ',', '.') }} | Keluar {{ number_format($ledger['total_out'], 0, ',', '.') }}</td>
-                    <td class="text-right ">SALDO AKHIR BANK: Rp {{ number_format($ledger['ending_balance'], 0, ',', '.') }}</td>
+                    <td>TOTAL MUTASI REKENING: Masuk <x-financial-amount :amount="$ledger['total_in']" :rupiah="false" :zero-as-dash="false" :pdf="true" /> | Keluar <x-financial-amount :amount="$ledger['total_out']" :rupiah="false" :zero-as-dash="false" :pdf="true" /></td>
+                    <td class="text-right ">SALDO AKHIR BANK: <x-financial-amount :amount="$ledger['ending_balance']" :pdf="true" /></td>
                 </tr>
             </table>
         </div>
