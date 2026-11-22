@@ -81,12 +81,16 @@
     </div>
 
     <div class="header text-center">
+        @php
+            $headerNote = $sale->resolveReceiptHeader($setting);
+            $footerNote = $sale->resolveReceiptFooter($setting) ?: 'Terima Kasih atas Kunjungan Anda';
+        @endphp
         @if (($setting->show_logo ?? true) && !empty($sale->branch->logo_path))
             <img src="{{ \Illuminate\Support\Facades\Storage::url($sale->branch->logo_path) }}" alt="Logo" style="max-height: 50px; margin-bottom: 8px;"><br>
         @endif
         <span class="store-name">{{ $setting?->store_display_name ?: ($sale->branch->store_name ?: 'Diego Music Store') }}</span><br>
-        @if (!empty($setting?->header_text))
-            <div style="font-size: 11px; font-style: italic; margin-bottom: 4px;">{{ $setting->header_text }}</div>
+        @if (!empty($headerNote))
+            <div style="font-size: 11px; font-style: italic; margin-bottom: 4px;">{!! nl2br(e($headerNote)) !!}</div>
         @endif
         <span>{{ $sale->branch->name }}</span><br>
         <span>Telp: {{ $sale->branch->phone }}</span>
@@ -261,7 +265,7 @@
     @endif
 
     <div class="footer">
-        {!! nl2br(e($setting?->footer_text ?: "Terima Kasih atas Kunjungan Anda")) !!}<br><br>
+        {!! nl2br(e($footerNote)) !!}<br><br>
     </div>
 
 

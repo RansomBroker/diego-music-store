@@ -3,6 +3,8 @@
     $branchName = $sale->branch?->name ?? 'Cabang Pusat';
     $storeAddress = $sale->branch?->address ?? '';
     $storePhone = $sale->branch?->phone ?: ($sale->branch?->fonnte_whatsapp_number ?? '');
+    $headerNote = $sale->resolveReceiptHeader($setting ?? null);
+    $footerNote = $sale->resolveReceiptFooter($setting ?? null);
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -85,6 +87,9 @@
     <!-- Store Header -->
     <div class="text-center" style="margin-bottom: 6px;">
         <div class="store-title">{{ $storeName }}</div>
+        @if (!empty($headerNote))
+            <div class="store-sub" style="font-style: italic;">{!! nl2br(e($headerNote)) !!}</div>
+        @endif
         @if ($branchName !== $storeName)
             <div class="store-sub font-bold">{{ $branchName }}</div>
         @endif
@@ -205,8 +210,8 @@
 
     <!-- Footer -->
     <div class="footer">
-        @if (!empty($setting?->footer_text))
-            <div>{{ $setting->footer_text }}</div>
+        @if (!empty($footerNote))
+            <div>{!! nl2br(e($footerNote)) !!}</div>
         @else
             <div class="font-bold">Terima kasih atas kunjungan & pembelian Anda!</div>
             <div style="margin-top: 2px;">Barang yang telah dibeli tidak dapat ditukar/dikembalikan tanpa bukti struk ini.</div>

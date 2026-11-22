@@ -301,4 +301,53 @@ class POSReceiptTest extends TestCase
         $nonCashReceipt->assertStatus(200);
         $nonCashReceipt->assertDontSee('Kembalian:');
     }
+
+    public function test_receipt_uses_branch_receipt_header_and_footer_when_receipt_setting_is_absent(): void
+    {
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $user = User::factory()->create(['name' => 'Kasir Branch']);
+        $user->assignRole($ownerRole);
+
+        $branch = Branch::create([
+            'name' => 'Cabang Pusat',
+            'store_name' => 'Diego Music Store',
+            'address' => 'Alamat Cabang',
+            'phone' => '021',
+            'receipt_header' => 'Pusat Penjualan Alat Musik Terlengkap di Pontianak',
+            'receipt_footer' => "Terimakasih sudah berbelanja di Diego Music Store!\nInstragram : @diegomusicstore",
+            'is_active' => true,
+        ]);
+        $user->branches()->attach($branch->id);
+
+        $sale = Sale::create([
+            'branch_id' => $branch->id,
+            'sales_rep_id' => $user->id,
+            'invoice_number' => 'INV-BR-0001',
+            'invoice_date' => now()->toDateString(),
+            'subtotal' => 100000,
+            'discount_amount' => 0,
+            'tax_amount' => 0,
+            'grand_total' => 100000,
+            'paid_amount' => 100000,
+            'change_amount' => 0,
+            'payment_method' => 'Cash',
+            'status' => 'completed',
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->get(route('pos.receipt', $sale->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('Pusat Penjualan Alat Musik Terlengkap di Pontianak');
+        $response->assertSee('Terimakasih sudah berbelanja di Diego Music Store!');
+        $response->assertSee('Instragram : @diegomusicstore');
+
+        $pdfHtml = view('pos.receipt-pdf', [
+            'sale' => $sale->fresh(['branch', 'customer', 'salesRep', 'creator', 'cashSession.user', 'items.variant.product', 'items.salesRep']),
+            'setting' => null,
+        ])->render();
+        $this->assertStringContainsString('Pusat Penjualan Alat Musik Terlengkap di Pontianak', $pdfHtml);
+        $this->assertStringContainsString('Instragram : @diegomusicstore', $pdfHtml);
+    }
 }

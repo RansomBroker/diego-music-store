@@ -189,4 +189,28 @@ class Sale extends Model
             || str_contains($method, 'cash')
             || str_contains($method, 'kas');
     }
+
+    /**
+     * Resolve receipt header note, falling back from ReceiptSetting to Branch receipt_header.
+     */
+    public function resolveReceiptHeader(?ReceiptSetting $setting = null): ?string
+    {
+        if (filled($setting?->header_text)) {
+            return $setting->header_text;
+        }
+
+        return filled($this->branch?->receipt_header) ? $this->branch->receipt_header : null;
+    }
+
+    /**
+     * Resolve receipt footer note, falling back from ReceiptSetting to Branch receipt_footer.
+     */
+    public function resolveReceiptFooter(?ReceiptSetting $setting = null): ?string
+    {
+        if (filled($setting?->footer_text)) {
+            return $setting->footer_text;
+        }
+
+        return filled($this->branch?->receipt_footer) ? $this->branch->receipt_footer : null;
+    }
 }
