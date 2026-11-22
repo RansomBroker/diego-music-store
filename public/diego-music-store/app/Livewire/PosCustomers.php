@@ -7,7 +7,10 @@ use Livewire\WithPagination;
 use App\Models\Customer;
 use App\Models\CustomerLabel;
 use App\Models\PricingTier;
+use App\Models\SaleCategory;
 use App\Models\Branch;
+use App\Actions\Customer\CreateCustomer;
+use App\Actions\Customer\UpdateCustomer;
 use App\Helpers\BranchHelper;
 use App\Helpers\FonnteHelper;
 use App\Helpers\PermissionHelper;
@@ -44,6 +47,7 @@ class PosCustomers extends Component
     public string $date_of_birth    = '';
     public ?int   $customer_label_id = null;
     public ?int   $pricing_tier_id   = null;
+    public ?int   $sale_category_id  = null;
     public bool   $is_loyalty_member = false;
     public int    $loyalty_points    = 0;
 
@@ -103,7 +107,7 @@ class PosCustomers extends Component
     {
         abort_unless(PermissionHelper::can(auth()->user(), 'fo.customers.create'), 403);
         $this->reset(['name','phone','email','address','date_of_birth',
-                       'customer_label_id','pricing_tier_id','is_loyalty_member','loyalty_points',
+                       'customer_label_id','pricing_tier_id','sale_category_id','is_loyalty_member','loyalty_points',
                        'editingId','isEditing']);
         $this->showModal = true;
     }
@@ -123,6 +127,7 @@ class PosCustomers extends Component
         $this->date_of_birth      = $customer->date_of_birth?->format('Y-m-d') ?? '';
         $this->customer_label_id  = $customer->customer_label_id;
         $this->pricing_tier_id    = $customer->pricing_tier_id;
+        $this->sale_category_id   = $customer->sale_category_id;
         $this->is_loyalty_member  = (bool) $customer->is_loyalty_member;
         $this->loyalty_points     = (int) $customer->loyalty_points;
 
@@ -134,12 +139,13 @@ class PosCustomers extends Component
     {
         abort_unless(PermissionHelper::can(auth()->user(), ($this->isEditing && $this->editingId) ? 'fo.customers.edit' : 'fo.customers.create'), 403);
         $this->validate([
-            'name'            => 'required|string|max:255',
-            'phone'           => 'nullable|string|max:20|unique:customers,phone,' . ($this->editingId ?? 'NULL'),
-            'email'           => 'nullable|email|max:255',
-            'address'         => 'nullable|string|max:500',
-            'date_of_birth'   => 'nullable|date',
-            'loyalty_points'  => 'integer|min:0',
+            'name'             => 'required|string|max:255',
+            'phone'            => 'nullable|string|max:20|unique:customers,phone,' . ($this->editingId ?? 'NULL'),
+            'email'            => 'nullable|email|max:255',
+            'address'          => 'nullable|string|max:500',
+            'date_of_birth'    => 'nullable|date',
+            'sale_category_id' => 'nullable|exists:sale_categories,id',
+            'loyalty_points'   => 'integer|min:0',
         ], [
             'name.required'   => 'Nama pelanggan wajib diisi.',
             'phone.unique'    => 'Nomor telepon sudah digunakan pelanggan lain.',
@@ -155,19 +161,20 @@ class PosCustomers extends Component
             'date_of_birth'     => $this->date_of_birth ?: null,
             'customer_label_id' => $this->customer_label_id,
             'pricing_tier_id'   => $this->pricing_tier_id,
+            'sale_category_id'  => $this->sale_category_id ?: null,
             'is_loyalty_member' => $this->is_loyalty_member,
             'loyalty_points'    => $this->loyalty_points,
         ];
 
         if ($this->isEditing) {
-            Customer::findOrFail($this->editingId)->update($data);
+            app(UpdateCustomer::class)->execute(Customer::findOrFail($this->editingId), $data);
             Notification::make()->title('Pelanggan Diperbarui')->success()->send();
             $this->dispatch('toast', [
                 'type' => 'success',
                 'message' => 'Pelanggan berhasil diperbarui.',
             ]);
         } else {
-            Customer::create($data);
+            app(CreateCustomer::class)->execute($data);
             Notification::make()->title('Pelanggan Ditambahkan')->success()->send();
             $this->dispatch('toast', [
                 'type' => 'success',
@@ -428,7 +435,7 @@ class PosCustomers extends Component
     // ── Render ───────────────────────────────────────────────────────────
     public function render()
     {
-        $customers = Customer::with(['label', 'pricingTier'])
+        $customers = Customer::with(['label', 'pricingTier', 'saleCategory'])
             ->when($this->search, fn ($q) =>
                 $q->where('name', 'like', "%{$this->search}%")
                   ->orWhere('phone', 'like', "%{$this->search}%")
@@ -445,9 +452,10 @@ class PosCustomers extends Component
             : null;
 
         return view('livewire.pos-customers', [
-            'customers'      => $customers,
-            'labels'         => CustomerLabel::orderBy('name')->get(),
-            'pricingTiers'   => PricingTier::orderBy('name')->get(),
+            'customers'       => $customers,
+            'labels'          => CustomerLabel::orderBy('name')->get(),
+            'pricingTiers'    => PricingTier::orderBy('name')->get(),
+            'saleCategories'  => SaleCategory::orderBy('name')->get(),
             'selectedLogoUrl' => $selectedLogoUrl,
         ])->layout('layouts.pos', ['title' => 'Data Pelanggan — POS']);
     }

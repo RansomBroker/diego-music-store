@@ -123,8 +123,10 @@
             :newCustomerEmail="$newCustomerEmail"
             :newCustomerAddress="$newCustomerAddress"
             :newCustomerPricingTierId="$newCustomerPricingTierId"
+            :newCustomerSaleCategoryId="$newCustomerSaleCategoryId"
             :newCustomerIsLoyaltyMember="$newCustomerIsLoyaltyMember"
             :pricingTiers="$this->pricingTiers"
+            :saleCategories="$this->saleCategories"
         />
     @endif
 

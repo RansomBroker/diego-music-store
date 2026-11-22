@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Customer;
 use App\Models\CustomerLabel;
 use App\Models\PricingTier;
+use App\Models\SaleCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -90,6 +91,10 @@ class PosCustomersTest extends TestCase
     {
         $label = CustomerLabel::create(['key' => 'vip', 'name' => 'VIP']);
         $tier = PricingTier::create(['name' => 'Grosir', 'price_follows_hpp' => false]);
+        $saleCategory = SaleCategory::firstOrCreate(
+            ['name' => 'Online'],
+            ['prefix' => 'ONL', 'start_alphabet' => 'A', 'end_alphabet' => 'Z', 'digit_length' => 4]
+        );
 
         Livewire::test('App\Livewire\PosCustomers')
             ->call('openCreate')
@@ -100,10 +105,12 @@ class PosCustomersTest extends TestCase
             ->set('address', 'Jl. Cempaka')
             ->set('customer_label_id', $label->id)
             ->set('pricing_tier_id', $tier->id)
+            ->set('sale_category_id', $saleCategory->id)
             ->set('is_loyalty_member', true)
             ->set('loyalty_points', 50)
             ->call('save')
-            ->assertSet('showModal', false);
+            ->assertSet('showModal', false)
+            ->assertSee('Online');
 
         $this->assertDatabaseHas('customers', [
             'name' => 'Candra',
@@ -112,6 +119,7 @@ class PosCustomersTest extends TestCase
             'address' => 'Jl. Cempaka',
             'customer_label_id' => $label->id,
             'pricing_tier_id' => $tier->id,
+            'sale_category_id' => $saleCategory->id,
             'is_loyalty_member' => true,
             'loyalty_points' => 50,
         ]);
@@ -120,17 +128,29 @@ class PosCustomersTest extends TestCase
     /** @test */
     public function it_can_update_a_customer()
     {
+        $storeCategory = SaleCategory::firstOrCreate(
+            ['name' => 'Store'],
+            ['prefix' => 'STR', 'start_alphabet' => 'A', 'end_alphabet' => 'Z', 'digit_length' => 4]
+        );
+        $onlineCategory = SaleCategory::firstOrCreate(
+            ['name' => 'Online'],
+            ['prefix' => 'ONL', 'start_alphabet' => 'A', 'end_alphabet' => 'Z', 'digit_length' => 4]
+        );
+
         $customer = Customer::create([
             'name' => 'Dedi',
             'phone' => '084444',
+            'sale_category_id' => $storeCategory->id,
         ]);
 
         Livewire::test('App\Livewire\PosCustomers')
             ->call('openEdit', $customer->id)
             ->assertSet('showModal', true)
             ->assertSet('name', 'Dedi')
+            ->assertSet('sale_category_id', $storeCategory->id)
             ->set('name', 'Dedi Hermawan')
             ->set('phone', '084445')
+            ->set('sale_category_id', $onlineCategory->id)
             ->call('save')
             ->assertSet('showModal', false);
 
@@ -138,6 +158,7 @@ class PosCustomersTest extends TestCase
             'id' => $customer->id,
             'name' => 'Dedi Hermawan',
             'phone' => '084445',
+            'sale_category_id' => $onlineCategory->id,
         ]);
     }
 

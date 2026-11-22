@@ -122,6 +122,7 @@ class BackofficePanelProvider extends PanelProvider
             PanelsRenderHook::HEAD_START,
             fn (): HtmlString => new HtmlString(
                 view('filament.components.favicons')->render()
+                . view('filament.components.sidebar-default-collapsed')->render()
             ),
         );
 

@@ -5,8 +5,10 @@
     'newCustomerEmail',
     'newCustomerAddress',
     'newCustomerPricingTierId',
+    'newCustomerSaleCategoryId' => null,
     'newCustomerIsLoyaltyMember',
-    'pricingTiers' => []
+    'pricingTiers' => [],
+    'saleCategories' => [],
 ])
 
 <x-pos-page::modal 
@@ -58,6 +60,18 @@
         >
             @foreach ($pricingTiers as $tier)
                 <option value="{{ $tier->id }}" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ $tier->name }}</option>
+            @endforeach
+        </x-pos.form.select>
+
+        <!-- Kategori Penjualan Default -->
+        <x-pos.form.select 
+            label="Kategori Penjualan Default" 
+            model="newCustomerSaleCategoryId" 
+            icon="ph-storefront"
+        >
+            <option value="" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">— Pilih Saat Transaksi —</option>
+            @foreach ($saleCategories as $category)
+                <option value="{{ $category->id }}" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ $category->name }}</option>
             @endforeach
         </x-pos.form.select>
 

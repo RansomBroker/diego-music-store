@@ -36,6 +36,11 @@ class CustomersTable
                     ->color('info')
                     ->label('Label'),
 
+                TextColumn::make('saleCategory.name')
+                    ->badge()
+                    ->color('warning')
+                    ->label('Kategori Penjualan'),
+
                 TextColumn::make('date_of_birth')
                     ->date()
                     ->sortable()

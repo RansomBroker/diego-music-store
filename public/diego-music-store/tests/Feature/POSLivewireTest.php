@@ -216,6 +216,11 @@ class POSLivewireTest extends TestCase
     /** @test */
     public function it_can_quickly_register_and_select_a_new_customer()
     {
+        $onlineCategory = \App\Models\SaleCategory::firstOrCreate(
+            ['name' => 'Online'],
+            ['prefix' => 'ONL', 'start_alphabet' => 'A', 'end_alphabet' => 'Z', 'digit_length' => 4]
+        );
+
         Livewire::test('App\Livewire\POS')
             ->set('customerSearch', 'Joko Susilo')
             ->call('openCreateCustomerModal')
@@ -224,19 +229,47 @@ class POSLivewireTest extends TestCase
             ->set('newCustomerPhone', '0855667788')
             ->set('newCustomerAddress', 'Jl. Sudirman No. 123')
             ->set('newCustomerPricingTierId', $this->grosirTier->id)
+            ->set('newCustomerSaleCategoryId', $onlineCategory->id)
             ->set('newCustomerIsLoyaltyMember', true)
             ->call('createCustomer')
             ->assertSet('showCreateCustomerModal', false)
             ->assertSet('selectedCustomerName', 'Joko Susilo')
-            ->assertSet('selectedPricingTierId', $this->grosirTier->id);
+            ->assertSet('selectedPricingTierId', $this->grosirTier->id)
+            ->assertSet('saleCategory', 'Online');
 
         $this->assertDatabaseHas('customers', [
             'name' => 'Joko Susilo',
             'phone' => '0855667788',
             'address' => 'Jl. Sudirman No. 123',
             'pricing_tier_id' => $this->grosirTier->id,
+            'sale_category_id' => $onlineCategory->id,
             'is_loyalty_member' => true,
         ]);
+    }
+
+    /** @test */
+    public function it_automatically_applies_and_resets_customer_sale_category_in_pos()
+    {
+        $storeCategory = \App\Models\SaleCategory::firstOrCreate(
+            ['name' => 'Store'],
+            ['prefix' => 'STR', 'start_alphabet' => 'A', 'end_alphabet' => 'Z', 'digit_length' => 4]
+        );
+        $b2bCategory = \App\Models\SaleCategory::firstOrCreate(
+            ['name' => 'B2B'],
+            ['prefix' => 'B2B', 'start_alphabet' => 'A', 'end_alphabet' => 'Z', 'digit_length' => 4]
+        );
+
+        $customer = \App\Models\Customer::create([
+            'name' => 'PT Musik Jaya',
+            'phone' => '0877778888',
+            'sale_category_id' => $b2bCategory->id,
+        ]);
+
+        Livewire::test('App\Livewire\POS')
+            ->call('selectCustomer', $customer->id, $customer->name, false)
+            ->assertSet('saleCategory', 'B2B')
+            ->call('clearCustomer')
+            ->assertSet('saleCategory', $storeCategory->name);
     }
 
     /** @test */

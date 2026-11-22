@@ -68,6 +68,12 @@ class CustomerForm
                             ->label('Tingkat Harga Default')
                             ->placeholder('Pilih tingkat harga...')
                             ->nullable(),
+
+                        Select::make('sale_category_id')
+                            ->relationship('saleCategory', 'name')
+                            ->label('Kategori Penjualan Default')
+                            ->placeholder('Pilih kategori penjualan...')
+                            ->nullable(),
                     ])
                     ->columnSpan(1),
             ]);

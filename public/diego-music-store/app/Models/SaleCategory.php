@@ -16,4 +16,12 @@ class SaleCategory extends Model
         'end_alphabet',
         'digit_length',
     ];
+
+    /**
+     * Customers that default to this sale category.
+     */
+    public function customers()
+    {
+        return $this->hasMany(Customer::class, 'sale_category_id');
+    }
 }

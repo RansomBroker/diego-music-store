@@ -53,6 +53,7 @@ class POS extends Component
     public $newCustomerEmail = '';
     public $newCustomerAddress = '';
     public $newCustomerPricingTierId = null;
+    public $newCustomerSaleCategoryId = null;
     public $newCustomerIsLoyaltyMember = false;
 
     // Held transactions and reprint

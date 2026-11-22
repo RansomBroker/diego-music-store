@@ -19,6 +19,10 @@
                 <x-pos.table.th>
                     Label
                 </x-pos.table.th>
+                <!-- Kategori Penjualan -->
+                <x-pos.table.th>
+                    Kategori Penjualan
+                </x-pos.table.th>
                 <!-- Poin -->
                 <x-pos.table.th sortable field="loyalty_points" :sortField="$sortField" :sortDirection="$sortDirection">
                     Poin
@@ -67,6 +71,16 @@
                         @if ($customer->label)
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-755 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
                                 {{ $customer->label->name }}
+                            </span>
+                        @else
+                            <span class="text-slate-350 dark:text-slate-600 text-xs">—</span>
+                        @endif
+                    </x-pos.table.td>
+                    <!-- Kategori Penjualan -->
+                    <x-pos.table.td class="whitespace-nowrap">
+                        @if ($customer->saleCategory)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
+                                {{ $customer->saleCategory->name }}
                             </span>
                         @else
                             <span class="text-slate-350 dark:text-slate-600 text-xs">—</span>
@@ -151,7 +165,7 @@
                     </x-pos.table.td>
                 </x-pos.table.tr>
             @empty
-                <x-pos.table.empty colspan="8" icon="ph-users" message="Tidak ada data pelanggan ditemukan" />
+                <x-pos.table.empty colspan="9" icon="ph-users" message="Tidak ada data pelanggan ditemukan" />
             @endforelse
         </tbody>
     </x-pos.table>

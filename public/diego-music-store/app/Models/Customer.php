@@ -17,6 +17,7 @@ class Customer extends Model
         'date_of_birth',
         'customer_label_id',
         'pricing_tier_id',
+        'sale_category_id',
         'is_loyalty_member',
         'loyalty_points',
         'deposit_balance',
@@ -43,6 +44,14 @@ class Customer extends Model
     public function pricingTier()
     {
         return $this->belongsTo(PricingTier::class, 'pricing_tier_id');
+    }
+
+    /**
+     * Get the customer's default sale category.
+     */
+    public function saleCategory()
+    {
+        return $this->belongsTo(SaleCategory::class, 'sale_category_id');
     }
 
     /**
