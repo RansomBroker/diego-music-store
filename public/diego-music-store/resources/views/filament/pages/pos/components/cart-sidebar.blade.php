@@ -272,16 +272,17 @@
                         </div>
                     </div>
                     @if ($selectedCustomerId)
-                        <div class="relative">
+                        <div wire:key="customer-selected" class="relative">
                             <i class="ph ph-user-plus text-slate-600 dark:text-slate-355 absolute left-2.5 top-1/2 -translate-y-1/2 text-sm font-bold"></i>
                             <div class="w-full pl-8 pr-7 py-1.5 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
                                 <span class="truncate">{{ $selectedCustomerName }}</span>
-                                <button wire:click="clearCustomer" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-1">
+                                <button type="button" wire:click="clearCustomer" @click.stop="isOpen = false" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-1">
                                     <i class="ph-bold ph-x text-sm sm:text-base"></i>
                                 </button>
                             </div>
                         </div>
                     @else
+                        <div wire:key="customer-search-box">
                         <x-pos.form.input 
                             id="customer-search-input"
                             model="customerSearch"
@@ -301,7 +302,7 @@
                             <div class="max-h-60 overflow-y-auto no-scrollbar">
                             @if (count($customers) > 0)
                                 @foreach ($customers as $c)
-                                    <button wire:click="selectCustomer({{ $c->id }}, '{{ $c->name }}', {{ $c->is_loyalty_member ? 'true' : 'false' }})" @click="isOpen = false" class="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 flex items-center justify-between">
+                                    <button type="button" wire:click="selectCustomer({{ $c->id }}, @js($c->name), {{ $c->is_loyalty_member ? 'true' : 'false' }})" @click="isOpen = false" class="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 flex items-center justify-between">
                                         <div>
                                             <div class="font-bold text-slate-800 dark:text-slate-100">{{ $c->name }}</div>
                                             <div class="text-xs text-slate-500 dark:text-slate-400">{{ $c->phone }}</div>
@@ -323,6 +324,7 @@
                                     <span>{{ $customerSearch ? 'Daftarkan "' . $customerSearch . '" sebagai Pelanggan Baru' : 'Daftarkan Pelanggan Baru' }}</span>
                                 </button>
                             @endif
+                        </div>
                         </div>
                     @endif
                 </div>
@@ -373,43 +375,50 @@
                 <div class="relative" x-data="{ isOpen: false }" @click.away="isOpen = false">
                     <label class="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-1.5">Sales</label>
                     @if ($selectedSalesRepId)
-                        <div class="relative">
+                        <div wire:key="sales-rep-selected" class="relative">
                             <i class="ph ph-identification-card text-slate-600 dark:text-slate-355 absolute left-2.5 top-1/2 -translate-y-1/2 text-sm font-bold"></i>
                             <div class="w-full pl-8 pr-7 py-1.5 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
                                 <span class="truncate">{{ $selectedSalesRepName }}</span>
-                                <button wire:click="clearSalesRep" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-1">
+                                <button type="button" wire:click="clearSalesRep" @click.stop="isOpen = true" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-1">
                                     <i class="ph-bold ph-x text-sm sm:text-base"></i>
                                 </button>
                             </div>
                         </div>
                     @else
-                        <x-pos.form.input 
-                            id="sales-search-input"
-                            model="salesSearch"
-                            placeholder="Cari Sales..."
-                            icon="ph-identification-card"
-                            live
-                            debounce="350ms"
-                            size="sm"
-                            @focus="isOpen = true"
-                            @click="isOpen = true"
-                            class="!bg-white dark:!bg-slate-800"
-                        />
-                        
-                        <!-- Sales Search Results Dropdown -->
-                        <div x-show="isOpen" x-cloak class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-20 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
-                            @if (count($salesReps) > 0)
-                                @foreach ($salesReps as $salesRep)
-                                    <button wire:click="selectSalesRep({{ $salesRep->id }}, '{{ $salesRep->name }}')" @click="isOpen = false" class="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 flex items-center justify-between">
-                                        <div>
-                                            <div class="font-bold text-slate-800 dark:text-slate-100">{{ $salesRep->name }}</div>
-                                            <div class="text-xs text-slate-500 dark:text-slate-400">{{ $salesRep->email }}</div>
-                                        </div>
-                                    </button>
-                                @endforeach
-                            @else
-                                <div class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">Tidak ada data Sales</div>
-                            @endif
+                        <div wire:key="sales-rep-search-box">
+                            <x-pos.form.input 
+                                id="sales-search-input"
+                                model="salesSearch"
+                                placeholder="Cari Sales..."
+                                icon="ph-identification-card"
+                                live
+                                debounce="350ms"
+                                size="sm"
+                                @focus="isOpen = true"
+                                @click="isOpen = true"
+                                class="!bg-white dark:!bg-slate-800"
+                            />
+                            
+                            <!-- Sales Search Results Dropdown -->
+                            <div x-show="isOpen" x-cloak class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-20 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
+                                @if (count($salesReps) > 0)
+                                    @foreach ($salesReps as $salesRep)
+                                        <button type="button" wire:click="selectSalesRep({{ $salesRep->id }}, @js($salesRep->name))" @click="isOpen = false" class="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 flex items-center justify-between gap-2">
+                                            <div class="min-w-0">
+                                                <div class="font-bold text-slate-800 dark:text-slate-100 truncate">{{ $salesRep->name }}</div>
+                                                <div class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $salesRep->email }}</div>
+                                            </div>
+                                            @if ($salesRep->roles->isNotEmpty())
+                                                <span class="flex-shrink-0 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                                    {{ $salesRep->roles->pluck('name')->implode(', ') }}
+                                                </span>
+                                            @endif
+                                        </button>
+                                    @endforeach
+                                @else
+                                    <div class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">Tidak ada data Sales</div>
+                                @endif
+                            </div>
                         </div>
                     @endif
                 </div>

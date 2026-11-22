@@ -273,6 +273,46 @@ class POSLivewireTest extends TestCase
     }
 
     /** @test */
+    public function it_includes_all_active_branch_roles_in_sales_rep_options_and_allows_clearing_and_reselecting()
+    {
+        $managerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'MANAGER TOKO', 'guard_name' => 'web']);
+        $salesRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
+
+        $manager = \App\Models\User::factory()->create(['name' => 'RAMADHAN SAPUTRA', 'is_active' => true]);
+        $manager->assignRole($managerRole);
+        $manager->branches()->attach($this->branch->id);
+
+        $salesApostrophe = \App\Models\User::factory()->create(['name' => "MAR'IE MUHAMMAD", 'is_active' => true]);
+        $salesApostrophe->assignRole($salesRole);
+        $salesApostrophe->branches()->attach($this->branch->id);
+
+        $inactiveUser = \App\Models\User::factory()->create(['name' => 'RESIGNED STAFF', 'is_active' => false]);
+        $inactiveUser->assignRole($salesRole);
+        $inactiveUser->branches()->attach($this->branch->id);
+
+        $component = Livewire::test('App\Livewire\POS')
+            ->call('clearSalesRep')
+            ->assertSet('selectedSalesRepId', null)
+            ->assertSet('selectedSalesRepName', '')
+            ->assertSee('RAMADHAN SAPUTRA')
+            ->assertSee($this->user->name)
+            ->assertSee("MAR'IE MUHAMMAD")
+            ->assertDontSee('RESIGNED STAFF')
+            ->call('selectSalesRep', $manager->id, $manager->name)
+            ->assertSet('selectedSalesRepId', $manager->id)
+            ->assertSet('selectedSalesRepName', 'RAMADHAN SAPUTRA')
+            ->call('clearSalesRep')
+            ->assertSee('RAMADHAN SAPUTRA')
+            ->call('selectSalesRep', $salesApostrophe->id)
+            ->assertSet('selectedSalesRepId', $salesApostrophe->id)
+            ->assertSet('selectedSalesRepName', "MAR'IE MUHAMMAD");
+
+        $this->assertTrue($component->instance()->salesReps->contains('id', $this->user->id));
+        $this->assertTrue($component->instance()->salesReps->contains('id', $manager->id));
+        $this->assertFalse($component->instance()->salesReps->contains('id', $inactiveUser->id));
+    }
+
+    /** @test */
     public function it_can_use_loyalty_points_for_discount_and_deducts_them_on_checkout()
     {
         // 1. Create a customer with 50 loyalty points (which is equivalent to 50 * 1000 = Rp 50.000 discount)

@@ -452,29 +452,39 @@ class POS extends Component
             ->get();
     }
 
-    // Get matching users with "sales" role for live search dropdown
+    // Get matching active branch users (all roles: sales, manager toko, kasir, etc.) for sales rep dropdown
     public function getSalesRepsProperty()
     {
-        if (!empty($this->salesSearch)) {
-            $search = '%' . trim($this->salesSearch) . '%';
-            return \App\Models\User::role('sales')
-                ->select(['users.id', 'users.name', 'users.email'])
-                ->where(function ($q) use ($search) {
-                    $q->where('name', 'like', $search)
-                      ->orWhere('email', 'like', $search);
-                })
-                ->orderBy('name')
-                ->limit(5)
-                ->get();
+        $branchId = $this->selectedBranchId;
+
+        $baseQuery = \App\Models\User::query()
+            ->with('roles:id,name')
+            ->select(['users.id', 'users.name', 'users.email'])
+            ->where('users.is_active', true);
+
+        if ($branchId) {
+            $branchScoped = (clone $baseQuery)->where(function ($query) use ($branchId) {
+                $query->whereHas('branches', fn ($b) => $b->where('branches.id', $branchId))
+                    ->orWhereHas('employee', fn ($e) => $e->where('employees.branch_id', $branchId));
+            });
+
+            if ((clone $branchScoped)->exists()) {
+                $baseQuery = $branchScoped;
+            }
         }
 
-        return cache()->remember('pos_sales_reps_default', 300, function () {
-            return \App\Models\User::role('sales')
-                ->select(['users.id', 'users.name', 'users.email'])
-                ->orderBy('name')
-                ->limit(5)
-                ->get();
-        });
+        if (! empty($this->salesSearch)) {
+            $search = '%' . trim($this->salesSearch) . '%';
+            $baseQuery->where(function ($q) use ($search) {
+                $q->where('users.name', 'like', $search)
+                    ->orWhere('users.email', 'like', $search);
+            });
+        }
+
+        return $baseQuery
+            ->orderBy('users.name')
+            ->limit(50)
+            ->get();
     }
 
     // Get all sale categories
@@ -646,10 +656,11 @@ class POS extends Component
             ->keyBy('id');
     }
 
-    public function selectSalesRep($id, $name)
+    public function selectSalesRep($id, ?string $name = null)
     {
-        $this->selectedSalesRepId = $id;
-        $this->selectedSalesRepName = $name;
+        $user = $id ? \App\Models\User::select(['id', 'name'])->find($id) : null;
+        $this->selectedSalesRepId = $user?->id ?? $id;
+        $this->selectedSalesRepName = $user?->name ?? ($name ?? '');
         $this->salesSearch = '';
     }
 
