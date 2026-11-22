@@ -250,8 +250,8 @@ trait WithPaymentHandling
             $this->selectedSalesRepId = Auth::id();
             $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
             $this->salesSearch = '';
-            $defaultCategory = $this->saleCategories->first();
-            $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
+            $this->saleCategory = $this->getDefaultSaleCategoryName();
+            $this->updatedSaleCategory();
             $this->invoiceDate = now()->format('Y-m-d');
             $this->showPaymentModal = false;
             $this->amountPaid = 0;

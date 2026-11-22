@@ -325,6 +325,30 @@ class POSLivewireTest extends TestCase
     }
 
     /** @test */
+    public function it_auto_selects_the_default_sale_category_on_pos_mount_and_reset()
+    {
+        \App\Models\SaleCategory::query()->update(['is_default' => false]);
+        \App\Models\SaleCategory::updateOrCreate(
+            ['name' => 'Online'],
+            ['prefix' => 'ONL', 'start_alphabet' => 'A', 'end_alphabet' => 'Z', 'digit_length' => 4, 'is_default' => true]
+        );
+        \App\Models\SaleCategory::updateOrCreate(
+            ['name' => 'Store'],
+            ['prefix' => 'STR', 'start_alphabet' => 'A', 'end_alphabet' => 'Z', 'digit_length' => 4, 'is_default' => false]
+        );
+
+        $component = Livewire::test('App\Livewire\POS')
+            ->assertSet('saleCategory', 'Online')
+            ->assertSet('previewInvoiceNumber', 'ONL-A0001')
+            ->set('saleCategory', 'Store')
+            ->call('clearCart')
+            ->assertSet('saleCategory', 'Online')
+            ->assertSet('previewInvoiceNumber', 'ONL-A0001');
+
+        $this->assertSame('Online', $component->instance()->saleCategories->first()->name);
+    }
+
+    /** @test */
     public function it_can_use_loyalty_points_for_discount_and_deducts_them_on_checkout()
     {
         // 1. Create a customer with 50 loyalty points (which is equivalent to 50 * 1000 = Rp 50.000 discount)

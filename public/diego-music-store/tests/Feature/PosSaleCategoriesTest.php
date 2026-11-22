@@ -226,4 +226,34 @@ class PosSaleCategoriesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/wire:model="prefix"[^>]*uppercase/', $modalHtml);
         $this->assertStringNotContainsString('font-bold uppercase">' . "\n                        " . '{{ $row->prefix', $tableHtml);
     }
+
+    /** @test */
+    public function it_can_toggle_default_sale_category_exclusively()
+    {
+        SaleCategory::query()->delete();
+
+        $store = SaleCategory::create(['name' => 'Store', 'prefix' => 'STR', 'is_default' => true]);
+        $online = SaleCategory::create(['name' => 'Online', 'prefix' => 'ONL', 'is_default' => false]);
+
+        Livewire::test('App\Livewire\PosSaleCategories')
+            ->call('toggleDefault', $online->id)
+            ->assertHasNoErrors();
+
+        $this->assertFalse((bool) $store->fresh()->is_default);
+        $this->assertTrue((bool) $online->fresh()->is_default);
+
+        Livewire::test('App\Livewire\PosSaleCategories')
+            ->call('openCreate')
+            ->set('name', 'Wholesale')
+            ->set('prefix', 'WHS')
+            ->set('is_default', true)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertFalse((bool) $online->fresh()->is_default);
+        $this->assertDatabaseHas('sale_categories', [
+            'name' => 'Wholesale',
+            'is_default' => true,
+        ]);
+    }
 }

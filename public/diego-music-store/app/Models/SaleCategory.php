@@ -15,6 +15,12 @@ class SaleCategory extends Model
         'start_alphabet',
         'end_alphabet',
         'digit_length',
+        'is_default',
+    ];
+
+    protected $casts = [
+        'digit_length' => 'integer',
+        'is_default' => 'boolean',
     ];
 
     /**

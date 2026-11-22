@@ -38,6 +38,7 @@ class PosSaleCategories extends Component
     public string $start_alphabet = 'A';
     public string $end_alphabet = 'Z';
     public int $digit_length = 4;
+    public bool $is_default = false;
 
     // ── State Konfirmasi Hapus ───────────────────────────────────────────
     public bool $showDeleteModal = false;
@@ -75,7 +76,7 @@ class PosSaleCategories extends Component
     public function openCreate(): void
     {
         abort_unless(PermissionHelper::can(Auth::user(), 'fo.sale_categories.create'), 403);
-        $this->reset(['name', 'prefix', 'start_alphabet', 'end_alphabet', 'digit_length', 'editingId', 'isEditing']);
+        $this->reset(['name', 'prefix', 'start_alphabet', 'end_alphabet', 'digit_length', 'is_default', 'editingId', 'isEditing']);
         $this->showModal = true;
     }
 
@@ -92,6 +93,7 @@ class PosSaleCategories extends Component
         $this->start_alphabet = $category->start_alphabet ?? 'A';
         $this->end_alphabet = $category->end_alphabet ?? 'Z';
         $this->digit_length = $category->digit_length ?? 4;
+        $this->is_default = (bool) $category->is_default;
 
         $this->showModal = true;
     }
@@ -106,6 +108,7 @@ class PosSaleCategories extends Component
             'start_alphabet' => 'required|string|alpha|max:5',
             'end_alphabet' => 'required|string|alpha|max:5',
             'digit_length' => 'required|integer|min:3|max:10',
+            'is_default' => 'boolean',
         ];
 
         $this->validate($rules, [
@@ -122,6 +125,7 @@ class PosSaleCategories extends Component
             'start_alphabet' => strtoupper($this->start_alphabet),
             'end_alphabet' => strtoupper($this->end_alphabet),
             'digit_length' => $this->digit_length,
+            'is_default' => $this->is_default,
         ];
 
         if ($this->isEditing) {
@@ -137,6 +141,23 @@ class PosSaleCategories extends Component
 
         $this->showModal = false;
         $this->resetPage();
+    }
+
+    // ── Switch Default Kategori ──────────────────────────────────────────
+    public function toggleDefault(int $id, UpdateSaleCategory $updateAction): void
+    {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.sale_categories.edit'), 403);
+        $category = SaleCategory::findOrFail($id);
+        $newState = ! (bool) $category->is_default;
+
+        $updateAction->execute($category, ['is_default' => $newState]);
+
+        $msg = $newState
+            ? "Kategori \"{$category->name}\" dijadikan default."
+            : "Status default untuk \"{$category->name}\" dinonaktifkan.";
+
+        Notification::make()->title($msg)->success()->send();
+        $this->dispatch('toast', type: 'success', message: $msg);
     }
 
     // ── Konfirmasi Hapus ─────────────────────────────────────────────────

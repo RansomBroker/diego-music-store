@@ -144,8 +144,7 @@ class POS extends Component
         $this->selectedSalesRepId = Auth::id();
         $this->selectedSalesRepName = Auth::user() ? Auth::user()->name : '';
         $this->invoiceDate = now()->format('Y-m-d');
-        $defaultCategory = $this->saleCategories->first();
-        $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
+        $this->saleCategory = $this->getDefaultSaleCategoryName();
         $this->updatePreviewInvoiceNumber();
         $this->viewMode = session('pos_view_mode', 'grid');
 
@@ -488,10 +487,18 @@ class POS extends Component
             ->get();
     }
 
-    // Get all sale categories
+    // Get all sale categories (default category placed first)
     public function getSaleCategoriesProperty()
     {
-        return cache()->remember('pos_sale_categories', 600, fn() => \App\Models\SaleCategory::all());
+        return cache()->remember('pos_sale_categories', 600, fn() => \App\Models\SaleCategory::orderByDesc('is_default')->orderBy('id')->get());
+    }
+
+    protected function getDefaultSaleCategoryName(): string
+    {
+        $defaultCategory = $this->saleCategories->firstWhere('is_default', true)
+            ?? $this->saleCategories->first();
+
+        return $defaultCategory ? $defaultCategory->name : 'Store';
     }
 
     public function updatePreviewInvoiceNumber(): void

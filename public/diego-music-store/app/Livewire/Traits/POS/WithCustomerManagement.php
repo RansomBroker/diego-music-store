@@ -55,8 +55,7 @@ trait WithCustomerManagement
         $this->selectedPricingTierId = $this->getDefaultRetailPricingTierId();
         $this->updatedSelectedPricingTierId($this->selectedPricingTierId);
 
-        $defaultCategory = $this->saleCategories->first();
-        $this->saleCategory = $defaultCategory ? $defaultCategory->name : 'Store';
+        $this->saleCategory = $this->getDefaultSaleCategoryName();
         $this->updatedSaleCategory();
     }
 
