@@ -200,21 +200,8 @@ class ProvisionBranchCoaAccounts
                 $accountCount++;
             }
 
-            // 3. Update branch-specific account pointers
-            $inventoryAcc = Account::where('branch_id', $branchId)->where('code', '111401001')->first()
-                ?? Account::where('branch_id', $branchId)->where('code', '111800000')->first();
-
-            $receivableAcc = Account::where('branch_id', $branchId)->where('code', '111601001')->first()
-                ?? Account::where('branch_id', $branchId)->where('code', '111301001')->first();
-
-            $payableAcc = Account::where('branch_id', $branchId)->where('code', '211601001')->first()
-                ?? Account::where('branch_id', $branchId)->where('code', '211101001')->first();
-
-            $branch->update([
-                'inventory_account_id' => $inventoryAcc?->id,
-                'interbranch_receivable_account_id' => $receivableAcc?->id,
-                'interbranch_payable_account_id' => $payableAcc?->id,
-            ]);
+            // 3. Ensure generated branch-specific inventory & inter-branch accounts exist
+            EnsureBranchCoaAccounts::ensureGeneratedAccounts($branch);
 
             return $accountCount;
         });

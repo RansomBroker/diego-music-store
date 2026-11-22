@@ -9,21 +9,48 @@ use Illuminate\Support\Facades\DB;
 class EnsureBranchCoaAccounts
 {
     /**
-     * Ensure a branch has its inventory, inter-branch receivable, and
-     * inter-branch payable accounts. The operation is safe to run repeatedly.
+     * Generic CSV COA codes that must never be renamed or hijacked as branch-specific generated accounts.
+     *
+     * @var array<int, string>
+     */
+    private const GENERIC_SYSTEM_CODES = [
+        '111401001',
+        '111601001',
+        '211601001',
+        '111301001',
+        '211101001',
+        '111800000',
+        '111600000',
+        '211300000',
+    ];
+
+    /**
+     * Ensure a branch has all 97 CSV COA accounts plus its generated branch-specific
+     * inventory, inter-branch receivable, and inter-branch payable accounts.
      */
     public static function execute(Branch $branch): Branch
     {
-        // First provision the full 97 official COA accounts for the branch
+        // ProvisionBranchCoaAccounts finishes by calling ensureGeneratedAccounts($branch)
         app(ProvisionBranchCoaAccounts::class)->execute($branch);
 
+        return $branch->fresh();
+    }
+
+    /**
+     * Ensure dedicated generated branch accounts exist without overwriting existing CSV provisioning.
+     */
+    public static function ensureGeneratedAccounts(Branch $branch): Branch
+    {
         return DB::transaction(function () use ($branch) {
             $branch->refresh();
 
-            $inventoryParent = Account::where('code', '111800000')->first();
-            $receivableParent = Account::where('code', '111600000')->first();
+            $inventoryParent = Account::where('branch_id', $branch->id)->where('code', '111800000')->first()
+                ?? Account::where('code', '111800000')->first();
+            $receivableParent = Account::where('branch_id', $branch->id)->where('code', '111600000')->first()
+                ?? Account::where('code', '111600000')->first();
             // Inter-branch balances are not supplier trade payables.
-            $payableParent = Account::where('code', '211300000')->first();
+            $payableParent = Account::where('branch_id', $branch->id)->where('code', '211300000')->first()
+                ?? Account::where('code', '211300000')->first();
 
             $branch->inventory_account_id = static::ensureBranchAccount(
                     branch: $branch,
@@ -66,7 +93,7 @@ class EnsureBranchCoaAccounts
 
     /**
      * Find and repair an existing branch-specific account, or create one.
-     * Existing account IDs/codes are preserved to avoid breaking journal links.
+     * Existing generated/legacy account IDs and codes (e.g. 11410001/14110001) are preserved.
      */
     private static function ensureBranchAccount(
         Branch $branch,
@@ -82,20 +109,42 @@ class EnsureBranchCoaAccounts
             ? Account::find($accountId)
             : null;
 
-        // If a branch is explicitly linked to a generic/manual COA account,
-        // respect that configuration instead of renaming it as branch-specific.
-        if ($account && !str_contains(
-            mb_strtolower($account->name),
-            mb_strtolower(strstr($existingName, ' - ', true) ?: $existingName),
-        )) {
+        if ($account && in_array($account->code, self::GENERIC_SYSTEM_CODES, true)) {
+            // Restore generic 111401001 name if a prior bug renamed it into a branch inventory name
+            if ($account->code === '111401001' && str_starts_with(mb_strtolower($account->name), 'persediaan barang dagang -')) {
+                $account->update(['name' => 'PERSEDIAAN BARANG DAGANG']);
+            }
+            $account = null;
+        }
+
+        // Preserve any non-generic account explicitly linked on the branch (e.g., 11410001, 14110001)
+        if ($account) {
+            $dirty = false;
+            if ($account->branch_id === null) {
+                $account->branch_id = $branch->id;
+                $dirty = true;
+            }
+            if ($account->parent_id === null && $parent) {
+                $account->parent_id = $parent->id;
+                $dirty = true;
+            }
+            if ($dirty) {
+                $account->save();
+            }
+
             return $account;
         }
 
-        $account ??= Account::query()
+        $account = Account::query()
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($existingName)])
+            ->where(function ($q) use ($branch): void {
+                $q->where('branch_id', $branch->id)->orWhereNull('branch_id');
+            })
+            ->whereNotIn('code', self::GENERIC_SYSTEM_CODES)
             ->first();
 
         $attributes = [
+            'branch_id' => $branch->id,
             'name' => $existingName,
             'classification' => $classification,
             'account_subtype' => $subtype,
@@ -127,6 +176,42 @@ class EnsureBranchCoaAccounts
             'code' => $code,
             'parent_id' => $parent?->id,
         ]);
+    }
+
+    /**
+     * Re-link InitialStock journal items on a branch from generic 111401001
+     * to the branch's dedicated generated inventory account.
+     */
+    public static function relinkInitialStockToGeneratedInventory(Branch $branch): int
+    {
+        $branch->refresh();
+        $generatedInventory = $branch->inventoryAccount;
+
+        if (! $generatedInventory || in_array($generatedInventory->code, self::GENERIC_SYSTEM_CODES, true)) {
+            return 0;
+        }
+
+        $genericIds = Account::query()
+            ->where('code', '111401001')
+            ->pluck('id');
+
+        if ($genericIds->isEmpty()) {
+            return 0;
+        }
+
+        $entryIds = \App\Models\JournalEntry::query()
+            ->where('branch_id', $branch->id)
+            ->where('reference_type', 'InitialStock')
+            ->pluck('id');
+
+        if ($entryIds->isEmpty()) {
+            return 0;
+        }
+
+        return (int) \App\Models\JournalItem::query()
+            ->whereIn('journal_entry_id', $entryIds)
+            ->whereIn('account_id', $genericIds)
+            ->update(['account_id' => $generatedInventory->id]);
     }
 
     /**

@@ -41,85 +41,118 @@
 
         {{-- LEFT COLUMN: ASET (AKTIVA / ASSETS) --}}
         <div class="space-y-6">
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-gray-700 dark:bg-gray-300"></span>
-                        <span class="font-extrabold tracking-wide">ASET (AKTIVA)</span>
-                    </div>
-                </x-slot>
+            @php
+                $assetSections = [
+                    [
+                        'heading' => 'AKTIVA LANCAR (CURRENT ASSETS)',
+                        'badge' => 'Aktiva Lancar',
+                        'rows' => $data['assets']['current_assets'],
+                        'empty' => 'Belum ada data akun Aktiva Lancar.',
+                        'total_label' => 'TOTAL AKTIVA LANCAR',
+                        'total' => $data['assets']['total_current_assets'],
+                    ],
+                ];
 
-                <x-slot name="headerEnd">
-                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
-                        Aktiva
-                    </span>
-                </x-slot>
+                if (count($data['assets']['fixed_assets']) > 0) {
+                    $assetSections[] = [
+                        'heading' => 'AKTIVA TETAP (FIXED ASSETS)',
+                        'badge' => 'Aktiva Tetap',
+                        'rows' => $data['assets']['fixed_assets'],
+                        'empty' => 'Belum ada data akun Aktiva Tetap.',
+                        'total_label' => 'TOTAL AKTIVA TETAP',
+                        'total' => $data['assets']['total_fixed_assets'],
+                    ];
+                }
+            @endphp
 
-                <div class="divide-y divide-gray-200 dark:divide-gray-800 -mx-6 -mb-6 border-t border-gray-200 dark:border-white/10">
-                    <table class="w-full text-left text-sm">
-                        <thead>
-                            <tr class="bg-gray-100/70 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-xs uppercase font-bold border-b border-gray-300 dark:border-gray-700">
-                                <th class="py-2.5 px-4">Kode</th>
-                                <th class="py-2.5 px-4">Akun / Kategori (Hierarki)</th>
-                                <th class="py-2.5 px-4 text-right">Saldo</th>
-                                <th class="py-2.5 px-2 text-center w-12">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                            @forelse($data['assets']['items'] as $item)
-                                <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
-                                    <td class="py-2.5 px-4  text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
-                                    <td class="py-2.5 px-4">
-                                        <div class="flex items-center gap-1.5" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
-                                            @if($item['is_header'])
-                                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                                                </svg>
-                                                <span class="font-semibold">{{ $item['name'] }}</span>
-                                            @else
-                                                <span class="text-gray-400">&bull;</span>
-                                                <span>{{ $item['name'] }}</span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="py-2.5 px-4 text-right  text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
-                                        <x-financial-amount :amount="$item['balance']" />
-                                    </td>
-                                    <td class="py-2.5 px-2 text-center">
-                                        @if(!$item['is_header'])
-                                            <button 
-                                                type="button" 
-                                                wire:click="openAccountLedgerModal({{ $item['id'] }})"
-                                                title="Drill-down Rincian Mutasi Jurnal"
-                                                class="inline-flex items-center justify-center p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
-                                            >
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                </svg>
-                                            </button>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="py-6 text-center text-gray-500 dark:text-gray-400 text-xs">
-                                        Belum ada data akun Aset.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+            @foreach($assetSections as $section)
+                <x-filament::section>
+                    <x-slot name="heading">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-gray-700 dark:bg-gray-300"></span>
+                            <span>{{ $section['heading'] }}</span>
+                        </div>
+                    </x-slot>
 
-                    {{-- Assets Total Footer Bar (Monochrome High Contrast) --}}
-                    <div class="p-4 px-6 bg-gray-100 dark:bg-white/10 border-t-2 border-gray-400 dark:border-gray-600 flex justify-between items-center text-gray-900 dark:text-white">
-                        <span class="font-extrabold text-sm uppercase tracking-wider">TOTAL ASET (AKTIVA)</span>
-                        <span class=" text-base font-extrabold text-gray-900 dark:text-white">
-                            <x-financial-amount :amount="$data['total_assets']" />
+                    <x-slot name="headerEnd">
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
+                            {{ $section['badge'] }}
                         </span>
+                    </x-slot>
+
+                    <div class="divide-y divide-gray-200 dark:divide-gray-800 -mx-6 -mb-6 border-t border-gray-200 dark:border-white/10">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="bg-gray-100/70 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-xs uppercase font-bold border-b border-gray-300 dark:border-gray-700">
+                                    <th class="py-2.5 px-4">Kode</th>
+                                    <th class="py-2.5 px-4">Akun / Kategori (Hierarki)</th>
+                                    <th class="py-2.5 px-4 text-right">Saldo</th>
+                                    <th class="py-2.5 px-2 text-center w-12">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                                @forelse($section['rows'] as $item)
+                                    <tr class="{{ $item['is_header'] ? 'bg-gray-100/50 font-bold dark:bg-white/5 text-gray-900 dark:text-white' : 'hover:bg-gray-50/80 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300' }}">
+                                        <td class="py-2.5 px-4 text-xs text-gray-500 dark:text-gray-400 w-28">{{ $item['code'] }}</td>
+                                        <td class="py-2.5 px-4">
+                                            <div class="flex items-center gap-1.5" style="padding-left: {{ max(0, ($item['level'] - 1) * 1) }}rem;">
+                                                @if($item['is_header'])
+                                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                                    </svg>
+                                                    <span class="font-semibold">{{ $item['name'] }}</span>
+                                                @else
+                                                    <span class="text-gray-400">&bull;</span>
+                                                    <span>{{ $item['name'] }}</span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td class="py-2.5 px-4 text-right text-xs font-semibold text-gray-900 dark:text-gray-100 {{ $item['is_header'] ? 'font-extrabold text-sm' : '' }}">
+                                            <x-financial-amount :amount="$item['balance']" />
+                                        </td>
+                                        <td class="py-2.5 px-2 text-center">
+                                            @if(!$item['is_header'])
+                                                <button 
+                                                    type="button" 
+                                                    wire:click="openAccountLedgerModal({{ $item['id'] }})"
+                                                    title="Drill-down Rincian Mutasi Jurnal"
+                                                    class="inline-flex items-center justify-center p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
+                                                >
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                    </svg>
+                                                </button>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="py-6 text-center text-gray-500 dark:text-gray-400 text-xs">
+                                            {{ $section['empty'] }}
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+
+                        <div class="p-3.5 px-4 bg-gray-100 dark:bg-white/10 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center text-gray-900 dark:text-white">
+                            <span class="font-bold text-xs uppercase tracking-wider">{{ $section['total_label'] }}</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white">
+                                <x-financial-amount :amount="$section['total']" />
+                            </span>
+                        </div>
                     </div>
-                </div>
-            </x-filament::section>
+                </x-filament::section>
+            @endforeach
+
+            {{-- COMBINED ASSETS TOTAL FOOTER (Matching Total Kewajiban & Ekuitas) --}}
+            <div class="p-4 bg-gray-100 dark:bg-white/10 border-2 border-gray-400 dark:border-gray-600 rounded-xl flex justify-between items-center text-gray-900 dark:text-white shadow-sm">
+                <span class="font-extrabold text-sm uppercase tracking-wider">TOTAL ASET (AKTIVA)</span>
+                <span class="text-base font-extrabold text-gray-900 dark:text-white">
+                    <x-financial-amount :amount="$data['total_assets']" />
+                </span>
+            </div>
         </div>
 
         {{-- RIGHT COLUMN: LIABILITIES & EQUITY (PASIVA) --}}

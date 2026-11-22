@@ -6,7 +6,6 @@ no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
 5,111201003,BANK BRI,asset,bank,debit
 6,111201004,BANK BNI,asset,bank,debit
 7,111201005,BANK Danamon,asset,bank,debit
-8,111201006,Uang Muka Pembelian,asset,purchase_advance,debit
 10,111202006,Tokopedia,asset,settlement,debit
 11,111202007,Shopee,asset,settlement,debit
 13,111301001,PIUTANG DAGANG,asset,receivable,debit
@@ -24,9 +23,8 @@ no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
 25,121201001,AKUMULASI PENYUSUTAN KENDARAAN,asset,accumulated_depreciation,credit
 26,121501001,INVENTARIS KANTOR,asset,fixed_asset,debit
 27,121601001,AKUMULASI PENYUSUTAN INVENTARIS KANTOR,asset,accumulated_depreciation,credit
-28,122101001,ASET TIDAK BERWUJUD,asset,intangible_asset,debit
 29,128801001,SOFTWARE,asset,intangible_asset,debit
-30,128801002,AKUMULASI PENYUSUTAN ASET TIDAK BERWUJUD,asset,accumulated_amortization,credit
+30,128801002,AKUMULASI PENYUSUTAN ASET TIDAK BERWUJUD,asset,intangible_asset,credit
 30,211101001,HUTANG DAGANG,liability,trade_payable,credit
 31,211201001,HUTANG PPN (PPN KELUARAN),liability,tax_payable,credit
 32,211301001,HUTANG PPH PASAL 21,liability,tax_payable,credit

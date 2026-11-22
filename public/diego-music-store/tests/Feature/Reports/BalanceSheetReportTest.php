@@ -105,7 +105,9 @@ class BalanceSheetReportTest extends TestCase
             ->test(BalanceSheet::class)
             ->assertStatus(200)
             ->assertSee('Laporan Balance Sheet (Neraca)')
-            ->assertSee('NERACA SEIMBANG');
+            ->assertSee('NERACA SEIMBANG')
+            ->assertSee('TOTAL AKTIVA LANCAR')
+            ->assertSee('TOTAL ASET (AKTIVA)');
     }
 
     /** @test */
@@ -142,5 +144,66 @@ class BalanceSheetReportTest extends TestCase
             ->call('printPdf')
             ->call('exportExcel')
             ->assertStatus(200);
+    }
+
+    /** @test */
+    public function it_orders_balance_sheet_rows_by_parent_hierarchy_instead_of_flat_code()
+    {
+        $rootAsset = Account::where('code', '1-0000')->firstOrFail();
+
+        $bankHeader = Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '111200000',
+            'name' => 'BANK',
+            'classification' => 'asset',
+            'is_header' => true,
+            'parent_id' => $rootAsset->id,
+            'is_active' => true,
+        ]);
+        Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '111201001',
+            'name' => 'BANK BCA',
+            'classification' => 'asset',
+            'is_header' => false,
+            'parent_id' => $bankHeader->id,
+            'is_active' => true,
+        ]);
+
+        $receivableHeader = Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '111600000',
+            'name' => 'PIUTANG USAHA',
+            'classification' => 'asset',
+            'is_header' => true,
+            'parent_id' => $rootAsset->id,
+            'is_active' => true,
+        ]);
+        Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '111301001',
+            'name' => 'PIUTANG DAGANG',
+            'classification' => 'asset',
+            'is_header' => false,
+            'parent_id' => $receivableHeader->id,
+            'is_active' => true,
+        ]);
+
+        $report = (new GenerateBalanceSheetReport())->execute(now()->toDateString(), $this->branch->id, 'detail', 'all');
+        $codes = array_column($report['assets']['current_assets'], 'code');
+
+        $bankIdx = array_search('111200000', $codes, true);
+        $bcaIdx = array_search('111201001', $codes, true);
+        $receivableHdrIdx = array_search('111600000', $codes, true);
+        $piutangDagangIdx = array_search('111301001', $codes, true);
+
+        $this->assertNotFalse($bankIdx);
+        $this->assertNotFalse($bcaIdx);
+        $this->assertNotFalse($receivableHdrIdx);
+        $this->assertNotFalse($piutangDagangIdx);
+
+        // PIUTANG DAGANG (111301001) must sit right under PIUTANG USAHA (111600000), NOT under BANK (111200000)
+        $this->assertGreaterThan($bankIdx, $bcaIdx);
+        $this->assertGreaterThan($receivableHdrIdx, $piutangDagangIdx);
     }
 }

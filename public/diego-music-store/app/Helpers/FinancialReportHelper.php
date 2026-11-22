@@ -78,8 +78,7 @@ class FinancialReportHelper
         foreach ($groupedByCode as $code => $group) {
             if ($branchId !== null) {
                 $canonical = $group->firstWhere('branch_id', $branchId)
-                    ?? $group->firstWhere('branch_id', null)
-                    ?? $group->first();
+                    ?? $group->firstWhere('branch_id', null);
             } else {
                 $canonical = $group->firstWhere('branch_id', null)
                     ?? $group->sortBy('branch_id')->first();
@@ -111,31 +110,53 @@ class FinancialReportHelper
         }
 
         $canonicalAccounts = $canonicalAccounts->sortBy('code')->values();
-        $levelsById = [];
-
+        $canonicalByCode = [];
         foreach ($canonicalAccounts as $acc) {
-            $level = 1;
-            $currCode = (string) $acc->code;
-            $visited = [$currCode => true];
+            $canonicalByCode[(string) $acc->code] = $acc;
+        }
 
-            while (isset($parentCodeMap[$currCode])) {
-                $nextCode = $parentCodeMap[$currCode];
-                if (isset($visited[$nextCode])) {
-                    break;
-                }
-                $visited[$nextCode] = true;
-                $level++;
-                $currCode = $nextCode;
-                if ($level > 10) {
-                    break;
-                }
+        // Order accounts depth-first following parent_code hierarchy (with sibling code order)
+        $childrenByParentCode = [];
+        $rootAccounts = [];
+        foreach ($canonicalAccounts as $acc) {
+            $code = (string) $acc->code;
+            $parentCode = $parentCodeMap[$code] ?? null;
+            if ($parentCode !== null && isset($canonicalByCode[$parentCode]) && $parentCode !== $code) {
+                $childrenByParentCode[$parentCode][] = $acc;
+            } else {
+                $rootAccounts[] = $acc;
             }
+        }
 
+        $orderedAccounts = collect();
+        $levelsById = [];
+        $visited = [];
+
+        $visit = function (Account $acc, int $level) use (&$visit, &$orderedAccounts, &$levelsById, &$visited, &$childrenByParentCode): void {
+            $code = (string) $acc->code;
+            if (isset($visited[$code])) {
+                return;
+            }
+            $visited[$code] = true;
+            $orderedAccounts->push($acc);
             $levelsById[$acc->id] = $level;
+
+            foreach ($childrenByParentCode[$code] ?? [] as $child) {
+                $visit($child, $level + 1);
+            }
+        };
+
+        foreach ($rootAccounts as $rootAcc) {
+            $visit($rootAcc, 1);
+        }
+
+        // Fallback safety in case any disconnected cycle exists
+        foreach ($canonicalAccounts as $acc) {
+            $visit($acc, 1);
         }
 
         return [
-            'accounts' => $canonicalAccounts,
+            'accounts' => $orderedAccounts->values(),
             'id_to_canonical_id' => $idToCanonicalId,
             'parent_code_map' => $parentCodeMap,
             'levels_by_id' => $levelsById,

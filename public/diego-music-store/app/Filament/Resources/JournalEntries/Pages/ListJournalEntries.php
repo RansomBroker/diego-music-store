@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\JournalEntries\Pages;
 
 use App\Actions\Accounting\CreateJournalEntry;
+use App\Filament\Concerns\HasTemporaryOpeningBalanceActions;
 use App\Filament\Resources\JournalEntries\JournalEntryResource;
 use App\Filament\Resources\JournalEntries\Widgets\JournalEntryStats;
 use App\Filament\Resources\ScheduledJournalEntries\ScheduledJournalEntryResource;
@@ -13,11 +14,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class ListJournalEntries extends ListRecords
 {
+    use HasTemporaryOpeningBalanceActions;
+
     protected static string $resource = JournalEntryResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            ...$this->temporaryOpeningBalanceHeaderActions(),
             Action::make('scheduled_journals')
                 ->label('Jurnal Terjadwal')
                 ->icon('heroicon-o-calendar')

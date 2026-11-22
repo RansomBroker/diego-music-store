@@ -36,30 +36,24 @@ class SeedOpeningBalances
         ['code' => '121201001', 'debit' => 0, 'credit' => 31597230, 'notes' => 'Saldo Awal Akumulasi Penyusutan Kendaraan'],
         ['code' => '121501001', 'debit' => 134179971, 'credit' => 0, 'notes' => 'Saldo Awal Inventaris Kantor'],
         ['code' => '121601001', 'debit' => 0, 'credit' => 83514876, 'notes' => 'Saldo Awal Akumulasi Penyusutan Inventaris Kantor'],
-        ['code' => '122101001', 'debit' => 19166653, 'credit' => 0, 'notes' => 'Saldo Awal Aset Tidak Berwujud'],
         ['code' => '128801001', 'debit' => 29000000, 'credit' => 0, 'notes' => 'Saldo Awal Software'],
         ['code' => '128801002', 'debit' => 0, 'credit' => 9883347, 'notes' => 'Saldo Awal Akumulasi Penyusutan Aset Tidak Berwujud'],
 
-        // Liabilitas & Ekuitas Laba
-        ['code' => '211101001', 'debit' => 0, 'credit' => 494555032, 'notes' => 'Saldo Awal Hutang Dagang'],
+        // Liabilitas (kecuali Hutang Dagang 211101001 — diinput lewat Import Saldo Awal Hutang Supplier) & Ekuitas Laba
         ['code' => '211601002', 'debit' => 0, 'credit' => 1095600, 'notes' => 'Saldo Awal Hutang Ongkir'],
         ['code' => '311201001', 'debit' => 0, 'credit' => 420971996, 'notes' => 'Saldo Awal Laba Ditahan'],
         ['code' => '311301001', 'debit' => 0, 'credit' => 378550240, 'notes' => 'Saldo Awal Laba Tahun Berjalan'],
     ];
 
     /**
-     * Ensure required COA accounts exist on active branches and seed opening balances
-     * once when Cabang Pusat has not been operated on and target accounts are still zero.
+     * Seed opening balances once when Cabang Pusat has not been operated on
+     * and target accounts are still zero.
      */
     public function execute(): ?JournalEntry
     {
         $activeBranches = Branch::query()->where('is_active', true)->orderBy('id')->get();
         if ($activeBranches->isEmpty()) {
             return null;
-        }
-
-        foreach ($activeBranches as $activeBranch) {
-            $this->ensureIntangibleAssetAccount($activeBranch);
         }
 
         $branch = $activeBranches->first(fn (Branch $b) => str_contains(mb_strtolower($b->name), 'pusat'))
@@ -93,59 +87,6 @@ class SeedOpeningBalances
         }
 
         return $this->seedForBranch($branch);
-    }
-
-    /**
-     * Non-destructively provision COA 122101001 (ASET TIDAK BERWUJUD) on an existing branch
-     * without overwriting any customized COA names or flags.
-     */
-    private function ensureIntangibleAssetAccount(Branch $branch): void
-    {
-        $rootHeader = Account::firstOrCreate(
-            [
-                'code' => '100000000',
-                'branch_id' => $branch->id,
-            ],
-            [
-                'name' => 'ASET',
-                'classification' => 'asset',
-                'normal_balance' => 'debit',
-                'is_header' => true,
-                'is_active' => true,
-            ]
-        );
-
-        $intangibleHeader = Account::firstOrCreate(
-            [
-                'code' => '122100000',
-                'branch_id' => $branch->id,
-            ],
-            [
-                'name' => 'ASET TIDAK BERWUJUD',
-                'classification' => 'asset',
-                'account_subtype' => 'intangible_asset',
-                'normal_balance' => 'debit',
-                'is_header' => true,
-                'parent_id' => $rootHeader->id,
-                'is_active' => true,
-            ]
-        );
-
-        Account::firstOrCreate(
-            [
-                'code' => '122101001',
-                'branch_id' => $branch->id,
-            ],
-            [
-                'name' => 'ASET TIDAK BERWUJUD',
-                'classification' => 'asset',
-                'account_subtype' => 'intangible_asset',
-                'normal_balance' => 'debit',
-                'is_header' => false,
-                'parent_id' => $intangibleHeader->id,
-                'is_active' => true,
-            ]
-        );
     }
 
     /**

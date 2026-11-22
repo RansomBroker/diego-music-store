@@ -40,11 +40,11 @@ class OpeningBalanceSeederTest extends TestCase
 
     public function test_seeds_opening_balance_once_with_fixed_asset_grouping_and_balanced_sheet(): void
     {
-        // Confirm fixed COA detail account 122101001 exists on branch
-        $intangible = AccountHelper::findByCode('122101001', $this->branch->id);
-        $this->assertNotNull($intangible);
-        $this->assertSame('ASET TIDAK BERWUJUD', $intangible->name);
-        $this->assertFalse($intangible->is_header);
+        // Confirm 122100000 ASET TIDAK BERWUJUD is a header containing 128801001 & 128801002 (no duplicate 122101001 detail)
+        $this->assertNull(AccountHelper::findByCode('122101001', $this->branch->id));
+        $intangibleHeader = AccountHelper::findByCode('122100000', $this->branch->id);
+        $this->assertNotNull($intangibleHeader);
+        $this->assertTrue($intangibleHeader->is_header);
 
         $this->seed(OpeningBalanceSeeder::class);
 
@@ -53,11 +53,14 @@ class OpeningBalanceSeederTest extends TestCase
             ->first();
         $this->assertNotNull($entry);
 
-        // Journal must be 100% balanced
+        // Journal must be 100% balanced and exclude 211101001 (Hutang Dagang comes from supplier debt import)
+        $ap = AccountHelper::findByCode('211101001', $this->branch->id);
+        $this->assertSame(0, JournalItem::where('journal_entry_id', $entry->id)->where('account_id', $ap->id)->count());
+
         $totalDebit = (float) JournalItem::where('journal_entry_id', $entry->id)->sum('debit');
         $totalCredit = (float) JournalItem::where('journal_entry_id', $entry->id)->sum('credit');
         $this->assertSame($totalCredit, $totalDebit);
-        $this->assertSame(1420168321.0, $totalDebit);
+        $this->assertSame(925613289.0, $totalDebit);
 
         // Re-running must be strictly idempotent (does not duplicate or overwrite)
         $this->seed(OpeningBalanceSeeder::class);
@@ -73,16 +76,17 @@ class OpeningBalanceSeederTest extends TestCase
 
         $this->assertTrue($report['is_balanced']);
         $this->assertEquals(573237960.0, $report['assets']['total_current_assets']);
-        // 100,208,326 - 31,597,230 + 134,179,971 - 83,514,876 + 19,166,653 + 29,000,000 - 9,883,347 = 157,559,497
-        $this->assertEquals(157559497.0, $report['assets']['total_fixed_assets']);
-        $this->assertEquals(495650632.0, $report['total_liabilities']);
+        // 100,208,326 - 31,597,230 + 134,179,971 - 83,514,876 + (29,000,000 - 9,883,347) = 138,392,844
+        $this->assertEquals(138392844.0, $report['assets']['total_fixed_assets']);
+        $this->assertEquals(1095600.0, $report['total_liabilities']);
 
         $fixedCodes = array_column($report['assets']['fixed_assets'], 'code');
         $this->assertContains('121101001', $fixedCodes);
         $this->assertContains('121201001', $fixedCodes);
-        $this->assertContains('122101001', $fixedCodes);
+        $this->assertContains('122100000', $fixedCodes);
         $this->assertContains('128801001', $fixedCodes);
         $this->assertContains('128801002', $fixedCodes);
+        $this->assertNotContains('122101001', $fixedCodes);
 
         // Consolidated ("Semua Cabang" -> branchId = null) across multiple branches must NOT duplicate COA codes
         $secondBranch = Branch::create([
@@ -106,7 +110,7 @@ class OpeningBalanceSeederTest extends TestCase
         $this->assertTrue($consolidated['is_balanced']);
         $assetCodes = array_column($consolidated['assets']['items'], 'code');
         $this->assertCount(count(array_unique($assetCodes)), $assetCodes);
-        $this->assertEquals(730797457.0, $consolidated['total_assets']);
+        $this->assertEquals(711630804.0, $consolidated['total_assets']);
     }
 
     public function test_skips_completely_when_operational_journals_already_exist(): void
@@ -135,6 +139,7 @@ class OpeningBalanceSeederTest extends TestCase
     public function test_skips_only_non_zero_accounts_when_initial_debt_already_imported(): void
     {
         $ap = AccountHelper::findByCode('211101001', $this->branch->id);
+        $ongkir = AccountHelper::findByCode('211601002', $this->branch->id);
         $equity = AccountHelper::findByCode('311101003', $this->branch->id);
 
         $debtEntry = JournalEntry::create([
@@ -146,39 +151,40 @@ class OpeningBalanceSeederTest extends TestCase
             'status' => 'posted',
             'posted_at' => now(),
         ]);
-        JournalItem::create(['journal_entry_id' => $debtEntry->id, 'account_id' => $equity->id, 'debit' => 493973512, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $debtEntry->id, 'account_id' => $equity->id, 'debit' => 494473512, 'credit' => 0]);
         JournalItem::create(['journal_entry_id' => $debtEntry->id, 'account_id' => $ap->id, 'debit' => 0, 'credit' => 493973512]);
+        JournalItem::create(['journal_entry_id' => $debtEntry->id, 'account_id' => $ongkir->id, 'debit' => 0, 'credit' => 500000]);
 
         $this->seed(OpeningBalanceSeeder::class);
 
         $opening = JournalEntry::where('reference_type', 'OpeningBalance')->firstOrFail();
-        // 211101001 was already non-zero so OpeningBalance must NOT touch it
+        // 211601002 was already non-zero so OpeningBalance must NOT touch it, and 211101001 is never bypassed
+        $this->assertSame(0, JournalItem::where('journal_entry_id', $opening->id)->where('account_id', $ongkir->id)->count());
         $this->assertSame(0, JournalItem::where('journal_entry_id', $opening->id)->where('account_id', $ap->id)->count());
 
-        // Balance sheet still balances and AP stays 493,973,512 (no double count!)
+        // Balance sheet still balances and keeps existing AP + Ongkir untouched (no double count!)
         $report = app(GenerateBalanceSheetReport::class)->execute(now()->format('Y-m-d'), $this->branch->id, 'detail', 'all');
         $this->assertTrue($report['is_balanced']);
-        // 493,973,512 AP + 1,095,600 Ongkir = 495,069,112
-        $this->assertEquals(495069112.0, $report['total_liabilities']);
+        // 493,973,512 AP + 500,000 Ongkir = 494,473,512
+        $this->assertEquals(494473512.0, $report['total_liabilities']);
     }
 
-    public function test_provisions_missing_intangible_asset_account_and_migration_skips_testing_env(): void
+    public function test_migration_skips_testing_env_and_intangible_amortization_nests_under_122100000(): void
     {
-        Account::where('code', '122101001')->delete();
-        $this->assertNull(AccountHelper::findByCode('122101001', $this->branch->id));
-
         $migration = require database_path('migrations/2026_11_22_101000_seed_opening_balances_if_zero.php');
         $migration->up();
 
         // In testing environment, migration must skip automatically without creating journals
         $this->assertSame(0, JournalEntry::count());
 
-        // Invoking the action directly provisions missing 122101001 and posts opening balance once
+        // Invoking the action directly posts balanced opening journal with 128801002 under 122100000
         app(\App\Actions\Accounting\SeedOpeningBalances::class)->execute();
 
-        $intangible = AccountHelper::findByCode('122101001', $this->branch->id);
-        $this->assertNotNull($intangible);
-        $this->assertSame('ASET TIDAK BERWUJUD', $intangible->name);
+        $amort = AccountHelper::findByCode('128801002', $this->branch->id);
+        $intangibleHeader = AccountHelper::findByCode('122100000', $this->branch->id);
+        $this->assertNotNull($amort);
+        $this->assertNotNull($intangibleHeader);
+        $this->assertSame($intangibleHeader->id, $amort->parent_id);
         $this->assertSame(1, JournalEntry::where('reference_type', 'OpeningBalance')->count());
     }
 }

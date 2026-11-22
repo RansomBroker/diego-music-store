@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Actions\Accounting\GenerateBalanceSheetReport;
+use App\Filament\Concerns\HasTemporaryOpeningBalanceActions;
 use App\Helpers\BranchHelper;
 use App\Models\Account;
 use App\Models\Branch;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 
 class BalanceSheet extends Page implements HasForms
 {
+    use HasTemporaryOpeningBalanceActions;
     use InteractsWithForms;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedScale;
@@ -67,6 +69,7 @@ class BalanceSheet extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
+            ...$this->temporaryOpeningBalanceHeaderActions(),
             Action::make('printPdf')
                 ->label('Cetak / PDF')
                 ->icon(Heroicon::OutlinedPrinter)
