@@ -149,40 +149,44 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-850 flex items-center justify-end gap-3">
+                <div class="px-6 py-3.5 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-850 flex flex-wrap items-center justify-end gap-2">
                     @if ($selectedSale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.edit_sale'))
                         <x-pos.utility.button
                             type="button"
+                            size="sm"
                             variant="warning"
                             wire:click="requestEditSale({{ $selectedSale->id }})"
                             icon="ph-pencil"
                         >
-                            Edit Transaksi
+                            Edit
                         </x-pos.utility.button>
                     @endif
                     @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.transactions.delete'))
                         <x-pos.utility.button
                             type="button"
+                            size="sm"
                             variant="danger"
                             wire:click="confirmDeleteSale({{ $selectedSale->id }})"
                             icon="ph-trash"
                         >
-                            Hapus Transaksi
+                            Hapus
                         </x-pos.utility.button>
                     @endif
                     @if ($selectedSale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.transactions.return') && $selectedSale->items->sum(fn($item) => $item->quantity - $item->returnItems()->sum('quantity')) > 0)
                         <x-pos.utility.button
                             type="button"
-                            variant="danger"
+                            size="sm"
+                            variant="soft-danger"
                             wire:click="startReturn({{ $selectedSale->id }})"
                             icon="ph-arrow-counter-clockwise"
                         >
-                            Retur Barang
+                            Retur
                         </x-pos.utility.button>
                     @endif
                     @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.print'))
                         <x-pos.utility.button
                             type="button"
+                            size="sm"
                             variant="success"
                             wire:click="printReceipt({{ $selectedSale->id }})"
                             icon="ph-printer"
@@ -192,6 +196,7 @@
                     @endif
                     <x-pos.utility.button
                         type="button"
+                        size="sm"
                         variant="secondary"
                         wire:click="closeDetails"
                     >

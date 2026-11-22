@@ -183,12 +183,17 @@ class PosPaymentMethodsGroupingTest extends TestCase
         $this->assertTrue((bool) $debitBca->fresh()->is_default);
         $this->assertFalse((bool) $debitMandiri->fresh()->is_default);
 
-        // Checkout routing maps QRIS -> Mandiri to BANK Mandiri COA account
+        // Checkout routing maps QRIS -> Mandiri to BANK Mandiri COA account & formats as "QRIS - Mandiri"
         $resolvedMandiri = PaymentMethod::resolveForCheckout('qris', 'Mandiri');
         $this->assertSame($bankMandiri->id, $resolvedMandiri->getEffectiveAccountId());
-        $this->assertSame('QRIS (Mandiri)', $resolvedMandiri->formatCheckoutLabel());
+        $this->assertSame('QRIS - Mandiri', $resolvedMandiri->formatCheckoutLabel());
+
+        // Without explicit sub-method, resolves to default child ("QRIS - Mandiri" after toggleDefault above)
+        $resolvedDefault = PaymentMethod::resolveForCheckout('qris', null);
+        $this->assertSame('QRIS - Mandiri', $resolvedDefault->formatCheckoutLabel());
 
         $resolvedBri = PaymentMethod::resolveForCheckout('qris', 'BRI');
         $this->assertSame($bankBri->id, $resolvedBri->getEffectiveAccountId());
+        $this->assertSame('QRIS - BRI', $resolvedBri->formatCheckoutLabel());
     }
 }

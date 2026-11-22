@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Actions\PosOtp\GeneratePosActionOtp;
 use App\Actions\Sales\UpdatePOSSale;
-use App\Filament\Pages\Settings\PosActionOtpPage;
+use App\Filament\Widgets\PosActionOtpWidget;
 use App\Helpers\PermissionHelper;
 use App\Livewire\POS;
 use App\Livewire\POSTransactions;
@@ -193,11 +193,12 @@ class PosTransactionOtpAndDeleteTest extends TestCase
     }
 
     /** @test */
-    public function owner_can_access_backoffice_otp_page_and_refresh_6_digit_1_minute_otp(): void
+    public function owner_can_view_backoffice_dashboard_otp_widget_and_refresh_6_digit_1_minute_otp(): void
     {
         $this->actingAs($this->owner);
 
-        $component = Livewire::test(PosActionOtpPage::class);
+        $this->assertTrue(PosActionOtpWidget::canView());
+        $component = Livewire::test(PosActionOtpWidget::class);
         $firstCode = $component->get('currentCode');
 
         $this->assertMatchesRegularExpression('/^\d{6}$/', $firstCode);
@@ -215,12 +216,12 @@ class PosTransactionOtpAndDeleteTest extends TestCase
     }
 
     /** @test */
-    public function non_owner_without_permission_cannot_access_backoffice_otp_page_but_authorized_role_can(): void
+    public function non_owner_without_permission_cannot_view_backoffice_otp_widget_but_authorized_role_can(): void
     {
         $this->actingAs($this->cashier);
 
-        $this->assertFalse(PosActionOtpPage::canAccess());
-        Livewire::test(PosActionOtpPage::class)->assertForbidden();
+        $this->assertFalse(PosActionOtpWidget::canView());
+        Livewire::test(PosActionOtpWidget::class)->assertForbidden();
 
         // Beri izin melihat saja (tanpa refresh)
         $managerRole = Role::firstOrCreate(['name' => 'manager', 'guard_name' => 'web']);
@@ -233,8 +234,8 @@ class PosTransactionOtpAndDeleteTest extends TestCase
         $manager->branches()->attach($this->branch);
 
         $this->actingAs($manager);
-        $this->assertTrue(PosActionOtpPage::canAccess());
-        Livewire::test(PosActionOtpPage::class)
+        $this->assertTrue(PosActionOtpWidget::canView());
+        Livewire::test(PosActionOtpWidget::class)
             ->assertOk()
             ->call('refreshOtp')
             ->assertForbidden();
@@ -244,7 +245,7 @@ class PosTransactionOtpAndDeleteTest extends TestCase
         $manager->refresh();
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $component = Livewire::test(PosActionOtpPage::class)->assertOk();
+        $component = Livewire::test(PosActionOtpWidget::class)->assertOk();
         $oldCode = $component->get('currentCode');
         $component->call('refreshOtp')->assertOk();
         $this->assertNotNull(\App\Models\PosActionOtp::where('code', $oldCode)->first()->revoked_at);

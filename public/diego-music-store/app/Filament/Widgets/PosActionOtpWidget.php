@@ -1,27 +1,22 @@
 <?php
 
-namespace App\Filament\Pages\Settings;
+namespace App\Filament\Widgets;
 
 use App\Actions\PosOtp\GeneratePosActionOtp;
 use App\Helpers\PermissionHelper;
 use App\Models\PosActionOtp;
 use App\Models\PosActionOtpLog;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
-use Filament\Support\Icons\Heroicon;
+use Filament\Widgets\Widget;
 use Illuminate\Support\Collection;
 
-class PosActionOtpPage extends Page
+class PosActionOtpWidget extends Widget
 {
-    protected static \UnitEnum|string|null $navigationGroup = 'Pengaturan';
+    protected string $view = 'filament.widgets.pos-action-otp-widget';
 
-    protected static ?string $navigationLabel = 'OTP Otorisasi POS';
+    protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $title = 'OTP Otorisasi Transaksi POS';
-
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
-
-    protected string $view = 'filament.pages.settings.pos-action-otp';
+    protected static ?int $sort = -5;
 
     public string $currentCode = '';
 
@@ -29,14 +24,14 @@ class PosActionOtpPage extends Page
 
     public string $expiresAtFormatted = '-';
 
-    public static function canAccess(): bool
+    public static function canView(): bool
     {
         return PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.pos_action_otp.view');
     }
 
     public function boot(): void
     {
-        abort_unless(static::canAccess(), 403);
+        abort_unless(static::canView(), 403);
     }
 
     public function mount(GeneratePosActionOtp $generator): void
@@ -64,7 +59,7 @@ class PosActionOtpPage extends Page
         return PosActionOtpLog::query()
             ->with(['user', 'branch'])
             ->latest('used_at')
-            ->limit(15)
+            ->limit(10)
             ->get();
     }
 

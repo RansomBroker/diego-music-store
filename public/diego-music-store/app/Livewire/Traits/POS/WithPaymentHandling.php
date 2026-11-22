@@ -147,19 +147,22 @@ trait WithPaymentHandling
                 }
             }
 
-            // Compile human-readable payment method name (batch lookup to avoid N+1)
-            $dbMethodsMap = PaymentMethod::whereIn('code', $selectedPaymentMethods)->get()->keyBy('code');
+            // Compile human-readable payment method name (resolving grouped child/default providers)
             $methodNames = [];
             foreach ($selectedPaymentMethods as $m) {
                 $amount = intval($paymentAmounts[$m] ?? ($m === 'cash' ? $amountCash : ($m === 'debit' ? $amountDebit : ($m === 'credit' ? $amountCredit : 0))));
                 if ($amount > 0) {
-                    $dbMethod = $dbMethodsMap->get($m);
-                    $baseName = $dbMethod ? $dbMethod->name : ($m === 'cash' ? 'Tunai' : ($m === 'debit' ? 'Debit Card' : ($m === 'credit' ? 'Piutang' : ucfirst($m))));
                     $subValue = $paymentSubMethods[$m] ?? null;
-                    if (!empty($subValue)) {
-                        $baseName .= " ({$subValue})";
+                    $resolvedMethod = PaymentMethod::resolveForCheckout($m, $subValue);
+                    if ($resolvedMethod) {
+                        $methodNames[] = $resolvedMethod->formatCheckoutLabel();
+                    } else {
+                        $baseName = $m === 'cash' ? 'Tunai' : ($m === 'debit' ? 'Debit Card' : ($m === 'credit' ? 'Piutang' : ucfirst($m)));
+                        if (!empty($subValue)) {
+                            $baseName .= " - {$subValue}";
+                        }
+                        $methodNames[] = $baseName;
                     }
-                    $methodNames[] = $baseName;
                 }
             }
             $paymentMethodString = empty($methodNames) ? 'Tunai' : implode(' & ', $methodNames);

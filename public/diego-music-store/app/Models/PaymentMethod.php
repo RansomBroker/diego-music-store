@@ -87,7 +87,7 @@ class PaymentMethod extends Model
     public function formatCheckoutLabel(?string $ref = null): string
     {
         $label = $this->parent
-            ? "{$this->parent->name} ({$this->name})"
+            ? "{$this->parent->name} - {$this->name}"
             : $this->name;
 
         return $label . ($ref ? " (Ref: {$ref})" : '');

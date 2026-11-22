@@ -40,7 +40,7 @@
                             </div>
                         @else
                             <div class="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/50 p-3.5 text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-                                Masukkan kode <strong>OTP 6 digit</strong> dari menu <strong>Backoffice → Pengaturan → OTP Otorisasi POS</strong> untuk melanjutkan edit transaksi <strong>{{ $otpTargetInvoice }}</strong>.
+                                Masukkan kode <strong>OTP 6 digit</strong> dari <strong>Dashboard Backoffice</strong> untuk melanjutkan edit transaksi <strong>{{ $otpTargetInvoice }}</strong>.
                             </div>
                         @endif
 
@@ -74,9 +74,10 @@
                     </div>
 
                     <!-- Footer -->
-                    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5">
+                    <div class="px-6 py-3.5 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
                         <x-pos.utility.button
                             type="button"
+                            size="sm"
                             variant="secondary"
                             wire:click="closeOtpActionModal"
                         >
@@ -84,10 +85,11 @@
                         </x-pos.utility.button>
                         <x-pos.utility.button
                             type="submit"
+                            size="sm"
                             :variant="$isDelete ? 'danger' : 'warning'"
                             :icon="$isDelete ? 'ph-trash' : 'ph-check-circle'"
                         >
-                            {{ $isDelete ? 'Ya, Hapus Transaksi' : 'Verifikasi & Edit' }}
+                            {{ $isDelete ? 'Ya, Hapus' : 'Verifikasi & Edit' }}
                         </x-pos.utility.button>
                     </div>
                 </form>
