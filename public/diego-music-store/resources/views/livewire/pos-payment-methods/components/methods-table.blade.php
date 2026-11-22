@@ -19,6 +19,10 @@
                 <x-pos.table.th class="text-center">
                     Status
                 </x-pos.table.th>
+                <!-- Default Group -->
+                <x-pos.table.th class="text-center">
+                    Default Group
+                </x-pos.table.th>
                 <!-- Actions -->
                 <x-pos.table.th class="text-right">
                     Aksi
@@ -72,6 +76,34 @@
                             </span>
                         @endif
                     </x-pos.table.td>
+                    <!-- Default Switch per Parent Group -->
+                    <x-pos.table.td class="whitespace-nowrap text-center">
+                        @if ($row->parent_id)
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.payment_methods.edit'))
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked="{{ $row->is_default ? 'true' : 'false' }}"
+                                    wire:click="toggleDefault({{ $row->id }})"
+                                    title="{{ $row->is_default ? 'Nonaktifkan Default' : 'Jadikan Default Group' }}"
+                                    class="inline-flex items-center gap-2 cursor-pointer"
+                                >
+                                    <span class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 {{ $row->is_default ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700' }}">
+                                        <span class="inline-block h-4 w-4 transform rounded-full bg-white border border-slate-300 dark:border-slate-600 transition-transform duration-200 {{ $row->is_default ? 'translate-x-[18px]' : 'translate-x-[2px]' }}"></span>
+                                    </span>
+                                    @if ($row->is_default)
+                                        <span class="text-[10px] font-bold text-primary dark:text-blue-400">Default</span>
+                                    @endif
+                                </button>
+                            @else
+                                <span class="text-xs font-semibold {{ $row->is_default ? 'text-primary dark:text-blue-400' : 'text-slate-400' }}">
+                                    {{ $row->is_default ? 'Default' : '-' }}
+                                </span>
+                            @endif
+                        @else
+                            <span class="text-slate-300 dark:text-slate-600 text-xs">-</span>
+                        @endif
+                    </x-pos.table.td>
                     <!-- Actions -->
                     <x-pos.table.td class="whitespace-nowrap text-right">
                         <div class="flex items-center justify-end gap-1.5">
@@ -103,7 +135,7 @@
                     </x-pos.table.td>
                 </x-pos.table.tr>
             @empty
-                <x-pos.table.empty colspan="5" icon="ph-credit-card" message="Tidak ada metode pembayaran ditemukan" />
+                <x-pos.table.empty colspan="6" icon="ph-credit-card" message="Tidak ada metode pembayaran ditemukan" />
             @endforelse
         </tbody>
     </x-pos.table>

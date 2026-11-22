@@ -149,7 +149,11 @@ class DatabaseSeeder extends Seeder
                 'code' => 'qris',
                 'account_id' => $bankBcaAcc?->id,
                 'parent_id' => null,
-                'children' => [],
+                'children' => [
+                    ['name' => 'BCA', 'code' => 'qris-bca', 'account_id' => $bankBcaAcc?->id, 'is_default' => true],
+                    ['name' => 'Mandiri', 'code' => 'qris-mandiri', 'account_id' => $bankMandiri?->id, 'is_default' => false],
+                    ['name' => 'BRI', 'code' => 'qris-bri', 'account_id' => $bankBri?->id, 'is_default' => false],
+                ],
             ],
             [
                 'name' => 'Transfer',
@@ -198,6 +202,7 @@ class DatabaseSeeder extends Seeder
                         'account_id' => $child['account_id'],
                         'parent_id' => $parent->id,
                         'is_active' => true,
+                        'is_default' => $child['is_default'] ?? false,
                     ]
                 );
             }

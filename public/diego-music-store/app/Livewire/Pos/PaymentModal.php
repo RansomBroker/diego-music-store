@@ -46,11 +46,35 @@ class PaymentModal extends Component
         $this->paymentAmounts = [
             'cash' => $this->grandTotal
         ];
+
+        foreach ($this->selectedPaymentMethods as $methodCode) {
+            $this->applyDefaultSubMethod($methodCode);
+        }
     }
 
     public function getPaymentMethodsProperty()
     {
-        return PaymentMethod::with(['children', 'parent'])->get();
+        return PaymentMethod::with([
+            'children' => fn ($q) => $q->where('is_active', true)->orderByDesc('is_default')->orderBy('id'),
+            'parent',
+        ])->where('is_active', true)->get();
+    }
+
+    protected function applyDefaultSubMethod(string $methodCode): void
+    {
+        if (! empty($this->paymentSubMethods[$methodCode])) {
+            return;
+        }
+
+        $parent = $this->paymentMethods->firstWhere('code', $methodCode);
+        if (! $parent || $parent->children->isEmpty()) {
+            return;
+        }
+
+        $defaultChild = $parent->children->firstWhere('is_default', true);
+        if ($defaultChild) {
+            $this->paymentSubMethods[$methodCode] = $defaultChild->name;
+        }
     }
 
     public function togglePaymentMethod($method)
@@ -100,6 +124,7 @@ class PaymentModal extends Component
             if ($method === 'cash') $this->amountCash = $remaining;
             if ($method === 'debit') $this->amountDebit = $remaining;
             if ($method === 'credit') $this->amountCredit = $remaining;
+            $this->applyDefaultSubMethod($method);
         }
 
         $this->distributePaymentAmounts();

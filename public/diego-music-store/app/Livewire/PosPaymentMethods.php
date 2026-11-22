@@ -39,6 +39,7 @@ class PosPaymentMethods extends Component
     public ?int $parent_id = null;
     public ?int $account_id = null;
     public bool $is_active = true;
+    public bool $is_default = false;
 
     // ── State Konfirmasi Hapus ───────────────────────────────────────────
     public bool $showDeleteModal = false;
@@ -76,7 +77,7 @@ class PosPaymentMethods extends Component
     public function openCreate(): void
     {
         abort_unless(PermissionHelper::can(Auth::user(), 'fo.payment_methods.create'), 403);
-        $this->reset(['name', 'code', 'parent_id', 'account_id', 'is_active', 'editingId', 'isEditing']);
+        $this->reset(['name', 'code', 'parent_id', 'account_id', 'is_active', 'is_default', 'editingId', 'isEditing']);
         $this->showModal = true;
     }
 
@@ -93,6 +94,7 @@ class PosPaymentMethods extends Component
         $this->parent_id  = $method->parent_id;
         $this->account_id = $method->account_id;
         $this->is_active  = (bool) $method->is_active;
+        $this->is_default = (bool) $method->is_default;
 
         $this->showModal = true;
     }
@@ -112,6 +114,7 @@ class PosPaymentMethods extends Component
             'parent_id' => 'nullable|exists:payment_methods,id',
             'account_id' => 'nullable|exists:accounts,id',
             'is_active' => 'boolean',
+            'is_default' => 'boolean',
         ];
 
         $this->validate($rules, [
@@ -126,6 +129,7 @@ class PosPaymentMethods extends Component
             'parent_id' => $this->parent_id,
             'account_id' => $this->account_id,
             'is_active' => $this->is_active,
+            'is_default' => $this->parent_id ? $this->is_default : false,
         ];
 
         if ($this->isEditing) {
@@ -141,6 +145,28 @@ class PosPaymentMethods extends Component
 
         $this->showModal = false;
         $this->resetPage();
+    }
+
+    // ── Switch Default Sub-Metode per Group ──────────────────────────────
+    public function toggleDefault(int $id, UpdatePaymentMethod $updateAction): void
+    {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.payment_methods.edit'), 403);
+        $method = PaymentMethod::with('parent')->findOrFail($id);
+
+        if (! $method->parent_id) {
+            return;
+        }
+
+        $newState = ! (bool) $method->is_default;
+        $updateAction->execute($method, ['is_default' => $newState]);
+
+        $groupName = $method->parent?->name ?? 'Group';
+        $msg = $newState
+            ? "Sub-metode \"{$method->name}\" dijadikan default untuk {$groupName}."
+            : "Status default \"{$method->name}\" pada {$groupName} dinonaktifkan.";
+
+        Notification::make()->title($msg)->success()->send();
+        $this->dispatch('toast', type: 'success', title: 'Berhasil', body: $msg);
     }
 
     // ── Konfirmasi Hapus ─────────────────────────────────────────────────
@@ -186,7 +212,7 @@ class PosPaymentMethods extends Component
     // ── Render ───────────────────────────────────────────────────────────
     public function render()
     {
-        $methods = PaymentMethod::with(['account', 'parent'])
+        $methods = PaymentMethod::with(['account', 'parent', 'children'])
             ->when($this->search, fn ($q) =>
                 $q->where('name', 'like', "%{$this->search}%")
                   ->orWhere('code', 'like', "%{$this->search}%")

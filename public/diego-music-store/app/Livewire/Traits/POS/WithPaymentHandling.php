@@ -137,12 +137,12 @@ trait WithPaymentHandling
                 if ($amount > 0) {
                     $refValue = $paymentRefs[$method] ?? ($method === 'debit' ? $debitRef : null);
                     $subValue = $paymentSubMethods[$method] ?? null;
-                    $combinedRef = trim(($subValue ? "Bank: {$subValue}" : '') . ($refValue ? ($subValue ? ' | ' : '') . "Ref: {$refValue}" : ''));
 
                     $paymentsData[] = [
                         'method' => $method,
+                        'sub_method' => $subValue ?: null,
                         'amount' => $amount,
-                        'ref' => $combinedRef ?: null
+                        'ref' => $refValue ?: null,
                     ];
                 }
             }

@@ -214,10 +214,10 @@ class CreatePOSSale
                     continue;
                 }
 
-                $dbMethod = \App\Models\PaymentMethod::where('code', $payMethod)->first();
+                $dbMethod = \App\Models\PaymentMethod::resolveForCheckout($payMethod, $pay['sub_method'] ?? null);
                 if ($dbMethod) {
-                    $debitAccId = $dbMethod->account_id ?: $resolveAccount('111101001', 'KAS', 'Asset');
-                    $methodName = $dbMethod->name . ($payRef ? " (Ref: {$payRef})" : '');
+                    $debitAccId = $dbMethod->getEffectiveAccountId() ?: $resolveAccount('111101001', 'KAS', 'Asset');
+                    $methodName = $dbMethod->formatCheckoutLabel($payRef);
                 } else {
                     if ($payMethod === 'credit') {
                         $debitAccId = $resolveAccount('111301001', 'PIUTANG DAGANG', 'Asset');

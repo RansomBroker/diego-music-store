@@ -135,4 +135,60 @@ class PosPaymentMethodsGroupingTest extends TestCase
 
         $this->assertDatabaseHas('payment_methods', ['id' => $parent->id]);
     }
+
+    public function test_qris_has_bca_mandiri_bri_children_and_bca_is_default_selected_in_payment_modal(): void
+    {
+        $bankBca = Account::firstOrCreate(['code' => '111201001'], ['name' => 'BANK BCA', 'classification' => 'Asset', 'is_active' => true]);
+        $bankMandiri = Account::firstOrCreate(['code' => '111201002'], ['name' => 'BANK Mandiri', 'classification' => 'Asset', 'is_active' => true]);
+        $bankBri = Account::firstOrCreate(['code' => '111201003'], ['name' => 'BANK BRI', 'classification' => 'Asset', 'is_active' => true]);
+
+        $qris = PaymentMethod::where('code', 'qris')->first();
+        if (! $qris) {
+            $qris = PaymentMethod::create(['name' => 'QRIS', 'code' => 'qris', 'account_id' => $bankBca->id, 'is_active' => true]);
+            PaymentMethod::create(['name' => 'BCA', 'code' => 'qris-bca', 'parent_id' => $qris->id, 'account_id' => $bankBca->id, 'is_active' => true, 'is_default' => true]);
+            PaymentMethod::create(['name' => 'Mandiri', 'code' => 'qris-mandiri', 'parent_id' => $qris->id, 'account_id' => $bankMandiri->id, 'is_active' => true, 'is_default' => false]);
+            PaymentMethod::create(['name' => 'BRI', 'code' => 'qris-bri', 'parent_id' => $qris->id, 'account_id' => $bankBri->id, 'is_active' => true, 'is_default' => false]);
+        }
+
+        $qrisBca = PaymentMethod::where('code', 'qris-bca')->first();
+        $qrisMandiri = PaymentMethod::where('code', 'qris-mandiri')->first();
+        $qrisBri = PaymentMethod::where('code', 'qris-bri')->first();
+
+        $this->assertNotNull($qrisBca);
+        $this->assertNotNull($qrisMandiri);
+        $this->assertNotNull($qrisBri);
+        $this->assertTrue((bool) $qrisBca->is_default);
+
+        // PaymentModal auto-selects default child ('BCA') when 'qris' is toggled
+        $modal = Livewire::test(\App\Livewire\Pos\PaymentModal::class, ['grandTotal' => 100000])
+            ->call('togglePaymentMethod', 'qris')
+            ->assertSet('paymentSubMethods.qris', 'BCA');
+
+        // Toggle default per parent group does not affect other parent groups
+        $debit = PaymentMethod::create(['name' => 'Debit Card', 'code' => 'debit_card', 'account_id' => $bankBca->id, 'is_active' => true]);
+        $debitBca = PaymentMethod::create(['name' => 'BCA', 'code' => 'debit-bca', 'parent_id' => $debit->id, 'account_id' => $bankBca->id, 'is_active' => true, 'is_default' => true]);
+        $debitMandiri = PaymentMethod::create(['name' => 'Mandiri', 'code' => 'debit-mandiri', 'parent_id' => $debit->id, 'account_id' => $bankMandiri->id, 'is_active' => true, 'is_default' => false]);
+
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $user = User::factory()->create();
+        $user->assignRole($ownerRole);
+
+        Livewire::actingAs($user)
+            ->test(PosPaymentMethods::class)
+            ->call('toggleDefault', $qrisMandiri->id)
+            ->assertHasNoErrors();
+
+        $this->assertFalse((bool) $qrisBca->fresh()->is_default);
+        $this->assertTrue((bool) $qrisMandiri->fresh()->is_default);
+        $this->assertTrue((bool) $debitBca->fresh()->is_default);
+        $this->assertFalse((bool) $debitMandiri->fresh()->is_default);
+
+        // Checkout routing maps QRIS -> Mandiri to BANK Mandiri COA account
+        $resolvedMandiri = PaymentMethod::resolveForCheckout('qris', 'Mandiri');
+        $this->assertSame($bankMandiri->id, $resolvedMandiri->getEffectiveAccountId());
+        $this->assertSame('QRIS (Mandiri)', $resolvedMandiri->formatCheckoutLabel());
+
+        $resolvedBri = PaymentMethod::resolveForCheckout('qris', 'BRI');
+        $this->assertSame($bankBri->id, $resolvedBri->getEffectiveAccountId());
+    }
 }
