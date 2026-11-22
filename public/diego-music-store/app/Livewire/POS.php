@@ -160,6 +160,14 @@ class POS extends Component
         $saleId = request()->query('edit');
         if ($saleId) {
             abort_unless(\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.edit_sale'), 403);
+            if (! \App\Helpers\PosOtpHelper::hasValidEditSaleSession((int) $saleId, Auth::user())) {
+                Notification::make()
+                    ->title('Otorisasi OTP Diperlukan')
+                    ->body('Silakan verifikasi kode OTP dari Owner melalui Daftar Transaksi sebelum mengedit transaksi ini.')
+                    ->warning()
+                    ->send();
+                return redirect()->to('/pos/transactions');
+            }
             $sale = \App\Models\Sale::with(['items.variant.product', 'items.variant.tierPrices', 'customer', 'salesRep'])->find($saleId);
             if ($sale) {
                 if ($sale->branch_id !== $this->selectedBranchId) {

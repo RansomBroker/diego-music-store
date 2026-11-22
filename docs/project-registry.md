@@ -7,6 +7,7 @@ Peta komponen arsitektur Diego Music Store (ERP, POS & Accounting). Jaga file in
 
 ## Core Domains & Action Modules (`app/Actions/`)
 - `Pos/`: Transaksi kasir, held transactions, pembayaran multi-metode, voucher, & integrasi stok.
+- `PosOtp/`: Generator & verifikasi OTP 6 digit (1 menit) di Backoffice untuk otorisasi edit & hapus transaksi POS non-owner.
 - `SalesQueue/`: Antrian giliran melayani sales (round-robin), on-duty tracking, & laporan performa.
 - `Accounting/`: General ledger, pembuatan journal entry otomatis/terjadwal, COA, & monthly closing.
 - `Product/`: Manajemen master produk, varian, pricing tier, branch stock, barcode, & bundle.

@@ -152,11 +152,22 @@
                 <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-850 flex items-center justify-end gap-3">
                     @if ($selectedSale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.edit_sale'))
                         <x-pos.utility.button
+                            type="button"
                             variant="warning"
-                            href="/pos?edit={{ $selectedSale->id }}"
+                            wire:click="requestEditSale({{ $selectedSale->id }})"
                             icon="ph-pencil"
                         >
                             Edit Transaksi
+                        </x-pos.utility.button>
+                    @endif
+                    @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.transactions.delete'))
+                        <x-pos.utility.button
+                            type="button"
+                            variant="danger"
+                            wire:click="confirmDeleteSale({{ $selectedSale->id }})"
+                            icon="ph-trash"
+                        >
+                            Hapus Transaksi
                         </x-pos.utility.button>
                     @endif
                     @if ($selectedSale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.transactions.return') && $selectedSale->items->sum(fn($item) => $item->quantity - $item->returnItems()->sum('quantity')) > 0)

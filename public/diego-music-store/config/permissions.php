@@ -62,6 +62,7 @@ return [
                                 'fo.transactions.view' => 'Tampil & Lihat',
                                 'fo.transactions.return' => 'Retur / Void Transaksi',
                                 'fo.transactions.settle' => 'Pelunasan Piutang Nota',
+                                'fo.transactions.delete' => 'Hapus Transaksi',
                             ],
                         ],
                         'fo_customer_deposits' => [
@@ -851,6 +852,13 @@ return [
                             'permissions' => [
                                 'bo.po_smart_assist.view' => 'Tampil & Lihat',
                                 'bo.po_smart_assist.edit' => 'Ubah Pengaturan',
+                            ],
+                        ],
+                        'bo_pos_action_otp' => [
+                            'label' => 'OTP Otorisasi POS',
+                            'permissions' => [
+                                'bo.pos_action_otp.view' => 'Lihat Kode OTP & Riwayat',
+                                'bo.pos_action_otp.refresh' => 'Refresh / Buat OTP Baru',
                             ],
                         ],
                     ],

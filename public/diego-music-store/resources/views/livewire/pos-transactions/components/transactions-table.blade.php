@@ -87,11 +87,22 @@
                             />
                             @if ($sale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.edit_sale'))
                                 <x-pos.utility.button
-                                    href="/pos?edit={{ $sale->id }}"
+                                    type="button"
+                                    wire:click="requestEditSale({{ $sale->id }})"
                                     variant="warning"
                                     size="xs"
                                     icon="ph-pencil"
                                     title="Edit Transaksi"
+                                />
+                            @endif
+                            @if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.transactions.delete'))
+                                <x-pos.utility.button
+                                    type="button"
+                                    wire:click="confirmDeleteSale({{ $sale->id }})"
+                                    variant="danger"
+                                    size="xs"
+                                    icon="ph-trash"
+                                    title="Hapus Transaksi"
                                 />
                             @endif
                             @if ($sale->status !== 'cancelled' && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.transactions.return') && $sale->items->sum(fn($item) => $item->quantity - $item->returnItems()->sum('quantity')) > 0)

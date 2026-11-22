@@ -26,11 +26,18 @@ class UpdatePOSSale
     {
         \App\Helpers\PermissionHelper::enforceActionPermission(Auth::user(), 'fo.pos.edit_sale');
         abort_unless(Auth::check(), 403);
+        if (\App\Helpers\PosOtpHelper::requiresOtp(Auth::user())) {
+            abort_unless(
+                \App\Helpers\PosOtpHelper::hasValidEditSaleSession((int) $sale->id, Auth::user()),
+                403,
+                'Otorisasi OTP dari Owner diperlukan untuk mengubah transaksi ini.'
+            );
+        }
         $allowedBranchIds = \App\Helpers\BranchHelper::getAllowedBranchesQuery()
             ->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
         abort_unless(in_array((int) $sale->branch_id, $allowedBranchIds, true), 403);
 
-        return DB::transaction(function () use ($sale, $data) {
+        $updatedSale = DB::transaction(function () use ($sale, $data) {
             $items = $data['items'] ?? [];
             if (empty($items)) {
                 throw new \Exception('Keranjang belanja kosong.');
@@ -321,5 +328,9 @@ class UpdatePOSSale
 
             return $sale;
         });
+
+        \App\Helpers\PosOtpHelper::consumeEditSaleSession((int) $sale->id);
+
+        return $updatedSale;
     }
 }

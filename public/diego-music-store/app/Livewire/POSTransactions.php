@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Sale;
 use App\Helpers\PermissionHelper;
+use App\Helpers\PosOtpHelper;
 use App\Models\Branch;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
@@ -47,6 +48,14 @@ class POSTransactions extends Component
     public string $settlementReference = '';
     public float $settlementAmount = 0;
     public string $settlementNote = '';
+
+    // ── OTP & Delete Modal State ──────────────────────────────────────────
+    public bool $showOtpActionModal = false;
+    public string $otpActionType = '';
+    public ?int $otpTargetSaleId = null;
+    public string $otpTargetInvoice = '';
+    public string $otpCode = '';
+    public string $otpError = '';
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -186,6 +195,137 @@ class POSTransactions extends Component
         abort_unless(PermissionHelper::can(Auth::user(), ['fo.pos.print', 'fo.transactions.view']), 403);
         Sale::query()->where('branch_id', $this->resolveAuthorizedBranchId())->findOrFail($saleId);
         $this->dispatch('print-receipt', saleId: $saleId);
+    }
+
+    public function requestEditSale(int $saleId)
+    {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.pos.edit_sale'), 403);
+
+        $sale = Sale::query()
+            ->where('branch_id', $this->resolveAuthorizedBranchId())
+            ->findOrFail($saleId);
+
+        if ($sale->status === 'cancelled') {
+            Notification::make()
+                ->title('Gagal')
+                ->body('Tidak dapat mengedit transaksi yang sudah dibatalkan.')
+                ->danger()
+                ->send();
+            return null;
+        }
+
+        if (! PosOtpHelper::requiresOtp(Auth::user())) {
+            return $this->redirect('/pos?edit=' . $sale->id);
+        }
+
+        $this->otpActionType = 'edit_sale';
+        $this->otpTargetSaleId = $sale->id;
+        $this->otpTargetInvoice = (string) $sale->invoice_number;
+        $this->otpCode = '';
+        $this->otpError = '';
+        $this->showOtpActionModal = true;
+
+        return null;
+    }
+
+    public function confirmDeleteSale(int $saleId): void
+    {
+        abort_unless(PermissionHelper::can(Auth::user(), 'fo.transactions.delete'), 403);
+
+        $sale = Sale::query()
+            ->where('branch_id', $this->resolveAuthorizedBranchId())
+            ->findOrFail($saleId);
+
+        $this->otpActionType = 'delete_sale';
+        $this->otpTargetSaleId = $sale->id;
+        $this->otpTargetInvoice = (string) $sale->invoice_number;
+        $this->otpCode = '';
+        $this->otpError = '';
+        $this->showOtpActionModal = true;
+    }
+
+    public function closeOtpActionModal(): void
+    {
+        $this->showOtpActionModal = false;
+        $this->otpActionType = '';
+        $this->otpTargetSaleId = null;
+        $this->otpTargetInvoice = '';
+        $this->otpCode = '';
+        $this->otpError = '';
+    }
+
+    public function submitOtpAction()
+    {
+        $this->otpError = '';
+
+        if (! $this->otpTargetSaleId || ! in_array($this->otpActionType, ['edit_sale', 'delete_sale'], true)) {
+            $this->closeOtpActionModal();
+            return null;
+        }
+
+        $user = Auth::user();
+        $requiredPermission = $this->otpActionType === 'delete_sale'
+            ? 'fo.transactions.delete'
+            : 'fo.pos.edit_sale';
+
+        abort_unless(PermissionHelper::can($user, $requiredPermission), 403);
+
+        $sale = Sale::query()
+            ->where('branch_id', $this->resolveAuthorizedBranchId())
+            ->findOrFail($this->otpTargetSaleId);
+
+        if (PosOtpHelper::requiresOtp($user)) {
+            try {
+                app(\App\Actions\PosOtp\VerifyPosActionOtp::class)->execute(
+                    $this->otpCode,
+                    $this->otpActionType,
+                    $sale,
+                    $user
+                );
+            } catch (\InvalidArgumentException $e) {
+                $this->otpError = $e->getMessage();
+                return null;
+            }
+        }
+
+        if ($this->otpActionType === 'edit_sale') {
+            PosOtpHelper::grantEditSaleSession($sale->id);
+            $saleId = $sale->id;
+            $this->closeOtpActionModal();
+            return $this->redirect('/pos?edit=' . $saleId);
+        }
+
+        try {
+            $invoiceNumber = $sale->invoice_number;
+            app(\App\Actions\Sales\DeletePOSSale::class)->execute($sale);
+
+            Notification::make()
+                ->title('Transaksi Dihapus')
+                ->body("Transaksi {$invoiceNumber} berhasil dihapus beserta mutasi stok dan jurnal terkait.")
+                ->success()
+                ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => "Transaksi {$invoiceNumber} berhasil dihapus.",
+            ]);
+
+            if ($this->selectedSale && $this->selectedSale->id === $this->otpTargetSaleId) {
+                $this->closeDetails();
+            }
+
+            $this->closeOtpActionModal();
+            $this->resetPage();
+        } catch (\Throwable $e) {
+            $this->otpError = $e->getMessage();
+            Notification::make()
+                ->title('Gagal Menghapus Transaksi')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+
+        return null;
     }
 
     public function startReturn(int $saleId): void

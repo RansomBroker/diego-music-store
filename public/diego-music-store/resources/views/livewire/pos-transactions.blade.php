@@ -61,4 +61,7 @@
 
     <!-- Modal Pelunasan Piutang -->
     @include('livewire.pos-transactions.components.settlement-modal')
+
+    <!-- Modal Otorisasi OTP & Hapus Transaksi -->
+    @include('livewire.pos-transactions.components.otp-action-modal')
 </div>
