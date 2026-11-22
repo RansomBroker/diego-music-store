@@ -28,8 +28,9 @@ class BackofficeSidebarDefaultCollapsedTest extends TestCase
         $response = $this->actingAs($user)->get('/backoffice');
 
         $response->assertStatus(200);
-        $response->assertSee("localStorage.setItem('_x_isOpenDesktop', 'false')", false);
-        $response->assertSee("localStorage.setItem('_x_isOpen', 'false')", false);
+        $response->assertSee("localStorage.setItem('isOpenDesktop', 'false')", false);
+        $response->assertSee("localStorage.setItem('isOpen', 'false')", false);
+        $response->assertSee('bo_sidebar_default_collapsed_v2', false);
         $response->assertSee('fi-body-has-sidebar-collapsible-on-desktop');
     }
 }
