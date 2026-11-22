@@ -175,6 +175,14 @@
             <td class="text-left" style="color: #475569;">Penjualan Non-Tunai:</td>
             <td class="text-right">{{ $nonCashSalesCount }} tx (Rp {{ number_format($nonCashSalesSum, 0, ',', '.') }})</td>
         </tr>
+        @if (!empty($nonCashBreakdown))
+            @foreach ($nonCashBreakdown as $methodSummary)
+                <tr>
+                    <td class="text-left" style="color: #64748b; padding-left: 10px; font-size: 8.5px;">- {{ $methodSummary['label'] }}:</td>
+                    <td class="text-right" style="color: #475569; font-size: 8.5px;">{{ $methodSummary['count'] }} tx (Rp {{ number_format($methodSummary['amount'], 0, ',', '.') }})</td>
+                </tr>
+            @endforeach
+        @endif
         <tr class="total-row" style="border-top: 1px dashed #cbd5e1;">
             <td class="text-left">TOTAL PENJUALAN:</td>
             <td class="text-right">{{ $totalSalesCount }} tx (Rp {{ number_format($totalSalesSum, 0, ',', '.') }})</td>

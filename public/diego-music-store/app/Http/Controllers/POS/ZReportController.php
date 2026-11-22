@@ -36,6 +36,7 @@ class ZReportController extends Controller
             }
         }
 
+        $nonCashBreakdown = \App\Helpers\SaleHelper::getSalesNonCashBreakdown($sales);
         $totalSalesCount = $sales->count();
         $totalSalesSum = $sales->sum('grand_total');
 
@@ -45,6 +46,7 @@ class ZReportController extends Controller
             'cashSalesSum' => $cashSalesSum,
             'nonCashSalesCount' => $nonCashSalesCount,
             'nonCashSalesSum' => $nonCashSalesSum,
+            'nonCashBreakdown' => $nonCashBreakdown,
             'totalSalesCount' => $totalSalesCount,
             'totalSalesSum' => $totalSalesSum,
         ];

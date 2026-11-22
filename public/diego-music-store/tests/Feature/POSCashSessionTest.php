@@ -205,4 +205,129 @@ class POSCashSessionTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/pdf');
     }
+
+    /** @test */
+    public function it_displays_detailed_non_cash_payment_breakdown_on_z_report()
+    {
+        $session = CashSession::create([
+            'user_id' => $this->user->id,
+            'branch_id' => $this->branch->id,
+            'status' => 'closed',
+            'opened_at' => now()->subHours(5),
+            'closed_at' => now()->subHours(1),
+            'opening_cash' => 500000,
+            'expected_cash' => 600000,
+            'actual_cash' => 600000,
+            'difference' => 0,
+        ]);
+
+        $cashAccount = \App\Models\Account::firstOrCreate(
+            ['code' => '111101001'],
+            ['name' => 'KAS', 'classification' => 'Asset', 'is_active' => true]
+        );
+        $bankBca = \App\Models\Account::firstOrCreate(
+            ['code' => '111201001'],
+            ['name' => 'BANK BCA', 'classification' => 'Asset', 'is_active' => true]
+        );
+        $bankMandiri = \App\Models\Account::firstOrCreate(
+            ['code' => '111201002'],
+            ['name' => 'BANK Mandiri', 'classification' => 'Asset', 'is_active' => true]
+        );
+
+        // Sale 1: Split Cash 100k + QRIS 250k
+        $splitSale = Sale::create([
+            'branch_id' => $this->branch->id,
+            'cash_session_id' => $session->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-ZR-0001',
+            'invoice_date' => now()->toDateString(),
+            'subtotal' => 350000,
+            'grand_total' => 350000,
+            'paid_amount' => 350000,
+            'change_amount' => 0,
+            'payment_method' => 'Tunai & QRIS',
+            'status' => 'completed',
+            'created_by' => $this->user->id,
+        ]);
+        $je1 = \App\Models\JournalEntry::create([
+            'branch_id' => $this->branch->id,
+            'entry_no' => 'JV-ZR-001',
+            'date' => now()->toDateString(),
+            'reference_type' => 'Sales',
+            'reference_id' => $splitSale->id,
+            'status' => 'posted',
+            'created_by' => $this->user->id,
+        ]);
+        \App\Models\JournalItem::create([
+            'journal_entry_id' => $je1->id,
+            'account_id' => $cashAccount->id,
+            'debit' => 100000,
+            'credit' => 0,
+            'notes' => 'Penerimaan POS - Cash',
+        ]);
+        \App\Models\JournalItem::create([
+            'journal_entry_id' => $je1->id,
+            'account_id' => $bankBca->id,
+            'debit' => 250000,
+            'credit' => 0,
+            'notes' => 'Penerimaan POS - QRIS (Ref: QR-123)',
+        ]);
+
+        // Sale 2: Transfer Mandiri 500k
+        $transferSale = Sale::create([
+            'branch_id' => $this->branch->id,
+            'cash_session_id' => $session->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-ZR-0002',
+            'invoice_date' => now()->toDateString(),
+            'subtotal' => 500000,
+            'grand_total' => 500000,
+            'paid_amount' => 500000,
+            'change_amount' => 0,
+            'payment_method' => 'Transfer (Mandiri)',
+            'status' => 'completed',
+            'created_by' => $this->user->id,
+        ]);
+        $je2 = \App\Models\JournalEntry::create([
+            'branch_id' => $this->branch->id,
+            'entry_no' => 'JV-ZR-002',
+            'date' => now()->toDateString(),
+            'reference_type' => 'Sales',
+            'reference_id' => $transferSale->id,
+            'status' => 'posted',
+            'created_by' => $this->user->id,
+        ]);
+        \App\Models\JournalItem::create([
+            'journal_entry_id' => $je2->id,
+            'account_id' => $bankMandiri->id,
+            'debit' => 500000,
+            'credit' => 0,
+            'notes' => 'Penerimaan POS - Debit Card (Bank: Mandiri | Ref: EDC-999)',
+        ]);
+
+        $response = $this->get(route('pos.z-report', $session->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('1 tx (Rp 100.000)');
+        $response->assertSee('2 tx (Rp 750.000)');
+        $response->assertSee('- Debit Card (Mandiri):');
+        $response->assertSee('1 tx (Rp 500.000)');
+        $response->assertSee('- QRIS:');
+        $response->assertSee('1 tx (Rp 250.000)');
+        $response->assertSee('2 tx (Rp 850.000)');
+
+        $pdfHtml = view('pos.z-report-pdf', [
+            'session' => $session->fresh(['branch', 'user', 'closedBy']),
+            'cashSalesCount' => 1,
+            'cashSalesSum' => 100000,
+            'nonCashSalesCount' => 2,
+            'nonCashSalesSum' => 750000,
+            'nonCashBreakdown' => \App\Helpers\SaleHelper::getSalesNonCashBreakdown(collect([$splitSale, $transferSale])),
+            'totalSalesCount' => 2,
+            'totalSalesSum' => 850000,
+        ])->render();
+
+        $this->assertStringContainsString('- Debit Card (Mandiri):', $pdfHtml);
+        $this->assertStringContainsString('- QRIS:', $pdfHtml);
+    }
 }

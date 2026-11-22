@@ -59,6 +59,133 @@ class SaleHelper
     }
 
     /**
+     * Resolve detailed non-cash payment breakdown (method label & amount) for a single sale.
+     *
+     * @return array<int, array{label: string, amount: int}>
+     */
+    public static function getNonCashBreakdown(Sale $sale, ?JournalEntry $journalEntry = null, ?int $cashAccountId = null): array
+    {
+        $journalEntry ??= JournalEntry::with('items.account')
+            ->where('reference_type', 'Sales')
+            ->where('reference_id', $sale->id)
+            ->first();
+
+        $cashAccountId ??= AccountHelper::findByCode('111101001')?->id;
+
+        if ($journalEntry) {
+            $breakdown = [];
+            foreach ($journalEntry->items as $item) {
+                $amount = intval($item->debit);
+                if ($amount <= 0) {
+                    continue;
+                }
+                if ($cashAccountId && (int) $item->account_id === $cashAccountId) {
+                    continue;
+                }
+
+                $isPaymentLeg = str_starts_with((string) $item->notes, 'Penerimaan POS - ')
+                    || ($item->account && strtolower((string) $item->account->classification) === 'asset');
+
+                if (! $isPaymentLeg) {
+                    continue;
+                }
+
+                $breakdown[] = [
+                    'label' => self::formatPaymentLegLabel((string) $item->notes, $item->account?->name),
+                    'amount' => $amount,
+                ];
+            }
+
+            if (! empty($breakdown)) {
+                return $breakdown;
+            }
+        }
+
+        $nonCashAmt = self::getNonCashAmount($sale);
+        if ($nonCashAmt <= 0) {
+            return [];
+        }
+
+        $parts = array_values(array_filter(array_map('trim', explode('&', (string) $sale->payment_method)), function ($part) {
+            $lower = strtolower($part);
+            return $part !== '' && ! str_contains($lower, 'tunai') && ! str_contains($lower, 'cash') && $lower !== 'kas';
+        }));
+
+        $label = ! empty($parts) ? implode(' & ', $parts) : (trim((string) $sale->payment_method) ?: 'Non-Tunai');
+
+        return [[
+            'label' => $label,
+            'amount' => $nonCashAmt,
+        ]];
+    }
+
+    /**
+     * Aggregate detailed non-cash breakdown across a collection of sales (batch-loaded journals).
+     *
+     * @param  \Illuminate\Support\Collection<int, Sale>  $sales
+     * @return array<int, array{label: string, count: int, amount: int}>
+     */
+    public static function getSalesNonCashBreakdown($sales): array
+    {
+        if ($sales->isEmpty()) {
+            return [];
+        }
+
+        $saleIds = $sales->pluck('id')->all();
+        $journals = JournalEntry::with('items.account')
+            ->where('reference_type', 'Sales')
+            ->whereIn('reference_id', $saleIds)
+            ->get()
+            ->keyBy('reference_id');
+
+        $cashAccountId = AccountHelper::findByCode('111101001')?->id;
+        $grouped = [];
+
+        foreach ($sales as $sale) {
+            $legs = self::getNonCashBreakdown($sale, $journals->get($sale->id), $cashAccountId);
+            $seenLabelsInSale = [];
+
+            foreach ($legs as $leg) {
+                $label = $leg['label'];
+                if (! isset($grouped[$label])) {
+                    $grouped[$label] = [
+                        'label' => $label,
+                        'count' => 0,
+                        'amount' => 0,
+                    ];
+                }
+                if (! isset($seenLabelsInSale[$label])) {
+                    $grouped[$label]['count']++;
+                    $seenLabelsInSale[$label] = true;
+                }
+                $grouped[$label]['amount'] += $leg['amount'];
+            }
+        }
+
+        uasort($grouped, fn ($a, $b) => $b['amount'] <=> $a['amount'] ?: strcmp($a['label'], $b['label']));
+
+        return array_values($grouped);
+    }
+
+    protected static function formatPaymentLegLabel(string $notes, ?string $accountName = null): string
+    {
+        if (str_starts_with($notes, 'Penerimaan POS - ')) {
+            $label = substr($notes, strlen('Penerimaan POS - '));
+            // Strip reference number tokens while preserving clean Bank/sub-method info
+            $label = preg_replace('/\s*\|\s*Ref:\s*[^)]*/i', '', $label);
+            $label = preg_replace('/\s*\(Ref:\s*[^)]*\)/i', '', $label);
+            $label = preg_replace('/\(Bank:\s*([^)]+)\)/i', '($1)', $label);
+            $label = trim($label);
+
+            if ($label !== '') {
+                return $label;
+            }
+        }
+
+        return $accountName ?: 'Non-Tunai';
+    }
+
+    /**
      * Get the sum of cash sales for a cash session.
      *
      * @param  CashSession  $session

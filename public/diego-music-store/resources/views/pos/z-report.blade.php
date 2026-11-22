@@ -266,6 +266,14 @@
             <span>Penjualan Non-Tunai:</span>
             <span>{{ $nonCashSalesCount }} tx (Rp {{ number_format($nonCashSalesSum, 0, ',', '.') }})</span>
         </div>
+        @if (!empty($nonCashBreakdown))
+            @foreach ($nonCashBreakdown as $methodSummary)
+                <div class="grid" style="padding-left: 10px; font-size: 11px; color: #334155;">
+                    <span>- {{ $methodSummary['label'] }}:</span>
+                    <span>{{ $methodSummary['count'] }} tx (Rp {{ number_format($methodSummary['amount'], 0, ',', '.') }})</span>
+                </div>
+            @endforeach
+        @endif
         <div class="divider"></div>
         <div class="grid bold">
             <span>Total Penjualan:</span>
