@@ -330,4 +330,46 @@ class POSCashSessionTest extends TestCase
         $this->assertStringContainsString('- Debit Card (Mandiri):', $pdfHtml);
         $this->assertStringContainsString('- QRIS:', $pdfHtml);
     }
+
+    /** @test */
+    public function it_allows_viewing_and_downloading_z_report_for_an_active_open_session()
+    {
+        $session = CashSession::create([
+            'user_id' => $this->user->id,
+            'branch_id' => $this->branch->id,
+            'status' => 'open',
+            'opened_at' => now()->subHours(2),
+            'opening_cash' => 300000,
+        ]);
+
+        Sale::create([
+            'branch_id' => $this->branch->id,
+            'cash_session_id' => $session->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-OPEN-0001',
+            'invoice_date' => now()->toDateString(),
+            'subtotal' => 150000,
+            'grand_total' => 150000,
+            'paid_amount' => 150000,
+            'change_amount' => 0,
+            'payment_method' => 'cash',
+            'status' => 'completed',
+            'created_by' => $this->user->id,
+        ]);
+
+        \Livewire\Livewire::test(\App\Livewire\POSCashSession::class)
+            ->assertSee(route('pos.z-report', $session->id))
+            ->assertSee('Lihat Z-Report (Sementara)');
+
+        $response = $this->get(route('pos.z-report', $session->id));
+        $response->assertStatus(200);
+        $response->assertSee('SESI MASIH AKTIF - SEMENTARA');
+        $response->assertSee('Masih Aktif');
+        $response->assertSee('Rp 450.000'); // 300k opening + 150k cash sale
+        $response->assertSee('Belum Ditutup');
+
+        $pdfResponse = $this->get(route('pos.z-report.pdf', $session->id));
+        $pdfResponse->assertStatus(200);
+        $pdfResponse->assertHeader('content-type', 'application/pdf');
+    }
 }

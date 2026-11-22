@@ -50,28 +50,24 @@
                         </x-pos.table.td>
                         <x-pos.table.td class="whitespace-nowrap text-right">
                             <div class="flex items-center justify-end gap-1.5">
-                                @if($item->status === 'closed')
+                                <x-pos.utility.button
+                                    type="button"
+                                    variant="primary"
+                                    size="xs"
+                                    icon="ph-printer"
+                                    onclick="window.open('{{ route('pos.z-report', $item->id) }}', '_blank')"
+                                    @click.stop
+                                    title="{{ $item->status === 'open' ? 'Lihat Z-Report (Sesi Aktif)' : 'Cetak Z-Report' }}"
+                                />
+                                @if($item->status === 'closed' && $loop->first && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.cash_session.reopen'))
                                     <x-pos.utility.button
                                         type="button"
-                                        variant="primary"
+                                        variant="warning"
                                         size="xs"
-                                        icon="ph-printer"
-                                        onclick="window.open('{{ route('pos.z-report', $item->id) }}', '_blank')"
-                                        @click.stop
-                                        title="Cetak Z-Report"
+                                        icon="ph-key-return"
+                                        wire:click.stop="requestReopenSession({{ $item->id }})"
+                                        title="Buka Kembali Sesi"
                                     />
-                                    @if($loop->first && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.cash_session.reopen'))
-                                        <x-pos.utility.button
-                                            type="button"
-                                            variant="warning"
-                                            size="xs"
-                                            icon="ph-key-return"
-                                            wire:click.stop="requestReopenSession({{ $item->id }})"
-                                            title="Buka Kembali Sesi"
-                                        />
-                                    @endif
-                                @else
-                                    -
                                 @endif
                             </div>
                         </x-pos.table.td>

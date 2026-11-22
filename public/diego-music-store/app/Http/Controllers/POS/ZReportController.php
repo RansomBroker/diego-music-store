@@ -40,8 +40,31 @@ class ZReportController extends Controller
         $totalSalesCount = $sales->count();
         $totalSalesSum = $sales->sum('grand_total');
 
+        $isOpen = $cashSession->status === 'open';
+        if ($isOpen) {
+            $cashIn = (int) $cashSession->cashTransactions()
+                ->where('type', 'in')
+                ->where('status', 'posted')
+                ->sum('amount');
+            $cashOut = (int) $cashSession->cashTransactions()
+                ->where('type', 'out')
+                ->where('status', 'posted')
+                ->sum('amount');
+            $expectedCash = (int) $cashSession->opening_cash + $cashSalesSum + $cashIn - $cashOut;
+            $actualCash = null;
+            $difference = null;
+        } else {
+            $expectedCash = (int) $cashSession->expected_cash;
+            $actualCash = $cashSession->actual_cash;
+            $difference = $cashSession->difference;
+        }
+
         return [
             'session' => $cashSession,
+            'isOpen' => $isOpen,
+            'expectedCash' => $expectedCash,
+            'actualCash' => $actualCash,
+            'difference' => $difference,
             'cashSalesCount' => $cashSalesCount,
             'cashSalesSum' => $cashSalesSum,
             'nonCashSalesCount' => $nonCashSalesCount,

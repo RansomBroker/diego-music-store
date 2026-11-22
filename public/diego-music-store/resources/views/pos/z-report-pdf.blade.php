@@ -105,6 +105,9 @@
 
     <div class="text-center bold" style="font-size: 11px; margin: 4px 0;">
         Z-REPORT SHIFT KASIR
+        @if (!empty($isOpen))
+            <div style="font-size: 8.5px; color: #b45309; margin-top: 2px;">(SESI MASIH AKTIF - SEMENTARA)</div>
+        @endif
     </div>
 
     <!-- Metadata Sesi -->
@@ -123,7 +126,7 @@
         </tr>
         <tr>
             <td class="text-left" style="color: #475569;">Waktu Tutup:</td>
-            <td class="text-right">{{ $session->closed_at ? $session->closed_at->format('d/m/Y H:i') : '-' }}</td>
+            <td class="text-right">{{ $session->closed_at ? $session->closed_at->format('d/m/Y H:i') : (!empty($isOpen) ? 'Masih Aktif' : '-') }}</td>
         </tr>
     </table>
 
@@ -142,21 +145,26 @@
         </tr>
         <tr style="border-top: 1px dashed #cbd5e1;">
             <td class="text-left bold">Total Teoritis:</td>
-            <td class="text-right bold">Rp {{ number_format($session->expected_cash, 0, ',', '.') }}</td>
+            <td class="text-right bold">Rp {{ number_format($expectedCash ?? $session->expected_cash, 0, ',', '.') }}</td>
         </tr>
         <tr>
             <td class="text-left bold">Uang Fisik Laci:</td>
-            <td class="text-right bold">Rp {{ number_format($session->actual_cash, 0, ',', '.') }}</td>
+            <td class="text-right bold">{{ isset($actualCash) ? 'Rp ' . number_format($actualCash, 0, ',', '.') : (!empty($isOpen) ? 'Belum Ditutup' : 'Rp ' . number_format($session->actual_cash, 0, ',', '.')) }}</td>
         </tr>
         <tr class="total-row" style="border-top: 1px solid #94a3b8;">
             <td class="text-left">SELISIH:</td>
             <td class="text-right">
-                @if($session->difference === 0)
+                @php
+                    $resolvedDiff = array_key_exists('difference', get_defined_vars()) ? $difference : $session->difference;
+                @endphp
+                @if($resolvedDiff === null)
+                    -
+                @elseif($resolvedDiff === 0)
                     Rp 0 (Pas)
-                @elseif($session->difference < 0)
-                    -Rp {{ number_format(abs($session->difference), 0, ',', '.') }}
+                @elseif($resolvedDiff < 0)
+                    -Rp {{ number_format(abs($resolvedDiff), 0, ',', '.') }}
                 @else
-                    +Rp {{ number_format($session->difference, 0, ',', '.') }}
+                    +Rp {{ number_format($resolvedDiff, 0, ',', '.') }}
                 @endif
             </td>
         </tr>
