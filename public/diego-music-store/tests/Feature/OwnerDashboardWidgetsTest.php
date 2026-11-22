@@ -15,7 +15,12 @@ class OwnerDashboardWidgetsTest extends TestCase
 
     public function test_non_owner_role_cannot_view_owner_executive_dashboard()
     {
+        $perm = \Spatie\Permission\Models\Permission::findOrCreate('fo.dashboard.owner_widgets', 'web');
+        $managerRole = Role::firstOrCreate(['name' => 'MANAGER TOKO', 'guard_name' => 'web']);
+        $managerRole->givePermissionTo($perm);
+
         $user = User::factory()->create();
+        $user->assignRole($managerRole);
         $this->actingAs($user);
 
         Livewire::test(OwnerDashboardWidgets::class)

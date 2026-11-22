@@ -171,4 +171,20 @@ class Employee extends Model
     {
         return $this->hasMany(CommissionGroupMember::class);
     }
+
+    /**
+     * Scope employees to those linked with an active user account.
+     */
+    public function scopeWithActiveUser($query, bool $excludeOwners = false)
+    {
+        return $query->whereHas('user', function ($userQuery) use ($excludeOwners) {
+            $userQuery->where('is_active', true);
+
+            if ($excludeOwners) {
+                $userQuery->whereDoesntHave('roles', function ($roleQuery) {
+                    $roleQuery->whereRaw('LOWER(name) IN (?, ?)', ['owner', 'super_admin']);
+                });
+            }
+        });
+    }
 }

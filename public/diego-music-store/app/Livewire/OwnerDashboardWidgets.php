@@ -41,7 +41,7 @@ class OwnerDashboardWidgets extends Component
     public function render(GetOwnerDashboardData $action)
     {
         $user = Auth::user();
-        $isOwner = PermissionHelper::can($user, 'fo.dashboard.owner_widgets');
+        $isOwner = PermissionHelper::isOwner($user);
 
         if (!$isOwner) {
             return view('livewire.owner-dashboard-widgets', [

@@ -452,7 +452,7 @@ class POS extends Component
             ->get();
     }
 
-    // Get matching active branch users (all roles: sales, manager toko, kasir, etc.) for sales rep dropdown
+    // Get active branch users with the sales role (including multi-role users such as sales + manager toko)
     public function getSalesRepsProperty()
     {
         $branchId = $this->selectedBranchId;
@@ -460,7 +460,8 @@ class POS extends Component
         $baseQuery = \App\Models\User::query()
             ->with('roles:id,name')
             ->select(['users.id', 'users.name', 'users.email'])
-            ->where('users.is_active', true);
+            ->where('users.is_active', true)
+            ->whereHas('roles', fn ($roleQuery) => $roleQuery->whereRaw('LOWER(name) = ?', ['sales']));
 
         if ($branchId) {
             $branchScoped = (clone $baseQuery)->where(function ($query) use ($branchId) {

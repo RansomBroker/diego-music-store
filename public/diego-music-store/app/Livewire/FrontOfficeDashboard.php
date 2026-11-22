@@ -44,15 +44,13 @@ class FrontOfficeDashboard extends Component
         $isOwner = PermissionHelper::can(Auth::user(), 'fo.dashboard.owner_widgets');
         $currentUserEmployee = Auth::user()?->employee;
 
-        // Load presensi cabang hari ini (khusus karyawan operasional, kecualikan Owner)
+        // Load presensi cabang hari ini (khusus karyawan operasional dengan akun user aktif, kecualikan Owner)
         $todayDate = now()->format('Y-m-d');
-        $branchEmployees = Employee::with(['user', 'attendances' => function ($q) use ($todayDate) {
+        $branchEmployees = Employee::with(['user.roles', 'attendances' => function ($q) use ($todayDate) {
             $q->where('date', $todayDate);
         }])
         ->where('is_active', true)
-        ->whereDoesntHave('user.roles', function ($q) {
-            $q->whereIn('name', ['owner', 'Owner']);
-        })
+        ->withActiveUser(excludeOwners: true)
         ->when(!$isOwner, function ($q) {
             $q->where('user_id', Auth::id());
         })

@@ -102,7 +102,7 @@ class PosSaleCategories extends Component
         abort_unless(PermissionHelper::can(Auth::user(), $this->isEditing ? 'fo.sale_categories.edit' : 'fo.sale_categories.create'), 403);
         $rules = [
             'name' => 'required|string|max:255|unique:sale_categories,name,' . ($this->editingId ?? 'NULL'),
-            'prefix' => 'nullable|string|max:10',
+            'prefix' => 'nullable|string|max:50',
             'start_alphabet' => 'required|string|alpha|max:5',
             'end_alphabet' => 'required|string|alpha|max:5',
             'digit_length' => 'required|integer|min:3|max:10',
@@ -113,9 +113,12 @@ class PosSaleCategories extends Component
             'name.unique'   => 'Nama kategori sudah terdaftar.',
         ]);
 
+        // Preserve exact prefix casing as typed; strip only whitespace and trailing '-' to prevent double dashes
+        $normalizedPrefix = rtrim(trim($this->prefix), '-');
+
         $data = [
             'name' => $this->name,
-            'prefix' => $this->prefix ?: null,
+            'prefix' => $normalizedPrefix !== '' ? $normalizedPrefix : null,
             'start_alphabet' => strtoupper($this->start_alphabet),
             'end_alphabet' => strtoupper($this->end_alphabet),
             'digit_length' => $this->digit_length,

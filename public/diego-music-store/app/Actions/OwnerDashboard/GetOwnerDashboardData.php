@@ -508,6 +508,7 @@ class GetOwnerDashboardData
     {
         $salesStaff = Employee::with(['user'])
             ->where('is_active', true)
+            ->withActiveUser(excludeOwners: true)
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->get();
 

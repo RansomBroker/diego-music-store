@@ -33,7 +33,7 @@
                         {{ $row->name }}
                     </x-pos.table.td>
                     <!-- Prefix -->
-                    <x-pos.table.td class="whitespace-nowrap text-sm text-slate-700 dark:text-slate-300 font-bold uppercase">
+                    <x-pos.table.td class="whitespace-nowrap text-sm text-slate-700 dark:text-slate-300 font-bold">
                         {{ $row->prefix ?? '-' }}
                     </x-pos.table.td>
                     <!-- Range Abjad -->

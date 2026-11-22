@@ -15,7 +15,9 @@ class SalesEmployeeDashboardWidgetsTest extends TestCase
     public function test_sales_employee_dashboard_widgets_renders_successfully()
     {
         $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         $user->branches()->attach($branch->id);
         $this->actingAs($user);
 
@@ -33,10 +35,30 @@ class SalesEmployeeDashboardWidgetsTest extends TestCase
             ->assertSee('Absensi Staf');
     }
 
+    public function test_non_owner_cannot_view_sales_employee_performance_widgets()
+    {
+        $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $perm = \Spatie\Permission\Models\Permission::findOrCreate('fo.dashboard.owner_widgets', 'web');
+        $managerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'MANAGER TOKO', 'guard_name' => 'web']);
+        $managerRole->givePermissionTo($perm);
+
+        $user = User::factory()->create();
+        $user->assignRole($managerRole);
+        $user->branches()->attach($branch->id);
+        $this->actingAs($user);
+
+        Livewire::test(SalesEmployeeDashboardWidgets::class)
+            ->assertDontSee('Performa Sales & Indikator Target')
+            ->assertDontSee('Leaderboard Top 3 Sales')
+            ->assertDontSee('Grafik Performa Penjualan Sales (1 Tahun)');
+    }
+
     public function test_it_displays_active_backoffice_focus_products()
     {
         $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
+        $ownerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         $user = User::factory()->create();
+        $user->assignRole($ownerRole);
         $user->branches()->attach($branch->id);
         \App\Models\Employee::create([
             'user_id'                => $user->id,

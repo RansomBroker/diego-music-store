@@ -133,4 +133,72 @@ class FrontOfficeDashboardTest extends TestCase
         $ownerResponse->assertSee('Buka halaman kasir');
         $ownerResponse->assertSee('pantau tugas');
     }
+
+    public function test_it_hides_deleted_and_inactive_users_from_today_branch_attendances(): void
+    {
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+
+        $ownerUser = User::factory()->create(['name' => 'Owner Cabang']);
+        $ownerUser->assignRole('owner');
+        $ownerUser->branches()->attach($this->branch->id);
+
+        $activeStaff = User::factory()->create(['name' => 'Karyawan Aktif', 'is_active' => true]);
+        $activeStaff->assignRole('karyawan');
+        $activeStaff->branches()->attach($this->branch->id);
+        $activeStaff->employee->update(['branch_id' => $this->branch->id]);
+
+        $deletedUser = User::factory()->create(['name' => 'User Dihapus', 'is_active' => true]);
+        $deletedUser->assignRole('karyawan');
+        $deletedUser->branches()->attach($this->branch->id);
+        $deletedEmp = $deletedUser->employee;
+        $deletedEmp->update(['branch_id' => $this->branch->id]);
+        $deletedUser->delete();
+
+        $inactiveUser = User::factory()->create(['name' => 'User Nonaktif', 'is_active' => false]);
+        $inactiveUser->assignRole('karyawan');
+        $inactiveUser->branches()->attach($this->branch->id);
+        $inactiveUser->employee->update(['branch_id' => $this->branch->id, 'is_active' => true]);
+
+        \App\Models\Employee::create([
+            'user_id' => null,
+            'branch_id' => $this->branch->id,
+            'nik' => 'EMP-ORPHAN-01',
+            'name' => 'Orphaned Deleted User',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($ownerUser)->get(route('pos.front-office'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Karyawan Aktif');
+        $response->assertDontSee('User Dihapus');
+        $response->assertDontSee('User Nonaktif');
+        $response->assertDontSee('Orphaned Deleted User');
+        $this->assertFalse((bool) $deletedEmp->fresh()->is_active);
+    }
+
+    public function test_only_owner_can_view_performance_analysis_widgets_on_dashboard(): void
+    {
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+
+        $staff = User::factory()->create(['is_active' => true]);
+        $staff->assignRole('karyawan');
+        $staff->givePermissionTo('fo.dashboard.owner_widgets');
+        $staff->branches()->attach($this->branch->id);
+
+        $staffResponse = $this->actingAs($staff)->get(route('pos.front-office'));
+        $staffResponse->assertStatus(200);
+        $staffResponse->assertSee('Clock In (Masuk)');
+        $staffResponse->assertDontSee('Analisis Performansi &amp; Keuangan Bisnis', false);
+        $staffResponse->assertDontSee('Performa Sales & Indikator Target', false);
+
+        $owner = User::factory()->create(['is_active' => true]);
+        $owner->assignRole('owner');
+        $owner->branches()->attach($this->branch->id);
+
+        $ownerResponse = $this->actingAs($owner)->get(route('pos.front-office'));
+        $ownerResponse->assertStatus(200);
+        $ownerResponse->assertSee('Analisis Performansi &amp; Keuangan Bisnis', false);
+        $ownerResponse->assertSee('Performa Sales & Indikator Target', false);
+    }
 }

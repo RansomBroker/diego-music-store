@@ -15,41 +15,45 @@ class SalesEmployeeDashboardWidgets extends Component
     public function mount(): void
     {
         $user = Auth::user();
-        $isOwner = PermissionHelper::can($user, 'fo.dashboard.owner_widgets');
+        $isOwner = PermissionHelper::isOwner($user);
 
-        if ($isOwner) {
-            $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
-            $firstEmp = Employee::where('is_active', true)
-                ->when($activeBranchId, fn($q) => $q->where('branch_id', $activeBranchId))
-                ->whereDoesntHave('user.roles', fn($q) => $q->whereIn('name', ['owner', 'Owner']))
-                ->orderBy('name', 'asc')
-                ->first();
-            $this->selectedEmployeeId = $firstEmp?->id;
-        } else {
-            $this->selectedEmployeeId = $user?->employee?->id;
+        if (! $isOwner) {
+            return;
         }
+
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        $firstEmp = Employee::where('is_active', true)
+            ->when($activeBranchId, fn($q) => $q->where('branch_id', $activeBranchId))
+            ->withActiveUser(excludeOwners: true)
+            ->orderBy('name', 'asc')
+            ->first();
+        $this->selectedEmployeeId = $firstEmp?->id;
     }
 
     public function render(GetSalesEmployeeDashboardData $action)
     {
         $currentUser = Auth::user();
-        $isOwner = PermissionHelper::can($currentUser, 'fo.dashboard.owner_widgets');
-        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+        $isOwner = PermissionHelper::isOwner($currentUser);
 
-        // Non-management users must never choose another employee through Livewire state.
-        if (!$isOwner) {
-            $this->selectedEmployeeId = $currentUser?->employee?->id;
+        if (! $isOwner) {
+            return view('livewire.sales-employee-dashboard-widgets', [
+                'isOwner' => false,
+            ]);
         }
 
-        // Daftar karyawan untuk dipilih oleh Owner
-        $employeesList = $isOwner
-            ? Employee::with('user')
-                ->where('is_active', true)
-                ->when($activeBranchId, fn($q) => $q->where('branch_id', $activeBranchId))
-                ->whereDoesntHave('user.roles', fn($q) => $q->whereIn('name', ['owner', 'Owner']))
-                ->orderBy('name', 'asc')
-                ->get()
-            : collect();
+        $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();
+
+        // Daftar karyawan aktif (hanya dengan user aktif & non-owner) untuk dipilih oleh Owner
+        $employeesList = Employee::with('user')
+            ->where('is_active', true)
+            ->when($activeBranchId, fn($q) => $q->where('branch_id', $activeBranchId))
+            ->withActiveUser(excludeOwners: true)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        if ($this->selectedEmployeeId && ! $employeesList->contains('id', $this->selectedEmployeeId)) {
+            $this->selectedEmployeeId = $employeesList->first()?->id;
+        }
 
         // Ambil data karyawan yang sedang dipilih
         $targetEmployee = $this->selectedEmployeeId ? Employee::with('user')->find($this->selectedEmployeeId) : null;
@@ -60,7 +64,7 @@ class SalesEmployeeDashboardWidgets extends Component
         return view('livewire.sales-employee-dashboard-widgets', array_merge($dashboardData, [
             'currentUser'        => $currentUser,
             'user'               => $targetUser ?: $currentUser,
-            'isOwner'            => $isOwner,
+            'isOwner'            => true,
             'employeesList'      => $employeesList,
             'selectedEmployee'   => $targetEmployee,
             'selectedEmployeeId' => $this->selectedEmployeeId,

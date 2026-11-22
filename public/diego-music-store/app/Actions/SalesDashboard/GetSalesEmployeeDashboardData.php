@@ -175,7 +175,10 @@ class GetSalesEmployeeDashboardData
      */
     private function getTopSalesLeaderboard(string $startOfMonth, string $endOfMonth): array
     {
-        $salesStaff = Employee::with('user')->where('is_active', true)->get();
+        $salesStaff = Employee::with('user')
+            ->where('is_active', true)
+            ->withActiveUser(excludeOwners: true)
+            ->get();
         $userIds = $salesStaff->pluck('user_id')->filter()->toArray();
         $employeeIds = $salesStaff->pluck('id')->toArray();
 

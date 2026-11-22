@@ -26,9 +26,10 @@
                 <input
                     type="text"
                     wire:model="prefix"
-                    class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors uppercase"
-                    placeholder="e.g. STR, WA"
+                    class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary dark:focus:ring-blue-500 focus:outline-none transition-colors"
+                    placeholder="e.g. STR, INV-O"
                 >
+                <p class="text-[10px] text-slate-400 mt-1.5 leading-tight">Huruf besar/kecil mengikuti ketikan; tanda hubung (-) pemisah ditambahkan otomatis.</p>
                 @error('prefix') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
             </div>
 

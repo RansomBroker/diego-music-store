@@ -20,6 +20,7 @@
             <div class="w-full space-y-6">
 
                 @php
+                    $isOwnerRole = \App\Helpers\PermissionHelper::isOwner(auth()->user());
                     $canViewOwnerWidgets = \App\Helpers\PermissionHelper::can(auth()->user(), 'fo.dashboard.owner_widgets');
                 @endphp
 
@@ -29,11 +30,13 @@
                 <!-- 2. Quick Navigation Tiles (Sesuai Hak Akses Role) -->
                 @include('livewire.front-office-dashboard.components.navigation-tiles')
 
-                <!-- 3. Executive Owner Dashboard Widgets Section -->
-                <livewire:owner-dashboard-widgets />
+                @if ($isOwnerRole)
+                    <!-- 3. Executive Owner Dashboard Widgets Section -->
+                    <livewire:owner-dashboard-widgets />
 
-                <!-- 4. Sales & Employee Performance Dashboard Widgets Section -->
-                <livewire:sales-employee-dashboard-widgets />
+                    <!-- 4. Sales & Employee Performance Dashboard Widgets Section -->
+                    <livewire:sales-employee-dashboard-widgets />
+                @endif
 
                 <!-- 5. Presensi Karyawan Cabang Hari Ini -->
                 @if ($canViewOwnerWidgets)

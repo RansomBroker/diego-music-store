@@ -51,11 +51,12 @@ class InvoiceHelper
     public static function getInvoiceNumber(?string $prefix, string $startAlphabet, string $endAlphabet, int $digitLength, int $sequence): string
     {
         $seqString = self::generateSequence($sequence, $startAlphabet, $endAlphabet, $digitLength);
-        
-        if (!empty($prefix)) {
-            return $prefix . '-' . $seqString;
+        $normalizedPrefix = $prefix !== null ? rtrim(trim($prefix), '-') : '';
+
+        if ($normalizedPrefix !== '') {
+            return $normalizedPrefix . '-' . $seqString;
         }
-        
+
         return $seqString;
     }
 }

@@ -367,6 +367,7 @@ class PosAttendances extends Component
 
         $employees = $isOwnerUser
             ? Employee::where('is_active', true)
+                ->withActiveUser()
                 ->when($this->filterBranchId, fn ($q) => $q->where('branch_id', $this->filterBranchId))
                 ->get()
             : Employee::query()->whereKey($currentEmployeeId ?? 0)->where('is_active', true)->get();

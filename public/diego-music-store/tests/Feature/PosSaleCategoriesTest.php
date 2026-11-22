@@ -181,4 +181,49 @@ class PosSaleCategoriesTest extends TestCase
             'id' => $category->id,
         ]);
     }
+
+    /** @test */
+    public function it_preserves_prefix_casing_and_prevents_double_dash_on_save_and_invoice_generation()
+    {
+        Livewire::test('App\Livewire\PosSaleCategories')
+            ->call('openCreate')
+            ->set('name', 'Online Upper')
+            ->set('prefix', 'INV-O-')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('sale_categories', [
+            'name' => 'Online Upper',
+            'prefix' => 'INV-O',
+        ]);
+        $this->assertSame('INV-O-A0001', Sale::generateInvoiceNumber('Online Upper'));
+
+        Livewire::test('App\Livewire\PosSaleCategories')
+            ->call('openCreate')
+            ->set('name', 'Online Lower')
+            ->set('prefix', 'inv-o-')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('sale_categories', [
+            'name' => 'Online Lower',
+            'prefix' => 'inv-o',
+        ]);
+        $this->assertSame('inv-o-A0001', Sale::generateInvoiceNumber('Online Lower'));
+
+        // Legacy stored prefix with trailing dash still avoids double dash when generating invoice numbers
+        SaleCategory::create(['name' => 'Legacy Dash', 'prefix' => 'leg-o-']);
+        $this->assertSame('leg-o-A0001', Sale::generateInvoiceNumber('Legacy Dash'));
+
+        // Ensure table and modal show exact prefix casing without CSS uppercase masking
+        $response = $this->get(route('pos.sale-categories'));
+        $response->assertStatus(200);
+        $response->assertSee('inv-o');
+        $response->assertSee('INV-O');
+
+        $modalHtml = file_get_contents(resource_path('views/livewire/pos-sale-categories/components/category-modal.blade.php'));
+        $tableHtml = file_get_contents(resource_path('views/livewire/pos-sale-categories/components/categories-table.blade.php'));
+        $this->assertDoesNotMatchRegularExpression('/wire:model="prefix"[^>]*uppercase/', $modalHtml);
+        $this->assertStringNotContainsString('font-bold uppercase">' . "\n                        " . '{{ $row->prefix', $tableHtml);
+    }
 }

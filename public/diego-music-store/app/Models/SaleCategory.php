@@ -18,6 +18,17 @@ class SaleCategory extends Model
     ];
 
     /**
+     * Invalidate POS sale categories cache whenever categories change.
+     */
+    protected static function booted(): void
+    {
+        $clearCache = static fn () => cache()->forget('pos_sale_categories');
+
+        static::saved($clearCache);
+        static::deleted($clearCache);
+    }
+
+    /**
      * Customers that default to this sale category.
      */
     public function customers()

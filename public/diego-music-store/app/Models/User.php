@@ -172,5 +172,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
                 ]);
             }
         });
+
+        static::updated(function ($user) {
+            if ($user->wasChanged('is_active')) {
+                $user->employee()->update(['is_active' => (bool) $user->is_active]);
+            }
+        });
+
+        static::deleting(function ($user) {
+            $user->employee()->update(['is_active' => false]);
+        });
     }
 }

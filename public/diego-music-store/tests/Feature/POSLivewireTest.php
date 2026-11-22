@@ -273,33 +273,43 @@ class POSLivewireTest extends TestCase
     }
 
     /** @test */
-    public function it_includes_all_active_branch_roles_in_sales_rep_options_and_allows_clearing_and_reselecting()
+    public function it_filters_sales_reps_to_users_with_sales_role_including_multi_role_and_allows_clearing_and_reselecting()
     {
         $managerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'MANAGER TOKO', 'guard_name' => 'web']);
         $salesRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
+        $upperSalesRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'SALES', 'guard_name' => 'web']);
 
-        $manager = \App\Models\User::factory()->create(['name' => 'RAMADHAN SAPUTRA', 'is_active' => true]);
-        $manager->assignRole($managerRole);
-        $manager->branches()->attach($this->branch->id);
+        // Has BOTH sales + MANAGER TOKO -> MUST appear
+        $multiRoleSales = \App\Models\User::factory()->create(['name' => 'RAMADHAN SAPUTRA', 'is_active' => true]);
+        $multiRoleSales->syncRoles([$salesRole, $managerRole]);
+        $multiRoleSales->branches()->attach($this->branch->id);
 
+        // Has uppercase SALES + another role + apostrophe in name -> MUST appear
         $salesApostrophe = \App\Models\User::factory()->create(['name' => "MAR'IE MUHAMMAD", 'is_active' => true]);
-        $salesApostrophe->assignRole($salesRole);
+        $salesApostrophe->syncRoles([$upperSalesRole, $managerRole]);
         $salesApostrophe->branches()->attach($this->branch->id);
 
+        // Only MANAGER TOKO (no sales role) -> MUST NOT appear
+        $managerOnly = \App\Models\User::factory()->create(['name' => 'NON SALES MANAGER', 'is_active' => true]);
+        $managerOnly->syncRoles([$managerRole]);
+        $managerOnly->branches()->attach($this->branch->id);
+
+        // Inactive user with sales role -> MUST NOT appear
         $inactiveUser = \App\Models\User::factory()->create(['name' => 'RESIGNED STAFF', 'is_active' => false]);
-        $inactiveUser->assignRole($salesRole);
+        $inactiveUser->syncRoles([$salesRole]);
         $inactiveUser->branches()->attach($this->branch->id);
 
+        // $this->user has only 'owner' role -> also excluded once cleared unless carrying 'sales'
         $component = Livewire::test('App\Livewire\POS')
             ->call('clearSalesRep')
             ->assertSet('selectedSalesRepId', null)
             ->assertSet('selectedSalesRepName', '')
             ->assertSee('RAMADHAN SAPUTRA')
-            ->assertSee($this->user->name)
             ->assertSee("MAR'IE MUHAMMAD")
+            ->assertDontSee('NON SALES MANAGER')
             ->assertDontSee('RESIGNED STAFF')
-            ->call('selectSalesRep', $manager->id, $manager->name)
-            ->assertSet('selectedSalesRepId', $manager->id)
+            ->call('selectSalesRep', $multiRoleSales->id, $multiRoleSales->name)
+            ->assertSet('selectedSalesRepId', $multiRoleSales->id)
             ->assertSet('selectedSalesRepName', 'RAMADHAN SAPUTRA')
             ->call('clearSalesRep')
             ->assertSee('RAMADHAN SAPUTRA')
@@ -307,8 +317,10 @@ class POSLivewireTest extends TestCase
             ->assertSet('selectedSalesRepId', $salesApostrophe->id)
             ->assertSet('selectedSalesRepName', "MAR'IE MUHAMMAD");
 
-        $this->assertTrue($component->instance()->salesReps->contains('id', $this->user->id));
-        $this->assertTrue($component->instance()->salesReps->contains('id', $manager->id));
+        $this->assertTrue($component->instance()->salesReps->contains('id', $multiRoleSales->id));
+        $this->assertTrue($component->instance()->salesReps->contains('id', $salesApostrophe->id));
+        $this->assertFalse($component->instance()->salesReps->contains('id', $this->user->id));
+        $this->assertFalse($component->instance()->salesReps->contains('id', $managerOnly->id));
         $this->assertFalse($component->instance()->salesReps->contains('id', $inactiveUser->id));
     }
 
