@@ -117,6 +117,7 @@ class UpdatePOSSale
             $saleStatus = ($isPiutang || $creditAmount > 0) ? 'pending' : 'completed';
 
             // 6. Update Sale Header (keep invoice number unchanged)
+            $defaultPaid = $isPiutang ? max(0, $grandTotal - (int) $creditAmount) : $grandTotal;
             $sale->update([
                 'customer_id' => $customerId,
                 'sales_rep_id' => $salesRepId,
@@ -124,6 +125,8 @@ class UpdatePOSSale
                 'discount_amount' => $discountAmount,
                 'tax_amount' => $taxAmount,
                 'grand_total' => $grandTotal,
+                'paid_amount' => intval($data['paid_amount'] ?? $defaultPaid),
+                'change_amount' => max(0, intval($data['change_amount'] ?? 0)),
                 'payment_method' => $paymentMethod,
                 'status' => $saleStatus,
                 'sale_category' => $data['sale_category'] ?? 'Store',

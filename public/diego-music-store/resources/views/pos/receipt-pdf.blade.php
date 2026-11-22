@@ -110,7 +110,7 @@
         </tr>
         <tr>
             <td class="text-left" style="color: #64748b;">Kasir</td>
-            <td class="text-right">{{ $sale->salesRep?->name ?? 'Kasir' }}</td>
+            <td class="text-right">{{ $sale->receipt_cashier_name }}</td>
         </tr>
         <tr>
             <td class="text-left" style="color: #64748b;">Pelanggan</td>
@@ -181,6 +181,24 @@
             <td class="text-left" style="color: #64748b; padding-top: 4px;">Metode Bayar</td>
             <td class="text-right font-bold" style="padding-top: 4px;">{{ strtoupper($sale->payment_method ?: 'TUNAI') }}</td>
         </tr>
+        @if ($sale->usesCashPayment())
+            @if ((int) ($sale->paid_amount ?? 0) > 0)
+                <tr>
+                    <td class="text-left" style="color: #64748b;">Dibayar</td>
+                    <td class="text-right">Rp {{ number_format($sale->paid_amount, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            <tr>
+                <td class="text-left font-bold" style="color: #0f172a;">Kembalian</td>
+                <td class="text-right font-bold" style="color: #0f172a;">Rp {{ number_format((int) ($sale->change_amount ?? 0), 0, ',', '.') }}</td>
+            </tr>
+        @endif
+        @if ($sale->receipt_sales_rep_name)
+            <tr>
+                <td class="text-left" style="color: #64748b;">Sales</td>
+                <td class="text-right">{{ $sale->receipt_sales_rep_name }}</td>
+            </tr>
+        @endif
     </table>
 
     <div class="divider-solid"></div>

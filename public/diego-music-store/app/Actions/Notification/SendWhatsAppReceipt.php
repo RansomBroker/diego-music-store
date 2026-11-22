@@ -56,7 +56,7 @@ class SendWhatsAppReceipt
         }
 
         // 5. Ensure sale relations are loaded
-        $sale->loadMissing(['branch', 'customer', 'salesRep', 'items.variant.product']);
+        $sale->loadMissing(['branch', 'customer', 'salesRep', 'creator', 'cashSession.user', 'items.variant.product', 'items.salesRep']);
 
         $setting = ReceiptSetting::where('branch_id', $sale->branch_id)->first();
         $storeName = $setting?->store_display_name ?: ($sale->branch?->store_name ?: ($sale->branch?->name ?: 'Diego Music Store'));

@@ -105,7 +105,7 @@
     @if ($setting->show_cashier ?? true)
         <div class="grid">
             <span>Kasir:</span>
-            <span>{{ $sale->salesRep->name }}</span>
+            <span>{{ $sale->receipt_cashier_name }}</span>
         </div>
     @endif
     @if ($setting->show_customer ?? true)
@@ -204,6 +204,19 @@
         </div>
     @endif
 
+    @if ($sale->usesCashPayment())
+        @if ((int) ($sale->paid_amount ?? 0) > 0)
+            <div class="grid">
+                <span>Dibayar:</span>
+                <span>Rp {{ number_format($sale->paid_amount, 0, ',', '.') }}</span>
+            </div>
+        @endif
+        <div class="grid bold">
+            <span>Kembalian:</span>
+            <span>Rp {{ number_format((int) ($sale->change_amount ?? 0), 0, ',', '.') }}</span>
+        </div>
+    @endif
+
     @if ($sale->status === 'pending' || (str_contains(strtolower($sale->payment_method), 'piutang') && !str_contains(strtolower($sale->payment_method), 'lunas')))
         <div class="grid bold" style="margin-top: 4px; color: #b45309;">
             <span>Status Transaksi:</span>
@@ -237,6 +250,14 @@
                 <span style="font-size: 9px; word-break: break-all;">Lacak Progress: {{ $so->tracking_url }}</span>
             </div>
         @endforeach
+    @endif
+
+    @if ($sale->receipt_sales_rep_name)
+        <div class="divider"></div>
+        <div class="grid">
+            <span>Sales:</span>
+            <span>{{ $sale->receipt_sales_rep_name }}</span>
+        </div>
     @endif
 
     <div class="footer">

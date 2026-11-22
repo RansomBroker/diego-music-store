@@ -93,6 +93,7 @@ class CreatePOSSale
             $saleStatus = ($isPiutang || $creditAmount > 0) ? 'pending' : 'completed';
 
             // 3. Create Sale Header
+            $defaultPaid = $isPiutang ? max(0, $grandTotal - (int) $creditAmount) : $grandTotal;
             $sale = Sale::create([
                 'branch_id' => $branchId,
                 'cash_session_id' => $data['cash_session_id'] ?? null,
@@ -104,6 +105,8 @@ class CreatePOSSale
                 'discount_amount' => $discountAmount,
                 'tax_amount' => $taxAmount,
                 'grand_total' => $grandTotal,
+                'paid_amount' => intval($data['paid_amount'] ?? $defaultPaid),
+                'change_amount' => max(0, intval($data['change_amount'] ?? 0)),
                 'payment_method' => $paymentMethod,
                 'status' => $saleStatus,
                 'created_by' => Auth::id(),

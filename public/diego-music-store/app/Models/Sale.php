@@ -22,6 +22,8 @@ class Sale extends Model
         'discount_amount',
         'tax_amount',
         'grand_total',
+        'paid_amount',
+        'change_amount',
         'payment_method',
         'status',
         'created_by',
@@ -35,6 +37,8 @@ class Sale extends Model
         'discount_amount' => 'integer',
         'tax_amount' => 'integer',
         'grand_total' => 'integer',
+        'paid_amount' => 'integer',
+        'change_amount' => 'integer',
     ];
 
     public function branch(): BelongsTo
@@ -141,5 +145,48 @@ class Sale extends Model
         }
 
         return 0;
+    }
+
+    /**
+     * Resolve cashier name for receipts: prioritizes the user who opened the cash session.
+     */
+    public function getReceiptCashierNameAttribute(): string
+    {
+        return $this->cashSession?->user?->name
+            ?? $this->creator?->name
+            ?? $this->salesRep?->name
+            ?? 'Kasir';
+    }
+
+    /**
+     * Resolve sales rep display name(s) for receipts across header and line items.
+     */
+    public function getReceiptSalesRepNameAttribute(): ?string
+    {
+        $names = $this->items->isNotEmpty()
+            ? $this->items
+                ->map(fn ($item) => $item->salesRep?->name ?? $this->salesRep?->name)
+                ->filter()
+                ->unique()
+                ->values()
+            : collect([$this->salesRep?->name])->filter()->values();
+
+        return $names->isNotEmpty() ? $names->implode(', ') : null;
+    }
+
+    /**
+     * Determine whether this sale includes a cash payment or has cash change.
+     */
+    public function usesCashPayment(): bool
+    {
+        if ((int) ($this->change_amount ?? 0) > 0) {
+            return true;
+        }
+
+        $method = strtolower((string) $this->payment_method);
+
+        return str_contains($method, 'tunai')
+            || str_contains($method, 'cash')
+            || str_contains($method, 'kas');
     }
 }

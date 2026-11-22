@@ -25,7 +25,7 @@ class POSReceiptController extends Controller
         abort_unless((int) $sale->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
 
         // Load relations
-        $sale->load(['branch', 'customer', 'salesRep', 'items.variant.product']);
+        $sale->load(['branch', 'customer', 'salesRep', 'creator', 'cashSession.user', 'items.variant.product', 'items.salesRep']);
 
         if ($request->query('format') === 'invoice') {
             $draft = (object)[
@@ -33,6 +33,7 @@ class POSReceiptController extends Controller
                 'created_at' => $sale->created_at,
                 'branch' => $sale->branch,
                 'customer_name' => $sale->customer ? $sale->customer->name : 'Umum / Walk-in',
+                'cashier_name' => $sale->receipt_cashier_name,
                 'salesRep' => $sale->salesRep ?? Auth::user(),
                 'items' => $sale->items,
                 'subtotal' => (int) $sale->subtotal,

@@ -347,7 +347,7 @@
                     <div><span class="bold">Tanggal:</span> {{ $draft->created_at->format('d/m/Y H:i') }}</div>
                 </div>
                 <div class="text-right">
-                    <div><span class="bold">Kasir:</span> {{ $draft->salesRep->name }}</div>
+                    <div><span class="bold">Kasir:</span> {{ $draft->cashier_name ?? $draft->salesRep->name }}</div>
                     <div><span class="bold">Pelanggan:</span> {{ $draft->customer_name }}</div>
                 </div>
             </div>
