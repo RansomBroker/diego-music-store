@@ -41,13 +41,12 @@ class CashTransactionForm
                                         $set('source_account_id', null);
                                         $set('destination_account_id', null);
                                     })
-                                    ->disabled(fn ($record) => $record !== null && $record->status !== 'draft'),
+                                    ->disabled(fn ($record) => $record !== null && ! empty($record->cash_session_id)),
 
                                 DatePicker::make('transaction_date')
                                     ->label('Tanggal Transaksi')
                                     ->default(now())
-                                    ->required()
-                                    ->disabled(fn ($record) => $record !== null && $record->status !== 'draft'),
+                                    ->required(),
 
                                 Select::make('type')
                                     ->label('Tipe Transaksi')
@@ -59,7 +58,6 @@ class CashTransactionForm
                                     ->default('out')
                                     ->required()
                                     ->reactive()
-                                    ->disabled(fn ($record) => $record !== null && $record->status !== 'draft')
                                     ->afterStateUpdated(function (callable $set) {
                                         $set('source_account_id', null);
                                         $set('destination_account_id', null);
@@ -82,8 +80,7 @@ class CashTransactionForm
                                     ->required()
                                     ->searchable()
                                     ->preload()
-                                    ->reactive()
-                                    ->disabled(fn ($record) => $record !== null && $record->status !== 'draft'),
+                                    ->reactive(),
 
                                 Select::make('destination_account_id')
                                     ->label(function ($get) {
@@ -101,16 +98,14 @@ class CashTransactionForm
                                     })
                                     ->required()
                                     ->searchable()
-                                    ->preload()
-                                    ->disabled(fn ($record) => $record !== null && $record->status !== 'draft'),
+                                    ->preload(),
 
                                 TextInput::make('amount')
                                     ->label('Jumlah Uang')
                                     ->numeric()
                                     ->prefix('Rp')
                                     ->required()
-                                    ->minValue(1)
-                                    ->disabled(fn ($record) => $record !== null && $record->status !== 'draft'),
+                                    ->minValue(1),
 
                                 Select::make('status')
                                     ->label('Status')
@@ -119,15 +114,13 @@ class CashTransactionForm
                                         'posted' => 'Posted (Selesai)',
                                     ])
                                     ->default('draft')
-                                    ->required()
-                                    ->disabled(fn ($record) => $record !== null && $record->status === 'posted'),
+                                    ->required(),
                             ]),
 
                         Textarea::make('notes')
                             ->label('Keterangan / Memo')
                             ->rows(3)
-                            ->columnSpanFull()
-                            ->disabled(fn ($record) => $record !== null && $record->status !== 'draft'),
+                            ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),
             ]);

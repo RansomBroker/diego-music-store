@@ -15,4 +15,14 @@ class CreateCashTransaction extends CreateRecord
     {
         return app(CreateActionClass::class)->execute($data);
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return 'Transaksi Kas & Bank berhasil dibuat.';
+    }
 }

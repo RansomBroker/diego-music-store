@@ -44,4 +44,14 @@ class EditCashTransaction extends EditRecord
     {
         return app(UpdateActionClass::class)->execute($record, $data);
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    protected function getSavedNotificationTitle(): ?string
+    {
+        return 'Transaksi Kas & Bank & jurnal terkait berhasil diperbarui.';
+    }
 }

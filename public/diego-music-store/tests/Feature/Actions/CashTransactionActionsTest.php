@@ -146,4 +146,79 @@ class CashTransactionActionsTest extends TestCase
         $this->assertDatabaseMissing('journal_items', ['journal_entry_id' => $journalId]);
         $this->assertSame(500000, (int) $session->fresh()->expected_cash);
     }
+
+    public function test_it_can_edit_posted_cash_transaction_and_updates_journal_entries_and_cash_session(): void
+    {
+        $secondExpense = Account::create([
+            'code' => '6-2000',
+            'name' => 'Beban Listrik',
+            'classification' => 'expense',
+            'is_active' => true,
+        ]);
+
+        $session = \App\Models\CashSession::create([
+            'user_id' => $this->user->id,
+            'branch_id' => $this->branch->id,
+            'opening_cash' => 500000,
+            'expected_cash' => 500000,
+            'status' => 'open',
+            'opened_at' => now(),
+        ]);
+
+        $tx = app(CreateCashTransaction::class)->execute([
+            'branch_id' => $this->branch->id,
+            'cash_session_id' => $session->id,
+            'type' => 'out',
+            'transaction_date' => '2026-11-22',
+            'source_account_id' => $this->cashAccount->id,
+            'destination_account_id' => $this->expenseAccount->id,
+            'amount' => 50000,
+            'notes' => 'Beli ATK awal',
+            'status' => 'posted',
+        ]);
+
+        $originalJournalId = $tx->journal_entry_id;
+        $originalEntryNo = JournalEntry::find($originalJournalId)->entry_no;
+
+        // Edit transaksi yang sudah posted: ubah nominal, akun tujuan, tanggal, dan catatan
+        $updated = app(UpdateCashTransaction::class)->execute($tx, [
+            'transaction_date' => '2026-11-23',
+            'destination_account_id' => $secondExpense->id,
+            'amount' => 125000,
+            'notes' => 'Bayar token listrik',
+            'status' => 'posted',
+        ]);
+
+        $this->assertSame('posted', $updated->status);
+        $this->assertSame(125000, (int) $updated->amount);
+        $this->assertSame($originalJournalId, $updated->journal_entry_id);
+        $this->assertSame(1, JournalEntry::where('reference_type', 'CashTransaction')->where('reference_id', $tx->id)->count());
+
+        $journal = JournalEntry::with('items')->find($originalJournalId);
+        $this->assertSame($originalEntryNo, $journal->entry_no);
+        $this->assertSame('2026-11-23', $journal->date->format('Y-m-d'));
+
+        // Akun beban lama sudah tidak ada di journal items; diganti akun beban baru dengan nominal 125.000
+        $this->assertDatabaseMissing('journal_items', [
+            'journal_entry_id' => $originalJournalId,
+            'account_id' => $this->expenseAccount->id,
+        ]);
+        $this->assertDatabaseHas('journal_items', [
+            'journal_entry_id' => $originalJournalId,
+            'account_id' => $secondExpense->id,
+            'debit' => 125000,
+            'credit' => 0,
+            'notes' => 'Bayar token listrik',
+        ]);
+        $this->assertDatabaseHas('journal_items', [
+            'journal_entry_id' => $originalJournalId,
+            'account_id' => $this->cashAccount->id,
+            'debit' => 0,
+            'credit' => 125000,
+            'notes' => 'Bayar token listrik',
+        ]);
+
+        // Ekspektasi kas laci sesi ikut ter-update (500.000 - 125.000 = 375.000)
+        $this->assertSame(375000, (int) $session->fresh()->expected_cash);
+    }
 }
