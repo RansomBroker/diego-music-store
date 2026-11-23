@@ -200,4 +200,43 @@ class POSTransactionsTest extends TestCase
         // Verify stock returned (10 + 1 = 11)
         $this->assertEquals(11, \App\Models\ProductBranchStock::where('product_variant_id', $variant->id)->where('branch_id', $this->branch->id)->first()->stock);
     }
+
+    /** @test */
+    public function it_displays_cash_session_opener_as_kasir_and_sales_rep_in_separate_sales_column()
+    {
+        $sessionOpener = User::factory()->create(['name' => 'Kasir Pembuka Sesi']);
+        $salesPerson = User::factory()->create(['name' => 'Sales Penjual']);
+
+        $session = \App\Models\CashSession::create([
+            'user_id' => $sessionOpener->id,
+            'branch_id' => $this->branch->id,
+            'opening_cash' => 250000,
+            'expected_cash' => 250000,
+            'status' => 'open',
+            'opened_at' => now(),
+        ]);
+
+        $sale = Sale::create([
+            'branch_id' => $this->branch->id,
+            'cash_session_id' => $session->id,
+            'sales_rep_id' => $salesPerson->id,
+            'invoice_number' => 'INV-KASIR-SALES-01',
+            'invoice_date' => now(),
+            'payment_method' => 'Tunai',
+            'status' => 'completed',
+            'subtotal' => 100000,
+            'discount_amount' => 0,
+            'tax_amount' => 0,
+            'grand_total' => 100000,
+            'created_by' => $this->user->id,
+        ]);
+
+        Livewire::test('App\Livewire\POSTransactions')
+            ->assertSee('Kasir')
+            ->assertSee('Sales')
+            ->assertSeeInOrder(['INV-KASIR-SALES-01', 'Kasir Pembuka Sesi', 'Sales Penjual'])
+            ->call('showDetails', $sale->id)
+            ->assertSee('Kasir Pembuka Sesi')
+            ->assertSee('Sales Penjual');
+    }
 }

@@ -178,7 +178,7 @@ class POSTransactions extends Component
 
     public function showDetails(int $saleId): void
     {
-        $this->selectedSale = Sale::with(['items.variant.product', 'customer', 'salesRep', 'branch'])
+        $this->selectedSale = Sale::with(['items.variant.product', 'items.salesRep', 'customer', 'salesRep', 'creator', 'cashSession.user', 'branch'])
             ->where('branch_id', $this->resolveAuthorizedBranchId())
             ->findOrFail($saleId);
         $this->showDetailsModal = true;
@@ -564,7 +564,7 @@ class POSTransactions extends Component
             ? \Illuminate\Support\Facades\Storage::url($activeBranch->logo_path)
             : null;
 
-        $sales = Sale::with(['customer', 'salesRep', 'branch'])
+        $sales = Sale::with(['customer', 'salesRep', 'creator', 'cashSession.user', 'items.salesRep', 'branch'])
             ->where('branch_id', $branchId)
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
@@ -573,6 +573,12 @@ class POSTransactions extends Component
                           $c->where('name', 'like', "%{$this->search}%");
                       })
                       ->orWhereHas('salesRep', function ($u) {
+                          $u->where('name', 'like', "%{$this->search}%");
+                      })
+                      ->orWhereHas('cashSession.user', function ($u) {
+                          $u->where('name', 'like', "%{$this->search}%");
+                      })
+                      ->orWhereHas('creator', function ($u) {
                           $u->where('name', 'like', "%{$this->search}%");
                       });
                 });

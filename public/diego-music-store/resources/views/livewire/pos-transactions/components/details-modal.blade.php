@@ -36,10 +36,14 @@
                     <!-- Transaction Metadata -->
                     <div class="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-950/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800/40 text-xs">
                         <div>
-                            <span class="block font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Kasir / Sales Rep</span>
-                            <span class="font-black text-slate-850 dark:text-slate-200 text-sm">{{ $selectedSale->salesRep->name ?? '-' }}</span>
+                            <span class="block font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Kasir</span>
+                            <span class="font-black text-slate-850 dark:text-slate-200 text-sm">{{ $selectedSale->receipt_cashier_name ?: '-' }}</span>
                         </div>
                         <div>
+                            <span class="block font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Sales</span>
+                            <span class="font-black text-slate-850 dark:text-slate-200 text-sm">{{ $selectedSale->receipt_sales_rep_name ?: '-' }}</span>
+                        </div>
+                        <div class="mt-2">
                             <span class="block font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Pelanggan</span>
                             <span class="font-black text-slate-850 dark:text-slate-200 text-sm">{{ $selectedSale->customer->name ?? 'Pelanggan Umum' }}</span>
                         </div>

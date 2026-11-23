@@ -9,6 +9,7 @@
                 <x-pos.table.th>Pelanggan</x-pos.table.th>
                 <x-pos.table.th>Catatan</x-pos.table.th>
                 <x-pos.table.th>Kasir</x-pos.table.th>
+                <x-pos.table.th>Sales</x-pos.table.th>
                 <x-pos.table.th>Metode Bayar</x-pos.table.th>
                 <x-pos.table.th class="text-right">Total</x-pos.table.th>
                 <x-pos.table.th class="text-center">Status</x-pos.table.th>
@@ -35,7 +36,10 @@
                         {{ $sale->notes ?: '-' }}
                     </x-pos.table.td>
                     <x-pos.table.td class="whitespace-nowrap text-xs">
-                        {{ $sale->salesRep->name ?? '-' }}
+                        {{ $sale->receipt_cashier_name ?: '-' }}
+                    </x-pos.table.td>
+                    <x-pos.table.td class="whitespace-nowrap text-xs">
+                        {{ $sale->receipt_sales_rep_name ?: '-' }}
                     </x-pos.table.td>
                     <x-pos.table.td class="whitespace-nowrap">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -141,7 +145,7 @@
                     </x-pos.table.td>
                 </tr>
             @empty
-                <x-pos.table.empty colspan="9" icon="ph-receipt" message="Tidak ada transaksi ditemukan untuk filter ini." />
+                <x-pos.table.empty colspan="11" icon="ph-receipt" message="Tidak ada transaksi ditemukan untuk filter ini." />
             @endforelse
         </tbody>
     </x-pos.table>
