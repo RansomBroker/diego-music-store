@@ -85,14 +85,35 @@ class Sale extends Model
                 : \App\Models\SaleCategory::where('name', $categoryName)->first();
             if ($category && !empty($category->prefix)) {
                 $prefix = $category->prefix;
+                $normalizedPrefix = rtrim(trim($prefix), '-');
                 $startAlphabet = strtoupper($category->start_alphabet ?? 'A');
                 $endAlphabet = strtoupper($category->end_alphabet ?? 'Z');
-                $digitLength = $category->digit_length ?? 4;
-                
-                $count = self::where('sale_category', $categoryName)->count();
-                $nextSequence = $count + 1;
-                
-                return \App\Helpers\InvoiceHelper::getInvoiceNumber($prefix, $startAlphabet, $endAlphabet, $digitLength, $nextSequence);
+                $digitLength = (int) ($category->digit_length ?? 4);
+
+                $existingInvoices = self::query()
+                    ->where('sale_category', $categoryName)
+                    ->when($normalizedPrefix !== '', function ($query) use ($normalizedPrefix) {
+                        $query->orWhere('invoice_number', 'like', $normalizedPrefix . '-%');
+                    })
+                    ->pluck('invoice_number');
+
+                $maxSequence = 0;
+                foreach ($existingInvoices as $inv) {
+                    $parsed = \App\Helpers\InvoiceHelper::extractSequence((string) $inv, $prefix, $startAlphabet, $digitLength);
+                    if ($parsed !== null && $parsed > $maxSequence) {
+                        $maxSequence = $parsed;
+                    }
+                }
+
+                $nextSequence = $maxSequence + 1;
+                $candidate = \App\Helpers\InvoiceHelper::getInvoiceNumber($prefix, $startAlphabet, $endAlphabet, $digitLength, $nextSequence);
+
+                while (self::where('invoice_number', $candidate)->exists()) {
+                    $nextSequence++;
+                    $candidate = \App\Helpers\InvoiceHelper::getInvoiceNumber($prefix, $startAlphabet, $endAlphabet, $digitLength, $nextSequence);
+                }
+
+                return $candidate;
             }
         }
 
@@ -103,14 +124,15 @@ class Sale extends Model
             ->orderBy('invoice_number', 'desc')
             ->first();
 
-        if ($lastSale) {
-            $lastNum = intval(substr($lastSale->invoice_number, -4));
-            $nextNum = str_pad((string)($lastNum + 1), 4, '0', STR_PAD_LEFT);
-        } else {
-            $nextNum = '0001';
+        $nextNumInt = $lastSale ? intval(substr($lastSale->invoice_number, -4)) + 1 : 1;
+        $candidate = $prefix . str_pad((string) $nextNumInt, 4, '0', STR_PAD_LEFT);
+
+        while (self::where('invoice_number', $candidate)->exists()) {
+            $nextNumInt++;
+            $candidate = $prefix . str_pad((string) $nextNumInt, 4, '0', STR_PAD_LEFT);
         }
 
-        return $prefix . $nextNum;
+        return $candidate;
     }
 
     public function getPiutangAmount(): float

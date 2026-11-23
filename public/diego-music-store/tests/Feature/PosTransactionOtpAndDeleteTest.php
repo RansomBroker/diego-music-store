@@ -412,4 +412,47 @@ class PosTransactionOtpAndDeleteTest extends TestCase
             ->assertSet('showOtpActionModal', true);
         $this->assertDatabaseHas('sales', ['id' => $saleWithSettlement->id]);
     }
+
+    /** @test */
+    public function generate_invoice_number_does_not_collide_after_deleting_a_previous_sale(): void
+    {
+        $this->actingAs($this->owner);
+
+        \App\Models\SaleCategory::create([
+            'name' => 'SHOPEE',
+            'prefix' => 'INV-SH',
+            'start_alphabet' => 'A',
+            'end_alphabet' => 'Z',
+            'digit_length' => 4,
+            'is_active' => true,
+        ]);
+
+        // Buat 4 transaksi: INV-SH-A0001 .. INV-SH-A0004
+        $sales = [];
+        for ($i = 1; $i <= 4; $i++) {
+            $inv = Sale::generateInvoiceNumber('SHOPEE');
+            $sales[$i] = Sale::create([
+                'branch_id' => $this->branch->id,
+                'sales_rep_id' => $this->owner->id,
+                'invoice_number' => $inv,
+                'invoice_date' => now()->toDateString(),
+                'subtotal' => 65000,
+                'discount_amount' => 0,
+                'tax_amount' => 0,
+                'grand_total' => 65000,
+                'payment_method' => 'Shopee',
+                'status' => 'completed',
+                'sale_category' => 'SHOPEE',
+                'created_by' => $this->owner->id,
+            ]);
+        }
+
+        $this->assertSame('INV-SH-A0004', $sales[4]->invoice_number);
+
+        // Hapus transaksi ke-2 (sehingga count turun jadi 3, tapi INV-SH-A0004 tetap ada)
+        $sales[2]->delete();
+
+        // Nomor invoice berikutnya harus INV-SH-A0005, bukan INV-SH-A0004
+        $this->assertSame('INV-SH-A0005', Sale::generateInvoiceNumber('SHOPEE'));
+    }
 }

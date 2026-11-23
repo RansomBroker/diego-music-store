@@ -18,4 +18,13 @@ class InvoiceHelperTest extends TestCase
         $this->assertSame('A0001', InvoiceHelper::getInvoiceNumber('-', 'A', 'Z', 4, 1));
         $this->assertSame('A0001', InvoiceHelper::getInvoiceNumber(null, 'A', 'Z', 4, 1));
     }
+
+    public function test_extracts_sequence_number_for_prefixed_and_unprefixed_invoices(): void
+    {
+        $this->assertSame(4, InvoiceHelper::extractSequence('INV-SH-A0004', 'INV-SH', 'A', 4));
+        $this->assertSame(26, InvoiceHelper::extractSequence('INV-S-A0026', 'INV-S-', 'A', 4));
+        $this->assertSame(10000, InvoiceHelper::extractSequence('INV-S-B0001', 'INV-S', 'A', 4));
+        $this->assertSame(12, InvoiceHelper::extractSequence('A0012', null, 'A', 4));
+        $this->assertNull(InvoiceHelper::extractSequence('OTHER-A0004', 'INV-SH', 'A', 4));
+    }
 }
