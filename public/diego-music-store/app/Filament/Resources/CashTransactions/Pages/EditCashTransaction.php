@@ -15,8 +15,28 @@ class EditCashTransaction extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make()
-                ->visible(fn ($record) => $record->status === 'draft' && CashTransactionResource::canDelete($record)),
+            \Filament\Actions\Action::make('cancel_delete')
+                ->label(fn ($record) => $record->status === 'posted' ? 'Batalkan & Hapus' : 'Hapus')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->visible(fn ($record) => CashTransactionResource::canDelete($record))
+                ->requiresConfirmation()
+                ->modalHeading(fn ($record) => $record->status === 'posted' ? 'Batalkan & Hapus Transaksi Kas?' : 'Hapus Draft Transaksi Kas?')
+                ->modalDescription(fn ($record) => $record->status === 'posted'
+                    ? "Transaksi {$record->transaction_no} beserta jurnal akuntansi terkait akan dihapus permanen. Saldo Kas/Bank di Neraca dan sesi kasir akan otomatis kembali seperti semula."
+                    : "Draft transaksi {$record->transaction_no} akan dihapus permanen.")
+                ->modalSubmitActionLabel('Ya, Hapus')
+                ->action(function ($record) {
+                    app(\App\Actions\CashManagement\DeleteCashTransaction::class)->execute($record);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Transaksi Kas Dihapus')
+                        ->body("Transaksi {$record->transaction_no} dan jurnal terkait berhasil dihapus.")
+                        ->success()
+                        ->send();
+
+                    return redirect()->to(CashTransactionResource::getUrl('index'));
+                }),
         ];
     }
 

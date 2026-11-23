@@ -110,4 +110,40 @@ class CashTransactionActionsTest extends TestCase
         $this->assertEquals(60000, $creditItem->credit);
         $this->assertEquals(0, $creditItem->debit);
     }
+
+    public function test_it_can_delete_posted_cash_transaction_and_revert_journal_and_session_expected_cash(): void
+    {
+        $session = \App\Models\CashSession::create([
+            'user_id' => $this->user->id,
+            'branch_id' => $this->branch->id,
+            'opening_cash' => 500000,
+            'expected_cash' => 500000,
+            'status' => 'open',
+            'opened_at' => now(),
+        ]);
+
+        $tx = app(CreateCashTransaction::class)->execute([
+            'branch_id' => $this->branch->id,
+            'cash_session_id' => $session->id,
+            'type' => 'out',
+            'transaction_date' => now()->toDateString(),
+            'source_account_id' => $this->cashAccount->id,
+            'destination_account_id' => $this->expenseAccount->id,
+            'amount' => 75000,
+            'notes' => 'Beli galon',
+            'status' => 'posted',
+        ]);
+
+        $journalId = $tx->journal_entry_id;
+        $this->assertNotNull($journalId);
+        $this->assertDatabaseHas('journal_entries', ['id' => $journalId]);
+        $this->assertDatabaseHas('journal_items', ['journal_entry_id' => $journalId]);
+
+        app(\App\Actions\CashManagement\DeleteCashTransaction::class)->execute($tx);
+
+        $this->assertDatabaseMissing('cash_transactions', ['id' => $tx->id]);
+        $this->assertDatabaseMissing('journal_entries', ['id' => $journalId]);
+        $this->assertDatabaseMissing('journal_items', ['journal_entry_id' => $journalId]);
+        $this->assertSame(500000, (int) $session->fresh()->expected_cash);
+    }
 }
