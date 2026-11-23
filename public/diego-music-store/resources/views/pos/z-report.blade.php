@@ -234,6 +234,24 @@
             <span>Penjualan Tunai:</span>
             <span>Rp {{ number_format($cashSalesSum, 0, ',', '.') }}</span>
         </div>
+        @if (!empty($cashInSum) && $cashInSum > 0)
+            <div class="grid">
+                <span>Kas Masuk:</span>
+                <span>+Rp {{ number_format($cashInSum, 0, ',', '.') }}</span>
+            </div>
+        @endif
+        @if (!empty($cashOutSum) && $cashOutSum > 0)
+            <div class="grid">
+                <span>Kas Keluar:</span>
+                <span>-Rp {{ number_format($cashOutSum, 0, ',', '.') }}</span>
+            </div>
+        @endif
+        @if (!empty($cashTransferOutSum) && $cashTransferOutSum > 0)
+            <div class="grid">
+                <span>Setor Kas:</span>
+                <span>-Rp {{ number_format($cashTransferOutSum, 0, ',', '.') }}</span>
+            </div>
+        @endif
         <div class="double-divider"></div>
         <div class="grid bold">
             <span>Total Teoritis:</span>

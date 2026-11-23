@@ -11,6 +11,32 @@ use App\Models\JournalItem;
 class SaleHelper
 {
     /**
+     * Resolve all active non-header cash drawer / cash account IDs (e.g. 111101001 KAS & 111101002 KAS Kecil).
+     *
+     * @return array<int, int>
+     */
+    public static function getCashAccountIds(): array
+    {
+        $ids = Account::query()
+            ->where('is_header', false)
+            ->where(function ($q) {
+                $q->where('code', 'like', '1111%')
+                    ->orWhere('code', '1-1100');
+            })
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (! empty($ids)) {
+            return $ids;
+        }
+
+        $fallback = AccountHelper::findByCode('111101002') ?? AccountHelper::findByCode('111101001');
+
+        return $fallback ? [(int) $fallback->id] : [];
+    }
+
+    /**
      * Get the cash amount of a single sale.
      *
      * @param  Sale  $sale
@@ -32,8 +58,8 @@ class SaleHelper
             return 0;
         }
         
-        $cashAccount = \App\Helpers\AccountHelper::findByCode('111101001');
-        if (!$cashAccount) {
+        $cashAccountIds = self::getCashAccountIds();
+        if (empty($cashAccountIds)) {
             $payMethod = strtolower($sale->payment_method);
             if ($payMethod === 'cash' || $payMethod === 'tunai' || str_contains($payMethod, 'tunai') || str_contains($payMethod, 'cash')) {
                 return $sale->grand_total;
@@ -42,7 +68,7 @@ class SaleHelper
         }
         
         return intval($journalEntry->items()
-            ->where('account_id', $cashAccount->id)
+            ->whereIn('account_id', $cashAccountIds)
             ->sum('debit'));
     }
 
@@ -63,14 +89,20 @@ class SaleHelper
      *
      * @return array<int, array{label: string, amount: int}>
      */
-    public static function getNonCashBreakdown(Sale $sale, ?JournalEntry $journalEntry = null, ?int $cashAccountId = null): array
+    public static function getNonCashBreakdown(Sale $sale, ?JournalEntry $journalEntry = null, array|int|null $cashAccountIds = null): array
     {
         $journalEntry ??= JournalEntry::with('items.account')
             ->where('reference_type', 'Sales')
             ->where('reference_id', $sale->id)
             ->first();
 
-        $cashAccountId ??= AccountHelper::findByCode('111101001')?->id;
+        if ($cashAccountIds === null) {
+            $resolvedCashIds = self::getCashAccountIds();
+        } elseif (is_int($cashAccountIds)) {
+            $resolvedCashIds = [$cashAccountIds];
+        } else {
+            $resolvedCashIds = array_map('intval', $cashAccountIds);
+        }
 
         if ($journalEntry) {
             $breakdown = [];
@@ -79,7 +111,7 @@ class SaleHelper
                 if ($amount <= 0) {
                     continue;
                 }
-                if ($cashAccountId && (int) $item->account_id === $cashAccountId) {
+                if (! empty($resolvedCashIds) && in_array((int) $item->account_id, $resolvedCashIds, true)) {
                     continue;
                 }
 
@@ -138,11 +170,11 @@ class SaleHelper
             ->get()
             ->keyBy('reference_id');
 
-        $cashAccountId = AccountHelper::findByCode('111101001')?->id;
+        $cashAccountIds = self::getCashAccountIds();
         $grouped = [];
 
         foreach ($sales as $sale) {
-            $legs = self::getNonCashBreakdown($sale, $journals->get($sale->id), $cashAccountId);
+            $legs = self::getNonCashBreakdown($sale, $journals->get($sale->id), $cashAccountIds);
             $seenLabelsInSale = [];
 
             foreach ($legs as $leg) {
@@ -200,15 +232,15 @@ class SaleHelper
         }
         
         $saleIds = $sales->pluck('id');
-        $cashAccount = \App\Helpers\AccountHelper::findByCode('111101001');
+        $cashAccountIds = self::getCashAccountIds();
         
         $journalSum = 0;
-        if ($cashAccount) {
+        if (! empty($cashAccountIds)) {
             $journalSum = intval(JournalItem::whereHas('journalEntry', function ($query) use ($saleIds) {
                     $query->where('reference_type', 'Sales')
                         ->whereIn('reference_id', $saleIds);
                 })
-                ->where('account_id', $cashAccount->id)
+                ->whereIn('account_id', $cashAccountIds)
                 ->sum('debit'));
         }
         

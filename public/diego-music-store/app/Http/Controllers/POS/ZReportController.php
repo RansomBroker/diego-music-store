@@ -41,16 +41,9 @@ class ZReportController extends Controller
         $totalSalesSum = $sales->sum('grand_total');
 
         $isOpen = $cashSession->status === 'open';
+        $cashTotals = \App\Helpers\CashSessionHelper::getSessionCashTotals($cashSession);
         if ($isOpen) {
-            $cashIn = (int) $cashSession->cashTransactions()
-                ->where('type', 'in')
-                ->where('status', 'posted')
-                ->sum('amount');
-            $cashOut = (int) $cashSession->cashTransactions()
-                ->where('type', 'out')
-                ->where('status', 'posted')
-                ->sum('amount');
-            $expectedCash = (int) $cashSession->opening_cash + $cashSalesSum + $cashIn - $cashOut;
+            $expectedCash = (int) $cashSession->opening_cash + $cashSalesSum + $cashTotals['cash_in'] - $cashTotals['total_out'];
             $actualCash = null;
             $difference = null;
         } else {
@@ -65,6 +58,9 @@ class ZReportController extends Controller
             'expectedCash' => $expectedCash,
             'actualCash' => $actualCash,
             'difference' => $difference,
+            'cashInSum' => $cashTotals['cash_in'],
+            'cashOutSum' => $cashTotals['cash_out'],
+            'cashTransferOutSum' => $cashTotals['cash_transfer_out'],
             'cashSalesCount' => $cashSalesCount,
             'cashSalesSum' => $cashSalesSum,
             'nonCashSalesCount' => $nonCashSalesCount,

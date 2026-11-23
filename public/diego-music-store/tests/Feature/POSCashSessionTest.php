@@ -372,4 +372,91 @@ class POSCashSessionTest extends TestCase
         $pdfResponse->assertStatus(200);
         $pdfResponse->assertHeader('content-type', 'application/pdf');
     }
+
+    /** @test */
+    public function it_shows_setor_kas_reminder_when_not_deposited_and_done_badge_after_transfer_on_close_session_page()
+    {
+        $kasUtama = \App\Models\Account::firstOrCreate(
+            ['code' => '111101001'],
+            ['name' => 'KAS', 'classification' => 'Asset', 'is_header' => false, 'is_active' => true]
+        );
+        $kasKecil = \App\Models\Account::firstOrCreate(
+            ['code' => '111101002'],
+            ['name' => 'KAS Kecil', 'classification' => 'Asset', 'is_header' => false, 'is_active' => true]
+        );
+
+        $session = CashSession::create([
+            'user_id' => $this->user->id,
+            'branch_id' => $this->branch->id,
+            'opening_cash' => 350000,
+            'expected_cash' => 350000,
+            'status' => 'open',
+            'opened_at' => now(),
+        ]);
+
+        Sale::create([
+            'branch_id' => $this->branch->id,
+            'cash_session_id' => $session->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-SETOR-0001',
+            'invoice_date' => now()->toDateString(),
+            'subtotal' => 500000,
+            'grand_total' => 500000,
+            'paid_amount' => 500000,
+            'change_amount' => 0,
+            'payment_method' => 'cash',
+            'status' => 'completed',
+            'created_by' => $this->user->id,
+        ]);
+
+        // Awalnya belum setor -> muncul pengingat & tombol Setor Kas Sekarang
+        $component = \Livewire\Livewire::test(\App\Livewire\POSCashSession::class)
+            ->assertSee('Belum Ada Setoran Kas di Sesi Ini')
+            ->assertSee('Setor Kas Sekarang')
+            ->assertSet('expectedCash', 850000);
+
+        // Setor 500.000 langsung dari halaman Tutup Sesi (default KAS Kecil 111101002 -> KAS Besar 111101001)
+        $component
+            ->call('openTransferModal')
+            ->assertSet('showTransferModal', true)
+            ->assertSet('transferSourceAccountId', $kasKecil->id)
+            ->assertSet('transferDestinationAccountId', $kasUtama->id)
+            ->set('transferAmount', 500000)
+            ->call('saveTransfer')
+            ->assertSet('showTransferModal', false)
+            ->assertSet('expectedCash', 350000)
+            ->assertSet('actualCash', 350000)
+            ->assertSet('cashTransferCount', 1)
+            ->assertSee('Setoran Kas Sudah Dilakukan')
+            ->assertSee('Done')
+            ->assertSee('Rp 500.000');
+    }
+
+    /** @test */
+    public function it_defaults_opening_cash_to_last_closed_session_actual_cash()
+    {
+        // Tanpa sesi sebelumnya -> fallback 500.000
+        \Livewire\Livewire::test(\App\Livewire\POSCashSession::class)
+            ->assertSet('openingCash', 500000)
+            ->assertSet('lastClosedActualCash', null);
+
+        // Setelah ada sesi tertutup dengan sisa fisik 353.100 -> otomatis terisi 353.100
+        $closedSession = CashSession::create([
+            'user_id' => $this->user->id,
+            'branch_id' => $this->branch->id,
+            'opening_cash' => 349100,
+            'expected_cash' => 353100,
+            'actual_cash' => 353100,
+            'difference' => 0,
+            'status' => 'closed',
+            'opened_at' => now()->subDay(),
+            'closed_at' => now()->subHours(2),
+        ]);
+
+        \Livewire\Livewire::test(\App\Livewire\POSCashSession::class)
+            ->assertSet('openingCash', 353100)
+            ->assertSet('lastClosedActualCash', 353100)
+            ->assertSet('lastClosedSessionId', $closedSession->id)
+            ->assertSee('Sesuai Sesi Terakhir (Rp 353.100)');
+    }
 }

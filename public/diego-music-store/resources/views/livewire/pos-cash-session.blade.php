@@ -51,4 +51,7 @@
 
     <!-- ================= TRANSACTIONS DETAILS MODAL ================= -->
     @include('livewire.pos-cash-session.components.transactions-modal')
+
+    <!-- ================= SETOR / TRANSFER KAS MODAL ================= -->
+    @include('livewire.pos-cash-session.components.transfer-modal')
 </div>

@@ -26,10 +26,10 @@
                 @else
                     <!-- Summary Metrics Grid -->
                     @include('livewire.pos-daily-cash.components.summary-metrics')
-
-                    <!-- Transactions Table Card Wrapper (Filament Style) -->
-                    @include('livewire.pos-daily-cash.components.transactions-table')
                 @endif
+
+                <!-- Transactions Table Card Wrapper (Filament Style) -->
+                @include('livewire.pos-daily-cash.components.transactions-table')
 
             </div>
         </div>
@@ -40,4 +40,7 @@
 
     <!-- Modal: Kas Keluar -->
     @include('livewire.pos-daily-cash.components.outflow-modal')
+
+    <!-- Modal: Setor / Transfer Kas -->
+    @include('livewire.pos-daily-cash.components.transfer-modal')
 </div>

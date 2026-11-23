@@ -43,16 +43,9 @@ class CloseCashSession
             }
 
             $cashSales = \App\Helpers\SaleHelper::getSessionCashSalesSum($session);
-            $cashIn = $session->cashTransactions()
-                ->where('type', 'in')
-                ->where('status', 'posted')
-                ->sum('amount');
-            $cashOut = $session->cashTransactions()
-                ->where('type', 'out')
-                ->where('status', 'posted')
-                ->sum('amount');
+            $cashTotals = \App\Helpers\CashSessionHelper::getSessionCashTotals($session);
 
-            $expectedCash = $session->opening_cash + $cashSales + $cashIn - $cashOut;
+            $expectedCash = $session->opening_cash + $cashSales + $cashTotals['cash_in'] - $cashTotals['total_out'];
             $difference = $actualCash - $expectedCash;
 
             $session->update([

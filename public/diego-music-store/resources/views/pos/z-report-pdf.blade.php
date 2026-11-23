@@ -143,6 +143,24 @@
             <td class="text-left" style="color: #475569;">Penjualan Tunai:</td>
             <td class="text-right">Rp {{ number_format($cashSalesSum, 0, ',', '.') }}</td>
         </tr>
+        @if (!empty($cashInSum) && $cashInSum > 0)
+            <tr>
+                <td class="text-left" style="color: #475569;">Kas Masuk:</td>
+                <td class="text-right">+Rp {{ number_format($cashInSum, 0, ',', '.') }}</td>
+            </tr>
+        @endif
+        @if (!empty($cashOutSum) && $cashOutSum > 0)
+            <tr>
+                <td class="text-left" style="color: #475569;">Kas Keluar:</td>
+                <td class="text-right">-Rp {{ number_format($cashOutSum, 0, ',', '.') }}</td>
+            </tr>
+        @endif
+        @if (!empty($cashTransferOutSum) && $cashTransferOutSum > 0)
+            <tr>
+                <td class="text-left" style="color: #475569;">Setor Kas:</td>
+                <td class="text-right">-Rp {{ number_format($cashTransferOutSum, 0, ',', '.') }}</td>
+            </tr>
+        @endif
         <tr style="border-top: 1px dashed #cbd5e1;">
             <td class="text-left bold">Total Teoritis:</td>
             <td class="text-right bold">Rp {{ number_format($expectedCash ?? $session->expected_cash, 0, ',', '.') }}</td>

@@ -16,7 +16,7 @@
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
                     <i class="ph-bold ph-storefront text-lg"></i>
                 </span>
-                <select wire:model="selectedBranchId" class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-sm font-semibold text-slate-850 dark:text-slate-200 transition-colors">
+                <select wire:model.live="selectedBranchId" class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-sm font-semibold text-slate-850 dark:text-slate-200 transition-colors">
                     <option value="">-- Pilih Cabang --</option>
                     @foreach ($branches as $branch)
                         <option value="{{ $branch->id }}">{{ $branch->store_name ?: $branch->name }}</option>
@@ -39,6 +39,11 @@
 
         <!-- Quick presets -->
         <div class="flex flex-wrap gap-2">
+            @if ($lastClosedActualCash !== null)
+                <button type="button" wire:click="selectOpeningPreset({{ $lastClosedActualCash }})" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold rounded-lg transition-colors cursor-pointer">
+                    Sesuai Sesi Terakhir (Rp {{ number_format($lastClosedActualCash, 0, ',', '.') }})
+                </button>
+            @endif
             <button type="button" wire:click="selectOpeningPreset(200000)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer">Rp 200.000</button>
             <button type="button" wire:click="selectOpeningPreset(500000)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer">Rp 500.000</button>
             <button type="button" wire:click="selectOpeningPreset(1000000)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer">Rp 1.000.000</button>

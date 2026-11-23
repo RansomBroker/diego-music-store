@@ -24,6 +24,8 @@ class POSCashSession extends Component
     // Open Session Form State
     public $selectedBranchId = null;
     public $openingCash = 0;
+    public ?int $lastClosedActualCash = null;
+    public ?int $lastClosedSessionId = null;
     public $notes = '';
     public $branches = [];
 
@@ -32,6 +34,19 @@ class POSCashSession extends Component
     public $closingNotes = '';
     public $expectedCash = 0;
     public $cashSales = 0;
+    public int $cashIn = 0;
+    public int $cashOut = 0;
+    public int $cashTransferOut = 0;
+    public int $cashTransferCount = 0;
+    public string $lastTransferLabel = '';
+
+    // Setor / Transfer Kas Modal State (langsung dari halaman Tutup Sesi)
+    public bool $showTransferModal = false;
+    public $transferAmount = 0;
+    public $transferSourceAccountId = '';
+    public $transferDestinationAccountId = '';
+    public string $transferNotes = '';
+    public $transferAccounts = [];
 
     // Supervisor confirmation state for cash discrepancy
     public $showSupervisorModal = false;
@@ -82,20 +97,153 @@ class POSCashSession extends Component
 
         if ($this->activeSession) {
             $this->cashSales = \App\Helpers\SaleHelper::getSessionCashSalesSum($this->activeSession);
-            $cashIn = $this->activeSession->cashTransactions()
-                ->where('type', 'in')
-                ->where('status', 'posted')
-                ->sum('amount');
-            $cashOut = $this->activeSession->cashTransactions()
-                ->where('type', 'out')
-                ->where('status', 'posted')
-                ->sum('amount');
+            $cashTotals = \App\Helpers\CashSessionHelper::getSessionCashTotals($this->activeSession);
+            $this->cashIn = $cashTotals['cash_in'];
+            $this->cashOut = $cashTotals['cash_out'];
+            $this->cashTransferOut = $cashTotals['cash_transfer_out'];
 
-            $this->expectedCash = $this->activeSession->opening_cash + $this->cashSales + $cashIn - $cashOut;
+            $transfers = $this->activeSession->cashTransactions()
+                ->with(['sourceAccount', 'destinationAccount'])
+                ->where('type', 'transfer')
+                ->where('status', 'posted')
+                ->latest('id')
+                ->get();
+            $this->cashTransferCount = $transfers->count();
+            $latestTransfer = $transfers->first();
+            $this->lastTransferLabel = $latestTransfer
+                ? trim(($latestTransfer->sourceAccount?->name ?? 'Kas') . ' → ' . ($latestTransfer->destinationAccount?->name ?? 'Kas Kecil'))
+                : '';
+
+            $this->expectedCash = $this->activeSession->opening_cash + $this->cashSales + $cashTotals['cash_in'] - $cashTotals['total_out'];
             $this->actualCash = $this->expectedCash;
         } else {
-            // Default opening cash state
-            $this->openingCash = 500000; // standard default Rp 500.000 modal
+            $lastClosed = CashSession::query()
+                ->where('branch_id', $activeBranchId)
+                ->where('status', 'closed')
+                ->whereNotNull('actual_cash')
+                ->orderByDesc('closed_at')
+                ->orderByDesc('id')
+                ->first();
+
+            if ($lastClosed) {
+                $this->lastClosedActualCash = (int) $lastClosed->actual_cash;
+                $this->lastClosedSessionId = (int) $lastClosed->id;
+                $this->openingCash = $this->lastClosedActualCash;
+            } else {
+                $this->lastClosedActualCash = null;
+                $this->lastClosedSessionId = null;
+                $this->openingCash = 500000; // standard default Rp 500.000 modal
+            }
+            $this->cashIn = 0;
+            $this->cashOut = 0;
+            $this->cashTransferOut = 0;
+            $this->cashTransferCount = 0;
+            $this->lastTransferLabel = '';
+        }
+    }
+
+    protected function loadTransferAccounts(): void
+    {
+        $this->transferAccounts = \App\Models\Account::query()
+            ->where('is_header', false)
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->where('code', 'like', '1111%')
+                    ->orWhere('code', 'like', '1112%');
+            })
+            ->orderBy('code')
+            ->get();
+
+        $accounts = collect($this->transferAccounts);
+        if ($accounts->isNotEmpty()) {
+            // Default sumber: KAS Kecil / Laci Kasir (111101002); Default tujuan: KAS Besar / Owner (111101001)
+            $kasKecil = $accounts->firstWhere('code', '111101002') ?? $accounts->first();
+            $kasBesar = $accounts->firstWhere('code', '111101001')
+                ?? $accounts->first(fn ($acc) => $acc->id !== $kasKecil?->id);
+
+            $this->transferSourceAccountId = $kasKecil?->id ?? '';
+            $this->transferDestinationAccountId = $kasBesar?->id ?? '';
+        }
+    }
+
+    public function openTransferModal(): void
+    {
+        abort_unless(PermissionHelper::can(Auth::user(), ['fo.daily_cash.create', 'fo.cash_session.close']), 403);
+        $this->checkActiveSession();
+        if (! $this->activeSession) {
+            return;
+        }
+
+        $this->loadTransferAccounts();
+        $this->transferAmount = '';
+        $this->transferNotes = '';
+        $this->showTransferModal = true;
+    }
+
+    public function saveTransfer(): void
+    {
+        abort_unless(PermissionHelper::can(Auth::user(), ['fo.daily_cash.create', 'fo.cash_session.close']), 403);
+        $this->checkActiveSession();
+        if (! $this->activeSession) {
+            return;
+        }
+
+        $this->validate([
+            'transferAmount' => 'required|integer|min:1',
+            'transferSourceAccountId' => 'required|exists:accounts,id',
+            'transferDestinationAccountId' => 'required|exists:accounts,id|different:transferSourceAccountId',
+            'transferNotes' => 'nullable|string|max:255',
+        ], [
+            'transferAmount.required' => 'Nominal setor wajib diisi.',
+            'transferAmount.integer' => 'Nominal setor harus berupa angka.',
+            'transferAmount.min' => 'Nominal setor harus lebih dari 0.',
+            'transferSourceAccountId.required' => 'Akun kas asal wajib dipilih.',
+            'transferDestinationAccountId.required' => 'Akun tujuan setor wajib dipilih.',
+            'transferDestinationAccountId.different' => 'Akun tujuan setor harus berbeda dari akun asal.',
+        ]);
+
+        try {
+            if ($this->expectedCash < $this->transferAmount) {
+                throw new \Exception('Kas di laci tidak mencukupi untuk melakukan setor kas ini.');
+            }
+
+            $destAccount = \App\Models\Account::find($this->transferDestinationAccountId);
+            $notes = trim((string) $this->transferNotes);
+            if ($notes === '') {
+                $notes = 'Setor kas ke ' . ($destAccount?->name ?? 'Kas Kecil');
+            }
+
+            app(\App\Actions\CashManagement\CreateCashTransaction::class)->execute([
+                'branch_id' => $this->activeSession->branch_id,
+                'cash_session_id' => $this->activeSession->id,
+                'type' => 'transfer',
+                'transaction_date' => now()->toDateString(),
+                'source_account_id' => $this->transferSourceAccountId,
+                'destination_account_id' => $this->transferDestinationAccountId,
+                'amount' => $this->transferAmount,
+                'notes' => $notes,
+                'status' => 'posted',
+            ]);
+
+            Notification::make()
+                ->title('Setor Kas Berhasil Dicatat')
+                ->body('Ekspektasi kas laci telah diperbarui otomatis.')
+                ->success()
+                ->send();
+
+            $this->dispatch('toast', [
+                'type' => 'success',
+                'message' => 'Setor Kas Berhasil Dicatat',
+            ]);
+
+            $this->showTransferModal = false;
+            $this->checkActiveSession();
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title('Gagal Mencatat Setor Kas')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
         }
     }
 
@@ -106,7 +254,7 @@ class POSCashSession extends Component
 
     public function updated($propertyName)
     {
-        if (in_array($propertyName, ['openingCash', 'actualCash'])) {
+        if (in_array($propertyName, ['openingCash', 'actualCash', 'transferAmount'])) {
             $this->$propertyName = \App\Helpers\FormatHelper::parseRupiah($this->$propertyName);
         }
     }

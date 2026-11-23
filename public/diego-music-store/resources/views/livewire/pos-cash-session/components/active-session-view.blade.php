@@ -66,6 +66,60 @@
                 </div>
             </div>
 
+            <!-- Status Setoran Kas (Tipe 1: sudah setor di Kas Harian -> Done ✅ | Tipe 2: belum setor -> tombol Setor Kas Sekarang) -->
+            @if ($cashTransferCount > 0)
+                <div class="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-800/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="ph-fill ph-check-circle text-xl"></i>
+                        </div>
+                        <div class="text-xs">
+                            <div class="font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                                <span>Setoran Kas Sudah Dilakukan</span>
+                                <span class="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider">Done</span>
+                            </div>
+                            <p class="text-emerald-700/90 dark:text-emerald-400/90 mt-0.5">
+                                Total setor <strong>Rp {{ number_format($cashTransferOut, 0, ',', '.') }}</strong> ({{ $cashTransferCount }}x{{ $lastTransferLabel ? ' • ' . $lastTransferLabel : '' }}) sudah mengurangi ekspektasi laci.
+                            </p>
+                        </div>
+                    </div>
+                    @if (\App\Helpers\PermissionHelper::can(Auth::user(), ['fo.daily_cash.create', 'fo.cash_session.close']))
+                        <button
+                            type="button"
+                            wire:click="openTransferModal"
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold rounded-lg transition-colors cursor-pointer flex-shrink-0"
+                        >
+                            <i class="ph-bold ph-plus text-xs"></i>
+                            <span>Tambah Setoran</span>
+                        </button>
+                    @endif
+                </div>
+            @else
+                <div class="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="ph-fill ph-warning-circle text-xl"></i>
+                        </div>
+                        <div class="text-xs">
+                            <div class="font-extrabold text-amber-800 dark:text-amber-300">Belum Ada Setoran Kas di Sesi Ini</div>
+                            <p class="text-amber-700/90 dark:text-amber-400/90 mt-0.5">
+                                Jika uang tunai sudah/ingin dipindahkan ke Kas Kecil atau Owner, catat setoran dulu agar ekspektasi laci pas.
+                            </p>
+                        </div>
+                    </div>
+                    @if (\App\Helpers\PermissionHelper::can(Auth::user(), ['fo.daily_cash.create', 'fo.cash_session.close']))
+                        <button
+                            type="button"
+                            wire:click="openTransferModal"
+                            class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer flex-shrink-0"
+                        >
+                            <i class="ph-bold ph-arrows-left-right text-sm"></i>
+                            <span>Setor Kas Sekarang</span>
+                        </button>
+                    @endif
+                </div>
+            @endif
+
             <!-- Input form -->
             <div class="space-y-5">
                 <div>

@@ -36,6 +36,11 @@ class CashTransactionForm
                                     ->required()
                                     ->searchable()
                                     ->preload()
+                                    ->live()
+                                    ->afterStateUpdated(function (callable $set) {
+                                        $set('source_account_id', null);
+                                        $set('destination_account_id', null);
+                                    })
                                     ->disabled(fn ($record) => $record !== null && $record->status !== 'draft'),
 
                                 DatePicker::make('transaction_date')
@@ -69,25 +74,10 @@ class CashTransactionForm
                                     })
                                     ->options(function ($get) {
                                         $type = $get('type') ?? 'out';
-                                        $branchId = BranchHelper::getActiveBranchId();
-                                        // For 'out' and 'transfer', must select a cash/bank asset account
-                                        if ($type === 'out' || $type === 'transfer') {
-                                            return Account::query()
-                                                ->where('branch_id', $branchId)
-                                                ->where('is_header', false)
-                                                ->where('code', 'like', '1-1%')
-                                                ->get()
-                                                ->mapWithKeys(fn ($acc) => [$acc->id => "[{$acc->code}] {$acc->name}"])
-                                                ->toArray();
-                                        }
-                                        // For 'in', select non-cash accounts (Revenue, etc.)
-                                        return Account::query()
-                                            ->where('branch_id', $branchId)
-                                            ->where('is_header', false)
-                                            ->where('code', 'not like', '1-1%')
-                                            ->get()
-                                            ->mapWithKeys(fn ($acc) => [$acc->id => "[{$acc->code}] {$acc->name}"])
-                                            ->toArray();
+                                        $branchId = $get('branch_id') ?: BranchHelper::getActiveBranchId();
+                                        $isCashBank = ($type === 'out' || $type === 'transfer');
+
+                                        return self::getAccountOptions($branchId, $isCashBank);
                                     })
                                     ->required()
                                     ->searchable()
@@ -104,25 +94,10 @@ class CashTransactionForm
                                     })
                                     ->options(function ($get) {
                                         $type = $get('type') ?? 'out';
-                                        $branchId = BranchHelper::getActiveBranchId();
-                                        // For 'in' and 'transfer', must select a cash/bank asset account
-                                        if ($type === 'in' || $type === 'transfer') {
-                                            return Account::query()
-                                                ->where('branch_id', $branchId)
-                                                ->where('is_header', false)
-                                                ->where('code', 'like', '1-1%')
-                                                ->get()
-                                                ->mapWithKeys(fn ($acc) => [$acc->id => "[{$acc->code}] {$acc->name}"])
-                                                ->toArray();
-                                        }
-                                        // For 'out', select non-cash accounts (Expense, etc.)
-                                        return Account::query()
-                                            ->where('branch_id', $branchId)
-                                            ->where('is_header', false)
-                                            ->where('code', 'not like', '1-1%')
-                                            ->get()
-                                            ->mapWithKeys(fn ($acc) => [$acc->id => "[{$acc->code}] {$acc->name}"])
-                                            ->toArray();
+                                        $branchId = $get('branch_id') ?: BranchHelper::getActiveBranchId();
+                                        $isCashBank = ($type === 'in' || $type === 'transfer');
+
+                                        return self::getAccountOptions($branchId, $isCashBank);
                                     })
                                     ->required()
                                     ->searchable()
@@ -156,5 +131,48 @@ class CashTransactionForm
                     ])
                     ->columnSpanFull(),
             ]);
+    }
+
+    /**
+     * Resolve Cash/Bank or contra account options for the given branch (supporting both 9-digit 1111%/1112% and legacy 1-1% codes).
+     *
+     * @return array<int, string>
+     */
+    protected static function getAccountOptions(?int $branchId, bool $cashBankOnly): array
+    {
+        $buildQuery = function (?int $targetBranchId) use ($cashBankOnly) {
+            return Account::query()
+                ->when(
+                    $targetBranchId !== null,
+                    fn ($q) => $q->where('branch_id', $targetBranchId),
+                    fn ($q) => $q->whereNull('branch_id')
+                )
+                ->where('is_header', false)
+                ->where('is_active', true)
+                ->when($cashBankOnly, function ($q) {
+                    $q->where(function ($sub) {
+                        $sub->where('code', 'like', '1111%')
+                            ->orWhere('code', 'like', '1112%')
+                            ->orWhere('code', 'like', '1-1%');
+                    });
+                }, function ($q) {
+                    $q->where(function ($sub) {
+                        $sub->where('code', 'not like', '1111%')
+                            ->where('code', 'not like', '1112%')
+                            ->where('code', 'not like', '1-1%');
+                    });
+                })
+                ->orderBy('code')
+                ->get();
+        };
+
+        $accounts = $buildQuery($branchId);
+        if ($accounts->isEmpty() && $branchId !== null) {
+            $accounts = $buildQuery(null);
+        }
+
+        return $accounts
+            ->mapWithKeys(fn ($acc) => [$acc->id => "[{$acc->code}] {$acc->name}"])
+            ->toArray();
     }
 }

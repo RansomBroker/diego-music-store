@@ -21,7 +21,14 @@
     </div>
 
     @if($activeSession && \App\Helpers\PermissionHelper::can(Auth::user(), 'fo.daily_cash.create'))
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-2.5">
+            <button
+                wire:click="openTransferModal"
+                class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all transform hover:-translate-y-0.5 duration-200 cursor-pointer"
+            >
+                <i class="ph ph-arrows-left-right text-base"></i>
+                Setor Kas
+            </button>
             <button
                 wire:click="openInModal"
                 class="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all transform hover:-translate-y-0.5 duration-200 cursor-pointer"
