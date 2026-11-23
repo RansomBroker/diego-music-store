@@ -298,6 +298,7 @@ class POSDailyCash extends Component
         $branchId = $this->resolveAuthorizedBranchId();
         $this->checkActiveSession();
         abort_unless($this->activeSession && (int) $this->activeSession->branch_id === $branchId, 403);
+        $this->loadAccounts(); // Enforce locked default accounts (KAS Kecil -> KAS Besar)
 
         $this->validate([
             'transferAmount' => 'required|integer|min:1',

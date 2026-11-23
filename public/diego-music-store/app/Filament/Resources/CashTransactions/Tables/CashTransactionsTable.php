@@ -81,6 +81,18 @@ class CashTransactionsTable
                     ->sortable(),
             ])
             ->actions([
+                Action::make('view_detail')
+                    ->label('')
+                    ->tooltip('Lihat Detail')
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->modalHeading(fn ($record) => "Detail Transaksi {$record->transaction_no}")
+                    ->modalContent(fn ($record) => view('filament.cash-transactions.view-modal', [
+                        'record' => $record->loadMissing(['branch', 'sourceAccount', 'destinationAccount', 'creator', 'journalEntry.items.account']),
+                    ]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup'),
+
                 EditAction::make(),
 
                 Action::make('lihat_jurnal')

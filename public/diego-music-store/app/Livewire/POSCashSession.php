@@ -187,6 +187,7 @@ class POSCashSession extends Component
         if (! $this->activeSession) {
             return;
         }
+        $this->loadTransferAccounts(); // Enforce locked default accounts (KAS Kecil -> KAS Besar)
 
         $this->validate([
             'transferAmount' => 'required|integer|min:1',

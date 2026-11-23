@@ -1,17 +1,14 @@
-<!-- Modal: Setor / Transfer Kas dari Halaman Tutup Sesi -->
+<!-- Modal: Setor / Transfer Kas dari Halaman Tutup Sesi (Akun Terkunci: KAS Kecil -> KAS Besar) -->
 <x-pos.modal
     wire:model="showTransferModal"
     title="Setor / Transfer Kas"
-    subtitle="Pindahkan uang tunai dari laci kasir ke Kas Kecil / Kas Besar / Bank sebelum tutup shift"
+    subtitle="Pindahkan uang tunai dari laci kasir (Kas Kecil) ke Kas Besar sebelum tutup shift"
     icon="ph-arrows-left-right"
     maxWidth="md"
 >
     @php
-        $transferOptions = collect($transferAccounts)->map(fn ($acc) => [
-            'value' => (string) $acc->id,
-            'label' => (string) $acc->name,
-            'sublabel' => (string) $acc->code,
-        ])->values()->all();
+        $sourceAcc = collect($transferAccounts)->firstWhere('id', $transferSourceAccountId);
+        $destAcc = collect($transferAccounts)->firstWhere('id', $transferDestinationAccountId);
     @endphp
     <form wire:submit.prevent="saveTransfer" class="space-y-4">
         <div class="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-900/50 flex items-center justify-between text-xs">
@@ -40,27 +37,27 @@
             @error('transferAmount') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
         </div>
 
+        <!-- Dari Akun (Terkunci) -->
         <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Dari Akun Kas</label>
-            <x-pos.form.searchable-select
-                model="transferSourceAccountId"
-                :options="$transferOptions"
-                placeholder="-- Pilih Akun Kas Asal --"
-                searchPlaceholder="Cari akun kas asal..."
-                accent="blue"
-            />
+            <div class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 flex items-center justify-between gap-2 select-none">
+                <span class="font-semibold truncate">
+                    {{ $sourceAcc ? "{$sourceAcc->name} ({$sourceAcc->code})" : 'KAS Kecil (111101002)' }}
+                </span>
+                <i class="ph-bold ph-lock text-slate-400 text-sm flex-shrink-0" title="Akun dikunci oleh sistem"></i>
+            </div>
             @error('transferSourceAccountId') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
         </div>
 
+        <!-- Ke Akun (Terkunci) -->
         <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Tujuan Setor (Kas / Bank)</label>
-            <x-pos.form.searchable-select
-                model="transferDestinationAccountId"
-                :options="$transferOptions"
-                placeholder="-- Pilih Akun Tujuan --"
-                searchPlaceholder="Cari akun kas / bank tujuan..."
-                accent="blue"
-            />
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Tujuan Setor</label>
+            <div class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 flex items-center justify-between gap-2 select-none">
+                <span class="font-semibold truncate">
+                    {{ $destAcc ? "{$destAcc->name} ({$destAcc->code})" : 'KAS (111101001)' }}
+                </span>
+                <i class="ph-bold ph-lock text-slate-400 text-sm flex-shrink-0" title="Akun dikunci oleh sistem"></i>
+            </div>
             @error('transferDestinationAccountId') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
         </div>
 
@@ -69,7 +66,7 @@
             <textarea
                 wire:model="transferNotes"
                 rows="2"
-                placeholder="Contoh: Setor hasil penjualan tunai ke Kas Kecil sebelum tutup shift"
+                placeholder="Contoh: Setor hasil penjualan tunai ke Kas Besar sebelum tutup shift"
                 class="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-colors resize-none"
             ></textarea>
             @error('transferNotes') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
