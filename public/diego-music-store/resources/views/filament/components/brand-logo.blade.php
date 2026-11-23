@@ -13,14 +13,15 @@
         $branch = \App\Models\Branch::first();
     }
     $storeName = $branch ? ($branch->store_name ?: "Diego Music Store ({$branch->name})") : 'Diego Music Store';
-    $logoUrl = ($branch && !empty($branch->logo_path)) ? \Illuminate\Support\Facades\Storage::url($branch->logo_path) : asset('images/logo.png');
+    $loginLogoUrl = asset('images/d-music-hub-logo.png');
+    $logoUrl = ($branch && !empty($branch->logo_path)) ? \Illuminate\Support\Facades\Storage::url($branch->logo_path) : $loginLogoUrl;
 @endphp
 
 @if ($isAuthPage)
     <div class="flex flex-col items-center justify-center mb-1">
         <div class="relative p-2 rounded-2xl group">
             <div class="absolute inset-0 bg-blue-500/10 dark:bg-blue-400/15 rounded-2xl blur-xl transition-all duration-300 group-hover:scale-125"></div>
-            <img src="{{ $logoUrl }}" alt="Diego Music Logo" class="w-24 h-24 object-contain relative z-10 drop-shadow-sm transition-transform duration-300 group-hover:scale-105">
+            <img src="{{ $loginLogoUrl }}" alt="D Music Hub Logo" class="h-16 w-auto object-contain relative z-10 drop-shadow-sm transition-transform duration-300 group-hover:scale-105">
         </div>
     </div>
 @else

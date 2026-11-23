@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diego Music Store & Repair - Portal</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png?v=2" sizes="96x96" />
+    <link rel="shortcut icon" href="/favicon.ico?v=2" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+    <link rel="manifest" href="/site.webmanifest" />
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +33,7 @@
     <!-- Header/Theme Toggle -->
     <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <img src="{{ asset('images/logo.png') }}" alt="Diego Music Logo" class="w-24     h-24    object-contain">
+            <img src="{{ asset('images/d-music-hub-logo.png') }}" alt="D Music Hub Logo" class="h-12 w-auto object-contain">
             <div>
                 <span class="font-extrabold text-slate-900 dark:text-white tracking-tight text-lg">DIEGO MUSIC</span>
                 <span class="text-xs block -mt-1 text-slate-400 dark:text-slate-500 font-medium">Store & Repair ERP</span>

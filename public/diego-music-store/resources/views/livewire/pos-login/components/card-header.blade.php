@@ -3,7 +3,7 @@
 
 <!-- Header -->
 <div class="text-center mb-8">
-    <img src="{{ asset('images/logo.png') }}" alt="Diego Music Logo" class="w-20 h-20 object-contain mx-auto mb-4">
+    <img src="{{ asset('images/d-music-hub-logo.png') }}" alt="D Music Hub Logo" class="h-16 w-auto object-contain mx-auto mb-4">
     <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Diego Music POS</h2>
     <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
         {{ $showBranchSelectStep ? 'Pilih lokasi cabang bertugas Anda' : 'Masuk ke sistem kasir penjualan ritel' }}
