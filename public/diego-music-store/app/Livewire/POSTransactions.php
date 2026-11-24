@@ -564,6 +564,15 @@ class POSTransactions extends Component
             ? \Illuminate\Support\Facades\Storage::url($activeBranch->logo_path)
             : null;
 
+        $selectedIds = array_values(array_unique(array_filter(
+            $this->selectedPaymentMethod,
+            fn ($value) => ctype_digit((string) $value)
+        )));
+
+        $selectedPaymentMethodsById = ! empty($selectedIds)
+            ? \App\Models\PaymentMethod::with(['parent', 'children'])->whereIn('id', $selectedIds)->get()->keyBy('id')
+            : collect();
+
         $sales = Sale::with(['customer', 'salesRep', 'creator', 'cashSession.user', 'items.salesRep', 'payments.paymentMethod.parent', 'saleCategory', 'branch'])
             ->where('branch_id', $branchId)
             ->when($this->search, function ($query) {
@@ -586,14 +595,40 @@ class POSTransactions extends Component
             ->when($this->selectedStatus !== 'all', function ($query) {
                 $query->where('status', $this->selectedStatus);
             })
-            ->when(!empty($this->selectedPaymentMethod), function ($query) {
-                $query->where(function ($q) {
-                    foreach ($this->selectedPaymentMethod as $method) {
-                        $q->orWhere('payment_method', 'like', "%{$method}%")
-                            ->orWhereHas('payments.paymentMethod', function ($pm) use ($method) {
-                                $pm->where('name', 'like', "%{$method}%")
-                                    ->orWhereHas('parent', fn ($p) => $p->where('name', 'like', "%{$method}%"));
-                            });
+            ->when(!empty($this->selectedPaymentMethod), function ($query) use ($selectedPaymentMethodsById) {
+                $query->where(function ($q) use ($selectedPaymentMethodsById) {
+                    foreach ($this->selectedPaymentMethod as $selection) {
+                        if (ctype_digit((string) $selection) && ($pm = $selectedPaymentMethodsById->get((int) $selection))) {
+                            if ($pm->parent_id !== null) {
+                                $q->orWhereHas('payments', fn ($p) => $p->where('payment_method_id', $pm->id))
+                                    ->orWhere(function ($legacy) use ($pm) {
+                                        $legacy->whereDoesntHave('payments')
+                                            ->where(function ($textQ) use ($pm) {
+                                                foreach ($pm->getLegacyFilterLabels() as $label) {
+                                                    $textQ->orWhere('payment_method', 'like', "%{$label}%");
+                                                }
+                                            });
+                                    });
+                            } else {
+                                $matchIds = collect([$pm->id])->merge($pm->children->pluck('id'))->unique()->all();
+                                $q->orWhereHas('payments', fn ($p) => $p->whereIn('payment_method_id', $matchIds))
+                                    ->orWhere(function ($legacy) use ($pm) {
+                                        $legacy->whereDoesntHave('payments')
+                                            ->where(function ($textQ) use ($pm) {
+                                                foreach ($pm->getLegacyFilterLabels() as $label) {
+                                                    $textQ->orWhere('payment_method', 'like', "%{$label}%");
+                                                }
+                                            });
+                                    });
+                            }
+                        } else {
+                            $methodText = (string) $selection;
+                            $q->orWhere('payment_method', 'like', "%{$methodText}%")
+                                ->orWhereHas('payments.paymentMethod', function ($pmQuery) use ($methodText) {
+                                    $pmQuery->where('name', 'like', "%{$methodText}%")
+                                        ->orWhereHas('parent', fn ($p) => $p->where('name', 'like', "%{$methodText}%"));
+                                });
+                        }
                     }
                 });
             })
@@ -614,7 +649,11 @@ class POSTransactions extends Component
         $customers = \App\Models\Customer::query()
             ->whereIn('id', Sale::query()->where('branch_id', $branchId)->whereNotNull('customer_id')->distinct()->pluck('customer_id'))
             ->orderBy('name')->get();
-        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get();
+        $paymentMethods = \App\Models\PaymentMethod::with(['parent', 'children' => fn ($q) => $q->where('is_active', true)])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        $paymentMethodOptions = \App\Models\PaymentMethod::getFilterOptions();
 
         return view('livewire.pos-transactions', [
             'sales' => $sales,
@@ -622,6 +661,7 @@ class POSTransactions extends Component
             'accounts' => $accounts,
             'customers' => $customers,
             'paymentMethods' => $paymentMethods,
+            'paymentMethodOptions' => $paymentMethodOptions,
             'selectedLogoUrl' => $selectedLogoUrl,
         ])->layout('layouts.pos', ['title' => 'Daftar Transaksi — POS']);
     }

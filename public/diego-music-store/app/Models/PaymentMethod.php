@@ -92,4 +92,94 @@ class PaymentMethod extends Model
 
         return $label . ($ref ? " (Ref: {$ref})" : '');
     }
+
+    /**
+     * Format distinct parent-child label for filter dropdowns (e.g. Transfer - BCA, QRIS - BCA).
+     */
+    public function formatFilterLabel(): string
+    {
+        $name = trim((string) $this->name);
+        if (! $this->parent) {
+            return $name;
+        }
+
+        $parentName = trim((string) $this->parent->name);
+        $childName = $this->stripParentPrefix($parentName, $name);
+
+        return "{$parentName} - {$childName}";
+    }
+
+    /**
+     * Candidate text labels matched against legacy sales without relational sale_payments rows.
+     *
+     * @return array<int, string>
+     */
+    public function getLegacyFilterLabels(): array
+    {
+        if (! $this->parent) {
+            $labels = [trim((string) $this->name)];
+            if (strtolower((string) $this->code) === 'cash') {
+                $labels[] = 'Tunai';
+            }
+
+            return array_values(array_unique(array_filter($labels)));
+        }
+
+        $parentName = trim((string) $this->parent->name);
+        $rawChild = trim((string) $this->name);
+        $cleanChild = $this->stripParentPrefix($parentName, $rawChild);
+
+        return array_values(array_unique(array_filter([
+            $this->formatFilterLabel(),
+            $this->formatCheckoutLabel(),
+            "{$parentName} ({$cleanChild})",
+            "{$parentName} ({$rawChild})",
+        ])));
+    }
+
+    /**
+     * Build separated filter options for multiselect dropdowns, expanding parent categories into Parent - Child entries.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    public static function getFilterOptions(): array
+    {
+        $methods = static::with(['parent', 'children' => fn ($q) => $q->where('is_active', true)])
+            ->where('is_active', true)
+            ->get();
+
+        $options = [];
+
+        foreach ($methods as $pm) {
+            // Skip container parents that already have active child sub-methods
+            if ($pm->parent_id === null && $pm->children->isNotEmpty()) {
+                continue;
+            }
+
+            // Skip orphan children whose parent is inactive
+            if ($pm->parent_id !== null && $pm->parent && ! $pm->parent->is_active) {
+                continue;
+            }
+
+            $options[] = [
+                'value' => (string) $pm->id,
+                'label' => $pm->formatFilterLabel(),
+            ];
+        }
+
+        usort($options, fn (array $a, array $b): int => strcasecmp($a['label'], $b['label']));
+
+        return $options;
+    }
+
+    private function stripParentPrefix(string $parentName, string $childName): string
+    {
+        if ($parentName === '' || $childName === '') {
+            return $childName;
+        }
+
+        $stripped = preg_replace('/^' . preg_quote($parentName, '/') . '\s*[-:]?\s+/i', '', $childName);
+
+        return ($stripped !== null && trim($stripped) !== '') ? trim($stripped) : $childName;
+    }
 }

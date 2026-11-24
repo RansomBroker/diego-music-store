@@ -38,7 +38,7 @@
                 </div>
 
                 <!-- Table Card Wrapper (Filament Style) -->
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden transition-colors duration-200">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-visible transition-colors duration-200">
 
                     <!-- Toolbar (Filters & Search) -->
                     @include('livewire.pos-transactions.components.toolbar-filters')

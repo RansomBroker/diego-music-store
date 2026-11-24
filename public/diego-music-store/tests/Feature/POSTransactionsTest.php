@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Branch;
-use App\Models\User;
+use App\Models\PaymentMethod;
 use App\Models\Sale;
+use App\Models\SalePayment;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -238,5 +240,180 @@ class POSTransactionsTest extends TestCase
             ->call('showDetails', $sale->id)
             ->assertSee('Kasir Pembuka Sesi')
             ->assertSee('Sales Penjual');
+    }
+
+    /** @test */
+    public function it_separates_parent_child_payment_method_filters_and_filters_accurately()
+    {
+        $cash = PaymentMethod::create(['name' => 'Cash', 'code' => 'cash', 'is_active' => true]);
+        $transfer = PaymentMethod::create(['name' => 'Transfer', 'code' => 'transfer', 'is_active' => true]);
+        $qris = PaymentMethod::create(['name' => 'QRIS', 'code' => 'qris', 'is_active' => true]);
+        $debit = PaymentMethod::create(['name' => 'Debit Card', 'code' => 'debit_card', 'is_active' => true]);
+
+        $transferBca = PaymentMethod::create(['name' => 'Transfer BCA', 'code' => 'transfer-bca', 'parent_id' => $transfer->id, 'is_active' => true]);
+        $transferMandiri = PaymentMethod::create(['name' => 'Mandiri', 'code' => 'transfer-mandiri', 'parent_id' => $transfer->id, 'is_active' => true]);
+        $qrisBca = PaymentMethod::create(['name' => 'BCA', 'code' => 'qris-bca', 'parent_id' => $qris->id, 'is_active' => true]);
+        $debitBca = PaymentMethod::create(['name' => 'BCA', 'code' => 'debit-bca', 'parent_id' => $debit->id, 'is_active' => true]);
+
+        $options = PaymentMethod::getFilterOptions();
+        $labels = array_column($options, 'label');
+
+        $this->assertEquals([
+            'Cash',
+            'Debit Card - BCA',
+            'QRIS - BCA',
+            'Transfer - BCA',
+            'Transfer - Mandiri',
+        ], $labels);
+
+        $this->assertNotContains('Transfer', $labels);
+        $this->assertNotContains('QRIS', $labels);
+        $this->assertNotContains('Debit Card', $labels);
+        $this->assertNotContains('BCA', $labels);
+
+        // Relational transactions using sale_payments
+        $saleTransferBca = Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-TRF-BCA-01',
+            'invoice_date' => now(),
+            'payment_method' => $transferBca->formatCheckoutLabel(),
+            'status' => 'completed',
+            'subtotal' => 100000,
+            'grand_total' => 100000,
+            'created_by' => $this->user->id,
+        ]);
+        SalePayment::create(['sale_id' => $saleTransferBca->id, 'payment_method_id' => $transferBca->id, 'amount' => 100000]);
+
+        $saleTransferMandiri = Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-TRF-MDR-01',
+            'invoice_date' => now(),
+            'payment_method' => $transferMandiri->formatCheckoutLabel(),
+            'status' => 'completed',
+            'subtotal' => 100000,
+            'grand_total' => 100000,
+            'created_by' => $this->user->id,
+        ]);
+        SalePayment::create(['sale_id' => $saleTransferMandiri->id, 'payment_method_id' => $transferMandiri->id, 'amount' => 100000]);
+
+        $saleQrisBca = Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-QRIS-BCA-01',
+            'invoice_date' => now(),
+            'payment_method' => $qrisBca->formatCheckoutLabel(),
+            'status' => 'completed',
+            'subtotal' => 100000,
+            'grand_total' => 100000,
+            'created_by' => $this->user->id,
+        ]);
+        SalePayment::create(['sale_id' => $saleQrisBca->id, 'payment_method_id' => $qrisBca->id, 'amount' => 100000]);
+
+        $saleDebitBca = Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-DEBIT-BCA-01',
+            'invoice_date' => now(),
+            'payment_method' => $debitBca->formatCheckoutLabel(),
+            'status' => 'completed',
+            'subtotal' => 100000,
+            'grand_total' => 100000,
+            'created_by' => $this->user->id,
+        ]);
+        SalePayment::create(['sale_id' => $saleDebitBca->id, 'payment_method_id' => $debitBca->id, 'amount' => 100000]);
+
+        $saleCash = Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-CASH-01',
+            'invoice_date' => now(),
+            'payment_method' => 'Cash',
+            'status' => 'completed',
+            'subtotal' => 100000,
+            'grand_total' => 100000,
+            'created_by' => $this->user->id,
+        ]);
+        SalePayment::create(['sale_id' => $saleCash->id, 'payment_method_id' => $cash->id, 'amount' => 100000]);
+
+        // Legacy text-only transactions (no sale_payments rows)
+        Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-LEG-QRIS-BCA',
+            'invoice_date' => now(),
+            'payment_method' => 'QRIS (BCA)',
+            'status' => 'completed',
+            'subtotal' => 100000,
+            'grand_total' => 100000,
+            'created_by' => $this->user->id,
+        ]);
+
+        Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-LEG-TRF-BCA',
+            'invoice_date' => now(),
+            'payment_method' => 'Transfer - BCA',
+            'status' => 'completed',
+            'subtotal' => 100000,
+            'grand_total' => 100000,
+            'created_by' => $this->user->id,
+        ]);
+
+        Sale::create([
+            'branch_id' => $this->branch->id,
+            'sales_rep_id' => $this->user->id,
+            'invoice_number' => 'INV-LEG-TUNAI',
+            'invoice_date' => now(),
+            'payment_method' => 'Tunai',
+            'status' => 'completed',
+            'subtotal' => 100000,
+            'grand_total' => 100000,
+            'created_by' => $this->user->id,
+        ]);
+
+        // 1. Selecting Transfer - BCA must ONLY match Transfer BCA transactions (NOT QRIS - BCA or Debit Card - BCA)
+        Livewire::test('App\Livewire\POSTransactions')
+            ->assertSee('Transfer - BCA')
+            ->assertSee('QRIS - BCA')
+            ->set('selectedPaymentMethod', [(string) $transferBca->id])
+            ->assertSee('INV-TRF-BCA-01')
+            ->assertSee('INV-LEG-TRF-BCA')
+            ->assertDontSee('INV-TRF-MDR-01')
+            ->assertDontSee('INV-QRIS-BCA-01')
+            ->assertDontSee('INV-LEG-QRIS-BCA')
+            ->assertDontSee('INV-DEBIT-BCA-01')
+            ->assertDontSee('INV-CASH-01')
+            ->assertDontSee('INV-LEG-TUNAI');
+
+        // 2. Selecting QRIS - BCA must ONLY match QRIS BCA (including legacy 'QRIS (BCA)')
+        Livewire::test('App\Livewire\POSTransactions')
+            ->set('selectedPaymentMethod', [(string) $qrisBca->id])
+            ->assertSee('INV-QRIS-BCA-01')
+            ->assertSee('INV-LEG-QRIS-BCA')
+            ->assertDontSee('INV-TRF-BCA-01')
+            ->assertDontSee('INV-LEG-TRF-BCA')
+            ->assertDontSee('INV-DEBIT-BCA-01')
+            ->assertDontSee('INV-CASH-01');
+
+        // 3. Multi-select Transfer - BCA + QRIS - BCA shows both sets cleanly
+        Livewire::test('App\Livewire\POSTransactions')
+            ->set('selectedPaymentMethod', [(string) $transferBca->id, (string) $qrisBca->id])
+            ->assertSee('INV-TRF-BCA-01')
+            ->assertSee('INV-LEG-TRF-BCA')
+            ->assertSee('INV-QRIS-BCA-01')
+            ->assertSee('INV-LEG-QRIS-BCA')
+            ->assertDontSee('INV-DEBIT-BCA-01')
+            ->assertDontSee('INV-CASH-01');
+
+        // 4. Selecting Cash matches relational Cash and legacy 'Tunai'
+        Livewire::test('App\Livewire\POSTransactions')
+            ->set('selectedPaymentMethod', [(string) $cash->id])
+            ->assertSee('INV-CASH-01')
+            ->assertSee('INV-LEG-TUNAI')
+            ->assertDontSee('INV-TRF-BCA-01')
+            ->assertDontSee('INV-QRIS-BCA-01');
     }
 }

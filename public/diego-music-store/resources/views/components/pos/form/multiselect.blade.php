@@ -47,7 +47,7 @@
             x-transition
             x-cloak
             style="display: none;"
-            class="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto"
+            class="absolute z-50 min-w-full sm:min-w-[230px] mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto"
         >
             <div class="p-2 space-y-1">
                 @if (empty($options) || (is_object($options) && $options->isEmpty()))

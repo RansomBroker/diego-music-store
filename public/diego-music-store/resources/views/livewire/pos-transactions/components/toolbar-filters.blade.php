@@ -1,5 +1,5 @@
 <!-- Toolbar (Filters & Search) -->
-<div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+<div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-t-xl">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3.5">
         
         <!-- Pencarian -->
@@ -36,7 +36,7 @@
             <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Metode Bayar</label>
             <x-pos.form.multiselect 
                 model="selectedPaymentMethod" 
-                :options="$paymentMethods->pluck('name', 'name')"
+                :options="$paymentMethodOptions"
                 rounded="rounded-lg" 
                 icon="ph-credit-card" 
                 placeholder="Semua Metode"
