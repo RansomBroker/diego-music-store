@@ -196,6 +196,8 @@ class PostPurchaseTransaction
                 'posted_by' => \Illuminate\Support\Facades\Auth::id() ?? $pt->created_by,
             ]);
 
+            $pt->update(['journal_entry_id' => $journalEntry->id]);
+
             // Resolve Account IDs helper
             $resolveAccount = function($code, $defaultName = 'Default Account') {
                 return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName);

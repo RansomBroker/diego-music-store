@@ -154,7 +154,7 @@ class SendWhatsAppReceipt
         }
 
         $lines[] = "*TOTAL AKHIR   : " . FormatHelper::rupiah($sale->grand_total) . "*";
-        $lines[] = "Metode Bayar   : " . strtoupper($sale->payment_method ?: 'TUNAI');
+        $lines[] = "Metode Bayar   : " . strtoupper($sale->payment_method_display ?: 'TUNAI');
 
         $lines[] = str_repeat('-', 28);
         if (!empty($setting?->footer_text)) {

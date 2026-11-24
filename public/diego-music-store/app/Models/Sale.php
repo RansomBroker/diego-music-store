@@ -28,6 +28,7 @@ class Sale extends Model
         'status',
         'created_by',
         'sale_category',
+        'sale_category_id',
         'notes',
     ];
 
@@ -39,7 +40,28 @@ class Sale extends Model
         'grand_total' => 'integer',
         'paid_amount' => 'integer',
         'change_amount' => 'integer',
+        'sale_category_id' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $sale): void {
+            if (! \Illuminate\Support\Facades\Schema::hasColumn($sale->getTable(), 'sale_category_id')) {
+                return;
+            }
+            if ($sale->sale_category_id && empty($sale->sale_category)) {
+                $cat = SaleCategory::find($sale->sale_category_id);
+                if ($cat) {
+                    $sale->sale_category = $cat->name;
+                }
+            } elseif (! $sale->sale_category_id && ! empty($sale->sale_category)) {
+                $cat = SaleCategory::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim((string) $sale->sale_category))])->first();
+                if ($cat) {
+                    $sale->sale_category_id = $cat->id;
+                }
+            }
+        });
+    }
 
     public function branch(): BelongsTo
     {
@@ -74,6 +96,59 @@ class Sale extends Model
     public function returns(): HasMany
     {
         return $this->hasMany(SalesReturn::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SalePayment::class);
+    }
+
+    public function saleCategory(): BelongsTo
+    {
+        return $this->belongsTo(SaleCategory::class, 'sale_category_id');
+    }
+
+    public function getSaleCategoryDisplayAttribute(): string
+    {
+        if ($this->relationLoaded('saleCategory') && $this->saleCategory) {
+            return (string) $this->saleCategory->name;
+        }
+
+        if ($this->sale_category_id) {
+            return (string) ($this->saleCategory?->name ?? $this->sale_category ?? '-');
+        }
+
+        return (string) ($this->sale_category ?: '-');
+    }
+
+    /**
+     * Resolve dynamic payment method display label from related sale_payments -> payment_methods,
+     * falling back to the stored payment_method string snapshot if no relational payments exist.
+     */
+    public function getPaymentMethodDisplayAttribute(): string
+    {
+        $payments = $this->relationLoaded('payments')
+            ? $this->payments
+            : $this->payments()->with('paymentMethod.parent')->get();
+
+        $labels = $payments
+            ->map(fn (SalePayment $payment) => $payment->paymentMethod?->formatCheckoutLabel())
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($labels->isEmpty()) {
+            return (string) ($this->payment_method ?: 'Tunai');
+        }
+
+        $display = $labels->implode(' & ');
+
+        // Preserve any receivable settlement suffix (e.g. "(Lunas via ...)" or "(Dicicil ...)")
+        if (preg_match('/(\s*\((?:Lunas|Dicicil)[^)]*\).*)$/i', (string) $this->payment_method, $matches)) {
+            $display .= $matches[1];
+        }
+
+        return $display;
     }
 
     public static function generateInvoiceNumber(string $categoryName = null): string

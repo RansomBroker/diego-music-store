@@ -81,8 +81,9 @@ class UpdatePOSSale
                 $je->delete();
             }
 
-            // 4. Delete Old Sale Items
+            // 4. Delete Old Sale Items & Payments
             $sale->items()->delete();
+            $sale->payments()->delete();
 
             // 5. Pre-calculate new subtotal
             $processedItems = [];
@@ -256,6 +257,13 @@ class UpdatePOSSale
                         $methodName = 'Tunai';
                     }
                 }
+
+                \App\Models\SalePayment::create([
+                    'sale_id' => $sale->id,
+                    'payment_method_id' => $dbMethod?->id,
+                    'amount' => $payAmount,
+                    'reference' => $payRef,
+                ]);
 
                 JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,

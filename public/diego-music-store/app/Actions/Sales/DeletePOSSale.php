@@ -94,7 +94,8 @@ class DeletePOSSale
             // 5. Hapus log komisi sales terkait (jika ada)
             SalesCommissionLog::where('sale_id', $sale->id)->delete();
 
-            // 6. Hapus item transaksi & header transaksi (hard delete)
+            // 6. Hapus item transaksi, pembayaran & header transaksi (hard delete)
+            $sale->payments()->delete();
             $sale->items()->delete();
             $sale->delete();
         });

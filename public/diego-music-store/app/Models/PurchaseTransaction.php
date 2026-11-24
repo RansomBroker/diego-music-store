@@ -38,6 +38,7 @@ class PurchaseTransaction extends Model
         'shipping_payment_account_id',
         'posted_at',
         'journal_no',
+        'journal_entry_id',
         'created_by',
         'enable_tax',
         'enable_item_discount',
@@ -71,6 +72,11 @@ class PurchaseTransaction extends Model
                 $pt->transaction_no = static::generateTransactionNo();
             }
         });
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
     }
 
     public static function generateTransactionNo(): string

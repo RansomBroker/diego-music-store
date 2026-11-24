@@ -25,7 +25,7 @@ class POSReceiptController extends Controller
         abort_unless((int) $sale->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
 
         // Load relations
-        $sale->load(['branch', 'customer', 'salesRep', 'creator', 'cashSession.user', 'items.variant.product', 'items.salesRep']);
+        $sale->load(['branch', 'customer', 'salesRep', 'creator', 'cashSession.user', 'payments.paymentMethod.parent', 'items.variant.product', 'items.salesRep']);
 
         if ($request->query('format') === 'invoice') {
             $draft = (object)[
@@ -40,7 +40,7 @@ class POSReceiptController extends Controller
                 'discount_amount' => (int) $sale->discount_amount,
                 'tax_amount' => (int) $sale->tax_amount,
                 'grand_total' => (int) $sale->grand_total,
-                'payment_method' => $sale->payment_method ?? 'LUNAS / CASH',
+                'payment_method' => $sale->payment_method_display ?: 'LUNAS / CASH',
             ];
 
             return view('pos.receipt-draft', [

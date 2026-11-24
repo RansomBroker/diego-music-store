@@ -62,6 +62,8 @@ class ProcessSupplierPaymentComplete
                 'posted_by' => Auth::id() ?? $payment->created_by,
             ]);
 
+            $payment->update(['journal_entry_id' => $journalEntry->id]);
+
             // Resolve Account Helper
             $resolveAccount = function($code, $defaultName = 'Default Account', $classification = 'liability') {
                 return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);

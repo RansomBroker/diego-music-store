@@ -15,6 +15,7 @@ class Account extends Model
         'code',
         'name',
         'classification',
+        'account_classification_id',
         'account_subtype',
         'normal_balance',
         'is_active',
@@ -24,9 +25,15 @@ class Account extends Model
 
     protected $casts = [
         'branch_id' => 'integer',
+        'account_classification_id' => 'integer',
         'is_active' => 'boolean',
         'is_header' => 'boolean',
     ];
+
+    public function accountClassification(): BelongsTo
+    {
+        return $this->belongsTo(AccountClassification::class, 'account_classification_id');
+    }
 
     /**
      * Find account by code or legacy code mapping within a branch.
@@ -142,21 +149,28 @@ class Account extends Model
     protected static function booted()
     {
         static::saving(function ($account) {
+            if ($account->account_classification_id && empty($account->classification)) {
+                $cls = AccountClassification::find($account->account_classification_id);
+                if ($cls) {
+                    $account->classification = $cls->key;
+                }
+            }
+
             if ($account->classification) {
                 // Generate a key slug for the classification
                 $key = \Illuminate\Support\Str::slug($account->classification);
                 
                 // Ensure it exists in the account_classifications database table
-                $exists = AccountClassification::where('key', $key)->exists();
-                if (!$exists) {
-                    AccountClassification::create([
-                        'key' => $key,
-                        'name' => $account->classification,
-                    ]);
-                }
+                $cls = AccountClassification::firstOrCreate(
+                    ['key' => $key],
+                    ['name' => $account->classification]
+                );
                 
-                // Store the normalized key slug
-                $account->classification = $key;
+                // Store the normalized key slug and relational foreign key (guard for earlier migrations)
+                $account->classification = $cls->key;
+                if (\Illuminate\Support\Facades\Schema::hasColumn($account->getTable(), 'account_classification_id')) {
+                    $account->account_classification_id = $cls->id;
+                }
             }
         });
     }

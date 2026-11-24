@@ -93,9 +93,10 @@ class PayPurchaseOrderDownPayment
             $po->update([
                 'dp_amount'       => $amount,
                 'dp_account_id'   => $bankAccount->id,
-                'dp_paid_at'      => $paidAt,
-                'dp_journal_no'   => $journal->entry_no,
-                'dp_reference_no' => $referenceNo ?: null,
+                'dp_paid_at'          => $paidAt,
+                'dp_journal_no'       => $journal->entry_no,
+                'dp_journal_entry_id' => $journal->id,
+                'dp_reference_no'     => $referenceNo ?: null,
                 'dp_notes'        => $notes ?: null,
             ]);
 

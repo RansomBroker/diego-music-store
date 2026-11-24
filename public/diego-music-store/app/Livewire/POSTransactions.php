@@ -178,7 +178,7 @@ class POSTransactions extends Component
 
     public function showDetails(int $saleId): void
     {
-        $this->selectedSale = Sale::with(['items.variant.product', 'items.salesRep', 'customer', 'salesRep', 'creator', 'cashSession.user', 'branch'])
+        $this->selectedSale = Sale::with(['items.variant.product', 'items.salesRep', 'payments.paymentMethod.parent', 'saleCategory', 'customer', 'salesRep', 'creator', 'cashSession.user', 'branch'])
             ->where('branch_id', $this->resolveAuthorizedBranchId())
             ->findOrFail($saleId);
         $this->showDetailsModal = true;
@@ -564,7 +564,7 @@ class POSTransactions extends Component
             ? \Illuminate\Support\Facades\Storage::url($activeBranch->logo_path)
             : null;
 
-        $sales = Sale::with(['customer', 'salesRep', 'creator', 'cashSession.user', 'items.salesRep', 'branch'])
+        $sales = Sale::with(['customer', 'salesRep', 'creator', 'cashSession.user', 'items.salesRep', 'payments.paymentMethod.parent', 'saleCategory', 'branch'])
             ->where('branch_id', $branchId)
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
@@ -589,7 +589,11 @@ class POSTransactions extends Component
             ->when(!empty($this->selectedPaymentMethod), function ($query) {
                 $query->where(function ($q) {
                     foreach ($this->selectedPaymentMethod as $method) {
-                        $q->orWhere('payment_method', 'like', "%{$method}%");
+                        $q->orWhere('payment_method', 'like', "%{$method}%")
+                            ->orWhereHas('payments.paymentMethod', function ($pm) use ($method) {
+                                $pm->where('name', 'like', "%{$method}%")
+                                    ->orWhereHas('parent', fn ($p) => $p->where('name', 'like', "%{$method}%"));
+                            });
                     }
                 });
             })

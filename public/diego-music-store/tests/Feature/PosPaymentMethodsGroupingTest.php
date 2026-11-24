@@ -196,4 +196,46 @@ class PosPaymentMethodsGroupingTest extends TestCase
         $this->assertSame($bankBri->id, $resolvedBri->getEffectiveAccountId());
         $this->assertSame('QRIS - BRI', $resolvedBri->formatCheckoutLabel());
     }
+
+    public function test_sale_payments_relation_keeps_payment_method_display_synced_when_method_is_renamed(): void
+    {
+        $bankBca = Account::firstOrCreate(['code' => '111201001'], ['name' => 'BANK BCA', 'classification' => 'Asset', 'is_active' => true]);
+        $transfer = PaymentMethod::create(['name' => 'Transfer', 'code' => 'transfer', 'account_id' => $bankBca->id, 'is_active' => true]);
+        $transferBca = PaymentMethod::create(['name' => 'Transfer BCA', 'code' => 'transfer-bca', 'parent_id' => $transfer->id, 'account_id' => $bankBca->id, 'is_active' => true]);
+
+        $branch = \App\Models\Branch::create([
+            'name' => 'Cabang Test',
+            'address' => 'Jl. Test',
+            'phone' => '123',
+            'is_active' => true,
+        ]);
+        $user = User::factory()->create();
+        $user->branches()->attach($branch);
+
+        $sale = \App\Models\Sale::create([
+            'branch_id' => $branch->id,
+            'sales_rep_id' => $user->id,
+            'invoice_number' => 'INV-SYNC-001',
+            'invoice_date' => now()->toDateString(),
+            'subtotal' => 420000,
+            'grand_total' => 420000,
+            'payment_method' => 'Transfer - Transfer BCA',
+            'status' => 'completed',
+            'created_by' => $user->id,
+        ]);
+
+        \App\Models\SalePayment::create([
+            'sale_id' => $sale->id,
+            'payment_method_id' => $transferBca->id,
+            'amount' => 420000,
+        ]);
+
+        $this->assertSame('Transfer - Transfer BCA', $sale->fresh()->payment_method_display);
+
+        // Rename child method in master payment_methods
+        $transferBca->update(['name' => 'BCA']);
+
+        // Sale display automatically reflects renamed payment method
+        $this->assertSame('Transfer - BCA', $sale->fresh()->payment_method_display);
+    }
 }

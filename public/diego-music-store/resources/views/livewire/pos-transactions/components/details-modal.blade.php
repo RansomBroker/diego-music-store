@@ -49,11 +49,11 @@
                         </div>
                         <div class="mt-2">
                             <span class="block font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Metode Pembayaran</span>
-                            <span class="font-black text-slate-850 dark:text-slate-200 text-sm">{{ $selectedSale->payment_method }}</span>
+                            <span class="font-black text-slate-850 dark:text-slate-200 text-sm">{{ $selectedSale->payment_method_display }}</span>
                         </div>
                         <div class="mt-2">
                             <span class="block font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Kategori Penjualan</span>
-                            <span class="font-black text-slate-850 dark:text-slate-200 text-sm">{{ $selectedSale->sale_category }}</span>
+                            <span class="font-black text-slate-850 dark:text-slate-200 text-sm">{{ $selectedSale->sale_category_display }}</span>
                         </div>
                         <div class="mt-2 col-span-2">
                             <span class="block font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Catatan Transaksi</span>
@@ -138,7 +138,7 @@
                     <div class="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl space-y-2 text-xs border border-slate-200/60 dark:border-slate-850">
                         <div class="flex items-center justify-between text-slate-500 font-bold">
                             <span>Metode Pembayaran</span>
-                            <span class="text-slate-800 dark:text-slate-200 uppercase">{{ $selectedSale->payment_method ?? 'TUNAI' }}</span>
+                            <span class="text-slate-800 dark:text-slate-200 uppercase">{{ $selectedSale->payment_method_display ?: 'TUNAI' }}</span>
                         </div>
                         <div class="flex items-center justify-between text-slate-500 font-bold">
                             <span>Nominal Dibayar</span>

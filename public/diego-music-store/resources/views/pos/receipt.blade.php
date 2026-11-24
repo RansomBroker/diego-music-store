@@ -204,7 +204,10 @@
     @else
         <div class="grid">
             <span>Pembayaran:</span>
-            <span class="bold">{{ strtoupper($sale->payment_method) === 'KAS' ? 'CASH' : strtoupper($sale->payment_method) }}</span>
+            @php
+                $receiptPaymentDisplay = $sale->payment_method_display;
+            @endphp
+            <span class="bold">{{ strtoupper($receiptPaymentDisplay) === 'KAS' ? 'CASH' : strtoupper($receiptPaymentDisplay) }}</span>
         </div>
     @endif
 

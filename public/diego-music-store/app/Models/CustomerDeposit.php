@@ -27,6 +27,7 @@ class CustomerDeposit extends Model
         'remaining_amount',
         'account_id',
         'payment_method',
+        'payment_method_id',
         'payment_reference',
         'notes',
         'status',
@@ -34,6 +35,7 @@ class CustomerDeposit extends Model
         'settled_by',
         'settlement_account_id',
         'settlement_payment_method',
+        'settlement_payment_method_id',
         'settlement_reference',
         'settlement_notes',
         'deposit_journal_entry_id',
@@ -57,6 +59,36 @@ class CustomerDeposit extends Model
                 $deposit->deposit_number = static::generateDepositNumber();
             }
         });
+
+        static::saving(function (self $deposit): void {
+            if (\Illuminate\Support\Facades\Schema::hasColumn($deposit->getTable(), 'payment_method_id')
+                && ! $deposit->payment_method_id && ! empty($deposit->payment_method)) {
+                $deposit->payment_method_id = static::resolvePaymentMethodId($deposit->payment_method);
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($deposit->getTable(), 'settlement_payment_method_id')
+                && ! $deposit->settlement_payment_method_id && ! empty($deposit->settlement_payment_method)) {
+                $deposit->settlement_payment_method_id = static::resolvePaymentMethodId($deposit->settlement_payment_method);
+            }
+        });
+    }
+
+    protected static function resolvePaymentMethodId(string $raw): ?int
+    {
+        $clean = strtolower(trim($raw));
+        if ($clean === '') {
+            return null;
+        }
+        if (in_array($clean, ['cash', 'tunai', 'kas'], true)) {
+            $cash = PaymentMethod::whereRaw('LOWER(code) = ?', ['cash'])->first();
+            if ($cash) {
+                return (int) $cash->id;
+            }
+        }
+        $pm = PaymentMethod::whereRaw('LOWER(TRIM(name)) = ?', [$clean])
+            ->orWhereRaw('LOWER(TRIM(code)) = ?', [$clean])
+            ->first();
+
+        return $pm ? (int) $pm->id : null;
     }
 
     /**
@@ -129,6 +161,26 @@ class CustomerDeposit extends Model
     public function settlementJournalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class, 'settlement_journal_entry_id');
+    }
+
+    public function paymentMethodRelation(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+    }
+
+    public function settlementPaymentMethodRelation(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class, 'settlement_payment_method_id');
+    }
+
+    public function getPaymentMethodDisplayAttribute(): string
+    {
+        return $this->paymentMethodRelation?->formatCheckoutLabel() ?? (string) ($this->payment_method ?: '-');
+    }
+
+    public function getSettlementPaymentMethodDisplayAttribute(): string
+    {
+        return $this->settlementPaymentMethodRelation?->formatCheckoutLabel() ?? (string) ($this->settlement_payment_method ?: '-');
     }
 
     public function isPending(): bool

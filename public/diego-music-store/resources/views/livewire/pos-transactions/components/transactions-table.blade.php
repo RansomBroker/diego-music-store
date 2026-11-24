@@ -42,15 +42,18 @@
                         {{ $sale->receipt_sales_rep_name ?: '-' }}
                     </x-pos.table.td>
                     <x-pos.table.td class="whitespace-nowrap">
+                        @php
+                            $pmDisplay = $sale->payment_method_display;
+                        @endphp
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300">
-                            @if (str_contains(strtolower($sale->payment_method), 'tunai') || strtolower($sale->payment_method) === 'cash')
+                            @if (str_contains(strtolower($pmDisplay), 'tunai') || strtolower($pmDisplay) === 'cash')
                                 <i class="ph ph-money text-emerald-500 text-sm"></i>
-                            @elseif (str_contains(strtolower($sale->payment_method), 'debit'))
+                            @elseif (str_contains(strtolower($pmDisplay), 'debit'))
                                 <i class="ph ph-credit-card text-blue-500 text-sm"></i>
                             @else
                                 <i class="ph ph-file-text text-amber-500 text-sm"></i>
                             @endif
-                            {{ $sale->payment_method }}
+                            {{ $pmDisplay }}
                         </span>
                     </x-pos.table.td>
                     <x-pos.table.td class="whitespace-nowrap text-right font-bold text-slate-900 dark:text-white">

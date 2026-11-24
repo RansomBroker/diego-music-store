@@ -33,6 +33,7 @@ class SalesInvoice extends Model
         'notes',
         'posted_at',
         'journal_no',
+        'journal_entry_id',
     ];
 
     protected $casts = [
@@ -80,6 +81,11 @@ class SalesInvoice extends Model
     public function salesQuotation(): BelongsTo
     {
         return $this->belongsTo(SalesQuotation::class, 'sales_quotation_id');
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
     }
 
     public function createdBy(): BelongsTo

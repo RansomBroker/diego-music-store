@@ -231,6 +231,13 @@ class CreatePOSSale
                     }
                 }
 
+                \App\Models\SalePayment::create([
+                    'sale_id' => $sale->id,
+                    'payment_method_id' => $dbMethod?->id,
+                    'amount' => $payAmount,
+                    'reference' => $payRef,
+                ]);
+
                 JournalItem::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id' => $debitAccId,

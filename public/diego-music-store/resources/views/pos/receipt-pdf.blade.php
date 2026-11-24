@@ -184,7 +184,7 @@
         </tr>
         <tr>
             <td class="text-left" style="color: #64748b; padding-top: 4px;">Metode Bayar</td>
-            <td class="text-right font-bold" style="padding-top: 4px;">{{ strtoupper($sale->payment_method ?: 'TUNAI') }}</td>
+            <td class="text-right font-bold" style="padding-top: 4px;">{{ strtoupper($sale->payment_method_display ?: 'TUNAI') }}</td>
         </tr>
         @if ($sale->usesCashPayment())
             @if ((int) ($sale->paid_amount ?? 0) > 0)

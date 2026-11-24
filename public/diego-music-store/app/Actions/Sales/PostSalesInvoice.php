@@ -171,6 +171,7 @@ class PostSalesInvoice
                 'posted_at' => now(),
                 'posted_by' => Auth::id(),
                 'journal_no' => $journalNo,
+                'journal_entry_id' => $journalEntry->id,
             ]);
 
             // Update linked quotation status if applicable

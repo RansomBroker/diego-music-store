@@ -41,6 +41,7 @@ class PurchaseOrder extends Model
         'dp_account_id',
         'dp_paid_at',
         'dp_journal_no',
+        'dp_journal_entry_id',
         'dp_reference_no',
         'dp_notes',
     ];
@@ -68,6 +69,11 @@ class PurchaseOrder extends Model
                 $purchaseOrder->po_number = static::generatePoNumber();
             }
         });
+    }
+
+    public function dpJournalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'dp_journal_entry_id');
     }
 
     public static function generatePoNumber(): string
