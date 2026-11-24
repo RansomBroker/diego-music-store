@@ -273,23 +273,30 @@ class POSLivewireTest extends TestCase
     }
 
     /** @test */
-    public function it_filters_sales_reps_to_users_with_sales_role_including_multi_role_and_allows_clearing_and_reselecting()
+    public function it_filters_sales_reps_to_owners_and_sales_roles_including_double_roles_and_allows_clearing_and_reselecting()
     {
         $managerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'MANAGER TOKO', 'guard_name' => 'web']);
+        $kasirRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Kasir Utama', 'guard_name' => 'web']);
         $salesRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'sales', 'guard_name' => 'web']);
         $upperSalesRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'SALES', 'guard_name' => 'web']);
 
-        // Has BOTH sales + MANAGER TOKO -> MUST appear
-        $multiRoleSales = \App\Models\User::factory()->create(['name' => 'RAMADHAN SAPUTRA', 'is_active' => true]);
-        $multiRoleSales->syncRoles([$salesRole, $managerRole]);
-        $multiRoleSales->branches()->attach($this->branch->id);
+        // Owner WITHOUT branch pivot and WITHOUT employee record (mirrors production MERDI (OWNER)) -> MUST appear
+        $globalOwner = \App\Models\User::factory()->create(['name' => 'MERDI (OWNER)', 'is_active' => true]);
+        $globalOwner->syncRoles([\Spatie\Permission\Models\Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web'])]);
 
-        // Has uppercase SALES + another role + apostrophe in name -> MUST appear
+        // Double-role user saved via UpdateUser (Kasir Utama + sales role IDs) -> MUST appear
+        $doubleRoleKasirSales = \App\Models\User::factory()->create(['name' => 'NAILA MULTI ROLE', 'is_active' => true]);
+        app(\App\Actions\User\UpdateUser::class)->execute($doubleRoleKasirSales, [
+            'branches' => [$this->branch->id],
+            'roles' => [$kasirRole->id, $salesRole->id],
+        ]);
+
+        // Double-role MANAGER TOKO + uppercase SALES + apostrophe in name -> MUST appear
         $salesApostrophe = \App\Models\User::factory()->create(['name' => "MAR'IE MUHAMMAD", 'is_active' => true]);
         $salesApostrophe->syncRoles([$upperSalesRole, $managerRole]);
         $salesApostrophe->branches()->attach($this->branch->id);
 
-        // Only MANAGER TOKO (no sales role) -> MUST NOT appear
+        // Only MANAGER TOKO (no sales / owner role) -> MUST NOT appear
         $managerOnly = \App\Models\User::factory()->create(['name' => 'NON SALES MANAGER', 'is_active' => true]);
         $managerOnly->syncRoles([$managerRole]);
         $managerOnly->branches()->attach($this->branch->id);
@@ -299,29 +306,44 @@ class POSLivewireTest extends TestCase
         $inactiveUser->syncRoles([$salesRole]);
         $inactiveUser->branches()->attach($this->branch->id);
 
-        // $this->user has only 'owner' role -> also excluded once cleared unless carrying 'sales'
         $component = Livewire::test('App\Livewire\POS')
             ->call('clearSalesRep')
             ->assertSet('selectedSalesRepId', null)
             ->assertSet('selectedSalesRepName', '')
-            ->assertSee('RAMADHAN SAPUTRA')
+            ->assertSee('MERDI (OWNER)')
+            ->assertSee('NAILA MULTI ROLE')
             ->assertSee("MAR'IE MUHAMMAD")
             ->assertDontSee('NON SALES MANAGER')
             ->assertDontSee('RESIGNED STAFF')
-            ->call('selectSalesRep', $multiRoleSales->id, $multiRoleSales->name)
-            ->assertSet('selectedSalesRepId', $multiRoleSales->id)
-            ->assertSet('selectedSalesRepName', 'RAMADHAN SAPUTRA')
+            ->call('selectSalesRep', $globalOwner->id)
+            ->assertSet('selectedSalesRepId', $globalOwner->id)
+            ->assertSet('selectedSalesRepName', 'MERDI (OWNER)')
             ->call('clearSalesRep')
-            ->assertSee('RAMADHAN SAPUTRA')
+            ->assertSet('selectedSalesRepId', null)
+            ->assertSee('MERDI (OWNER)')
+            ->call('selectSalesRep', $doubleRoleKasirSales->id)
+            ->assertSet('selectedSalesRepId', $doubleRoleKasirSales->id)
+            ->assertSet('selectedSalesRepName', 'NAILA MULTI ROLE')
+            ->call('clearSalesRep')
+            ->assertSee("MAR'IE MUHAMMAD")
             ->call('selectSalesRep', $salesApostrophe->id)
             ->assertSet('selectedSalesRepId', $salesApostrophe->id)
             ->assertSet('selectedSalesRepName', "MAR'IE MUHAMMAD");
 
-        $this->assertTrue($component->instance()->salesReps->contains('id', $multiRoleSales->id));
+        // Verify salesReps & allSalesReps eligibility
+        $this->assertTrue($component->instance()->salesReps->contains('id', $this->user->id));
+        $this->assertTrue($component->instance()->salesReps->contains('id', $globalOwner->id));
+        $this->assertTrue($component->instance()->salesReps->contains('id', $doubleRoleKasirSales->id));
         $this->assertTrue($component->instance()->salesReps->contains('id', $salesApostrophe->id));
-        $this->assertFalse($component->instance()->salesReps->contains('id', $this->user->id));
         $this->assertFalse($component->instance()->salesReps->contains('id', $managerOnly->id));
         $this->assertFalse($component->instance()->salesReps->contains('id', $inactiveUser->id));
+
+        // Searching in header Sales input narrows salesReps, but allSalesReps remains full for cart rows
+        $component->set('salesSearch', 'NAILA');
+        $this->assertTrue($component->instance()->salesReps->contains('id', $doubleRoleKasirSales->id));
+        $this->assertFalse($component->instance()->salesReps->contains('id', $globalOwner->id));
+        $this->assertTrue($component->instance()->allSalesReps->contains('id', $globalOwner->id));
+        $this->assertTrue($component->instance()->allSalesReps->contains('id', $salesApostrophe->id));
     }
 
     /** @test */

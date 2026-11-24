@@ -84,6 +84,7 @@
         :selectedSalesRepName="$selectedSalesRepName"
         :saleCategory="$saleCategory"
         :salesReps="$this->salesReps"
+        :allSalesReps="$this->allSalesReps"
         :saleCategories="$this->saleCategories"
         :editingSaleId="$editingSaleId"
         :selectedBranchId="$selectedBranchId"

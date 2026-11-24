@@ -115,8 +115,9 @@ class PosReportsSalesQueue extends Component
 
     public function getSalesUsersProperty()
     {
-        return User::role('sales')
+        return User::query()
             ->where('is_active', true)
+            ->whereHas('roles', fn ($roleQuery) => $roleQuery->whereRaw('LOWER(name) LIKE ?', ['%sales%']))
             ->orderBy('name', 'asc')
             ->get();
     }

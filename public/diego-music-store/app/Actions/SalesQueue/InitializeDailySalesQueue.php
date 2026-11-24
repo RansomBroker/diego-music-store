@@ -25,14 +25,17 @@ class InitializeDailySalesQueue
             // Find existing queue members for this branch and date
             $existingMembers = SalesQueueMember::with('user')
                 ->where('branch_id', $branchId)
-                ->where('date', $targetDate)
+                ->whereDate('date', $targetDate)
                 ->orderBy('queue_order', 'asc')
                 ->get();
 
             $existingUserIds = $existingMembers->pluck('user_id')->toArray();
 
-            // Find sales users assigned to this branch
-            $branchSalesUsers = User::role('sales')
+            $salesRoleFilter = fn ($roleQuery) => $roleQuery->whereRaw('LOWER(name) LIKE ?', ['%sales%']);
+
+            // Find sales users assigned to this branch (case-insensitive & multi-role compatible)
+            $branchSalesUsers = User::query()
+                ->whereHas('roles', $salesRoleFilter)
                 ->where('is_active', true)
                 ->where(function ($query) use ($branchId) {
                     $query->whereHas('branches', function ($b) use ($branchId) {
@@ -46,7 +49,8 @@ class InitializeDailySalesQueue
 
             // Fallback: If no users mapped specifically to branch, get all active sales users
             if ($branchSalesUsers->isEmpty()) {
-                $branchSalesUsers = User::role('sales')
+                $branchSalesUsers = User::query()
+                    ->whereHas('roles', $salesRoleFilter)
                     ->where('is_active', true)
                     ->orderBy('name', 'asc')
                     ->get();
@@ -80,7 +84,7 @@ class InitializeDailySalesQueue
 
             return SalesQueueMember::with(['user', 'currentDutyLog'])
                 ->where('branch_id', $branchId)
-                ->where('date', $targetDate)
+                ->whereDate('date', $targetDate)
                 ->orderBy('queue_order', 'asc')
                 ->get();
         });

@@ -27,6 +27,7 @@
     'selectedSalesRepName' => '',
     'saleCategory' => 'Store',
     'salesReps' => [],
+    'allSalesReps' => null,
     'saleCategories' => [],
     'editingSaleId' => null,
     'cartVariants' => [],
@@ -248,7 +249,7 @@
         </div>
 
         <!-- Informasi Pembelian Section -->
-        <div class="mt-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-400 dark:border-slate-700">
+        <div class="relative z-20 mt-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-400 dark:border-slate-700">
             <h3 class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-1.5">
                 <i class="ph-bold ph-receipt text-xs sm:text-sm"></i>
                 Informasi Pembelian
@@ -377,9 +378,9 @@
                     @if ($selectedSalesRepId)
                         <div wire:key="sales-rep-selected" class="relative">
                             <i class="ph ph-identification-card text-slate-600 dark:text-slate-355 absolute left-2.5 top-1/2 -translate-y-1/2 text-sm font-bold"></i>
-                            <div class="w-full pl-8 pr-7 py-1.5 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
+                            <div class="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-600 rounded-lg font-bold text-xs text-slate-900 dark:text-white flex items-center justify-between shadow-sm">
                                 <span class="truncate">{{ $selectedSalesRepName }}</span>
-                                <button type="button" wire:click="clearSalesRep" @click.stop="isOpen = true" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-1">
+                                <button type="button" @click.stop="$wire.clearSalesRep().then(() => { isOpen = true; $nextTick(() => document.getElementById('sales-search-input')?.focus()); })" title="Ganti Sales" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-1 cursor-pointer">
                                     <i class="ph-bold ph-x text-sm sm:text-base"></i>
                                 </button>
                             </div>
@@ -400,10 +401,10 @@
                             />
                             
                             <!-- Sales Search Results Dropdown -->
-                            <div x-show="isOpen" x-cloak class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-20 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
+                            <div x-show="isOpen" x-cloak class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-30 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
                                 @if (count($salesReps) > 0)
                                     @foreach ($salesReps as $salesRep)
-                                        <button type="button" wire:click="selectSalesRep({{ $salesRep->id }}, @js($salesRep->name))" @click="isOpen = false" class="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 flex items-center justify-between gap-2">
+                                        <button type="button" wire:key="sales-rep-option-{{ $salesRep->id }}" wire:click="selectSalesRep({{ $salesRep->id }})" @click="isOpen = false" class="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 flex items-center justify-between gap-2 cursor-pointer">
                                             <div class="min-w-0">
                                                 <div class="font-bold text-slate-800 dark:text-slate-100 truncate">{{ $salesRep->name }}</div>
                                                 <div class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $salesRep->email }}</div>
@@ -561,7 +562,7 @@
                                         class="w-full pl-6 pr-5 py-0 h-full bg-transparent border-none text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-0 cursor-pointer appearance-none"
                                     >
                                         <option value="">- Utama -</option>
-                                        @foreach ($salesReps as $rep)
+                                        @foreach (($allSalesReps ?? $salesReps) as $rep)
                                             <option value="{{ $rep->id }}" {{ ($item['sales_rep_id'] ?? '') == $rep->id ? 'selected' : '' }} class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
                                                 {{ $rep->name }}
                                             </option>

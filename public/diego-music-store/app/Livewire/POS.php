@@ -459,27 +459,52 @@ class POS extends Component
             ->get();
     }
 
-    // Get active branch users with the sales role (including multi-role users such as sales + manager toko)
-    public function getSalesRepsProperty()
+    /**
+     * Build the base query for eligible POS sales representatives:
+     * active Owner users globally (even without branch/employee mapping) plus active users
+     * holding any Sales role (including multi-role users) scoped to the active branch when available.
+     */
+    protected function buildEligibleSalesRepsQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $branchId = $this->selectedBranchId;
 
-        $baseQuery = \App\Models\User::query()
+        $salesRoleUsers = \App\Models\User::query()
+            ->where('users.is_active', true)
+            ->whereHas('roles', fn ($roleQuery) => $roleQuery->whereRaw('LOWER(name) LIKE ?', ['%sales%']));
+
+        $hasBranchScopedSales = false;
+        if ($branchId) {
+            $hasBranchScopedSales = (clone $salesRoleUsers)
+                ->where(function ($query) use ($branchId) {
+                    $query->whereHas('branches', fn ($b) => $b->where('branches.id', $branchId))
+                        ->orWhereHas('employee', fn ($e) => $e->where('employees.branch_id', $branchId));
+                })
+                ->exists();
+        }
+
+        return \App\Models\User::query()
             ->with('roles:id,name')
             ->select(['users.id', 'users.name', 'users.email'])
             ->where('users.is_active', true)
-            ->whereHas('roles', fn ($roleQuery) => $roleQuery->whereRaw('LOWER(name) = ?', ['sales']));
+            ->where(function ($outer) use ($branchId, $hasBranchScopedSales) {
+                $outer->whereHas('roles', fn ($roleQuery) => $roleQuery->whereRaw('LOWER(name) = ?', ['owner']))
+                    ->orWhere(function ($salesQuery) use ($branchId, $hasBranchScopedSales) {
+                        $salesQuery->whereHas('roles', fn ($roleQuery) => $roleQuery->whereRaw('LOWER(name) LIKE ?', ['%sales%']));
 
-        if ($branchId) {
-            $branchScoped = (clone $baseQuery)->where(function ($query) use ($branchId) {
-                $query->whereHas('branches', fn ($b) => $b->where('branches.id', $branchId))
-                    ->orWhereHas('employee', fn ($e) => $e->where('employees.branch_id', $branchId));
+                        if ($hasBranchScopedSales && $branchId) {
+                            $salesQuery->where(function ($branchQuery) use ($branchId) {
+                                $branchQuery->whereHas('branches', fn ($b) => $b->where('branches.id', $branchId))
+                                    ->orWhereHas('employee', fn ($e) => $e->where('employees.branch_id', $branchId));
+                            });
+                        }
+                    });
             });
+    }
 
-            if ((clone $branchScoped)->exists()) {
-                $baseQuery = $branchScoped;
-            }
-        }
+    // Get active owner + branch sales users (including multi-role users) filtered by search query
+    public function getSalesRepsProperty()
+    {
+        $baseQuery = $this->buildEligibleSalesRepsQuery();
 
         if (! empty($this->salesSearch)) {
             $search = '%' . trim($this->salesSearch) . '%';
@@ -490,6 +515,15 @@ class POS extends Component
         }
 
         return $baseQuery
+            ->orderBy('users.name')
+            ->limit(50)
+            ->get();
+    }
+
+    // Unfiltered list of eligible sales reps for per-item cart dropdowns
+    public function getAllSalesRepsProperty()
+    {
+        return $this->buildEligibleSalesRepsQuery()
             ->orderBy('users.name')
             ->limit(50)
             ->get();

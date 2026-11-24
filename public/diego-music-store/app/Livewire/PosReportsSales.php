@@ -186,7 +186,7 @@ class PosReportsSales extends Component
         // Filter Options Dropdowns
         $customers = Customer::orderBy('name')->get();
 
-        $salesUsers = User::whereHas('roles', fn($q) => $q->whereIn('name', ['sales', 'owner', 'admin']))
+        $salesUsers = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) IN (?, ?, ?) OR LOWER(name) LIKE ?', ['sales', 'owner', 'admin', '%sales%']))
             ->orWhereIn('id', Sale::where('branch_id', $activeBranchId)->whereNotNull('sales_rep_id')->distinct()->pluck('sales_rep_id'))
             ->orderBy('name')->get();
 

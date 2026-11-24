@@ -167,6 +167,36 @@ class SalesQueueTest extends TestCase
     }
 
     /** @test */
+    public function it_includes_double_role_and_uppercase_sales_users_in_queue_while_excluding_non_sales_owner()
+    {
+        $kasirRole = Role::firstOrCreate(['name' => 'Kasir Utama', 'guard_name' => 'web']);
+        $upperSalesRole = Role::firstOrCreate(['name' => 'SALES', 'guard_name' => 'web']);
+        $ownerRole = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+
+        $doubleRoleUser = User::factory()->create([
+            'name' => 'Naila Double Role',
+            'is_active' => true,
+        ]);
+        $doubleRoleUser->syncRoles([$kasirRole, $upperSalesRole]);
+        $doubleRoleUser->branches()->attach($this->branch);
+
+        $ownerOnlyUser = User::factory()->create([
+            'name' => 'Merdi Owner Only',
+            'is_active' => true,
+        ]);
+        $ownerOnlyUser->syncRoles([$ownerRole]);
+
+        $queue = app(InitializeDailySalesQueue::class)->execute($this->branch->id);
+
+        $this->assertTrue($queue->pluck('user_id')->contains($doubleRoleUser->id));
+        $this->assertFalse($queue->pluck('user_id')->contains($this->cashierUser->id));
+        $this->assertFalse($queue->pluck('user_id')->contains($ownerOnlyUser->id));
+
+        $reportComponent = Livewire::test(PosReportsSalesQueue::class);
+        $this->assertTrue($reportComponent->instance()->salesUsers->contains('id', $doubleRoleUser->id));
+    }
+
+    /** @test */
     public function it_can_toggle_sales_rep_to_off_duty_and_skip_them_in_queue()
     {
         $queue = app(InitializeDailySalesQueue::class)->execute($this->branch->id);
