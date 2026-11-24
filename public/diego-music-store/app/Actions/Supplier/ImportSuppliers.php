@@ -4,24 +4,19 @@ namespace App\Actions\Supplier;
 
 use App\Models\Supplier;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ImportSuppliers
 {
     /**
-     * Required headers for Supplier import.
+     * Required headers for Supplier import (NO | NAMA | ALAMAT | STATUS).
      *
      * @var array<int, string>
      */
     public const REQUIRED_HEADERS = [
-        'name',
-        'contact_person',
-        'phone',
-        'email',
-        'address',
-        'bank_name',
-        'bank_account_number',
-        'bank_account_name',
-        'outstanding_debt',
+        'nama',
+        'alamat',
+        'status',
     ];
 
     /**
@@ -36,49 +31,66 @@ class ImportSuppliers
         $skippedCount = 0;
         $errors = [];
 
-        DB::transaction(function () use ($rows, &$importedCount, &$skippedCount, &$errors) {
+        DB::transaction(function () use ($rows, &$importedCount, &$skippedCount, &$errors): void {
             foreach ($rows as $index => $row) {
                 $rowNum = $row['_row_number'] ?? ($index + 2);
-                $name = trim((string) ($row['name'] ?? ''));
+                $name = trim((string) ($row['nama'] ?? $row['name'] ?? ''));
+                $address = trim((string) ($row['alamat'] ?? $row['address'] ?? ''));
+                $rawStatus = trim((string) ($row['status'] ?? $row['tipe'] ?? $row['type'] ?? ''));
+                $phone = array_key_exists('phone', $row) && trim((string) ($row['phone'] ?? '')) !== ''
+                    ? trim((string) $row['phone'])
+                    : null;
 
-                if ($name === '') {
-                    $skippedCount++;
-                    $errors[] = "Baris {$rowNum}: Kolom 'name' (Nama Supplier) wajib diisi.";
+                // Ignore completely blank rows silently
+                if ($name === '' && $address === '' && $rawStatus === '' && $phone === null) {
                     continue;
                 }
 
-                $contactPerson = !empty($row['contact_person']) ? trim((string) $row['contact_person']) : null;
-                $phone = !empty($row['phone']) ? trim((string) $row['phone']) : null;
-                $email = !empty($row['email']) ? trim((string) $row['email']) : null;
-                $address = !empty($row['address']) ? trim((string) $row['address']) : null;
-                $bankName = !empty($row['bank_name']) ? trim((string) $row['bank_name']) : null;
-                $bankAccountNumber = !empty($row['bank_account_number']) ? trim((string) $row['bank_account_number']) : null;
-                $bankAccountName = !empty($row['bank_account_name']) ? trim((string) $row['bank_account_name']) : null;
+                if ($name === '') {
+                    $skippedCount++;
+                    $errors[] = "Baris {$rowNum}: Kolom 'NAMA' (Nama Supplier) wajib diisi.";
+                    continue;
+                }
 
-                // Parse Outstanding Debt
-                $rawDebt = (string) ($row['outstanding_debt'] ?? '0');
-                $cleanDebt = preg_replace('/[^\d.]/', '', str_replace(',', '.', $rawDebt));
-                $outstandingDebt = is_numeric($cleanDebt) ? (float) $cleanDebt : 0.0;
+                $status = $rawStatus !== ''
+                    ? Str::upper(preg_replace('/\s+/', ' ', $rawStatus) ?? $rawStatus)
+                    : Supplier::STATUS_SUPPLIER;
+
+                $addressValue = $address !== '' ? $address : null;
+
+                // Check existing supplier by phone (when provided) or case-insensitive name
+                $existing = null;
+                if ($phone !== null) {
+                    $existing = Supplier::where('phone', $phone)->first();
+                }
+                if (! $existing) {
+                    $existing = Supplier::whereRaw('LOWER(name) = ?', [Str::lower($name)])->first();
+                }
 
                 $supplierData = [
                     'name' => $name,
-                    'contact_person' => $contactPerson,
-                    'phone' => $phone,
-                    'email' => $email,
-                    'address' => $address,
-                    'bank_name' => $bankName,
-                    'bank_account_number' => $bankAccountNumber,
-                    'bank_account_name' => $bankAccountName,
-                    'outstanding_debt' => $outstandingDebt,
+                    'status' => $status,
                 ];
 
-                // Check existing supplier by phone or name
-                $existing = null;
-                if ($phone) {
-                    $existing = Supplier::where('phone', $phone)->first();
+                if (! $existing || $addressValue !== null) {
+                    $supplierData['address'] = $addressValue;
                 }
-                if (!$existing) {
-                    $existing = Supplier::where('name', $name)->first();
+
+                foreach (['contact_person', 'phone', 'email', 'bank_name', 'bank_account_number', 'bank_account_name'] as $optionalField) {
+                    if (array_key_exists($optionalField, $row)) {
+                        $val = trim((string) ($row[$optionalField] ?? ''));
+                        $supplierData[$optionalField] = $val !== '' ? $val : null;
+                    }
+                }
+
+                if (array_key_exists('outstanding_debt', $row) && $row['outstanding_debt'] !== null && trim((string) $row['outstanding_debt']) !== '') {
+                    $rawDebt = (string) $row['outstanding_debt'];
+                    $cleanDebt = preg_replace('/[^\d.]/', '', str_replace(',', '.', $rawDebt));
+                    if (is_numeric($cleanDebt)) {
+                        $supplierData['outstanding_debt'] = (float) $cleanDebt;
+                    }
+                } elseif (! $existing) {
+                    $supplierData['outstanding_debt'] = 0.0;
                 }
 
                 if ($existing) {

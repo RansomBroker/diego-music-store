@@ -401,6 +401,7 @@ class SpreadsheetImporter extends Component
 
         $noun = match($this->type) {
             'product'       => 'produk',
+            'supplier'      => 'supplier',
             'supplier_debt' => 'faktur hutang',
             'employee'      => 'karyawan',
             default         => 'data',

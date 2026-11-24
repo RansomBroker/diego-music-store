@@ -71,8 +71,38 @@ class SpreadsheetImportHelperTest extends TestCase
 
         $this->assertTrue($info['validation']['is_valid']);
         $this->assertEmpty($info['validation']['missing']);
-        $this->assertGreaterThan(0, $info['total_rows']);
+        $this->assertEquals(['NO'], $info['ignored_headers']);
+        $this->assertSame(3, $info['total_rows']);
         $this->assertNotEmpty($info['preview_rows']);
-        $this->assertEquals('PT Yamaha Musik Distributor', $info['preview_rows'][0]['name']);
+        $this->assertEquals('AANK PICK', $info['preview_rows'][0]['nama']);
+        $this->assertEquals('BANDUNG', $info['preview_rows'][0]['alamat']);
+        $this->assertEquals('SUPPLIER', $info['preview_rows'][0]['status']);
+        $this->assertEquals('ACE HARDWARE PONTIANAK', $info['preview_rows'][1]['nama']);
+        $this->assertEquals('PONTIANAK', $info['preview_rows'][1]['alamat']);
+        $this->assertEquals('VENDOR', $info['preview_rows'][1]['status']);
+    }
+
+    public function test_inspect_file_on_supplier_xlsx_template(): void
+    {
+        $path = public_path('templates/template_import_supplier.xlsx');
+        if (!file_exists($path)) {
+            $this->markTestSkipped('Supplier XLSX template not found');
+        }
+
+        $info = SpreadsheetImportHelper::inspectFile($path, null, ImportSuppliers::REQUIRED_HEADERS);
+
+        $this->assertTrue($info['validation']['is_valid']);
+        $this->assertEmpty($info['validation']['missing']);
+        $this->assertEquals(['NO'], $info['ignored_headers']);
+        $this->assertSame(3, $info['total_rows']);
+        $this->assertEquals('AANK PICK', $info['preview_rows'][0]['nama']);
+        $this->assertEquals('BANDUNG', $info['preview_rows'][0]['alamat']);
+        $this->assertEquals('SUPPLIER', $info['preview_rows'][0]['status']);
+        $this->assertEquals('ACE HARDWARE PONTIANAK', $info['preview_rows'][1]['nama']);
+        $this->assertEquals('PONTIANAK', $info['preview_rows'][1]['alamat']);
+        $this->assertEquals('VENDOR', $info['preview_rows'][1]['status']);
+        $this->assertEquals('ADE ETMUS', $info['preview_rows'][2]['nama']);
+        $this->assertEquals('JAKARTA', $info['preview_rows'][2]['alamat']);
+        $this->assertEquals('SUPPLIER', $info['preview_rows'][2]['status']);
     }
 }

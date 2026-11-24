@@ -38,6 +38,11 @@
                 </h4>
                 <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-0.5">
                     Gunakan template berikut agar susunan kolom terdeteksi otomatis dan valid saat diimpor.
+                    @if($type === 'supplier')
+                        <span class="block mt-1 font-medium text-blue-800 dark:text-blue-300">
+                            Format kolom: <code class="font-mono font-bold">NO</code> (opsional), <code class="font-mono font-bold">NAMA</code>, <code class="font-mono font-bold">ALAMAT</code>, <code class="font-mono font-bold">STATUS</code> (SUPPLIER / VENDOR).
+                        </span>
+                    @endif
                 </p>
             </div>
             <div class="flex items-center gap-2">
@@ -467,7 +472,7 @@
                     <div>
                         <h4 class="text-sm font-bold text-rose-900 dark:text-rose-300">Format Kolom Tidak Sesuai Template!</h4>
                         <p class="text-xs text-rose-700 dark:text-rose-400/90 mt-0.5">
-                            Header dibaca dari baris #{{ $headerRowIndex }}. Harap sesuaikan nama kolom berkas{{ in_array($type, ['product', 'employee'], true) ? ' atau gunakan pemetaan kolom manual di bawah' : ' dengan template' }}.
+                            Header dibaca dari baris #{{ $headerRowIndex }}. Harap sesuaikan nama kolom berkas{{ in_array($type, ['product', 'employee', 'supplier'], true) ? ' atau gunakan pemetaan kolom manual di bawah' : ' dengan template' }}.
                         </p>
                     </div>
                 </div>
@@ -513,7 +518,7 @@
             </div>
         @endif
 
-        @if(in_array($type, ['product', 'employee'], true) && !empty($rawColumnHeaders) && !$isImporting)
+        @if(in_array($type, ['product', 'employee', 'supplier'], true) && !empty($rawColumnHeaders) && !$isImporting)
             <!-- Interactive Manual Column Remapping Fallback -->
             <div x-data="{ openMapping: {{ !$validation['is_valid'] ? 'true' : 'false' }} }" class="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900/40 shadow-xs">
                 <button type="button" @click="openMapping = !openMapping" class="w-full px-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/40 flex items-center justify-between text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/80 transition cursor-pointer">

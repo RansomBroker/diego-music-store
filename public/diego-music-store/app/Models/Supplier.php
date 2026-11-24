@@ -9,8 +9,12 @@ class Supplier extends Model
 {
     use HasFactory;
 
+    public const STATUS_SUPPLIER = 'SUPPLIER';
+    public const STATUS_VENDOR = 'VENDOR';
+
     protected $fillable = [
         'name',
+        'status',
         'contact_person',
         'phone',
         'email',

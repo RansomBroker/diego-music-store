@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Suppliers\Schemas;
 
+use App\Models\Supplier;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -21,6 +23,23 @@ class SupplierForm
                             ->required()
                             ->maxLength(255)
                             ->label('Nama Supplier / Vendor'),
+
+                        Select::make('status')
+                            ->label('Jenis / Status')
+                            ->options(function (?Supplier $record): array {
+                                $options = [
+                                    Supplier::STATUS_SUPPLIER => 'SUPPLIER',
+                                    Supplier::STATUS_VENDOR => 'VENDOR',
+                                ];
+                                if ($record && filled($record->status) && ! array_key_exists($record->status, $options)) {
+                                    $options[$record->status] = $record->status;
+                                }
+
+                                return $options;
+                            })
+                            ->default(Supplier::STATUS_SUPPLIER)
+                            ->required()
+                            ->native(false),
 
                         TextInput::make('contact_person')
                             ->maxLength(255)

@@ -275,21 +275,7 @@ class SpreadsheetImportHelper
         }
 
         if ($normalized === 'no' || in_array($normalized, $requiredHeaders, true)) {
-            // Apply contextual mappings when importing employees + users
-        $isEmployeeContext = in_array('nama', $requiredHeaders, true) && in_array('user', $requiredHeaders, true);
-        if ($isEmployeeContext) {
-            if (in_array($normalized, ['name', 'employee'], true)) {
-                return 'nama';
-            }
-            if (in_array($normalized, ['nama_user', 'akun', 'login'], true)) {
-                return 'user';
-            }
-            if (in_array($normalized, ['hak_akses', 'level', 'posisi'], true)) {
-                return 'role';
-            }
-        }
-
-        return $normalized;
+            return $normalized;
         }
 
         $cleaned = strtolower(self::cleanHeaderText($header));
@@ -333,6 +319,22 @@ class SpreadsheetImportHelper
             }
             if (in_array($normalized, ['hak_akses', 'level', 'posisi'], true)) {
                 return 'role';
+            }
+        }
+
+        // Apply contextual mappings when importing master suppliers (NO | NAMA | ALAMAT | STATUS)
+        $isSupplierMasterContext = in_array('nama', $requiredHeaders, true)
+            && in_array('alamat', $requiredHeaders, true)
+            && in_array('status', $requiredHeaders, true);
+        if ($isSupplierMasterContext) {
+            if (in_array($normalized, ['name', 'supplier', 'nama_supplier', 'nama_vendor', 'supplier_name', 'vendor_name'], true)) {
+                return 'nama';
+            }
+            if (in_array($normalized, ['address', 'kota', 'city', 'domisili', 'lokasi', 'alamat_supplier'], true)) {
+                return 'alamat';
+            }
+            if (in_array($normalized, ['tipe', 'type', 'jenis', 'kategori', 'status_supplier'], true)) {
+                return 'status';
             }
         }
 
