@@ -14,9 +14,9 @@ class UpdateBranch
      * @param array $data
      * @return Branch
      */
-    public static function execute(Branch $branch, array $data): Branch
+    public static function execute(Branch $branch, array $data, ?array &$skuRegenerationResult = null): Branch
     {
-        return DB::transaction(function () use ($branch, $data) {
+        return DB::transaction(function () use ($branch, $data, &$skuRegenerationResult) {
             $branch->update([
                 'name'           => $data['name'] ?? $branch->name,
                 'store_name'     => $data['store_name'] ?? $branch->store_name,
@@ -52,6 +52,17 @@ class UpdateBranch
 
             if (is_array($staffIds)) {
                 $branch->users()->sync($staffIds);
+            }
+
+            if (! empty($data['regenerate_skus_on_save'])) {
+                $skuRegenerationResult = app(RegenerateBranchProductSkus::class)->execute(
+                    branch: $branch,
+                    prefixOverride: $data['sku_prefix'] ?? $branch->sku_prefix,
+                    scope: $data['sku_regenerate_scope'] ?? RegenerateBranchProductSkus::SCOPE_ALL,
+                    mode: $data['sku_regenerate_mode'] ?? RegenerateBranchProductSkus::MODE_MISSING_PREFIX,
+                    format: $data['sku_regenerate_format'] ?? RegenerateBranchProductSkus::FORMAT_RANDOM,
+                    savePrefixToBranch: true,
+                );
             }
 
             return $branch->fresh();

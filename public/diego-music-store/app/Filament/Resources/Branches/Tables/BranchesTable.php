@@ -2,13 +2,19 @@
 
 namespace App\Filament\Resources\Branches\Tables;
 
+use App\Actions\Branch\RegenerateBranchProductSkus;
 use App\Actions\Branch\UpdateBranch;
+use App\Filament\Resources\Branches\BranchResource;
 use App\Filament\Resources\Branches\Schemas\BranchForm;
 use App\Filament\Resources\StockMovements\StockMovementResource;
+use App\Models\Branch;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -102,7 +108,73 @@ class BranchesTable
             ->actions([
                 EditAction::make()
                     ->steps(BranchForm::getWizardSteps())
-                    ->using(fn (Model $record, array $data): Model => app(UpdateBranch::class)->execute($record, $data)),
+                    ->using(function (Model $record, array $data): Model {
+                        $skuResult = null;
+                        $updated = app(UpdateBranch::class)->execute($record, $data, $skuResult);
+
+                        if ($skuResult !== null) {
+                            Notification::make()
+                                ->title('Generate SKU Berhasil')
+                                ->body(RegenerateBranchProductSkus::formatResultMessage($skuResult))
+                                ->success()
+                                ->send();
+                        }
+
+                        return $updated;
+                    }),
+
+                Action::make('regenerate_skus')
+                    ->label('Generate SKU')
+                    ->icon('heroicon-o-sparkles')
+                    ->color('warning')
+                    ->visible(fn (Branch $record): bool => BranchResource::canEdit($record))
+                    ->modalHeading(fn (Branch $record): string => "Generate Ulang SKU Barang — {$record->name}")
+                    ->modalDescription('SKU barang yang sudah diimport akan di-generate ulang menggunakan Prefix SKU cabang ini. Barcode, stok, harga, dan histori transaksi tetap aman.')
+                    ->modalSubmitActionLabel('Generate Sekarang')
+                    ->form(fn (Branch $record): array => [
+                        TextInput::make('sku_prefix')
+                            ->label('Prefix Kode Produk / SKU')
+                            ->default($record->sku_prefix ?: 'DG')
+                            ->required()
+                            ->maxLength(20)
+                            ->helperText('Otomatis disimpan ke cabang ini jika berbeda.'),
+                        Select::make('scope')
+                            ->label('Cakupan Produk Target')
+                            ->options(RegenerateBranchProductSkus::scopeOptions($record))
+                            ->default(RegenerateBranchProductSkus::SCOPE_ALL)
+                            ->required()
+                            ->native(false),
+                        Select::make('mode')
+                            ->label('Mode Penggantian SKU')
+                            ->options(RegenerateBranchProductSkus::modeOptions())
+                            ->default(RegenerateBranchProductSkus::MODE_MISSING_PREFIX)
+                            ->required()
+                            ->native(false),
+                        Select::make('format')
+                            ->label('Format Kode SKU Baru')
+                            ->options(RegenerateBranchProductSkus::formatOptions())
+                            ->default(RegenerateBranchProductSkus::FORMAT_RANDOM)
+                            ->required()
+                            ->native(false),
+                    ])
+                    ->action(function (Branch $record, array $data): void {
+                        abort_unless(BranchResource::canEdit($record), 403);
+
+                        $result = app(RegenerateBranchProductSkus::class)->execute(
+                            branch: $record,
+                            prefixOverride: $data['sku_prefix'] ?? $record->sku_prefix,
+                            scope: $data['scope'] ?? RegenerateBranchProductSkus::SCOPE_ALL,
+                            mode: $data['mode'] ?? RegenerateBranchProductSkus::MODE_MISSING_PREFIX,
+                            format: $data['format'] ?? RegenerateBranchProductSkus::FORMAT_RANDOM,
+                            savePrefixToBranch: true,
+                        );
+
+                        Notification::make()
+                            ->title('Generate SKU Berhasil')
+                            ->body(RegenerateBranchProductSkus::formatResultMessage($result))
+                            ->success()
+                            ->send();
+                    }),
 
                 Action::make('kartu_stok')
                     ->label('Kartu Stok')

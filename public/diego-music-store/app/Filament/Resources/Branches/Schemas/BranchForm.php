@@ -2,13 +2,18 @@
 
 namespace App\Filament\Resources\Branches\Schemas;
 
+use App\Actions\Branch\RegenerateBranchProductSkus;
+use App\Filament\Resources\Branches\BranchResource;
+use App\Models\Branch;
 use App\Models\User;
 use App\Models\Account;
+use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Wizard\Step;
 
 class BranchForm
@@ -177,7 +182,74 @@ class BranchForm
                         ->default('DG')
                         ->placeholder('Contoh: DG, DG-SKW, DG-KTP')
                         ->helperText('Prefix otomatis untuk penomoran SKU saat tambah produk atau import produk di cabang ini (misal: DG -> DG-ABC12345)')
-                        ->maxLength(20),
+                        ->required(fn ($get): bool => (bool) $get('regenerate_skus_on_save'))
+                        ->maxLength(20)
+                        ->suffixAction(
+                            Action::make('generate_skus_now')
+                                ->label('Generate SKU')
+                                ->icon('heroicon-o-sparkles')
+                                ->color('warning')
+                                ->tooltip('Generate ulang SKU barang menggunakan prefix ini sekarang')
+                                ->visible(fn (?Branch $record): bool => $record !== null && BranchResource::canEdit($record))
+                                ->requiresConfirmation()
+                                ->modalHeading('Generate Ulang SKU Barang?')
+                                ->modalDescription('SKU produk akan di-generate ulang sesuai Prefix SKU di atas. Barcode, harga, stok, dan riwayat transaksi tidak akan berubah.')
+                                ->action(function (?Branch $record, $state, $get): void {
+                                    if (! $record || ! BranchResource::canEdit($record)) {
+                                        return;
+                                    }
+
+                                    try {
+                                        $result = app(RegenerateBranchProductSkus::class)->execute(
+                                            branch: $record,
+                                            prefixOverride: (string) ($state ?? $record->sku_prefix),
+                                            scope: (string) ($get('sku_regenerate_scope') ?: RegenerateBranchProductSkus::SCOPE_ALL),
+                                            mode: (string) ($get('sku_regenerate_mode') ?: RegenerateBranchProductSkus::MODE_MISSING_PREFIX),
+                                            format: (string) ($get('sku_regenerate_format') ?: RegenerateBranchProductSkus::FORMAT_RANDOM),
+                                            savePrefixToBranch: true,
+                                        );
+
+                                        Notification::make()
+                                            ->title('Generate SKU Berhasil')
+                                            ->body(RegenerateBranchProductSkus::formatResultMessage($result))
+                                            ->success()
+                                            ->send();
+                                    } catch (\InvalidArgumentException $e) {
+                                        Notification::make()
+                                            ->title('Prefix SKU Belum Diisi')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                    }
+                                })
+                        ),
+
+                    Toggle::make('regenerate_skus_on_save')
+                        ->label('Generate ulang SKU barang yang sudah diimport saat simpan cabang')
+                        ->helperText('Aktifkan jika ingin men-generate ulang SKU barang di katalog secara otomatis saat cabang ini disimpan.')
+                        ->default(false)
+                        ->live(),
+
+                    Select::make('sku_regenerate_scope')
+                        ->label('Cakupan Produk Target')
+                        ->options(fn (?Branch $record): array => RegenerateBranchProductSkus::scopeOptions($record))
+                        ->default(RegenerateBranchProductSkus::SCOPE_ALL)
+                        ->native(false)
+                        ->visible(fn ($get): bool => (bool) $get('regenerate_skus_on_save')),
+
+                    Select::make('sku_regenerate_mode')
+                        ->label('Mode Penggantian SKU')
+                        ->options(RegenerateBranchProductSkus::modeOptions())
+                        ->default(RegenerateBranchProductSkus::MODE_MISSING_PREFIX)
+                        ->native(false)
+                        ->visible(fn ($get): bool => (bool) $get('regenerate_skus_on_save')),
+
+                    Select::make('sku_regenerate_format')
+                        ->label('Format Kode SKU Baru')
+                        ->options(RegenerateBranchProductSkus::formatOptions())
+                        ->default(RegenerateBranchProductSkus::FORMAT_RANDOM)
+                        ->native(false)
+                        ->visible(fn ($get): bool => (bool) $get('regenerate_skus_on_save')),
 
                     TextInput::make('journal_prefix')
                         ->label('Prefix Kode Jurnal')

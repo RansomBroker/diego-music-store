@@ -21,9 +21,9 @@ class CreateBranch
      * @param array $data
      * @return Branch
      */
-    public static function execute(array $data): Branch
+    public static function execute(array $data, ?array &$skuRegenerationResult = null): Branch
     {
-        return DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data, &$skuRegenerationResult) {
             // 1. Create Branch record
             $branch = Branch::create([
                 'name'           => $data['name'],
@@ -102,6 +102,17 @@ class CreateBranch
                         'stock' => 0,
                         'hpp'   => $variant->hpp ?: $variant->cost_price ?: 0,
                     ]
+                );
+            }
+
+            if (! empty($data['regenerate_skus_on_save'])) {
+                $skuRegenerationResult = app(RegenerateBranchProductSkus::class)->execute(
+                    branch: $branch,
+                    prefixOverride: $data['sku_prefix'] ?? $branch->sku_prefix,
+                    scope: $data['sku_regenerate_scope'] ?? RegenerateBranchProductSkus::SCOPE_ALL,
+                    mode: $data['sku_regenerate_mode'] ?? RegenerateBranchProductSkus::MODE_MISSING_PREFIX,
+                    format: $data['sku_regenerate_format'] ?? RegenerateBranchProductSkus::FORMAT_RANDOM,
+                    savePrefixToBranch: true,
                 );
             }
 

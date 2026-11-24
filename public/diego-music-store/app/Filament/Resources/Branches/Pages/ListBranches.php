@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Branches\Pages;
 
 use App\Actions\Branch\CreateBranch;
 use App\Actions\Branch\EnsureBranchCoaAccounts;
+use App\Actions\Branch\RegenerateBranchProductSkus;
 use App\Filament\Resources\Branches\BranchResource;
 use App\Filament\Resources\Branches\Schemas\BranchForm;
 use Filament\Actions\Action;
@@ -38,7 +39,20 @@ class ListBranches extends ListRecords
                 }),
             CreateAction::make()
                 ->steps(BranchForm::getWizardSteps())
-                ->using(fn (array $data): Model => app(CreateBranch::class)->execute($data)),
+                ->using(function (array $data): Model {
+                    $skuResult = null;
+                    $branch = app(CreateBranch::class)->execute($data, $skuResult);
+
+                    if ($skuResult !== null) {
+                        Notification::make()
+                            ->title('Generate SKU Berhasil')
+                            ->body(RegenerateBranchProductSkus::formatResultMessage($skuResult))
+                            ->success()
+                            ->send();
+                    }
+
+                    return $branch;
+                }),
         ];
     }
 }
