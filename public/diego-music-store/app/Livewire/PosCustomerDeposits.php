@@ -500,7 +500,9 @@ class PosCustomerDeposits extends Component
         $cashAccounts = Account::where('classification', 'asset')
             ->where('is_header', false)
             ->where(function ($q) {
-                $q->where('code', 'like', '1-1%')
+                $q->where('code', 'like', '1111%')
+                  ->orWhere('code', 'like', '1112%')
+                  ->orWhere('code', 'like', '1-1%')
                   ->orWhere('name', 'like', '%kas%')
                   ->orWhere('name', 'like', '%bank%');
             })

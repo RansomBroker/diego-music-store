@@ -135,4 +135,117 @@ class CashBookReportTest extends TestCase
             ->call('exportExcel')
             ->assertStatus(200);
     }
+
+    /** @test */
+    public function it_includes_nine_digit_cash_and_bank_accounts_handles_or_search_and_labels_internal_transfers()
+    {
+        $kasBesar = Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '111101001',
+            'name' => 'KAS',
+            'classification' => 'asset',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $kasKecil = Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '111101002',
+            'name' => 'KAS Kecil',
+            'classification' => 'asset',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $bankBca = Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '111201001',
+            'name' => 'BANK BCA',
+            'classification' => 'asset',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $shopee = Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '111202007',
+            'name' => 'Shopee',
+            'classification' => 'asset',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $today = now()->toDateString();
+        $priorDate = now()->startOfMonth()->subDay()->toDateString();
+
+        // 1. Initial balance before period start: Bank BCA +5.000.000
+        $initEntry = JournalEntry::create([
+            'branch_id' => $this->branch->id,
+            'entry_no' => 'JV-INIT-001',
+            'date' => $priorDate,
+            'description' => 'Saldo Awal Bank BCA',
+            'status' => 'posted',
+            'created_by' => $this->user->id,
+        ]);
+        JournalItem::create(['journal_entry_id' => $initEntry->id, 'account_id' => $bankBca->id, 'debit' => 5000000, 'credit' => 0]);
+
+        // 2. POS sale into Kas Kecil (+1.000.000) & Shopee (+2.500.000)
+        $saleEntry = JournalEntry::create([
+            'branch_id' => $this->branch->id,
+            'entry_no' => 'JV-SALE-001',
+            'date' => $today,
+            'description' => 'Penjualan Harian POS',
+            'status' => 'posted',
+            'created_by' => $this->user->id,
+        ]);
+        JournalItem::create(['journal_entry_id' => $saleEntry->id, 'account_id' => $kasKecil->id, 'debit' => 1000000, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $saleEntry->id, 'account_id' => $shopee->id, 'debit' => 2500000, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $saleEntry->id, 'account_id' => $this->revenueAccount->id, 'debit' => 0, 'credit' => 3500000]);
+
+        // 3. Internal transfer: Kas Kecil -> KAS (400.000)
+        $transferEntry = JournalEntry::create([
+            'branch_id' => $this->branch->id,
+            'entry_no' => 'JV-TRF-001',
+            'date' => $today,
+            'description' => 'Setor Kas Harian',
+            'status' => 'posted',
+            'created_by' => $this->user->id,
+        ]);
+        JournalItem::create(['journal_entry_id' => $transferEntry->id, 'account_id' => $kasBesar->id, 'debit' => 400000, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $transferEntry->id, 'account_id' => $kasKecil->id, 'debit' => 0, 'credit' => 400000]);
+
+        $fromDate = now()->startOfMonth()->toDateString();
+        $toDate = $today;
+
+        // Consolidated across all cash & bank accounts (9-digit + legacy)
+        $consolidated = (new GenerateCashBookReport())->execute($fromDate, $toDate, $this->branch->id);
+        $this->assertEquals(5000000, $consolidated['initial_balance']);
+        $this->assertEquals(3900000, $consolidated['total_inflow']);
+        $this->assertEquals(400000, $consolidated['total_outflow']);
+        $this->assertEquals(8500000, $consolidated['ending_balance']);
+
+        $opposingLabels = array_column($consolidated['rows'], 'opposing_account');
+        $this->assertContains('Transfer: KAS Kecil', $opposingLabels);
+        $this->assertContains('Transfer: KAS', $opposingLabels);
+        $this->assertNotContains('Penerimaan Lainnya', $opposingLabels);
+
+        // Single account report (Bank BCA only)
+        $bcaOnly = (new GenerateCashBookReport())->execute($fromDate, $toDate, $this->branch->id, $bankBca->id);
+        $this->assertEquals(5000000, $bcaOnly['initial_balance']);
+        $this->assertEquals(5000000, $bcaOnly['ending_balance']);
+
+        // Search must work with OR logic: matching entry_no alone OR description alone
+        $byEntryNo = (new GenerateCashBookReport())->execute($fromDate, $toDate, $this->branch->id, null, 'all', 'running_balance', 'JV-TRF-001');
+        $this->assertSame(2, $byEntryNo['transaction_count']);
+
+        $byDescription = (new GenerateCashBookReport())->execute($fromDate, $toDate, $this->branch->id, null, 'all', 'running_balance', 'Penjualan Harian POS');
+        $this->assertSame(2, $byDescription['transaction_count']);
+
+        // Livewire Filament page must populate 9-digit accounts & non-zero balances
+        Livewire::actingAs($this->user)
+            ->test(CashBookReport::class)
+            ->assertSee('111101002 - KAS Kecil')
+            ->assertSee('111202007 - Shopee')
+            ->assertSee('8.500.000');
+    }
 }

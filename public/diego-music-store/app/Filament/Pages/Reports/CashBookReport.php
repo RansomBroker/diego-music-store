@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Actions\Accounting\GenerateCashBookReport;
+use App\Helpers\AccountHelper;
 use App\Helpers\BranchHelper;
 use App\Models\Account;
 use App\Models\Branch;
@@ -116,17 +117,21 @@ class CashBookReport extends Page implements HasForms
                             Select::make('account_id')
                                 ->label('Pilih Akun Kas & Bank')
                                 ->options(function (callable $get) {
-                                    $branchId = $get('branch_id') ?: BranchHelper::getActiveBranchId();
-                                    return Account::where('branch_id', $branchId)
-                                        ->where('is_active', true)
-                                        ->where('is_header', false)
-                                        ->where(function ($q) {
-                                            $q->where('classification', 'asset')
-                                              ->where('code', 'LIKE', '1-1%');
-                                        })
-                                        ->orderBy('code')
-                                        ->get()
-                                        ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"]);
+                                    $branchId = ! empty($get('branch_id'))
+                                        ? (int) $get('branch_id')
+                                        : (BranchHelper::canAccessAllBranches() ? null : BranchHelper::getActiveBranchId());
+
+                                    $accounts = AccountHelper::cashAndBankQuery($branchId)
+                                        ->with('branch:id,name')
+                                        ->get();
+
+                                    $showBranchName = $branchId === null
+                                        && $accounts->pluck('branch_id')->filter()->unique()->count() > 1;
+
+                                    return $accounts->mapWithKeys(function ($acc) use ($showBranchName) {
+                                        $branchPrefix = ($showBranchName && $acc->branch) ? "[{$acc->branch->name}] " : '';
+                                        return [$acc->id => "{$branchPrefix}{$acc->code} - {$acc->name}"];
+                                    });
                                 })
                                 ->placeholder('Semua Akun Kas & Bank')
                                 ->searchable()

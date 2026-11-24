@@ -2,6 +2,7 @@
 
 namespace App\Actions\Accounting;
 
+use App\Helpers\AccountHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\JournalItem;
@@ -35,18 +36,11 @@ class GenerateCashBookReport
         $branch   = $branchId ? Branch::find($branchId) : null;
         $account  = $accountId ? Account::find($accountId) : null;
 
-        // Cash & Bank accounts (Assets, Code 1-1%)
-        $cashAccountsQuery = Account::where('is_active', true)
-            ->where('is_header', false)
-            ->where(function ($q) {
-                $q->where('classification', 'asset')
-                  ->where('code', 'LIKE', '1-1%');
-            });
-
+        // Cash & Bank accounts (Assets: 9-digit 1111%/1112% and legacy 1-1%)
         if ($accountId) {
             $cashAccountIds = [$accountId];
         } else {
-            $cashAccountIds = $cashAccountsQuery->pluck('id')->toArray();
+            $cashAccountIds = AccountHelper::cashAndBankQuery(null)->pluck('id')->toArray();
         }
 
         // 1. Initial Balance before $fromDate
@@ -78,7 +72,7 @@ class GenerateCashBookReport
                     $s = trim($search);
                     $q->where(function ($sq) use ($s) {
                         $sq->where('entry_no', 'LIKE', "%{$s}%")
-                           ->where('description', 'LIKE', "%{$s}%");
+                           ->orWhere('description', 'LIKE', "%{$s}%");
                     });
                 }
             });
@@ -120,6 +114,15 @@ class GenerateCashBookReport
             foreach ($entry->items as $otherItem) {
                 if (!in_array($otherItem->account_id, $cashAccountIds) && $otherItem->account) {
                     $opposingAccounts[] = $otherItem->account->name;
+                }
+            }
+
+            // Internal Cash/Bank transfer fallback: show the other Cash/Bank account leg
+            if (empty($opposingAccounts)) {
+                foreach ($entry->items as $otherItem) {
+                    if ($otherItem->account_id !== $item->account_id && $otherItem->account) {
+                        $opposingAccounts[] = 'Transfer: ' . $otherItem->account->name;
+                    }
                 }
             }
 

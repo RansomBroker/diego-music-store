@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Group;
 use App\Models\PurchaseTransaction;
 use App\Models\Account;
 use App\Models\Supplier;
+use App\Helpers\AccountHelper;
 use App\Helpers\FormatHelper;
 use App\Helpers\BranchHelper;
 
@@ -96,12 +97,9 @@ class SupplierPaymentForm
 
                                 Select::make('account_id')
                                     ->label('Akun Kas / Bank')
-                                    ->options(fn () => Account::where('branch_id', BranchHelper::getActiveBranchId())
-                                        ->where('classification', 'asset')
-                                        ->where('is_header', false)
-                                        ->where('code', 'like', '1-1%') // Cash and cash equivalents
+                                    ->options(fn () => AccountHelper::cashAndBankQuery(BranchHelper::getActiveBranchId())
                                         ->get()
-                                        ->pluck('name', 'id')
+                                        ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"])
                                     )
                                     ->required()
                                     ->searchable()

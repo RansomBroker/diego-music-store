@@ -123,4 +123,27 @@ class AccountHelper
 
         return $account->id;
     }
+
+    /**
+     * Query active non-header Cash & Bank asset accounts (both 9-digit 1111%/1112% and legacy 1-1%),
+     * scoped to the branch when branch-specific accounts exist or falling back to global accounts.
+     */
+    public static function cashAndBankQuery(?int $branchId = null): \Illuminate\Database\Eloquent\Builder
+    {
+        $baseQuery = Account::query()
+            ->where('is_active', true)
+            ->where('is_header', false)
+            ->whereRaw('LOWER(classification) = ?', ['asset'])
+            ->where(function ($q) {
+                $q->where('code', 'LIKE', '1111%')
+                    ->orWhere('code', 'LIKE', '1112%')
+                    ->orWhere('code', 'LIKE', '1-1%');
+            });
+
+        if ($branchId !== null && (clone $baseQuery)->where('branch_id', $branchId)->exists()) {
+            $baseQuery->where('branch_id', $branchId);
+        }
+
+        return $baseQuery->orderBy('code');
+    }
 }

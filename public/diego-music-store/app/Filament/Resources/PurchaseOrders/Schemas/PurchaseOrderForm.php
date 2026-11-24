@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Group;
 use App\Models\Supplier;
 use App\Models\ProductVariant;
 use App\Models\Unit;
+use App\Helpers\AccountHelper;
 use App\Helpers\FormatHelper;
 use App\Helpers\PoSmartAssistHelper;
 use App\Helpers\BranchHelper;
@@ -187,9 +188,7 @@ class PurchaseOrderForm
 
                                 Select::make('shipping_payment_account_id')
                                     ->label('Metode Pembayaran Ongkir')
-                                    ->options(fn () => \App\Models\Account::where('branch_id', BranchHelper::getActiveBranchId())
-                                        ->where('is_header', false)
-                                        ->where('code', 'like', '1-1%')
+                                    ->options(fn () => AccountHelper::cashAndBankQuery(BranchHelper::getActiveBranchId())
                                         ->get()
                                         ->mapWithKeys(fn ($acc) => [$acc->id => "[{$acc->code}] {$acc->name}"])
                                     )
