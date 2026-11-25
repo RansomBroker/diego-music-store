@@ -2,6 +2,7 @@
 
 namespace App\Actions\Accounting;
 
+use App\Helpers\AccountHelper;
 use App\Helpers\FinancialReportHelper;
 use App\Models\Account;
 use Illuminate\Support\Facades\DB;
@@ -77,14 +78,9 @@ class CalculateCoaComparisonBalances
             $deb = $sums ? (float) $sums->total_debit : 0.0;
             $crd = $sums ? (float) $sums->total_credit : 0.0;
 
-            $classification = strtolower((string) $acc->classification);
-            $code = strtolower((string) $acc->code);
-
-            // Asset (1) & Expense (5, 6) normal balance is Debit
-            if ($classification === 'asset' || str_starts_with($code, '1') || $classification === 'expense' || str_starts_with($code, '5') || str_starts_with($code, '6') || str_contains($classification, 'beban') || str_contains($classification, 'cost')) {
+            if (AccountHelper::isGroupDebitNormal($acc)) {
                 $rawBalances[$acc->id] = $deb - $crd;
             } else {
-                // Liabilities (2), Equity (3), Revenue (4) normal balance is Credit
                 $rawBalances[$acc->id] = $crd - $deb;
             }
         }

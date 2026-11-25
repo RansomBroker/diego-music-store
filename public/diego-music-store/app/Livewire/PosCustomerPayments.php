@@ -60,10 +60,13 @@ class PosCustomerPayments extends Component
         $this->payment_date = now()->format('Y-m-d');
         $this->branch_id = \App\Helpers\BranchHelper::getActiveBranchId();
 
-        $defaultAccount = Account::where('classification', 'asset')
-            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
-            ->where('is_header', false)
-            ->first();
+        $defaultAccount = \App\Helpers\AccountHelper::cashAndBankQuery($this->branch_id)->first()
+            ?? Account::where('is_active', true)
+                ->where('classification', 'asset')
+                ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
+                ->where('is_header', false)
+                ->orderBy('code')
+                ->first();
         if ($defaultAccount) {
             $this->account_id = $defaultAccount->id;
         }
@@ -240,9 +243,12 @@ class PosCustomerPayments extends Component
         }
 
         if (!$this->account_id) {
-            $defaultAccount = Account::where('classification', 'asset')
-                ->where('is_header', false)
-                ->first();
+            $defaultAccount = \App\Helpers\AccountHelper::cashAndBankQuery($this->branch_id)->first()
+                ?? Account::where('is_active', true)
+                    ->where('classification', 'asset')
+                    ->where('is_header', false)
+                    ->orderBy('code')
+                    ->first();
             if ($defaultAccount) {
                 $this->account_id = $defaultAccount->id;
             }
@@ -396,11 +402,15 @@ class PosCustomerPayments extends Component
             ? Storage::url($branch->logo_path)
             : null;
 
-        $accounts = Account::where('classification', 'asset')
-            ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId))
-            ->where('is_header', false)
-            ->orderBy('code')
-            ->get();
+        $accounts = \App\Helpers\AccountHelper::cashAndBankQuery($activeBranchId)->get();
+        if ($accounts->isEmpty()) {
+            $accounts = Account::where('is_active', true)
+                ->where('classification', 'asset')
+                ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId))
+                ->where('is_header', false)
+                ->orderBy('code')
+                ->get();
+        }
 
         $paymentMethodsData = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get();
 

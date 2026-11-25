@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Actions\Accounting\GenerateBankLedgerReport;
+use App\Helpers\AccountHelper;
 use App\Helpers\BranchHelper;
 use App\Models\Account;
 use App\Models\Branch;
@@ -115,12 +116,9 @@ class BankLedger extends Page implements HasForms
                             Select::make('account_id')
                                 ->label('Pilih Rekening Bank')
                                 ->options(function (callable $get) {
-                                    $branchId = $get('branch_id') ?: BranchHelper::getActiveBranchId();
-                                    return Account::where('branch_id', $branchId)
-                                        ->where('is_active', true)
-                                        ->where('is_header', false)
-                                        ->where('classification', 'asset')
-                                        ->orderBy('code')
+                                    $branchId = !empty($get('branch_id')) ? (int) $get('branch_id') : BranchHelper::getActiveBranchId();
+
+                                    return AccountHelper::bankAccountsQuery($branchId)
                                         ->get()
                                         ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"]);
                                 })

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Accounting;
 
+use App\Helpers\AccountHelper;
 use App\Helpers\FinancialReportHelper;
 use App\Models\Account;
 use App\Models\Branch;
@@ -57,15 +58,11 @@ class GenerateBalanceSheetReport
             $debits = $sums ? (float) $sums->total_debit : 0.0;
             $credits = $sums ? (float) $sums->total_credit : 0.0;
 
-            $classification = strtolower($account->classification);
-            $code = strtolower($account->code);
-
-            // Asset (1) & Expense (5, 6) normal balance is Debit
-            if ($classification === 'asset' || str_starts_with($code, '1') || $classification === 'expense' || str_starts_with($code, '5') || str_starts_with($code, '6')) {
+            // Asset (1), Cost/COGS (5), Expense (6, 8) normal balance is Debit; Revenue/Liability/Equity is Credit
+            if (AccountHelper::isGroupDebitNormal($account)) {
                 return $debits - $credits;
             }
 
-            // Liabilities (2), Equity (3), Revenue (4) normal balance is Credit
             return $credits - $debits;
         };
 
@@ -178,11 +175,11 @@ class GenerateBalanceSheetReport
                 }
             } elseif ($class === 'equity' || str_starts_with($code, '3')) {
                 $equityItems[] = $itemData;
-            } elseif ($class === 'revenue' || str_starts_with($code, '4')) {
+            } elseif ($class === 'revenue' || str_starts_with($code, '4') || str_starts_with($code, '7')) {
                 if (!$acc->is_header) {
                     $revenueTotal += $rawBalances[$acc->id];
                 }
-            } elseif ($class === 'expense' || str_starts_with($code, '5') || str_starts_with($code, '6')) {
+            } elseif ($class === 'expense' || $class === 'cost' || str_starts_with($code, '5') || str_starts_with($code, '6') || str_starts_with($code, '8')) {
                 if (!$acc->is_header) {
                     $expenseTotal += $rawBalances[$acc->id];
                 }

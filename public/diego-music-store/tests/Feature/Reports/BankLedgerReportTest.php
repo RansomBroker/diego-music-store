@@ -115,4 +115,45 @@ class BankLedgerReportTest extends TestCase
             ->call('exportExcel')
             ->assertStatus(200);
     }
+
+    /** @test */
+    public function it_includes_nine_digit_bank_and_marketplace_accounts_while_excluding_cash_and_advances()
+    {
+        Account::create(['branch_id' => $this->branch->id, 'code' => '111101001', 'name' => 'KAS', 'classification' => 'asset', 'is_header' => false, 'is_active' => true]);
+        Account::create(['branch_id' => $this->branch->id, 'code' => '111201001', 'name' => 'BANK BCA', 'classification' => 'asset', 'is_header' => false, 'is_active' => true]);
+        $tokopedia = Account::create(['branch_id' => $this->branch->id, 'code' => '111202006', 'name' => 'Tokopedia', 'classification' => 'asset', 'account_subtype' => 'settlement', 'is_header' => false, 'is_active' => true]);
+        $shopee = Account::create(['branch_id' => $this->branch->id, 'code' => '111202007', 'name' => 'Shopee', 'classification' => 'asset', 'account_subtype' => 'settlement', 'is_header' => false, 'is_active' => true]);
+        Account::create(['branch_id' => $this->branch->id, 'code' => '111201006', 'name' => 'Uang Muka Pembelian', 'classification' => 'asset', 'is_header' => false, 'is_active' => true]);
+        Account::create(['branch_id' => $this->branch->id, 'code' => '111301001', 'name' => 'PIUTANG DAGANG', 'classification' => 'asset', 'is_header' => false, 'is_active' => true]);
+
+        $rev = Account::where('code', '4-1000')->first();
+
+        $entry = JournalEntry::create([
+            'branch_id' => $this->branch->id,
+            'entry_no' => 'JV-MP-01',
+            'date' => now()->toDateString(),
+            'description' => 'Settlement Marketplace',
+            'status' => 'posted',
+            'created_by' => $this->user->id,
+        ]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $tokopedia->id, 'debit' => 1500000, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $shopee->id, 'debit' => 2000000, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $rev->id, 'debit' => 0, 'credit' => 3500000]);
+
+        $report = (new GenerateBankLedgerReport())->execute(now()->startOfMonth()->toDateString(), now()->toDateString(), null, $this->branch->id, 'all');
+        $codes = array_column($report['ledgers'], 'account_code');
+
+        $this->assertContains('111201001', $codes);
+        $this->assertContains('111202006', $codes);
+        $this->assertContains('111202007', $codes);
+        $this->assertNotContains('111101001', $codes);
+        $this->assertNotContains('111201006', $codes);
+        $this->assertNotContains('111301001', $codes);
+        $this->assertEquals(3500000, $report['grand_total_in']);
+
+        Livewire::actingAs($this->user)
+            ->test(BankLedger::class)
+            ->assertSee('111202006 - Tokopedia')
+            ->assertSee('111202007 - Shopee');
+    }
 }

@@ -129,15 +129,7 @@ class GetOwnerDashboardData
         }
 
         // Cash & Bank Balance
-        $accounts = Account::where('is_header', false)->where(function ($q) {
-            $q->whereIn('account_subtype', ['cash', 'bank'])
-                ->orWhere('classification', 'like', '%kas%')
-                ->orWhere('classification', 'like', '%bank%')
-                ->orWhere('code', 'like', '1111%')
-                ->orWhere('code', 'like', '1112%')
-                ->orWhere('code', 'like', '1-10%')
-                ->orWhere('code', 'like', '1-11%');
-        })->get();
+        $accounts = \App\Helpers\AccountHelper::cashAndBankQuery($branchId)->get();
 
         $saldoKasBank = 0.0;
         foreach ($accounts as $acc) {

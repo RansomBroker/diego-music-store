@@ -204,12 +204,13 @@ class POSDailyCash extends Component
             ->orderBy('code')
             ->get();
 
-        // Load all active non-header Expense accounts for Cash Out
+        // Load all active non-header Expense/Cost accounts for Cash Out (exclude revenue accounts like 621101002)
         $this->outflowDestinations = Account::query()
             ->where('is_header', false)
             ->where('is_active', true)
+            ->whereRaw('LOWER(classification) != ?', ['revenue'])
             ->where(function ($q) {
-                $q->where(\Illuminate\Support\Facades\DB::raw('LOWER(classification)'), 'expense')
+                $q->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(classification)'), ['expense', 'cost'])
                     ->orWhere('code', 'like', '5%')
                     ->orWhere('code', 'like', '6%')
                     ->orWhere('code', 'like', '8%');
@@ -217,15 +218,7 @@ class POSDailyCash extends Component
             ->orderBy('code')
             ->get();
 
-        $this->transferAccounts = Account::query()
-            ->where('is_header', false)
-            ->where('is_active', true)
-            ->where(function ($q) {
-                $q->where('code', 'like', '1111%')
-                    ->orWhere('code', 'like', '1112%');
-            })
-            ->orderBy('code')
-            ->get();
+        $this->transferAccounts = \App\Helpers\AccountHelper::cashAndBankQuery()->get();
 
         // Auto-select sensible default options
         if ($this->inflowSources->isNotEmpty() && empty($this->inSourceAccountId)) {

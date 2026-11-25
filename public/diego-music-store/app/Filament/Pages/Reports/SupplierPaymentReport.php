@@ -155,16 +155,9 @@ class SupplierPaymentReport extends Page implements HasForms
 
                             Select::make('account_id')
                                 ->label('Akun Pembayaran (Kas/Bank)')
-                                ->options(
-                                    Account::where('is_active', true)
-                                        ->where('is_header', false)
-                                        ->where(function ($q) {
-                                            $q->where('classification', 'asset')
-                                              ->orWhere('code', 'LIKE', '1-1%');
-                                        })
-                                        ->orderBy('code')
-                                        ->get()
-                                        ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"])
+                                ->options(fn () => \App\Helpers\AccountHelper::cashAndBankQuery()
+                                    ->get()
+                                    ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"])
                                 )
                                 ->placeholder('Semua Akun Kas/Bank')
                                 ->searchable()

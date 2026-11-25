@@ -41,6 +41,16 @@ class AccountHelper
     ];
 
     /**
+     * Asset/advance codes under cash/bank prefixes that are not liquid Cash or Bank accounts.
+     *
+     * @var array<int, string>
+     */
+    public const NON_CASH_BANK_CODES = [
+        '111201006', // Uang Muka Pembelian (advance/prepaid asset, not liquid cash/bank)
+        '1-1400',    // Legacy Uang Muka Pembelian
+    ];
+
+    /**
      * Find an account by new code or legacy code (bi-directional), scoped by branch.
      */
     public static function findByCode(string $code, ?int $branchId = null): ?Account
@@ -125,19 +135,27 @@ class AccountHelper
     }
 
     /**
-     * Query active non-header Cash & Bank asset accounts (both 9-digit 1111%/1112% and legacy 1-1%),
-     * scoped to the branch when branch-specific accounts exist or falling back to global accounts.
+     * Query active non-header Cash & Bank asset accounts (both 9-digit 1111%/1112% and legacy 1-10%/1-11%),
+     * excluding non-liquid advance codes such as 111201006 / 1-1400, scoped to the branch when branch-specific
+     * accounts exist or falling back to global accounts.
      */
     public static function cashAndBankQuery(?int $branchId = null): \Illuminate\Database\Eloquent\Builder
     {
         $baseQuery = Account::query()
             ->where('is_active', true)
             ->where('is_header', false)
-            ->whereRaw('LOWER(classification) = ?', ['asset'])
+            ->whereNotIn('code', self::NON_CASH_BANK_CODES)
             ->where(function ($q) {
-                $q->where('code', 'LIKE', '1111%')
-                    ->orWhere('code', 'LIKE', '1112%')
-                    ->orWhere('code', 'LIKE', '1-1%');
+                $q->whereRaw('LOWER(classification) = ?', ['kas-bank'])
+                    ->orWhere(function ($assetQuery) {
+                        $assetQuery->whereRaw('LOWER(classification) = ?', ['asset'])
+                            ->where(function ($codeQuery) {
+                                $codeQuery->where('code', 'LIKE', '1111%')
+                                    ->orWhere('code', 'LIKE', '1112%')
+                                    ->orWhere('code', 'LIKE', '1-10%')
+                                    ->orWhere('code', 'LIKE', '1-11%');
+                            });
+                    });
             });
 
         if ($branchId !== null && (clone $baseQuery)->where('branch_id', $branchId)->exists()) {
@@ -145,5 +163,71 @@ class AccountHelper
         }
 
         return $baseQuery->orderBy('code');
+    }
+
+    /**
+     * Query active non-header Bank & Marketplace settlement accounts (1112% / legacy 1-11% / bank subtype or name),
+     * excluding cash drawers (1111%) and non-liquid advance codes (111201006 / 1-1400), scoped by branch with fallback.
+     */
+    public static function bankAccountsQuery(?int $branchId = null): \Illuminate\Database\Eloquent\Builder
+    {
+        $baseQuery = Account::query()
+            ->where('is_active', true)
+            ->where('is_header', false)
+            ->whereNotIn('code', self::NON_CASH_BANK_CODES)
+            ->whereRaw('LOWER(classification) IN (?, ?)', ['asset', 'kas-bank'])
+            ->where(function ($q) {
+                $q->where('code', 'LIKE', '1112%')
+                    ->orWhere('code', 'LIKE', '1-11%')
+                    ->orWhereRaw("LOWER(COALESCE(account_subtype, '')) = ?", ['bank'])
+                    ->orWhere('name', 'LIKE', '%bank%')
+                    ->orWhere('name', 'LIKE', '%bca%')
+                    ->orWhere('name', 'LIKE', '%mandiri%')
+                    ->orWhere('name', 'LIKE', '%bni%')
+                    ->orWhere('name', 'LIKE', '%bri%');
+            });
+
+        if ($branchId !== null && (clone $baseQuery)->where('branch_id', $branchId)->exists()) {
+            $baseQuery->where('branch_id', $branchId);
+        }
+
+        return $baseQuery->orderBy('code');
+    }
+
+    /**
+     * Determine whether an account follows Debit-normal balance in financial statements by group classification.
+     *
+     * Contra accounts retain their group's sign convention (negative within group), while credit-normal
+     * classifications (revenue, liability, equity) are checked before numeric code prefixes so revenue
+     * accounts prefixed with 6 (e.g. 621101002 PENDAPATAN BUNGA BANK) are treated as Credit-normal.
+     */
+    public static function isGroupDebitNormal(Account $account): bool
+    {
+        $classification = strtolower((string) $account->classification);
+        $code = strtolower((string) $account->code);
+
+        if (
+            $classification === 'revenue'
+            || str_contains($classification, 'pendapatan')
+            || $classification === 'liability'
+            || str_contains($classification, 'liab')
+            || str_contains($classification, 'kewajiban')
+            || $classification === 'equity'
+            || str_contains($classification, 'ekuitas')
+        ) {
+            return false;
+        }
+
+        return $classification === 'asset'
+            || $classification === 'kas-bank'
+            || $classification === 'expense'
+            || $classification === 'cost'
+            || str_contains($classification, 'aset')
+            || str_contains($classification, 'beban')
+            || str_contains($classification, 'cost')
+            || str_starts_with($code, '1')
+            || str_starts_with($code, '5')
+            || str_starts_with($code, '6')
+            || str_starts_with($code, '8');
     }
 }

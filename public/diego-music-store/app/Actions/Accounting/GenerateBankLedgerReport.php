@@ -2,6 +2,7 @@
 
 namespace App\Actions\Accounting;
 
+use App\Helpers\AccountHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Illuminate\Support\Facades\DB;
@@ -32,33 +33,18 @@ class GenerateBankLedgerReport
         $branch   = $branchId ? Branch::find($branchId) : null;
 
         // Fetch bank accounts
-        $accountQuery = Account::where('is_active', true);
         if ($bankAccountId) {
-            $accountQuery->where('id', $bankAccountId);
-        } else {
-            $accountQuery->where('is_header', false)
-                ->where('classification', 'asset')
-                ->where(function ($q) {
-                    $q->where('name', 'LIKE', '%bank%')
-                      ->orWhere('name', 'LIKE', '%bca%')
-                      ->orWhere('name', 'LIKE', '%mandiri%')
-                      ->orWhere('name', 'LIKE', '%bni%')
-                      ->orWhere('name', 'LIKE', '%bri%')
-                      ->orWhere('code', 'LIKE', '1-11%')
-                      ->orWhere('code', 'LIKE', '1-12%');
-                });
-        }
-
-        $bankAccounts = $accountQuery->orderBy('code')->get();
-
-        // Fallback: If no bank accounts matched the search criteria, get asset accounts starting with code 1
-        if ($bankAccounts->isEmpty() && !$bankAccountId) {
             $bankAccounts = Account::where('is_active', true)
-                ->where('is_header', false)
-                ->where('classification', 'asset')
-                ->where('code', 'LIKE', '1%')
+                ->where('id', $bankAccountId)
                 ->orderBy('code')
                 ->get();
+        } else {
+            $bankAccounts = AccountHelper::bankAccountsQuery($branchId)->get();
+
+            // Fallback: If no bank accounts matched, use active Cash & Bank accounts
+            if ($bankAccounts->isEmpty()) {
+                $bankAccounts = AccountHelper::cashAndBankQuery($branchId)->get();
+            }
         }
 
         $bankReports = [];

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Procurement;
 
+use App\Helpers\AccountHelper;
 use App\Models\Account;
 use App\Models\PoSmartAssistSetting;
 use App\Models\PurchaseOrder;
@@ -43,15 +44,7 @@ class EvaluatePoFinancialHealth
         }
 
         // 1. Calculate Liquid Cash & Bank Assets
-        $liquidAccountsQuery = Account::query()
-            ->where('is_header', false)
-            ->where(function ($q) {
-                $q->where('classification', 'kas-bank')
-                    ->orWhere('code', 'like', '1-11%')
-                    ->orWhere('code', 'like', '1-1%');
-            });
-
-        $liquidAccounts = $liquidAccountsQuery->get();
+        $liquidAccounts = AccountHelper::cashAndBankQuery($branchId)->get();
         $totalLiquidCash = 0.0;
 
         foreach ($liquidAccounts as $acc) {

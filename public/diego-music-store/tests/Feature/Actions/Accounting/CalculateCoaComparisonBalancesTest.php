@@ -181,4 +181,49 @@ class CalculateCoaComparisonBalancesTest extends TestCase
 
         $component->assertStatus(200);
     }
+
+    public function test_treats_six_prefixed_revenue_as_credit_normal_and_contra_asset_as_debit_normal(): void
+    {
+        $user = User::factory()->create();
+
+        $interestRev = Account::create([
+            'code' => '621101002',
+            'name' => 'PENDAPATAN BUNGA BANK',
+            'classification' => 'revenue',
+            'normal_balance' => 'credit',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $accumDepr = Account::create([
+            'code' => '121201001',
+            'name' => 'AKUMULASI PENYUSUTAN KENDARAAN',
+            'classification' => 'asset',
+            'normal_balance' => 'credit',
+            'is_header' => false,
+            'parent_id' => $this->assetHeader->id,
+            'is_active' => true,
+        ]);
+
+        $entry = JournalEntry::create([
+            'branch_id' => $this->branchA->id,
+            'entry_no' => 'JV-COA-SPEC',
+            'date' => now()->format('Y-m-d'),
+            'description' => 'Bunga Bank & Penyusutan',
+            'status' => 'posted',
+            'created_by' => $user->id,
+        ]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $this->cashAccount->id, 'debit' => 500000, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $interestRev->id, 'debit' => 0, 'credit' => 250000]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $accumDepr->id, 'debit' => 0, 'credit' => 250000]);
+
+        $result = (new CalculateCoaComparisonBalances())->execute(['100000000', '621101002', '121201001'], $this->branchA->id);
+
+        // Net asset header: Cash (+500k) + Accum Depr (-250k) = +250k
+        $this->assertEquals(250000.0, $result['items'][0]['raw_balance']);
+        // 621101002 revenue: Credit-normal (+250k, positive)
+        $this->assertEquals(250000.0, $result['items'][1]['raw_balance']);
+        // 121201001 contra asset: Debit-normal (-250k)
+        $this->assertEquals(-250000.0, $result['items'][2]['raw_balance']);
+    }
 }

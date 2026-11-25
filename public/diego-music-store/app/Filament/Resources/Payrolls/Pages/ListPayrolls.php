@@ -52,13 +52,7 @@ class ListPayrolls extends ListRecords
                     Forms\Components\Select::make('payment_account_id')
                         ->label('Rekening Kas/Bank Pembayaran')
                         ->options(function () {
-                            return \App\Models\Account::where('classification', 'asset')
-                                ->where(function ($q) {
-                                    $q->where('code', 'like', '1111%')
-                                      ->orWhere('code', 'like', '1112%');
-                                })
-                                ->where('is_active', true)
-                                ->pluck('name', 'id');
+                            return \App\Helpers\AccountHelper::cashAndBankQuery()->pluck('name', 'id');
                         })
                         ->default(fn () => \App\Helpers\AccountHelper::resolveAccountId('111201001', 'BANK BCA', 'asset'))
                         ->required(),

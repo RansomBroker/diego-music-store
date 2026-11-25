@@ -73,14 +73,7 @@ class ListPurchaseReturns extends ListRecords
                         ->label('Pilih Akun Kas / Bank Penerima Dana Refund')
                         ->placeholder('-- Pilih Akun Kas atau Rekening Bank --')
                         ->options(function () {
-                            $accounts = \App\Models\Account::where('is_header', false)
-                                ->where('is_active', true)
-                                ->where('classification', 'asset')
-                                ->where(function ($sub) {
-                                    $sub->where('name', 'like', '%kas%')
-                                        ->orWhere('name', 'like', '%bank%');
-                                })
-                                ->orderBy('code', 'asc')
+                            $accounts = \App\Helpers\AccountHelper::cashAndBankQuery()
                                 ->pluck('name', 'id')
                                 ->toArray();
 

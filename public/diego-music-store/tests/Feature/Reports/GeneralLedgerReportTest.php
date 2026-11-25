@@ -117,4 +117,48 @@ class GeneralLedgerReportTest extends TestCase
             ->call('exportExcel')
             ->assertStatus(200);
     }
+
+    /** @test */
+    public function it_calculates_credit_normal_running_balance_for_six_prefixed_revenue_and_debit_normal_for_contra_asset()
+    {
+        $kas = Account::where('code', '1-1000')->firstOrFail();
+        $interestRev = Account::create([
+            'code' => '621101002',
+            'name' => 'PENDAPATAN BUNGA BANK',
+            'classification' => 'revenue',
+            'normal_balance' => 'credit',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+        $accumDepr = Account::create([
+            'code' => '121201001',
+            'name' => 'AKUMULASI PENYUSUTAN KENDARAAN',
+            'classification' => 'asset',
+            'normal_balance' => 'credit',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $entry = JournalEntry::create([
+            'branch_id' => $this->branch->id,
+            'entry_no' => 'JV-GL-SPEC',
+            'date' => now()->toDateString(),
+            'description' => 'Test 621101002 & 121201001',
+            'status' => 'posted',
+            'created_by' => $this->user->id,
+        ]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $kas->id, 'debit' => 750000, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $interestRev->id, 'debit' => 0, 'credit' => 300000]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $accumDepr->id, 'debit' => 0, 'credit' => 450000]);
+
+        $action = new GenerateGeneralLedgerReport();
+
+        $revReport = $action->execute(now()->startOfMonth()->toDateString(), now()->toDateString(), $interestRev->id, $this->branch->id);
+        $this->assertFalse($revReport['ledgers'][0]['is_debit_normal']);
+        $this->assertEquals(300000.0, $revReport['ledgers'][0]['ending_balance']);
+
+        $contraReport = $action->execute(now()->startOfMonth()->toDateString(), now()->toDateString(), $accumDepr->id, $this->branch->id);
+        $this->assertTrue($contraReport['ledgers'][0]['is_debit_normal']);
+        $this->assertEquals(-450000.0, $contraReport['ledgers'][0]['ending_balance']);
+    }
 }

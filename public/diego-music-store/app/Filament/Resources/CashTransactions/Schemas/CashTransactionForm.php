@@ -143,16 +143,22 @@ class CashTransactionForm
                 ->where('is_header', false)
                 ->where('is_active', true)
                 ->when($cashBankOnly, function ($q) {
-                    $q->where(function ($sub) {
-                        $sub->where('code', 'like', '1111%')
-                            ->orWhere('code', 'like', '1112%')
-                            ->orWhere('code', 'like', '1-1%');
-                    });
+                    $q->whereNotIn('code', \App\Helpers\AccountHelper::NON_CASH_BANK_CODES)
+                        ->where(function ($sub) {
+                            $sub->where('code', 'like', '1111%')
+                                ->orWhere('code', 'like', '1112%')
+                                ->orWhere('code', 'like', '1-10%')
+                                ->orWhere('code', 'like', '1-11%');
+                        });
                 }, function ($q) {
                     $q->where(function ($sub) {
-                        $sub->where('code', 'not like', '1111%')
-                            ->where('code', 'not like', '1112%')
-                            ->where('code', 'not like', '1-1%');
+                        $sub->whereIn('code', \App\Helpers\AccountHelper::NON_CASH_BANK_CODES)
+                            ->orWhere(function ($other) {
+                                $other->where('code', 'not like', '1111%')
+                                    ->where('code', 'not like', '1112%')
+                                    ->where('code', 'not like', '1-10%')
+                                    ->where('code', 'not like', '1-11%');
+                            });
                     });
                 })
                 ->orderBy('code')

@@ -175,13 +175,7 @@ class EmployeeCashAdvanceResource extends Resource
                         Forms\Components\Select::make('disbursement_account_id')
                             ->label('Rekening Kas/Bank Sumber Dana')
                             ->options(function () {
-                                return \App\Models\Account::where('classification', 'asset')
-                                    ->where(function ($q) {
-                                        $q->where('code', 'like', '1111%')
-                                          ->orWhere('code', 'like', '1112%');
-                                    })
-                                    ->where('is_active', true)
-                                    ->pluck('name', 'id');
+                                return \App\Helpers\AccountHelper::cashAndBankQuery()->pluck('name', 'id');
                             })
                             ->default(fn () => \App\Helpers\AccountHelper::resolveAccountId('111101001', 'KAS', 'asset'))
                             ->required(),
@@ -236,13 +230,7 @@ class EmployeeCashAdvanceResource extends Resource
                         Forms\Components\Select::make('receipt_account_id')
                             ->label('Rekening Kas/Bank Penerima Dana')
                             ->options(function () {
-                                return \App\Models\Account::where('classification', 'asset')
-                                    ->where(function ($q) {
-                                        $q->where('code', 'like', '1111%')
-                                          ->orWhere('code', 'like', '1112%');
-                                    })
-                                    ->where('is_active', true)
-                                    ->pluck('name', 'id');
+                                return \App\Helpers\AccountHelper::cashAndBankQuery()->pluck('name', 'id');
                             })
                             ->default(fn () => \App\Helpers\AccountHelper::resolveAccountId('111101001', 'KAS', 'asset'))
                             ->required(),

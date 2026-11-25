@@ -18,6 +18,7 @@ class RegenerateBranchProductSkus
     public const MODE_MISSING_PREFIX = 'missing_prefix';
     public const MODE_ALL_OVERWRITE = 'all_overwrite';
 
+    public const FORMAT_KEEP_SUFFIX = 'keep_suffix';
     public const FORMAT_RANDOM = 'random';
     public const FORMAT_SEQUENTIAL = 'sequential';
 
@@ -103,9 +104,64 @@ class RegenerateBranchProductSkus
     public static function formatOptions(): array
     {
         return [
+            self::FORMAT_KEEP_SUFFIX => 'Pertahankan kode ujung & tambah/ganti prefix (contoh: DG0642 -> PREFIX-D0642, BRG2122 -> PREFIX-BRG2122)',
             self::FORMAT_RANDOM => 'Acak 8 karakter (contoh: PREFIX-A1B2C3D4)',
             self::FORMAT_SEQUENTIAL => 'Berurutan angka (contoh: PREFIX-0001, PREFIX-0002)',
         ];
+    }
+
+    /**
+     * Build a branch-prefixed SKU from a raw master/existing code while preserving
+     * product/brand suffixes (e.g. BRG2122, FW-1PK-XL, SUI026) and shortening DG<digits> to D<digits>.
+     *
+     * @param  array<int, string>  $knownBranchPrefixes
+     */
+    public static function buildPrefixedSkuFromRaw(
+        string $normalizedPrefix,
+        string $rawCode,
+        array $knownBranchPrefixes = []
+    ): string {
+        $prefix = self::normalizePrefix($normalizedPrefix);
+        if ($prefix === '') {
+            throw new InvalidArgumentException('Prefix Kode Produk / SKU cabang wajib diisi.');
+        }
+
+        $clean = strtoupper(trim($rawCode));
+        $clean = rtrim($clean, ". \t\n\r\0\x0B");
+
+        if ($clean === '') {
+            return '';
+        }
+
+        $prefixesToStrip = [$prefix];
+        foreach ($knownBranchPrefixes as $knownPrefix) {
+            $normalizedKnown = self::normalizePrefix((string) $knownPrefix);
+            if ($normalizedKnown !== '') {
+                $prefixesToStrip[] = $normalizedKnown;
+            }
+        }
+
+        $prefixesToStrip = array_values(array_unique($prefixesToStrip));
+        usort($prefixesToStrip, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+
+        foreach ($prefixesToStrip as $known) {
+            $needle = $known . '-';
+            if (str_starts_with($clean, $needle)) {
+                $clean = ltrim(substr($clean, strlen($needle)), '-');
+                $clean = rtrim(trim($clean), '.');
+                break;
+            }
+        }
+
+        if ($clean === '') {
+            return '';
+        }
+
+        if (preg_match('/^DG(\d+)$/', $clean, $matches) === 1) {
+            $clean = 'D' . $matches[1];
+        }
+
+        return $prefix . '-' . $clean;
     }
 
     /**
@@ -135,7 +191,7 @@ class RegenerateBranchProductSkus
         ?string $prefixOverride = null,
         string $scope = self::SCOPE_ALL,
         string $mode = self::MODE_MISSING_PREFIX,
-        string $format = self::FORMAT_RANDOM,
+        string $format = self::FORMAT_KEEP_SUFFIX,
         bool $savePrefixToBranch = false
     ): array {
         $rawPrefix = $prefixOverride !== null ? $prefixOverride : $branch->sku_prefix;
@@ -153,6 +209,18 @@ class RegenerateBranchProductSkus
             $format,
             $savePrefixToBranch
         ): array {
+            $knownBranchPrefixes = Branch::query()
+                ->whereNotNull('sku_prefix')
+                ->pluck('sku_prefix')
+                ->filter()
+                ->values()
+                ->all();
+
+            if ($branch->sku_prefix !== null && $branch->sku_prefix !== '') {
+                $knownBranchPrefixes[] = $branch->sku_prefix;
+            }
+            $knownBranchPrefixes[] = $normalizedPrefix;
+
             if ($savePrefixToBranch && $branch->sku_prefix !== $normalizedPrefix) {
                 $branch->update(['sku_prefix' => $normalizedPrefix]);
             }
@@ -215,10 +283,11 @@ class RegenerateBranchProductSkus
 
             $newSkuById = $this->buildNewSkuMap(
                 $targetsToUpdate,
-                $prefixWithDash,
+                $normalizedPrefix,
                 $format,
                 $allExistingSkus,
-                $untouchedSkus
+                $untouchedSkus,
+                $knownBranchPrefixes
             );
 
             // Two-phase update prevents unique index collisions when target SKUs swap/overlap (e.g. PTK-0002 -> PTK-0001)
@@ -268,15 +337,67 @@ class RegenerateBranchProductSkus
      * @param  array<string, bool>  $untouchedSkus
      * @return array<int, string>
      */
+    /**
+     * Build non-colliding new SKU assignments for every target variant.
+     *
+     * @param  array<int, object>  $targetsToUpdate
+     * @param  array<string, true>  $allExistingSkus
+     * @param  array<string, true>  $untouchedSkus
+     * @param  array<int, string>  $knownBranchPrefixes
+     * @return array<int, string>
+     */
     private function buildNewSkuMap(
         array $targetsToUpdate,
-        string $prefixWithDash,
+        string $normalizedPrefix,
         string $format,
         array $allExistingSkus,
-        array $untouchedSkus
+        array $untouchedSkus,
+        array $knownBranchPrefixes = []
     ): array {
         $newSkuById = [];
         $reservedNewSkus = [];
+        $prefixWithDash = $normalizedPrefix . '-';
+
+        if ($format === self::FORMAT_KEEP_SUFFIX) {
+            foreach ($targetsToUpdate as $variant) {
+                $candidate = self::buildPrefixedSkuFromRaw(
+                    $normalizedPrefix,
+                    (string) ($variant->sku ?? ''),
+                    $knownBranchPrefixes
+                );
+
+                if ($candidate === '') {
+                    do {
+                        $candidate = $prefixWithDash . strtoupper(Str::random(8));
+                        $upper = strtoupper($candidate);
+                    } while (
+                        isset($untouchedSkus[$upper])
+                        || isset($reservedNewSkus[$upper])
+                        || isset($allExistingSkus[$upper])
+                    );
+
+                    $reservedNewSkus[$upper] = true;
+                    $newSkuById[(int) $variant->id] = $candidate;
+
+                    continue;
+                }
+
+                $baseCandidate = $candidate;
+                $upper = strtoupper($candidate);
+                $duplicateCounter = 2;
+
+                while (isset($untouchedSkus[$upper]) || isset($reservedNewSkus[$upper])) {
+                    $candidate = $baseCandidate . '-' . $duplicateCounter;
+                    $upper = strtoupper($candidate);
+                    $duplicateCounter++;
+                }
+
+                $reservedNewSkus[$upper] = true;
+                $newSkuById[(int) $variant->id] = $candidate;
+            }
+
+            return $newSkuById;
+        }
 
         if ($format === self::FORMAT_SEQUENTIAL) {
             $maxSeq = 0;

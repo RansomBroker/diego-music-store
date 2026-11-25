@@ -2,6 +2,7 @@
 
 namespace App\Actions\Accounting;
 
+use App\Helpers\AccountHelper;
 use App\Models\Account;
 use App\Models\Branch;
 use Illuminate\Support\Facades\DB;
@@ -37,9 +38,7 @@ class GenerateGeneralLedgerReport
         $grandTotalCredit = 0.0;
 
         foreach ($accounts as $account) {
-            $classification = strtolower($account->classification);
-            $code = strtolower($account->code);
-            $isDebitNormal = ($classification === 'asset' || str_starts_with($code, '1') || $classification === 'expense' || str_starts_with($code, '5') || str_starts_with($code, '6') || str_starts_with($code, '8'));
+            $isDebitNormal = AccountHelper::isGroupDebitNormal($account);
 
             // 1. Calculate Beginning Balance (Saldo Awal) before $fromDate
             $priorQuery = DB::table('journal_items')

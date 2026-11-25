@@ -113,11 +113,15 @@ class GeneralLedger extends Page implements HasForms
                                 ->label('Pilih Akun')
                                 ->options(function (callable $get) {
                                     $branchId = $get('branch_id') ?: BranchHelper::getActiveBranchId();
-                                    return Account::where('branch_id', $branchId)
-                                        ->where('is_active', true)
+                                    $query = Account::where('is_active', true)
                                         ->where('is_header', false)
-                                        ->orderBy('code')
-                                        ->get()
+                                        ->orderBy('code');
+
+                                    if ($branchId && (clone $query)->where('branch_id', $branchId)->exists()) {
+                                        $query->where('branch_id', $branchId);
+                                    }
+
+                                    return $query->get()
                                         ->mapWithKeys(fn ($acc) => [$acc->id => "{$acc->code} - {$acc->name}"]);
                                 })
                                 ->placeholder('Semua Akun (Buku Besar Lengkap)')

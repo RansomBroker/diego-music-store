@@ -231,6 +231,203 @@ class RegenerateBranchProductSkusTest extends TestCase
         $this->assertSame('DG-PTK-0002', $v2->fresh()->sku);
     }
 
+    public function test_keep_suffix_format_is_default_and_preserves_codes_while_shortening_dg_prefix(): void
+    {
+        $brg = $this->createVariant('Item BRG', 'BRG2122', 'BC-BRG2122', [$this->branchA->id => 4]);
+        $dg4 = $this->createVariant('Item DG 4 Digit', 'DG0642', 'BC-DG0642', [$this->branchA->id => 2]);
+        $dg3 = $this->createVariant('Item DG 3 Digit', 'DG052', 'BC-DG052', [$this->branchA->id => 1]);
+        $dgZero = $this->createVariant('Item DG Zero', 'DG0052', 'BC-DG0052', [$this->branchA->id => 1]);
+        $dgDot = $this->createVariant('Item DG Trailing Dot', 'DG0319.', 'BC-DG0319', [$this->branchA->id => 3]);
+        $fw = $this->createVariant('Item FW Dash', 'FW-1PK-XL', 'BC-FW1', [$this->branchA->id => 6]);
+        $sui = $this->createVariant('Item SUI', 'SUI026', 'BC-SUI026', [$this->branchA->id => 2]);
+        $bmc = $this->createVariant('Item BMC Dash', 'BMC-01B', 'BC-BMC01B', [$this->branchA->id => 5]);
+        $mix = $this->createVariant('Item MIX', 'MIX5', 'BC-MIX5', [$this->branchA->id => 8]);
+
+        $result = app(RegenerateBranchProductSkus::class)->execute(
+            branch: $this->branchA,
+            prefixOverride: 'dms-p',
+            mode: RegenerateBranchProductSkus::MODE_ALL_OVERWRITE,
+            savePrefixToBranch: true,
+        );
+
+        $this->assertSame(9, $result['updated']);
+        $this->assertSame('DMS-P', $this->branchA->fresh()->sku_prefix);
+        $this->assertSame('DMS-P-BRG2122', $brg->fresh()->sku);
+        $this->assertSame('DMS-P-D0642', $dg4->fresh()->sku);
+        $this->assertSame('DMS-P-D052', $dg3->fresh()->sku);
+        $this->assertSame('DMS-P-D0052', $dgZero->fresh()->sku);
+        $this->assertSame('DMS-P-D0319', $dgDot->fresh()->sku);
+        $this->assertSame('DMS-P-FW-1PK-XL', $fw->fresh()->sku);
+        $this->assertSame('DMS-P-SUI026', $sui->fresh()->sku);
+        $this->assertSame('DMS-P-BMC-01B', $bmc->fresh()->sku);
+        $this->assertSame('DMS-P-MIX5', $mix->fresh()->sku);
+
+        // Barcodes and branch stock must remain untouched
+        $this->assertSame('BC-DG0642', $dg4->fresh()->barcode);
+        $this->assertSame(4, ProductBranchStock::where('product_variant_id', $brg->id)->where('branch_id', $this->branchA->id)->value('stock'));
+    }
+
+    public function test_keep_suffix_swaps_known_branch_prefix_without_stripping_brand_prefixes(): void
+    {
+        $this->branchA->update(['sku_prefix' => 'DMS-P']);
+
+        $brg = $this->createVariant('Item BRG', 'DMS-P-BRG2122', 'BC-SWAP-1', [$this->branchA->id => 2]);
+        $dg = $this->createVariant('Item DG', 'DMS-P-D0642', 'BC-SWAP-2', [$this->branchA->id => 2]);
+        $fw = $this->createVariant('Item FW', 'DMS-P-FW-1PK-XL', 'BC-SWAP-3', [$this->branchA->id => 2]);
+        $bmc = $this->createVariant('Item BMC', 'DMS-P-BMC-01B', 'BC-SWAP-4', [$this->branchA->id => 2]);
+
+        $result = app(RegenerateBranchProductSkus::class)->execute(
+            branch: $this->branchA,
+            prefixOverride: 'DMS-B',
+            mode: RegenerateBranchProductSkus::MODE_ALL_OVERWRITE,
+            format: RegenerateBranchProductSkus::FORMAT_KEEP_SUFFIX,
+            savePrefixToBranch: true,
+        );
+
+        $this->assertSame(4, $result['updated']);
+        $this->assertSame('DMS-B', $this->branchA->fresh()->sku_prefix);
+        $this->assertSame('DMS-B-BRG2122', $brg->fresh()->sku);
+        $this->assertSame('DMS-B-D0642', $dg->fresh()->sku);
+        $this->assertSame('DMS-B-FW-1PK-XL', $fw->fresh()->sku);
+        $this->assertSame('DMS-B-BMC-01B', $bmc->fresh()->sku);
+
+        // Re-running with identical prefix stays idempotent
+        $secondRun = app(RegenerateBranchProductSkus::class)->execute(
+            branch: $this->branchA,
+            prefixOverride: 'DMS-B',
+            mode: RegenerateBranchProductSkus::MODE_ALL_OVERWRITE,
+            format: RegenerateBranchProductSkus::FORMAT_KEEP_SUFFIX,
+            savePrefixToBranch: true,
+        );
+
+        $this->assertSame(4, $secondRun['updated']);
+        $this->assertSame('DMS-B-D0642', $dg->fresh()->sku);
+        $this->assertSame('DMS-B-FW-1PK-XL', $fw->fresh()->sku);
+    }
+
+    public function test_sync_branch_product_skus_from_master_restores_random_skus_with_banner_rows_and_idempotency(): void
+    {
+        $nut = $this->createVariant(
+            'HOSCO SHAPED & SLOTTED BONE NUT 9.5" ELECTRIC HSB-NS1/9.5',
+            'DMS-P-RND00001',
+            '200000000001',
+            [$this->branchA->id => 7]
+        );
+        $nut->update(['price' => 155000, 'cost_price' => 92000, 'hpp' => 92000]);
+
+        $guitar = $this->createVariant(
+            'COWBOY GWC 235 EQ NS',
+            'DMS-P-RND00002',
+            '200000000002',
+            [$this->branchA->id => 3]
+        );
+
+        $soloking = $this->createVariant(
+            'SOLOKING T1B VINTAGE II SURF GREEN /R',
+            'DMS-P-RND00003',
+            '200000000003',
+            [$this->branchA->id => 1]
+        );
+
+        $fender = $this->createVariant(
+            'FENDER PICK EXTRA HEAVY',
+            'DMS-P-RND00004',
+            '200000000004',
+            [$this->branchA->id => 10]
+        );
+
+        $csvContent = implode("\n", [
+            '"DIEGO MUSIC STORE","","",""',
+            '"","","",""',
+            '"NO","KODE BARANG","NAMA STOK","BARCODE"',
+            '1,"BRG2122","HOSCO SHAPED & SLOTTED BONE NUT 9.5"" ELECTRIC HSB-NS1/9.5","200000000001"',
+            '2,"DG052","cowboy   gwc 235 eq ns","200000000002"',
+            '3,"DG0319.","SOLOKING T1B VINTAGE II SURF GREEN /R","200000000003"',
+            '4,"FW-1PK-XL","FENDER PICK EXTRA HEAVY","200000000004"',
+            '5,"BRG9999","BARANG TIDAK ADA DI DB","200000009999"',
+        ]);
+
+        $tempPath = sys_get_temp_dir() . '/sku_master_' . uniqid('', true) . '.csv';
+        file_put_contents($tempPath, $csvContent);
+
+        try {
+            $syncAction = app(\App\Actions\Branch\SyncBranchProductSkusFromMaster::class);
+            $result = $syncAction->execute(
+                branch: $this->branchA,
+                filePath: $tempPath,
+                prefixOverride: 'DMS-P',
+                savePrefixToBranch: true,
+            );
+
+            $this->assertSame(4, $result['updated']);
+            $this->assertSame(0, $result['unchanged']);
+            $this->assertCount(1, $result['not_found']);
+            $this->assertSame('BARANG TIDAK ADA DI DB', $result['not_found'][0]['name']);
+            $this->assertSame([], $result['ambiguous']);
+            $this->assertSame(5, $result['total_rows']);
+
+            $freshNut = $nut->fresh();
+            $this->assertSame('DMS-P-BRG2122', $freshNut->sku);
+            $this->assertSame('200000000001', $freshNut->barcode);
+            $this->assertSame(155000, $freshNut->price);
+            $this->assertSame(92000, $freshNut->hpp);
+            $this->assertSame(7, ProductBranchStock::where('product_variant_id', $nut->id)->where('branch_id', $this->branchA->id)->value('stock'));
+
+            $this->assertSame('DMS-P-D052', $guitar->fresh()->sku);
+            $this->assertSame('DMS-P-D0319', $soloking->fresh()->sku);
+            $this->assertSame('DMS-P-FW-1PK-XL', $fender->fresh()->sku);
+
+            // Second run must be idempotent
+            $secondRun = $syncAction->execute(
+                branch: $this->branchA,
+                filePath: $tempPath,
+                prefixOverride: 'DMS-P',
+                savePrefixToBranch: true,
+            );
+
+            $this->assertSame(0, $secondRun['updated']);
+            $this->assertSame(4, $secondRun['unchanged']);
+            $this->assertCount(1, $secondRun['not_found']);
+        } finally {
+            @unlink($tempPath);
+        }
+    }
+
+    public function test_sync_skus_from_master_table_action_is_visible_and_executable_on_list_branches(): void
+    {
+        $ownerRole = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $owner = User::factory()->create();
+        $owner->assignRole($ownerRole);
+        $this->actingAs($owner);
+
+        $variant = $this->createVariant(
+            'KORG PITCHBLACK TUNER',
+            'DMS-P-RND88888',
+            '200000008888',
+            [$this->branchA->id => 5]
+        );
+
+        $csvContent = implode("\n", [
+            'NO,KODE BARANG,NAMA STOK',
+            '1,DG0642,KORG PITCHBLACK TUNER',
+        ]);
+
+        $uploadedFile = \Illuminate\Http\UploadedFile::fake()->createWithContent('master-barang.csv', $csvContent);
+
+        Livewire::test(ListBranches::class)
+            ->assertTableActionVisible('regenerate_skus', $this->branchA)
+            ->assertTableActionVisible('sync_skus_from_master', $this->branchA)
+            ->callTableAction('sync_skus_from_master', $this->branchA, data: [
+                'sku_prefix' => 'DMS-P',
+                'master_file' => $uploadedFile,
+            ])
+            ->assertHasNoTableActionErrors()
+            ->assertNotified();
+
+        $this->assertSame('DMS-P-D0642', $variant->fresh()->sku);
+        $this->assertSame([], \Illuminate\Support\Facades\Storage::disk('local')->files('temp-sku-sync'));
+    }
+
     /**
      * Create a test product variant with optional per-branch stock rows.
      *

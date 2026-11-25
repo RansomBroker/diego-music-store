@@ -111,7 +111,7 @@ class CreateBranch
                     prefixOverride: $data['sku_prefix'] ?? $branch->sku_prefix,
                     scope: $data['sku_regenerate_scope'] ?? RegenerateBranchProductSkus::SCOPE_ALL,
                     mode: $data['sku_regenerate_mode'] ?? RegenerateBranchProductSkus::MODE_MISSING_PREFIX,
-                    format: $data['sku_regenerate_format'] ?? RegenerateBranchProductSkus::FORMAT_RANDOM,
+                    format: $data['sku_regenerate_format'] ?? RegenerateBranchProductSkus::FORMAT_KEEP_SUFFIX,
                     savePrefixToBranch: true,
                 );
             }

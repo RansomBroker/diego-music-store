@@ -83,4 +83,63 @@ class EvaluatePoFinancialHealthTest extends TestCase
         $this->assertEquals(10000000, $setting->min_buffer_nominal);
         $this->assertFalse($setting->include_pending_pos);
     }
+
+    public function test_evaluate_po_financial_health_counts_nine_digit_cash_bank_and_excludes_advances_and_headers(): void
+    {
+        Account::create([
+            'code' => '111100000',
+            'name' => 'KAS (Header)',
+            'classification' => 'asset',
+            'is_active' => true,
+            'is_header' => true,
+        ]);
+
+        $kas = Account::create([
+            'code' => '111101001',
+            'name' => 'KAS',
+            'classification' => 'asset',
+            'is_active' => true,
+            'is_header' => false,
+        ]);
+
+        $bankBca = Account::create([
+            'code' => '111201001',
+            'name' => 'BANK BCA',
+            'classification' => 'asset',
+            'is_active' => true,
+            'is_header' => false,
+        ]);
+
+        $tokopedia = Account::create([
+            'code' => '111202006',
+            'name' => 'Tokopedia',
+            'classification' => 'asset',
+            'is_active' => true,
+            'is_header' => false,
+        ]);
+
+        $advance = Account::create([
+            'code' => '111201006',
+            'name' => 'Uang Muka Pembelian',
+            'classification' => 'asset',
+            'is_active' => true,
+            'is_header' => false,
+        ]);
+
+        $entry = \App\Models\JournalEntry::create([
+            'entry_no' => 'JE-9DIGIT-01',
+            'date' => now(),
+            'status' => 'posted',
+        ]);
+
+        \App\Models\JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $kas->id, 'debit' => 20000000, 'credit' => 0]);
+        \App\Models\JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $bankBca->id, 'debit' => 30000000, 'credit' => 0]);
+        \App\Models\JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $tokopedia->id, 'debit' => 10000000, 'credit' => 0]);
+        \App\Models\JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $advance->id, 'debit' => 99000000, 'credit' => 0]);
+
+        $result = (new EvaluatePoFinancialHealth())->execute(poGrandTotal: 1000000, paymentTerm: '30 Hari');
+
+        $this->assertSame(60000000.0, (float) $result['total_liquid_cash']);
+        $this->assertEquals('AMAN', $result['status']);
+    }
 }

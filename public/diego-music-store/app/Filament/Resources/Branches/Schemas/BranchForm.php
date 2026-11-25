@@ -193,7 +193,7 @@ class BranchForm
                                 ->visible(fn (?Branch $record): bool => $record !== null && BranchResource::canEdit($record))
                                 ->requiresConfirmation()
                                 ->modalHeading('Generate Ulang SKU Barang?')
-                                ->modalDescription('SKU produk akan di-generate ulang sesuai Prefix SKU di atas. Barcode, harga, stok, dan riwayat transaksi tidak akan berubah.')
+                                ->modalDescription('SKU produk akan disesuaikan memakai Prefix SKU di atas dan Format Kode SKU Baru (bawaan: hanya tambah/ganti prefix dan pertahankan kode ujung). Barcode, harga, stok, dan riwayat transaksi tidak akan berubah.')
                                 ->action(function (?Branch $record, $state, $get): void {
                                     if (! $record || ! BranchResource::canEdit($record)) {
                                         return;
@@ -205,7 +205,7 @@ class BranchForm
                                             prefixOverride: (string) ($state ?? $record->sku_prefix),
                                             scope: (string) ($get('sku_regenerate_scope') ?: RegenerateBranchProductSkus::SCOPE_ALL),
                                             mode: (string) ($get('sku_regenerate_mode') ?: RegenerateBranchProductSkus::MODE_MISSING_PREFIX),
-                                            format: (string) ($get('sku_regenerate_format') ?: RegenerateBranchProductSkus::FORMAT_RANDOM),
+                                            format: (string) ($get('sku_regenerate_format') ?: RegenerateBranchProductSkus::FORMAT_KEEP_SUFFIX),
                                             savePrefixToBranch: true,
                                         );
 
@@ -247,7 +247,7 @@ class BranchForm
                     Select::make('sku_regenerate_format')
                         ->label('Format Kode SKU Baru')
                         ->options(RegenerateBranchProductSkus::formatOptions())
-                        ->default(RegenerateBranchProductSkus::FORMAT_RANDOM)
+                        ->default(RegenerateBranchProductSkus::FORMAT_KEEP_SUFFIX)
                         ->native(false)
                         ->visible(fn ($get): bool => (bool) $get('regenerate_skus_on_save')),
 

@@ -200,9 +200,7 @@ class BalanceSheet extends Page implements HasForms
 
         $runningBalance = 0.0;
         $transactions = [];
-        $classification = strtolower($account->classification);
-        $code = strtolower($account->code);
-        $isDebitNormal = ($classification === 'asset' || str_starts_with($code, '1') || $classification === 'expense' || str_starts_with($code, '5') || str_starts_with($code, '6'));
+        $isDebitNormal = \App\Helpers\AccountHelper::isGroupDebitNormal($account);
 
         foreach ($items as $item) {
             $debit = (float) $item->debit;

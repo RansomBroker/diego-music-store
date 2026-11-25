@@ -424,16 +424,33 @@ class POSDailyCashTest extends TestCase
             ['code' => '611100000'],
             ['name' => 'HEADER BEBAN', 'classification' => 'Expense', 'is_header' => true, 'is_active' => true]
         );
+        $sixRevenue = Account::firstOrCreate(
+            ['code' => '621101002'],
+            ['name' => 'PENDAPATAN BUNGA BANK', 'classification' => 'revenue', 'is_header' => false, 'is_active' => true]
+        );
+        $bankBca = Account::firstOrCreate(
+            ['code' => '111201001'],
+            ['name' => 'BANK BCA', 'classification' => 'asset', 'is_header' => false, 'is_active' => true]
+        );
+        $advanceAcc = Account::firstOrCreate(
+            ['code' => '111201006'],
+            ['name' => 'Uang Muka Pembelian', 'classification' => 'asset', 'is_header' => false, 'is_active' => true]
+        );
 
         $component = Livewire::test('App\Livewire\POSDailyCash');
 
         $inCodes = collect($component->get('inflowSources'))->pluck('code')->all();
         $outCodes = collect($component->get('outflowDestinations'))->pluck('code')->all();
+        $transferCodes = collect($component->get('transferAccounts'))->pluck('code')->all();
 
         $this->assertContains($otherRevenue->code, $inCodes);
         $this->assertContains($this->capitalAccount->code, $inCodes);
         $this->assertContains($electricityExpense->code, $outCodes);
         $this->assertContains($this->expenseAccount->code, $outCodes);
         $this->assertNotContains($headerExpense->code, $outCodes);
+        $this->assertNotContains($sixRevenue->code, $outCodes);
+        $this->assertContains($this->cashAccount->code, $transferCodes);
+        $this->assertContains($bankBca->code, $transferCodes);
+        $this->assertNotContains($advanceAcc->code, $transferCodes);
     }
 }

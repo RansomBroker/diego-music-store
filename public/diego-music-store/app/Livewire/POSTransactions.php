@@ -488,9 +488,12 @@ class POSTransactions extends Component
         $this->settlementNote = '';
         $this->settlementAmount = $sale->getPiutangAmount();
         
-        $defaultAccount = \App\Models\Account::where('classification', 'asset')
-            ->where('is_header', false)
-            ->first();
+        $defaultAccount = \App\Helpers\AccountHelper::cashAndBankQuery($sale->branch_id)->first()
+            ?? \App\Models\Account::where('is_active', true)
+                ->where('classification', 'asset')
+                ->where('is_header', false)
+                ->orderBy('code')
+                ->first();
         $this->settlementAccountId = $defaultAccount?->id;
 
         $this->showSettlementModal = true;
@@ -641,10 +644,14 @@ class POSTransactions extends Component
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage > 0 ? $this->perPage : 1000);
 
-        $accounts = \App\Models\Account::where('classification', 'asset')
-            ->where('is_header', false)
-            ->orderBy('code')
-            ->get();
+        $accounts = \App\Helpers\AccountHelper::cashAndBankQuery($branchId)->get();
+        if ($accounts->isEmpty()) {
+            $accounts = \App\Models\Account::where('is_active', true)
+                ->where('classification', 'asset')
+                ->where('is_header', false)
+                ->orderBy('code')
+                ->get();
+        }
 
         $customers = \App\Models\Customer::query()
             ->whereIn('id', Sale::query()->where('branch_id', $branchId)->whereNotNull('customer_id')->distinct()->pluck('customer_id'))

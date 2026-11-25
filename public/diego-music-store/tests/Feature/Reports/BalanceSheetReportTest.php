@@ -206,4 +206,68 @@ class BalanceSheetReportTest extends TestCase
         $this->assertGreaterThan($bankIdx, $bcaIdx);
         $this->assertGreaterThan($receivableHdrIdx, $piutangDagangIdx);
     }
+
+    /** @test */
+    public function it_keeps_balance_sheet_balanced_with_contra_asset_and_six_prefixed_revenue_accounts()
+    {
+        $kas = Account::where('code', '1-1000')->firstOrFail();
+
+        $accumDepr = Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '121201001',
+            'name' => 'AKUMULASI PENYUSUTAN KENDARAAN',
+            'classification' => 'asset',
+            'account_subtype' => 'accumulated_depreciation',
+            'normal_balance' => 'credit',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $deprExpense = Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '611101030',
+            'name' => 'BEBAN PENYUSUTAN',
+            'classification' => 'expense',
+            'normal_balance' => 'debit',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $interestRev = Account::create([
+            'branch_id' => $this->branch->id,
+            'code' => '621101002',
+            'name' => 'PENDAPATAN BUNGA BANK',
+            'classification' => 'revenue',
+            'normal_balance' => 'credit',
+            'is_header' => false,
+            'is_active' => true,
+        ]);
+
+        $entry = JournalEntry::create([
+            'branch_id' => $this->branch->id,
+            'entry_no' => 'JV-CONTRA-6REV',
+            'date' => now()->toDateString(),
+            'description' => 'Bunga Bank dan Penyusutan',
+            'status' => 'posted',
+            'created_by' => $this->user->id,
+        ]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $kas->id, 'debit' => 500000, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $interestRev->id, 'debit' => 0, 'credit' => 500000]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $deprExpense->id, 'debit' => 200000, 'credit' => 0]);
+        JournalItem::create(['journal_entry_id' => $entry->id, 'account_id' => $accumDepr->id, 'debit' => 0, 'credit' => 200000]);
+
+        $report = (new GenerateBalanceSheetReport())->execute(now()->toDateString(), $this->branch->id, 'detail', 'all');
+
+        $this->assertTrue($report['is_balanced']);
+        $this->assertEquals(0.0, $report['difference']);
+        $this->assertEquals(500000.0, $report['equity']['revenue_total']);
+        $this->assertEquals(200000.0, $report['equity']['expense_total']);
+        $this->assertEquals(300000.0, $report['equity']['current_net_income']);
+
+        // Drill-down ledger for 121201001 keeps group debit-normal convention (-200,000)
+        Livewire::actingAs($this->user)
+            ->test(BalanceSheet::class)
+            ->call('openAccountLedgerModal', $accumDepr->id)
+            ->assertSet('selectedAccount.total_balance', -200000.0);
+    }
 }

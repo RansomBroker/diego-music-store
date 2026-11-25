@@ -144,15 +144,7 @@ class POSCashSession extends Component
 
     protected function loadTransferAccounts(): void
     {
-        $this->transferAccounts = \App\Models\Account::query()
-            ->where('is_header', false)
-            ->where('is_active', true)
-            ->where(function ($q) {
-                $q->where('code', 'like', '1111%')
-                    ->orWhere('code', 'like', '1112%');
-            })
-            ->orderBy('code')
-            ->get();
+        $this->transferAccounts = \App\Helpers\AccountHelper::cashAndBankQuery()->get();
 
         $accounts = collect($this->transferAccounts);
         if ($accounts->isNotEmpty()) {

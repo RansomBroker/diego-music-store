@@ -131,15 +131,7 @@ class PurchaseOrdersTable
 
                         \Filament\Forms\Components\Select::make('dp_account_id')
                             ->label('Rekening Kas / Bank')
-                            ->options(fn () => \App\Models\Account::where('classification', 'asset')
-                                ->where('is_header', false)
-                                ->where(function ($q) {
-                                    $q->where('code', 'like', '1-1%')
-                                      ->orWhere('code', 'like', '1111%')
-                                      ->orWhere('code', 'like', '1112%');
-                                })
-                                ->pluck('name', 'id')
-                            )
+                            ->options(fn () => \App\Helpers\AccountHelper::cashAndBankQuery()->pluck('name', 'id'))
                             ->required()
                             ->searchable()
                             ->preload()

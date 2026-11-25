@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Branches\Tables;
 
 use App\Actions\Branch\RegenerateBranchProductSkus;
+use App\Actions\Branch\SyncBranchProductSkusFromMaster;
 use App\Actions\Branch\UpdateBranch;
 use App\Filament\Resources\Branches\BranchResource;
 use App\Filament\Resources\Branches\Schemas\BranchForm;
@@ -12,6 +13,7 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -20,6 +22,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class BranchesTable
 {
@@ -153,7 +156,7 @@ class BranchesTable
                         Select::make('format')
                             ->label('Format Kode SKU Baru')
                             ->options(RegenerateBranchProductSkus::formatOptions())
-                            ->default(RegenerateBranchProductSkus::FORMAT_RANDOM)
+                            ->default(RegenerateBranchProductSkus::FORMAT_KEEP_SUFFIX)
                             ->required()
                             ->native(false),
                     ])
@@ -165,7 +168,7 @@ class BranchesTable
                             prefixOverride: $data['sku_prefix'] ?? $record->sku_prefix,
                             scope: $data['scope'] ?? RegenerateBranchProductSkus::SCOPE_ALL,
                             mode: $data['mode'] ?? RegenerateBranchProductSkus::MODE_MISSING_PREFIX,
-                            format: $data['format'] ?? RegenerateBranchProductSkus::FORMAT_RANDOM,
+                            format: $data['format'] ?? RegenerateBranchProductSkus::FORMAT_KEEP_SUFFIX,
                             savePrefixToBranch: true,
                         );
 
@@ -174,6 +177,86 @@ class BranchesTable
                             ->body(RegenerateBranchProductSkus::formatResultMessage($result))
                             ->success()
                             ->send();
+                    }),
+
+                Action::make('sync_skus_from_master')
+                    ->label('Pulihkan SKU Master')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('info')
+                    ->visible(fn (Branch $record): bool => BranchResource::canEdit($record))
+                    ->modalHeading('Pulihkan SKU Barang dari File Master')
+                    ->modalDescription('Unggah file master barang (.xlsx / .xls / .csv) dengan kolom KODE BARANG & NAMA STOK untuk mengembalikan kode ujung SKU tanpa mengubah stok, harga, HPP, barcode, atau jurnal.')
+                    ->modalSubmitActionLabel('Pulihkan SKU Sekarang')
+                    ->form([
+                        TextInput::make('sku_prefix')
+                            ->label('Prefix Kode Produk / SKU')
+                            ->default(fn (Branch $record): string => (string) ($record->sku_prefix ?? ''))
+                            ->placeholder('Contoh: DMS-P atau PTK')
+                            ->maxLength(20)
+                            ->required()
+                            ->dehydrateStateUsing(fn (?string $state): string => RegenerateBranchProductSkus::normalizePrefix($state)),
+
+                        FileUpload::make('master_file')
+                            ->label('File Master Barang (.xlsx / .xls / .csv)')
+                            ->disk('local')
+                            ->directory('temp-sku-sync')
+                            ->acceptedFileTypes([
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                'application/vnd.ms-excel',
+                                'text/csv',
+                                'application/csv',
+                                'text/plain',
+                            ])
+                            ->helperText('Kode BRG tetap BRG (contoh: BRG2122 -> PREFIX-BRG2122), sedangkan DG + angka dipendekkan menjadi D + angka (contoh: DG0642 -> PREFIX-D0642).')
+                            ->required(),
+                    ])
+                    ->action(function (Branch $record, array $data): void {
+                        abort_unless(BranchResource::canEdit($record), 403);
+
+                        $relativePath = is_array($data['master_file'] ?? null)
+                            ? (string) (reset($data['master_file']) ?: '')
+                            : (string) ($data['master_file'] ?? '');
+
+                        if ($relativePath === '' || ! Storage::disk('local')->exists($relativePath)) {
+                            Notification::make()
+                                ->title('File Master Tidak Ditemukan')
+                                ->body('Silakan unggah kembali file master barang (.xlsx, .xls, atau .csv).')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $fullPath = Storage::disk('local')->path($relativePath);
+
+                        try {
+                            $result = app(SyncBranchProductSkusFromMaster::class)->execute(
+                                branch: $record,
+                                filePath: $fullPath,
+                                prefixOverride: $data['sku_prefix'] ?? $record->sku_prefix,
+                                savePrefixToBranch: true,
+                            );
+
+                            $notification = Notification::make()
+                                ->title('Pulihkan SKU Master Selesai')
+                                ->body(SyncBranchProductSkusFromMaster::formatResultMessage($result));
+
+                            if (($result['not_found'] ?? []) !== [] || ($result['ambiguous'] ?? []) !== []) {
+                                $notification->warning();
+                            } else {
+                                $notification->success();
+                            }
+
+                            $notification->send();
+                        } catch (\InvalidArgumentException $e) {
+                            Notification::make()
+                                ->title('File Master Tidak Valid')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        } finally {
+                            Storage::disk('local')->delete($relativePath);
+                        }
                     }),
 
                 Action::make('kartu_stok')

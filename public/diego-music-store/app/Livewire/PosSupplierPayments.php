@@ -66,10 +66,13 @@ class PosSupplierPayments extends Component
             ?? Auth::user()?->branch_id
             ?? Branch::first()?->id;
 
-        $defaultAccount = Account::where('classification', 'asset')
-            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
-            ->where('is_header', false)
-            ->first();
+        $defaultAccount = \App\Helpers\AccountHelper::cashAndBankQuery($this->branch_id)->first()
+            ?? Account::where('is_active', true)
+                ->where('classification', 'asset')
+                ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
+                ->where('is_header', false)
+                ->orderBy('code')
+                ->first();
         if ($defaultAccount) {
             $this->account_id = $defaultAccount->id;
         }
@@ -118,10 +121,13 @@ class PosSupplierPayments extends Component
             ?? Auth::user()?->branch_id
             ?? Branch::first()?->id;
 
-        $defaultAccount = Account::where('classification', 'asset')
-            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
-            ->where('is_header', false)
-            ->first();
+        $defaultAccount = \App\Helpers\AccountHelper::cashAndBankQuery($this->branch_id)->first()
+            ?? Account::where('is_active', true)
+                ->where('classification', 'asset')
+                ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
+                ->where('is_header', false)
+                ->orderBy('code')
+                ->first();
         if ($defaultAccount) {
             $this->account_id = $defaultAccount->id;
         }
@@ -358,11 +364,15 @@ class PosSupplierPayments extends Component
             ? Storage::url($branch->logo_path)
             : null;
 
-        $accounts = Account::where('classification', 'asset')
-            ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId))
-            ->where('is_header', false)
-            ->orderBy('code')
-            ->get();
+        $accounts = \App\Helpers\AccountHelper::cashAndBankQuery($activeBranchId)->get();
+        if ($accounts->isEmpty()) {
+            $accounts = Account::where('is_active', true)
+                ->where('classification', 'asset')
+                ->when($activeBranchId, fn ($q) => $q->where('branch_id', $activeBranchId))
+                ->where('is_header', false)
+                ->orderBy('code')
+                ->get();
+        }
 
         return view('livewire.pos-supplier-payments', [
             'payments' => $salesPiutang,
