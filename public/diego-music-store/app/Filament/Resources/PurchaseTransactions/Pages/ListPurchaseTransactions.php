@@ -26,7 +26,7 @@ class ListPurchaseTransactions extends ListRecords
                 ->label('Reset Transaksi Pembelian')
                 ->icon('heroicon-o-trash')
                 ->color('danger')
-                ->visible(fn (): bool => PermissionHelper::can(Auth::user(), 'bo.purchase_transactions.delete'))
+                ->visible(false) // Temporarily hidden; restore: fn (): bool => PermissionHelper::can(Auth::user(), 'bo.purchase_transactions.delete')
                 ->requiresConfirmation()
                 ->modalHeading('Reset Semua Transaksi Pembelian')
                 ->modalDescription('Tindakan ini akan menghapus semua transaksi pembelian pada cabang aktif beserta jurnal terkait (Pembelian & Saldo Awal Hutang), mutasi stok pembelian, dan saldo hutang supplier dari transaksi tersebut. Tindakan ini tidak dapat dibatalkan.')

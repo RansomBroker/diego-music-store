@@ -279,29 +279,9 @@ class ResetPurchaseTransactionsTest extends TestCase
         app(ResetPurchaseTransactions::class)->execute($this->branch->id);
     }
 
-    public function test_list_page_exposes_reset_header_action_only_when_authorized_and_resets_data(): void
+    public function test_list_page_hides_reset_header_action_even_when_authorized(): void
     {
-        $pt = app(CreatePurchaseTransaction::class)->execute([
-            'transaction_date' => '2026-04-02',
-            'supplier_id' => $this->supplier->id,
-            'branch_id' => $this->branch->id,
-            'purchase_type' => 'Tunai',
-            'items' => [
-                [
-                    'product_variant_id' => $this->variant->id,
-                    'qty_received' => 1,
-                    'price' => 1000000,
-                ],
-            ],
-        ]);
-        app(PostPurchaseTransaction::class)->execute($pt);
-
         Livewire::test(ListPurchaseTransactions::class)
-            ->assertActionVisible('reset_transactions')
-            ->callAction('reset_transactions')
-            ->assertNotified('Reset Transaksi Pembelian Berhasil');
-
-        $this->assertSame(0, PurchaseTransaction::where('branch_id', $this->branch->id)->count());
-        $this->assertSame(0, JournalEntry::where('branch_id', $this->branch->id)->where('reference_type', 'Purchase')->count());
+            ->assertActionHidden('reset_transactions');
     }
 }

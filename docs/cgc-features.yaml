@@ -1,0 +1,597 @@
+# Peta Fitur & Keyword Bisnis — Diego Music Store ERP
+# Digunakan oleh CodeGraphContext (`resolve_feature_context` / `cgc feature resolve`)
+# dan filter Feature di Visualizer Web (`http://localhost:8765`).
+#
+# Catatan: Seluruh path `entry_points` relatif terhadap `public/diego-music-store`.
+
+version: 1
+features:
+  - id: sku-management
+    name: "SKU & Penomoran Produk per Cabang"
+    description: "Generate SKU unik sekuensial per prefix cabang (`sku_sequences`), pulihkan SKU master, dan regenerasi SKU saat buat/ubah cabang."
+    keywords:
+      - sku
+      - generate sku
+      - pulihkan sku
+      - sku master
+      - regenerasi sku
+      - penomoran produk
+      - prefix cabang
+      - prefix sku
+      - sku_prefix
+      - sku_sequences
+      - brg
+      - reserve sku
+      - format sku
+    entry_points:
+      - app/Actions/Branch/RegenerateBranchProductSkus.php
+      - app/Actions/Branch/SyncBranchProductSkusFromMaster.php
+      - app/Actions/Product/ReserveNextSku.php
+      - app/Actions/Product/SyncSkuSequenceFromExisting.php
+      - app/Helpers/ProductHelper.php
+      - app/Models/SkuSequence.php
+    hints:
+      - "Penomoran SKU per prefix + cabang dikelola di tabel `sku_sequences` via `SkuSequence` dan `ProductHelper::generateUniqueSku`."
+      - "Format `BRG2122` menjadi `<PREFIX>-2122` (tanpa literal BRG), sedangkan huruf non-BRG seperti `D0642` dipertahankan."
+
+  - id: pos-checkout
+    name: "POS Kasir & Checkout"
+    description: "Layar transaksi kasir Front Office, keranjang belanja, metode pembayaran, hold transaction, cetak struk, & edit/hapus transaksi POS."
+    keywords:
+      - pos
+      - kasir
+      - checkout
+      - transaksi pos
+      - keranjang
+      - cart
+      - hold transaksi
+      - tahan transaksi
+      - held transaction
+      - struk
+      - receipt
+      - cetak struk
+      - draft transaksi
+      - barcode scan
+      - edit transaksi
+      - hapus transaksi pos
+    entry_points:
+      - app/Livewire/POS.php
+      - app/Livewire/Pos/PaymentModal.php
+      - app/Livewire/Pos/ProductSearchModal.php
+      - app/Livewire/POSTransactions.php
+      - app/Actions/Sales/CreatePOSSale.php
+      - app/Actions/Sales/UpdatePOSSale.php
+      - app/Actions/Sales/DeletePOSSale.php
+      - app/Http/Controllers/POS/POSReceiptController.php
+      - app/Models/Sale.php
+      - app/Models/SaleItem.php
+      - app/Models/SalePayment.php
+      - app/Models/PosHeldTransaction.php
+      - resources/views/filament/pages/pos/pos.blade.php
+      - resources/views/filament/pages/pos/components/cart-sidebar.blade.php
+    hints:
+      - "`CreatePOSSale` menjalankan mutasi stok, perhitungan komisi, pembuatan service order (jika jasa), dan penomoran invoice."
+
+  - id: pos-otp
+    name: "OTP Otorisasi Edit & Hapus POS"
+    description: "Pembuatan dan verifikasi kode OTP 6 digit berbatas waktu untuk otorisasi perubahan/penghapusan transaksi POS oleh non-owner."
+    keywords:
+      - otp
+      - pos otp
+      - verifikasi otp
+      - kode otp
+      - otorisasi edit
+      - otorisasi hapus
+    entry_points:
+      - app/Actions/PosOtp/GeneratePosActionOtp.php
+      - app/Actions/PosOtp/VerifyPosActionOtp.php
+      - app/Helpers/PosOtpHelper.php
+      - app/Models/PosActionOtp.php
+      - app/Models/PosActionOtpLog.php
+      - app/Filament/Widgets/PosActionOtpWidget.php
+    hints:
+      - "Widget OTP Backoffice menampilkan kode 6 digit aktif dan mencatat audit trail di `PosActionOtpLog`."
+
+  - id: cash-session-daily-cash
+    name: "Shift Kasir, Kas Harian & Z-Report"
+    description: "Buka/tutup shift kasir (`cash_sessions`), modal awal, selisih kas, transaksi kas harian, dan cetak Z-Report PDF."
+    keywords:
+      - cash session
+      - shift kasir
+      - buka kasir
+      - tutup kasir
+      - modal awal
+      - z-report
+      - z report
+      - daily cash
+      - kas harian
+      - kas masuk
+      - kas keluar
+      - selisih kas
+    entry_points:
+      - app/Actions/CashSession/OpenCashSession.php
+      - app/Actions/CashSession/CloseCashSession.php
+      - app/Actions/CashSession/ReopenCashSession.php
+      - app/Actions/CashManagement/CreateCashTransaction.php
+      - app/Actions/CashManagement/PostCashTransaction.php
+      - app/Livewire/POSCashSession.php
+      - app/Livewire/POSDailyCash.php
+      - app/Filament/Resources/CashTransactions/
+      - app/Http/Controllers/POS/ZReportController.php
+      - app/Helpers/CashSessionHelper.php
+      - app/Models/CashSession.php
+      - app/Models/CashTransaction.php
+
+  - id: sales-queue
+    name: "Antrian Sales & Duty Status"
+    description: "Antrian giliran sales melayani pelanggan secara round-robin, check-in on-duty harian, dan ekspor laporan antrian."
+    keywords:
+      - antrian sales
+      - sales queue
+      - giliran sales
+      - round robin
+      - on duty
+      - duty log
+      - antrian kasir
+    entry_points:
+      - app/Actions/SalesQueue/InitializeDailySalesQueue.php
+      - app/Actions/SalesQueue/StartSalesDuty.php
+      - app/Actions/SalesQueue/CompleteSalesDuty.php
+      - app/Actions/SalesQueue/ToggleSalesDutyStatus.php
+      - app/Actions/SalesQueue/ReorderSalesQueue.php
+      - app/Livewire/Pos/SalesQueueWidget.php
+      - app/Helpers/SalesQueueHelper.php
+      - app/Models/SalesQueueMember.php
+      - app/Models/SalesDutyLog.php
+
+  - id: product-catalog-import
+    name: "Katalog Produk, Varian, Harga & Import"
+    description: "Master produk fisik/jasa/bundle, varian, harga tier/per-cabang, cetak barcode, dan import/export spreadsheet produk."
+    keywords:
+      - produk
+      - master produk
+      - product
+      - varian
+      - variant
+      - pricing tier
+      - harga cabang
+      - harga grosir
+      - barcode
+      - cetak barcode
+      - import produk
+      - bundle
+      - paket produk
+      - satuan
+      - unit
+    entry_points:
+      - app/Actions/Product/CreateProduct.php
+      - app/Actions/Product/UpdateProduct.php
+      - app/Actions/Product/DuplicateProduct.php
+      - app/Actions/Product/ImportProducts.php
+      - app/Actions/Product/ResetProductsForImport.php
+      - app/Filament/Resources/Products/
+      - app/Filament/Resources/PricingTiers/
+      - app/Filament/Resources/Units/
+      - app/Livewire/PosCatalog.php
+      - app/Livewire/PosBarcodePrint.php
+      - app/Livewire/Backoffice/SpreadsheetImporter.php
+      - app/Models/Product.php
+      - app/Models/ProductVariant.php
+      - app/Models/ProductBranchPrice.php
+      - app/Models/ProductBranchStock.php
+      - app/Models/ProductTierPrice.php
+      - app/Models/ProductBundle.php
+      - app/Models/PricingTier.php
+
+  - id: sales-b2b-receivables
+    name: "Penjualan B2B, Invoice, Retur & Piutang"
+    description: "Faktur penjualan B2B (`SalesInvoice`), penawaran (`SalesQuotation`), retur penjualan, pelunasan piutang pelanggan, & AR Aging."
+    keywords:
+      - sales invoice
+      - faktur penjualan
+      - invoice b2b
+      - quotation
+      - penawaran
+      - retur penjualan
+      - sales return
+      - piutang
+      - ar aging
+      - pelunasan piutang
+      - customer payment
+      - kategori penjualan
+    entry_points:
+      - app/Actions/Sales/CreateSalesInvoice.php
+      - app/Actions/Sales/PostSalesInvoice.php
+      - app/Actions/Sales/CreateSalesQuotation.php
+      - app/Actions/Sales/CreateSalesReturn.php
+      - app/Actions/Sales/PostSalesReturn.php
+      - app/Actions/Sales/SettleCustomerReceivable.php
+      - app/Filament/Resources/SalesInvoices/
+      - app/Filament/Resources/SalesQuotations/
+      - app/Filament/Resources/SalesReturns/
+      - app/Http/Controllers/BackOffice/SalesInvoicePrintController.php
+      - app/Livewire/PosCustomerPayments.php
+      - app/Livewire/PosReportsArAging.php
+      - app/Livewire/PosReportsArSettlement.php
+      - app/Models/SalesInvoice.php
+      - app/Models/SalesQuotation.php
+      - app/Models/SalesReturn.php
+
+  - id: procurement-po-suppliers
+    name: "Pembelian (PO), Penerimaan DO, Retur Beli & Hutang Supplier"
+    description: "Alur pengadaan mulai Purchase Order, Smart Assist PO, Down Payment (DP PO), Delivery Order (DO), faktur beli, hingga pelunasan hutang supplier."
+    keywords:
+      - purchase order
+      - po
+      - pembelian
+      - pengadaan
+      - delivery order
+      - penerimaan barang
+      - surat jalan
+      - dp po
+      - down payment
+      - faktur pembelian
+      - purchase transaction
+      - purchase-transactions
+      - reset transaksi pembelian
+      - retur pembelian
+      - hutang supplier
+      - supplier payment
+      - smart assist
+      - hpp
+    entry_points:
+      - app/Actions/Procurement/CreatePurchaseOrder.php
+      - app/Actions/Procurement/PayPurchaseOrderDownPayment.php
+      - app/Actions/Procurement/CreateDeliveryOrder.php
+      - app/Actions/Procurement/ReceiveDeliveryOrder.php
+      - app/Actions/Procurement/CreatePurchaseTransaction.php
+      - app/Actions/Procurement/PostPurchaseTransaction.php
+      - app/Actions/Procurement/ResetPurchaseTransactions.php
+      - app/Actions/Procurement/EvaluatePoFinancialHealth.php
+      - app/Actions/Purchases/CreatePurchaseReturn.php
+      - app/Actions/Purchases/PostPurchaseReturn.php
+      - app/Actions/SupplierPayment/CreateSupplierPayment.php
+      - app/Actions/SupplierPayment/ProcessSupplierPaymentComplete.php
+      - app/Filament/Resources/PurchaseOrders/
+      - app/Filament/Resources/DeliveryOrders/
+      - app/Filament/Resources/PurchaseTransactions/
+      - app/Filament/Resources/PurchaseReturns/
+      - app/Filament/Resources/SupplierPayments/
+      - app/Filament/Resources/Suppliers/
+      - app/Filament/Pages/Settings/PoSmartAssistSettingsPage.php
+      - app/Helpers/PoSmartAssistHelper.php
+      - app/Models/PurchaseOrder.php
+      - app/Models/DeliveryOrder.php
+      - app/Models/PurchaseTransaction.php
+      - app/Models/SupplierPayment.php
+      - app/Models/Supplier.php
+
+  - id: inventory-mutation-transfer
+    name: "Mutasi Inventaris, Transfer Stok & Focus Product"
+    description: "Mutasi stok antar-cabang/gudang, pengiriman & penerimaan transfer stok, kartu pergerakan stok (`StockMovement`), & aturan focus product."
+    keywords:
+      - mutasi stok
+      - mutasi barang
+      - inventory mutation
+      - transfer stok
+      - pindah stok
+      - stock transfer
+      - kartu stok
+      - stock movement
+      - stok cabang
+      - aging stok
+      - focus product
+    entry_points:
+      - app/Actions/InventoryMutation/CreateInventoryMutation.php
+      - app/Actions/InventoryMutation/ProcessInventoryMutationTransit.php
+      - app/Actions/InventoryMutation/ProcessInventoryMutationReceived.php
+      - app/Actions/StockTransfer/SubmitStockTransfer.php
+      - app/Actions/StockTransfer/ApproveStockTransfer.php
+      - app/Actions/StockTransfer/CompleteStockTransfer.php
+      - app/Actions/FocusProduct/EvaluateFocusRules.php
+      - app/Filament/Resources/InventoryMutations/
+      - app/Filament/Resources/StockTransferResource.php
+      - app/Filament/Resources/StockMovements/
+      - app/Filament/Resources/FocusProductResource.php
+      - app/Http/Controllers/BackOffice/InventoryMutationPrintController.php
+      - app/Models/InventoryMutation.php
+      - app/Models/StockTransfer.php
+      - app/Models/StockMovement.php
+      - app/Models/FocusProduct.php
+
+  - id: stock-opname
+    name: "Stock Opname & Review Selisih"
+    description: "Periode stock opname, preset rak/kategori, penugasan hitung stok karyawan, review selisih, dan finalisasi penyesuaian stok."
+    keywords:
+      - stock opname
+      - opname
+      - hitung stok
+      - selisih stok
+      - opname periode
+      - opname review
+    entry_points:
+      - app/Actions/StockOpname/ActivateStockOpnamePeriod.php
+      - app/Actions/StockOpname/CreateStockOpname.php
+      - app/Actions/StockOpname/ApproveStockOpnameAssignment.php
+      - app/Actions/StockOpname/ProcessStockOpnameComplete.php
+      - app/Actions/StockOpname/FinalizeStockOpnamePeriod.php
+      - app/Livewire/StockOpnameTasks.php
+      - app/Livewire/StockOpnameReview.php
+      - app/Filament/Pages/StockOpnameReview.php
+      - app/Filament/Resources/StockOpnames/
+      - app/Filament/Resources/StockOpnamePeriods/
+      - app/Filament/Resources/StockOpnamePresets/
+      - app/Models/StockOpname.php
+      - app/Models/StockOpnamePeriod.php
+      - app/Models/StockOpnameAssignment.php
+
+  - id: accounting-ledger-closing
+    name: "Akuntansi, Jurnal, COA, Aset & Tutup Buku"
+    description: "Chart of Accounts (COA), jurnal umum & terjadwal, manajemen aset & depresiasi/disposal, closing bulanan/tahunan, dan laporan keuangan."
+    keywords:
+      - akuntansi
+      - accounting
+      - jurnal
+      - journal entry
+      - coa
+      - chart of accounts
+      - akun perkiraan
+      - buku besar
+      - general ledger
+      - neraca
+      - balance sheet
+      - laba rugi
+      - income statement
+      - trial balance
+      - tutup buku
+      - closing
+      - monthly closing
+      - year end closing
+      - aset
+      - penyusutan
+    entry_points:
+      - app/Actions/Accounting/CreateJournalEntry.php
+      - app/Actions/Accounting/PostJournalEntry.php
+      - app/Actions/Accounting/CreateScheduledJournalEntry.php
+      - app/Actions/Accounting/ProcessScheduledJournalEntries.php
+      - app/Actions/Accounting/ExecuteMonthlyClosing.php
+      - app/Actions/Accounting/ExecuteYearEndClosing.php
+      - app/Actions/Accounting/ReopenMonthlyClosing.php
+      - app/Actions/Accounting/CreateAsset.php
+      - app/Actions/Accounting/PostAssetDisposal.php
+      - app/Filament/Pages/Accounting/MonthlyClosingPage.php
+      - app/Filament/Resources/Accounts/
+      - app/Filament/Resources/AccountClassifications/
+      - app/Filament/Resources/JournalEntries/
+      - app/Filament/Resources/ScheduledJournalEntries/
+      - app/Filament/Resources/Assets/
+      - app/Filament/Resources/AssetDisposals/
+      - app/Filament/Pages/Reports/
+      - app/Helpers/AccountHelper.php
+      - app/Helpers/FinancialReportHelper.php
+      - app/Models/Account.php
+      - app/Models/JournalEntry.php
+      - app/Models/JournalItem.php
+      - app/Models/MonthlyClosing.php
+      - app/Models/Asset.php
+
+  - id: branch-store-settings
+    name: "Cabang, Profil Toko, Replikasi COA & Backup"
+    description: "Pengelolaan multi-cabang (`branches`), pindah cabang POS, replikasi struktur akun COA per cabang, setting struk, & backup database."
+    keywords:
+      - cabang
+      - branch
+      - ganti cabang
+      - switch branch
+      - multi cabang
+      - store profile
+      - profil toko
+      - setting struk
+      - receipt setting
+      - backup database
+      - replikasi coa
+    entry_points:
+      - app/Actions/Branch/CreateBranch.php
+      - app/Actions/Branch/UpdateBranch.php
+      - app/Actions/Branch/ProvisionBranchCoaAccounts.php
+      - app/Actions/Branch/EnsureBranchCoaAccounts.php
+      - app/Actions/Store/UpdateBranchProfile.php
+      - app/Actions/Setting/UpdateReceiptSettings.php
+      - app/Actions/Settings/CreateDatabaseBackup.php
+      - app/Filament/Resources/Branches/
+      - app/Filament/Pages/Settings/DatabaseBackup.php
+      - app/Http/Controllers/POS/PosWebController.php
+      - app/Helpers/BranchHelper.php
+      - app/Models/Branch.php
+
+  - id: hr-payroll-attendance
+    name: "SDM, Absensi GPS, Cuti, Kasbon & Payroll Gaji"
+    description: "Data karyawan, absensi radius/GPS & backdate approval, hari libur/cuti, kasbon (cash advance), generasi payroll bulanan, dan cetak slip gaji PDF/Excel."
+    keywords:
+      - payroll
+      - gaji
+      - slip gaji
+      - payslip
+      - penggajian
+      - karyawan
+      - employee
+      - absen
+      - absensi
+      - clock in
+      - clock out
+      - radius absen
+      - pelanggaran absen
+      - backdate absen
+      - kasbon
+      - cash advance
+      - lembur
+      - hari libur
+      - cuti
+    entry_points:
+      - app/Actions/Employee/CreateEmployee.php
+      - app/Actions/Employee/UpdateEmployee.php
+      - app/Actions/Attendance/ClockIn.php
+      - app/Actions/Attendance/ClockOut.php
+      - app/Actions/Attendance/ProcessAttendanceViolations.php
+      - app/Actions/CashAdvance/CreateCashAdvanceRequest.php
+      - app/Actions/CashAdvance/ApproveCashAdvance.php
+      - app/Actions/Payroll/GenerateMonthlyPayroll.php
+      - app/Actions/Payroll/ApprovePayroll.php
+      - app/Actions/Payroll/ProcessPayrollPayment.php
+      - app/Http/Controllers/POS/PayrollPayslipController.php
+      - app/Http/Controllers/POS/BulkPayrollPayslipController.php
+      - app/Livewire/PosPayrollManagement.php
+      - app/Livewire/PosAttendances.php
+      - app/Filament/Resources/Employees/
+      - app/Filament/Resources/Payrolls/
+      - app/Filament/Resources/EmployeeCashAdvances/
+      - app/Filament/Resources/AttendanceRadiuses/
+      - app/Filament/Resources/AttendanceViolationLogs/
+      - app/Filament/Resources/AttendanceViolationRules/
+      - app/Models/Employee.php
+      - app/Models/EmployeeAttendance.php
+      - app/Models/Payroll.php
+      - app/Models/EmployeeCashAdvance.php
+
+  - id: commission-kpi
+    name: "Komisi Sales & KPI Karyawan"
+    description: "Skema komisi individu maupun grup sales, kalkulasi komisi penjualan, approval rekap komisi, serta evaluasi KPI karyawan."
+    keywords:
+      - komisi
+      - commission
+      - skema komisi
+      - komisi grup
+      - rekap komisi
+      - kpi
+      - evaluasi kpi
+      - performa cabang
+    entry_points:
+      - app/Actions/Commission/CalculateSaleCommission.php
+      - app/Actions/Commission/EvaluateGroupCommission.php
+      - app/Actions/Commission/ApproveCommissionRecap.php
+      - app/Actions/Kpi/CalculateEmployeeKpi.php
+      - app/Actions/Kpi/ApproveKpiEvaluation.php
+      - app/Livewire/PosCommissions.php
+      - app/Livewire/PosKpiPerformance.php
+      - app/Filament/Resources/CommissionSchemes/
+      - app/Filament/Resources/SalesCommissions/
+      - app/Filament/Resources/KpiEvaluations/
+      - app/Filament/Resources/KpiTemplates/
+      - app/Models/CommissionScheme.php
+      - app/Models/SalesCommissionLog.php
+      - app/Models/KpiEvaluation.php
+
+  - id: service-orders
+    name: "Servis Alat Musik & Tracking Publik"
+    description: "Order servis dari transaksi POS, update status pengerjaan servis, & halaman tracking servis publik via kode tiket."
+    keywords:
+      - servis
+      - service
+      - service order
+      - perbaikan
+      - tracking servis
+      - tiket servis
+    entry_points:
+      - app/Actions/Service/CreateServiceOrderFromSale.php
+      - app/Actions/Service/UpdateServiceOrderStatus.php
+      - app/Livewire/PosServiceManagement.php
+      - app/Http/Controllers/PublicServiceTrackingController.php
+      - app/Models/ServiceOrder.php
+
+  - id: customer-voucher-master
+    name: "Pelanggan, Deposit, Loyalty & Voucher Diskon"
+    description: "Master pelanggan, label segmentasi pelanggan, deposit/saldo pelanggan, poin loyalty, & pengelolaan kode voucher diskon."
+    keywords:
+      - customer
+      - pelanggan
+      - deposit
+      - saldo pelanggan
+      - poin
+      - loyalty
+      - voucher
+      - promo
+      - diskon
+      - label pelanggan
+    entry_points:
+      - app/Actions/Customer/CreateCustomer.php
+      - app/Actions/Customer/UpdateCustomer.php
+      - app/Actions/CustomerDeposit/CreateCustomerDeposit.php
+      - app/Actions/CustomerDeposit/SettleCustomerDeposit.php
+      - app/Actions/Voucher/CreateVoucher.php
+      - app/Livewire/PosCustomers.php
+      - app/Livewire/PosCustomerDeposits.php
+      - app/Livewire/PosVouchers.php
+      - app/Filament/Resources/Customers/
+      - app/Filament/Resources/CustomerLabels/
+      - app/Models/Customer.php
+      - app/Models/CustomerDeposit.php
+      - app/Models/Voucher.php
+
+  - id: whatsapp-notifications
+    name: "Notifikasi WhatsApp & Integrasi Fonnte"
+    description: "Pengiriman struk WhatsApp, pengingat tagihan pelanggan, broadcast WA, dan uji koneksi gateway Fonnte."
+    keywords:
+      - whatsapp
+      - wa
+      - fonnte
+      - kirim struk wa
+      - pengingat tagihan
+      - broadcast wa
+      - notifikasi wa
+    entry_points:
+      - app/Actions/Notification/SendWhatsAppReceipt.php
+      - app/Actions/Notification/SendWhatsAppBillingReminder.php
+      - app/Actions/Notification/BroadcastWhatsAppMessage.php
+      - app/Actions/Notification/TestFonnteConnection.php
+      - app/Helpers/FonnteHelper.php
+      - app/Livewire/PosWhatsAppSettings.php
+
+  - id: privileges-auth-users
+    name: "Hak Akses, Role & Autentikasi User"
+    description: "Manajemen user, role, sinkronisasi hak akses Front Office (`fo.*`) & Backoffice (`bo.*`), serta login POS/Admin."
+    keywords:
+      - hak akses
+      - privilege
+      - permission
+      - role
+      - user
+      - login
+      - auth
+      - fo permission
+      - bo permission
+    entry_points:
+      - app/Actions/Privilege/CreateRole.php
+      - app/Actions/Privilege/UpdateRolePermissions.php
+      - app/Actions/User/CreateUser.php
+      - app/Actions/User/UpdateUser.php
+      - app/Helpers/PermissionHelper.php
+      - app/Filament/Pages/UserPrivileges.php
+      - app/Filament/Pages/Auth/CustomLogin.php
+      - app/Filament/Resources/Users/
+      - app/Livewire/POSLogin.php
+      - app/Livewire/PosPrivileges.php
+      - app/Livewire/PosUsers.php
+      - app/Models/User.php
+
+  - id: dashboards-reports
+    name: "Dashboard Owner / Sales & Laporan Front Office"
+    description: "Dashboard performa Owner, Sales, Front Office, dan kumpulan halaman laporan penjualan, kas, stok, & piutang."
+    keywords:
+      - dashboard
+      - owner dashboard
+      - front office dashboard
+      - laporan
+      - report
+      - laporan penjualan
+      - laporan stok
+    entry_points:
+      - app/Actions/OwnerDashboard/GetOwnerDashboardData.php
+      - app/Actions/SalesDashboard/GetSalesEmployeeDashboardData.php
+      - app/Helpers/OwnerDashboardHelper.php
+      - app/Helpers/ReportHelper.php
+      - app/Livewire/FrontOfficeDashboard.php
+      - app/Livewire/OwnerDashboardWidgets.php
+      - app/Livewire/PosReports.php
+      - app/Livewire/PosReportsSales.php
+      - app/Filament/Pages/Dashboard.php
+

@@ -471,12 +471,25 @@
                                 originalDiscount: @js(($item['discount_value'] ?? 0) > 0 ? (string)$item['discount_value'] : ''),
                                 taxVal: @js(($item['tax_value'] ?? 0) > 0 ? (string)$item['tax_value'] : ''),
                                 originalTax: @js(($item['tax_value'] ?? 0) > 0 ? (string)$item['tax_value'] : ''),
+                                init() {
+                                    this.$watch(() => $wire.cart?.['{{ $id }}']?.qty, (val) => {
+                                        if (val !== undefined && this.timer === null) {
+                                            this.qty = parseInt(val) || 0;
+                                        }
+                                    });
+                                },
+                                syncFromServer(quantities) {
+                                    if (this.timer === null && quantities && quantities['{{ $id }}'] !== undefined) {
+                                        this.qty = parseInt(quantities['{{ $id }}']) || 0;
+                                    }
+                                },
                                 changeQty(diff) {
                                     let next = this.qty + diff;
                                     if (next < 0) next = 0;
                                     this.qty = next;
                                     clearTimeout(this.timer);
                                     this.timer = setTimeout(() => {
+                                        this.timer = null;
                                         $wire.setCartQty({{ $id }}, this.qty);
                                     }, 300);
                                 },
@@ -486,6 +499,7 @@
                                     this.qty = parsed;
                                     clearTimeout(this.timer);
                                     this.timer = setTimeout(() => {
+                                        this.timer = null;
                                         $wire.setCartQty({{ $id }}, this.qty);
                                     }, 300);
                                 },
@@ -508,6 +522,7 @@
                                     }
                                 }
                             }"
+                            @pos-cart-synced.window="syncFromServer($event.detail?.quantities)"
                             class="border-b border-slate-250 dark:border-slate-700 hover:bg-slate-100/40 dark:hover:bg-slate-700/30 transition-colors"
                         >
                             <td class="py-2 px-2 text-xs font-extrabold text-slate-700 dark:text-slate-300 align-middle">{{ $loop->iteration }}</td>
