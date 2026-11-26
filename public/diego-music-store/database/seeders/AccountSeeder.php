@@ -130,9 +130,9 @@ class AccountSeeder extends Seeder
             'long_term_liability' => ['code' => '221100000', 'name' => 'HUTANG JANGKA PANJANG'],
             
             'paid_in_capital' => ['code' => '311100000', 'name' => 'MODAL'],
-            'owner_withdrawal' => ['code' => '311200000', 'name' => 'PRIVE'],
-            'retained_earnings' => ['code' => '311300000', 'name' => 'LABA DITAHAN'],
-            'current_year_earnings' => ['code' => '311400000', 'name' => 'LABA BERJALAN'],
+            'owner_withdrawal' => ['code' => '311100000', 'name' => 'MODAL'],
+            'retained_earnings' => ['code' => '311100000', 'name' => 'MODAL'],
+            'current_year_earnings' => ['code' => '311100000', 'name' => 'MODAL'],
             
             'sales' => ['code' => '411100000', 'name' => 'PENJUALAN'],
             'sales_return' => ['code' => '411200000', 'name' => 'RETUR PENJUALAN'],
@@ -184,9 +184,10 @@ class AccountSeeder extends Seeder
             $level2Id = $rootId; // Fallback jika subtype tidak ditemukan
             if (isset($subtypeHeadersMap[$subtype])) {
                 $subData = $subtypeHeadersMap[$subtype];
-                if (!isset($level2Models[$subtype])) {
-                    $level2Models[$subtype] = Account::updateOrCreate(
-                        ['code' => $subData['code']],
+                $subCode = $subData['code'];
+                if (!isset($level2Models[$subCode])) {
+                    $level2Models[$subCode] = Account::updateOrCreate(
+                        ['code' => $subCode],
                         [
                             'name' => $subData['name'],
                             'classification' => $type,
@@ -198,7 +199,7 @@ class AccountSeeder extends Seeder
                         ]
                     );
                 }
-                $level2Id = $level2Models[$subtype]->id;
+                $level2Id = $level2Models[$subCode]->id;
             }
 
             // 3. Buat Akun Detail (Level 3) mengarah ke Level 2

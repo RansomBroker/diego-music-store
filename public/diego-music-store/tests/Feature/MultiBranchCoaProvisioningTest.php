@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\Accounting\GenerateBalanceSheetReport;
 use App\Actions\Branch\CreateBranch;
 use App\Actions\Branch\EnsureBranchCoaAccounts;
 use App\Actions\Branch\ProvisionBranchCoaAccounts;
@@ -33,14 +34,33 @@ class MultiBranchCoaProvisioningTest extends TestCase
             'name' => 'Cabang Pontianak Kota',
         ]);
 
-        // Branch must have 95 detail accounts from CSV + 3 generated branch-scoped accounts (98 details, 147 total)
+        // Branch must have 95 detail accounts from CSV + 3 generated branch-scoped accounts (98 details, 144 total)
         $detailCount = Account::where('branch_id', $branch->id)->where('is_header', false)->count();
         $this->assertEquals(98, $detailCount);
         $totalCount = Account::where('branch_id', $branch->id)->count();
-        $this->assertEquals(147, $totalCount);
+        $this->assertEquals(144, $totalCount);
 
-        foreach (['111201006', '111202005', '111202008', '111300000', '111400000', '122101001', '122200000'] as $removedCode) {
+        foreach (['111201006', '111202005', '111202008', '111300000', '111400000', '122101001', '122200000', '311200000', '311300000', '311400000'] as $removedCode) {
             $this->assertNull(Account::where('branch_id', $branch->id)->where('code', $removedCode)->first());
+        }
+
+        // Verify all equity detail accounts (Modal, Prive, Laba Ditahan, Laba Tahun Berjalan) sit under 311100000 (MODAL)
+        $modalHeader = Account::where('branch_id', $branch->id)->where('code', '311100000')->first();
+        $this->assertNotNull($modalHeader);
+        $this->assertTrue($modalHeader->is_header);
+        foreach (['311101001', '311101002', '311101003', '311201001', '311301001'] as $equityDetailCode) {
+            $equityAcc = Account::where('branch_id', $branch->id)->where('code', $equityDetailCode)->first();
+            $this->assertNotNull($equityAcc, "Equity account {$equityDetailCode} should exist");
+            $this->assertSame($modalHeader->id, $equityAcc->parent_id, "Equity account {$equityDetailCode} should be parented under MODAL (311100000)");
+        }
+
+        $balanceSheet = (new GenerateBalanceSheetReport())->execute(now()->format('Y-m-d'), $branch->id);
+        $equityByCode = collect($balanceSheet['equity']['items'])->keyBy('code');
+        $this->assertSame(1, $equityByCode['300000000']['level']);
+        $this->assertSame(2, $equityByCode['311100000']['level']);
+        foreach (['311101001', '311101002', '311101003', '311201001', '311301001'] as $equityDetailCode) {
+            $this->assertSame(3, $equityByCode[$equityDetailCode]['level']);
+            $this->assertSame('311100000', $equityByCode[$equityDetailCode]['parent_code']);
         }
 
         // Verify root headers (Level 1) exist
@@ -142,8 +162,8 @@ class MultiBranchCoaProvisioningTest extends TestCase
 
         $this->assertEquals(98, Account::where('branch_id', $branch1->id)->where('is_header', false)->count());
         $this->assertEquals(98, Account::where('branch_id', $branch2->id)->where('is_header', false)->count());
-        $this->assertEquals(147, Account::where('branch_id', $branch1->id)->count());
-        $this->assertEquals(147, Account::where('branch_id', $branch2->id)->count());
+        $this->assertEquals(144, Account::where('branch_id', $branch1->id)->count());
+        $this->assertEquals(144, Account::where('branch_id', $branch2->id)->count());
 
         // Branch-scoped report account resolution must NOT leak branch2's generated accounts into branch1
         $branch1->refresh()->load('inventoryAccount');

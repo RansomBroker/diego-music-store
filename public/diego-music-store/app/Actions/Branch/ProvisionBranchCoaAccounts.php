@@ -37,9 +37,9 @@ class ProvisionBranchCoaAccounts
         'long_term_liability' => ['code' => '221100000', 'name' => 'HUTANG JANGKA PANJANG'],
 
         'paid_in_capital' => ['code' => '311100000', 'name' => 'MODAL'],
-        'owner_withdrawal' => ['code' => '311200000', 'name' => 'PRIVE'],
-        'retained_earnings' => ['code' => '311300000', 'name' => 'LABA DITAHAN'],
-        'current_year_earnings' => ['code' => '311400000', 'name' => 'LABA BERJALAN'],
+        'owner_withdrawal' => ['code' => '311100000', 'name' => 'MODAL'],
+        'retained_earnings' => ['code' => '311100000', 'name' => 'MODAL'],
+        'current_year_earnings' => ['code' => '311100000', 'name' => 'MODAL'],
 
         'sales' => ['code' => '411100000', 'name' => 'PENJUALAN'],
         'sales_return' => ['code' => '411200000', 'name' => 'RETUR PENJUALAN'],
