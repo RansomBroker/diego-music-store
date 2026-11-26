@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Reports;
 
+use App\Actions\Accounting\ExportBalanceSheetToExcel;
 use App\Actions\Accounting\GenerateBalanceSheetReport;
 use App\Filament\Concerns\HasTemporaryOpeningBalanceActions;
 use App\Helpers\BranchHelper;
@@ -257,57 +258,6 @@ class BalanceSheet extends Page implements HasForms
 
     public function exportExcel()
     {
-        $data = $this->report_data;
-        $filename = 'Laporan-Balance-Sheet-' . ($data['as_of_date'] ?? now()->format('Y-m-d')) . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
-
-        $callback = function () use ($data) {
-            $file = fopen('php://output', 'w');
-            fputs($file, "\xEF\xBB\xBF");
-
-            fputcsv($file, ['DIEGO MUSIC STORE - LAPORAN BALANCE SHEET (NERACA)']);
-            fputcsv($file, ['Per Tanggal:', $data['as_of_date']]);
-            fputcsv($file, ['Cabang:', $data['branch_name']]);
-            fputcsv($file, ['Mode Tampilan:', $data['view_type']]);
-            fputcsv($file, ['Status Keseimbangan:', $data['is_balanced'] ? 'SEIMBANG (BALANCED)' : 'TIDAK SEIMBANG']);
-            fputcsv($file, []);
-
-            fputcsv($file, ['Kode Akun', 'Level', 'Nama Akun / Kategori', 'Saldo (Rp)']);
-            fputcsv($file, ['ASET']);
-            foreach ($data['assets']['items'] as $item) {
-                $indent = str_repeat('   ', max(0, $item['level'] - 1));
-                fputcsv($file, [$item['code'], $item['level'], $indent . $item['name'], $item['balance']]);
-            }
-            fputcsv($file, ['', '', 'TOTAL ASET', $data['total_assets']]);
-            fputcsv($file, []);
-
-            fputcsv($file, ['KEWAJIBAN (LIABILITIES) & EKUITAS']);
-            fputcsv($file, ['KEWAJIBAN']);
-            foreach ($data['liabilities']['items'] as $item) {
-                $indent = str_repeat('   ', max(0, $item['level'] - 1));
-                fputcsv($file, [$item['code'], $item['level'], $indent . $item['name'], $item['balance']]);
-            }
-            fputcsv($file, ['', '', 'TOTAL KEWAJIBAN', $data['total_liabilities']]);
-            fputcsv($file, []);
-
-            fputcsv($file, ['EKUITAS']);
-            foreach ($data['equity']['items'] as $item) {
-                $indent = str_repeat('   ', max(0, $item['level'] - 1));
-                fputcsv($file, [$item['code'], $item['level'], $indent . $item['name'], $item['balance']]);
-            }
-            fputcsv($file, ['-', '-', 'Laba / (Rugi) Periode Berjalan', $data['equity']['current_net_income']]);
-            fputcsv($file, ['', '', 'TOTAL EKUITAS', $data['total_equity']]);
-            fputcsv($file, []);
-
-            fputcsv($file, ['', '', 'TOTAL KEWAJIBAN & EKUITAS', $data['total_liabilities_and_equity']]);
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return app(ExportBalanceSheetToExcel::class)->execute($this->report_data);
     }
 }
