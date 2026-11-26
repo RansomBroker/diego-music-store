@@ -59,7 +59,7 @@ class ProvisionBranchCoaAccounts
         'selling_expense' => ['code' => '611600000', 'name' => 'BEBAN PENJUALAN'],
         'bank_expense' => ['code' => '621100000', 'name' => 'BIAYA ADMINISTRASI BANK'],
         'other_expense' => ['code' => '631100000', 'name' => 'BIAYA LAIN-LAIN'],
-        'inventory_adjustment' => ['code' => '631200000', 'name' => 'PENYESUAIAN STOK'],
+        'inventory_adjustment' => ['code' => '631100000', 'name' => 'BIAYA LAIN-LAIN'],
         'payment_difference' => ['code' => '631300000', 'name' => 'SELISIH PEMBAYARAN'],
         'corporate_tax' => ['code' => '641100000', 'name' => 'PAJAK BADAN'],
 

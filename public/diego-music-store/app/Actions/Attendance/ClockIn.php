@@ -132,12 +132,15 @@ class ClockIn
                 $attendance->is_out_of_radius = false;
             }
 
-            // Calculate late minutes based on branch shift_start_time (default 09:00)
-            $shiftStart = $branch && $branch->shift_start_time
-                ? $branch->shift_start_time
-                : '09:00:00';
+            // Calculate late minutes based on branch shift schedule for this day of week (default 09:00-17:00)
+            $shiftTimes = $branch
+                ? $branch->getShiftTimesForDate($clockInTime)
+                : ['start' => '09:00:00', 'end' => '17:00:00'];
+            $shiftStart = $shiftTimes['start'];
+            $shiftEnd = $shiftTimes['end'];
+
             $shiftStartParts = explode(':', $shiftStart);
-            $expectedTime = now()->setTime((int) $shiftStartParts[0], (int) $shiftStartParts[1], 0);
+            $expectedTime = $clockInTime->copy()->setTime((int) $shiftStartParts[0], (int) $shiftStartParts[1], 0);
 
             if ($clockInTime->greaterThan($expectedTime)) {
                 $attendance->late_minutes = (int) $expectedTime->diffInMinutes($clockInTime);
@@ -147,10 +150,7 @@ class ClockIn
 
             $attendance->save();
 
-            // Trigger Automatic Attendance Violation Calculation using branch shift times
-            $shiftEnd = $branch && $branch->shift_end_time
-                ? $branch->shift_end_time
-                : '17:00:00';
+            // Trigger Automatic Attendance Violation Calculation using branch shift times for this day
             app(ProcessAttendanceViolations::class)->execute($attendance, $shiftStart, $shiftEnd);
 
             return $attendance;

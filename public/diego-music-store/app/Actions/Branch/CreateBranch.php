@@ -43,6 +43,7 @@ class CreateBranch
                 'receipt_footer' => $data['receipt_footer'] ?? null,
                 'shift_start_time' => $data['shift_start_time'] ?? '09:00:00',
                 'shift_end_time'   => $data['shift_end_time'] ?? '17:00:00',
+                'shift_schedules'  => $data['shift_schedules'] ?? null,
                 'manager_id'     => $data['manager_id'] ?? null,
                 'is_active'      => $data['is_active'] ?? true,
                 'monthly_off_days_quota' => $data['monthly_off_days_quota'] ?? 4,

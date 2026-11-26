@@ -69,21 +69,19 @@ class SalesDutyLog extends Model
 
     public function getDurationTextAttribute(): string
     {
-        $seconds = $this->duration_seconds;
+        $seconds = (int) ($this->duration_seconds ?? 0);
         if ($this->status === 'serving' && $this->started_at) {
-            $seconds = (int) now()->diffInSeconds($this->started_at);
+            $seconds = (int) abs(now()->diffInSeconds($this->started_at));
         }
 
-        if ($seconds < 60) {
-            return $seconds . ' dtk';
+        $totalMinutes = (int) floor(max(0, $seconds) / 60);
+
+        if ($totalMinutes < 60) {
+            return "{$totalMinutes} mnt";
         }
 
-        if ($seconds < 3600) {
-            return floor($seconds / 60) . ' mnt';
-        }
-
-        $hours = floor($seconds / 3600);
-        $minutes = floor(($seconds % 3600) / 60);
+        $hours = intdiv($totalMinutes, 60);
+        $minutes = $totalMinutes % 60;
         return "{$hours}j {$minutes}m";
     }
 }

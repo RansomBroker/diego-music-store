@@ -28,6 +28,11 @@ class PricingTierForm
                 Toggle::make('price_follows_hpp')
                     ->label('Harga mengikuti HPP Awal Setelah Ongkir')
                     ->default(false),
+
+                Toggle::make('censor_prices')
+                    ->label('Sensor Harga di POS Kasir')
+                    ->helperText('Menyensor harga, subtotal, & total tagihan menjadi **** di POS Kasir untuk role tanpa hak akses lihat harga tersensor.')
+                    ->default(false),
             ]);
     }
 }

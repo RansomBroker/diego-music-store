@@ -110,11 +110,10 @@ class ProcessStockOpnameComplete
 
                     $inventoryAccId = $item->productVariant->product->inventory_account_id 
                         ?? $resolveAccount('111401001', 'PERSEDIAAN BARANG DAGANG', 'Asset');
-                    $hppAccId = $item->productVariant->product->cogs_account_id 
-                        ?? $resolveAccount('511501001', 'HARGA POKOK PENJUALAN', 'cost');
+                    $adjustmentAccId = $resolveAccount('631101003', 'SELISIH PENYESUAIAN STOK', 'expense');
 
                     if ($diff > 0) {
-                        // Surplus: Debit Persediaan, Kredit HPP
+                        // Surplus: Debit Persediaan, Kredit Selisih Penyesuaian Stok
                         \App\Models\JournalItem::create([
                             'journal_entry_id' => $journalEntry->id,
                             'account_id' => $inventoryAccId,
@@ -125,19 +124,19 @@ class ProcessStockOpnameComplete
 
                         \App\Models\JournalItem::create([
                             'journal_entry_id' => $journalEntry->id,
-                            'account_id' => $hppAccId,
+                            'account_id' => $adjustmentAccId,
                             'debit' => 0,
                             'credit' => $value,
-                            'notes' => "Penyesuaian HPP Surplus Opname",
+                            'notes' => "Selisih Penyesuaian Stok Surplus Opname " . $item->productVariant->sku,
                         ]);
                     } else {
-                        // Deficit: Debit HPP, Kredit Persediaan
+                        // Deficit: Debit Selisih Penyesuaian Stok, Kredit Persediaan
                         \App\Models\JournalItem::create([
                             'journal_entry_id' => $journalEntry->id,
-                            'account_id' => $hppAccId,
+                            'account_id' => $adjustmentAccId,
                             'debit' => $value,
                             'credit' => 0,
-                            'notes' => "Kerugian Defisit Opname " . $item->productVariant->sku,
+                            'notes' => "Selisih Penyesuaian Stok Defisit Opname " . $item->productVariant->sku,
                         ]);
 
                         \App\Models\JournalItem::create([

@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\PricingTiers;
 
-use App\Filament\Resources\PricingTiers\Pages\CreatePricingTier;
-use App\Filament\Resources\PricingTiers\Pages\EditPricingTier;
 use App\Filament\Resources\PricingTiers\Pages\ListPricingTiers;
 use App\Filament\Resources\PricingTiers\Schemas\PricingTierForm;
 use App\Filament\Resources\PricingTiers\Tables\PricingTiersTable;
@@ -53,8 +51,6 @@ class PricingTierResource extends Resource
     {
         return [
             'index' => ListPricingTiers::route('/'),
-            'create' => CreatePricingTier::route('/create'),
-            'edit' => EditPricingTier::route('/{record}/edit'),
         ];
     }
 }

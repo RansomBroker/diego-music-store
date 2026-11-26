@@ -105,16 +105,45 @@ class BranchForm
                     TextInput::make('shift_start_time')
                         ->required()
                         ->default('09:00')
-                        ->label('Jam Masuk Shift (HH:MM)')
+                        ->label('Jam Masuk Shift Default (HH:MM)')
                         ->placeholder('09:00')
-                        ->helperText('Jam mulai kerja cabang. Clock In setelah jam ini dianggap keterlambatan.'),
+                        ->helperText('Jam mulai kerja default jika hari tidak diatur secara khusus di jadwal per hari.'),
 
                     TextInput::make('shift_end_time')
                         ->required()
                         ->default('17:00')
-                        ->label('Jam Pulang Shift (HH:MM)')
+                        ->label('Jam Pulang Shift Default (HH:MM)')
                         ->placeholder('17:00')
-                        ->helperText('Jam selesai kerja cabang. Clock Out sebelum jam ini dianggap pulang cepat.'),
+                        ->helperText('Jam selesai kerja default jika hari tidak diatur secara khusus di jadwal per hari.'),
+
+                    \Filament\Forms\Components\Repeater::make('shift_schedules')
+                        ->label('Jadwal Jam Shift per Hari')
+                        ->helperText('Tambahkan jadwal khusus per hari (misal: Senin–Jumat 09:00–17:00, Sabtu–Minggu 10:00–19:00).')
+                        ->schema([
+                            Select::make('days')
+                                ->label('Hari Kerja')
+                                ->options(\App\Models\Branch::DAY_LABELS)
+                                ->multiple()
+                                ->required()
+                                ->searchable(false)
+                                ->columnSpan(2),
+
+                            TextInput::make('start_time')
+                                ->label('Jam Masuk (HH:MM)')
+                                ->placeholder('09:00')
+                                ->default('09:00')
+                                ->required(),
+
+                            TextInput::make('end_time')
+                                ->label('Jam Pulang (HH:MM)')
+                                ->placeholder('17:00')
+                                ->default('17:00')
+                                ->required(),
+                        ])
+                        ->columns(4)
+                        ->addActionLabel('Tambah Jadwal Shift Hari')
+                        ->default([])
+                        ->columnSpanFull(),
 
                     Toggle::make('is_active')
                         ->label('Status Aktif Operasional')

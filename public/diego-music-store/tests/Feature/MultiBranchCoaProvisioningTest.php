@@ -34,18 +34,23 @@ class MultiBranchCoaProvisioningTest extends TestCase
             'name' => 'Cabang Pontianak Kota',
         ]);
 
-        // Branch must have 96 detail accounts from CSV + 3 generated branch-scoped accounts (99 details, 145 total)
+        // Branch must have 96 detail accounts from CSV + 3 generated branch-scoped accounts (99 details, 144 total)
         $detailCount = Account::where('branch_id', $branch->id)->where('is_header', false)->count();
         $this->assertEquals(99, $detailCount);
         $totalCount = Account::where('branch_id', $branch->id)->count();
-        $this->assertEquals(145, $totalCount);
+        $this->assertEquals(144, $totalCount);
 
         $hutangKonsinyasi = Account::where('branch_id', $branch->id)->where('code', '211101002')->first();
         $this->assertNotNull($hutangKonsinyasi);
         $this->assertSame('HUTANG KONSINYASI', $hutangKonsinyasi->name);
         $this->assertSame('211100000', Account::find($hutangKonsinyasi->parent_id)?->code);
 
-        foreach (['111201006', '111202005', '111202008', '111300000', '111400000', '122101001', '122200000', '311200000', '311300000', '311400000'] as $removedCode) {
+        $inventoryAdj = Account::where('branch_id', $branch->id)->where('code', '631101003')->first();
+        $this->assertNotNull($inventoryAdj);
+        $this->assertSame('SELISIH PENYESUAIAN STOK', $inventoryAdj->name);
+        $this->assertSame('631100000', Account::find($inventoryAdj->parent_id)?->code);
+
+        foreach (['111201006', '111202005', '111202008', '111300000', '111400000', '122101001', '122200000', '311200000', '311300000', '311400000', '631200000'] as $removedCode) {
             $this->assertNull(Account::where('branch_id', $branch->id)->where('code', $removedCode)->first());
         }
 
@@ -167,8 +172,8 @@ class MultiBranchCoaProvisioningTest extends TestCase
 
         $this->assertEquals(99, Account::where('branch_id', $branch1->id)->where('is_header', false)->count());
         $this->assertEquals(99, Account::where('branch_id', $branch2->id)->where('is_header', false)->count());
-        $this->assertEquals(145, Account::where('branch_id', $branch1->id)->count());
-        $this->assertEquals(145, Account::where('branch_id', $branch2->id)->count());
+        $this->assertEquals(144, Account::where('branch_id', $branch1->id)->count());
+        $this->assertEquals(144, Account::where('branch_id', $branch2->id)->count());
 
         // Branch-scoped report account resolution must NOT leak branch2's generated accounts into branch1
         $branch1->refresh()->load('inventoryAccount');

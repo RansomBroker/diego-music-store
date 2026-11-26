@@ -17,6 +17,7 @@ class SalesQueueMember extends Model
         'queue_order',
         'status',
         'duty_started_at',
+        'idle_until',
         'current_duty_log_id',
         'turns_count',
         'is_active',
@@ -26,10 +27,18 @@ class SalesQueueMember extends Model
     protected $casts = [
         'queue_order' => 'integer',
         'duty_started_at' => 'datetime',
+        'idle_until' => 'datetime',
         'turns_count' => 'integer',
         'is_active' => 'boolean',
         'date' => 'date',
     ];
+
+    public function isIdle(): bool
+    {
+        return $this->status === 'off_duty'
+            && $this->idle_until !== null
+            && $this->idle_until->isFuture();
+    }
 
     public function branch(): BelongsTo
     {

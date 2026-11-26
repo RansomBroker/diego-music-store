@@ -245,8 +245,11 @@ class AccountingActionsTest extends TestCase
         $this->assertEquals(1600000, $debitTotal); // 2 * 800,000
         $this->assertEquals($debitTotal, $creditTotal);
 
-        // HPP should be debited
-        $this->assertEquals(1600000, $journal->items()->where('account_id', $this->hppAccount->id)->first()->debit);
+        // Selisih Penyesuaian Stok (631101003) should be debited (not HPP)
+        $adjustmentAccount = Account::where('code', '631101003')->first();
+        $this->assertNotNull($adjustmentAccount);
+        $this->assertEquals(1600000, $journal->items()->where('account_id', $adjustmentAccount->id)->first()->debit);
+        $this->assertNull($journal->items()->where('account_id', $this->hppAccount->id)->first());
         // Persediaan should be credited
         $this->assertEquals(1600000, $journal->items()->where('account_id', $this->inventoryAccount->id)->first()->credit);
     }

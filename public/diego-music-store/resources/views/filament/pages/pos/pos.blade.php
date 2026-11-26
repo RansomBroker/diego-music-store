@@ -88,6 +88,7 @@
         :saleCategories="$this->saleCategories"
         :editingSaleId="$editingSaleId"
         :selectedBranchId="$selectedBranchId"
+        :censorPrices="$this->shouldCensorPrices"
     />
 
 
@@ -112,6 +113,7 @@
             :point-discount-amount="$this->pointDiscountAmount"
             :use-points="$usePoints"
             :customer-phone="$customerPhone"
+            :censor-prices="$this->shouldCensorPrices"
         />
     @endif
 
@@ -151,7 +153,7 @@
                                         {{ $held->customer_name }}
                                     </div>
                                     <div class="font-black text-sm text-primary dark:text-blue-400 bg-primary/10 px-2 py-0.5 rounded-lg">
-                                        Rp {{ number_format($held->grand_total, 0, ',', '.') }}
+                                        {{ $this->shouldCensorHeldTransaction($held) ? '****' : 'Rp ' . number_format($held->grand_total, 0, ',', '.') }}
                                     </div>
                                 </div>
                                 <div class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mt-1">

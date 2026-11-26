@@ -32,6 +32,7 @@
     'editingSaleId' => null,
     'cartVariants' => [],
     'selectedBranchId' => null,
+    'censorPrices' => false,
 ])
 
 <div class="flex-1 w-full bg-white dark:bg-slate-800 flex flex-col h-full transition-colors overflow-hidden">
@@ -140,17 +141,17 @@
                                 @endif
                             </x-pos.utility.button>
 
-                            <!-- 3. Simpan Transaksi Saat Ini -->
+                            <!-- 3. Buat Transaksi Baru (Hold Transaksi Saat Ini) -->
                             <x-pos.utility.button 
                                 wire:click="holdTransaction" 
                                 variant="warning" 
                                 size="xs" 
                                 icon="ph-bold ph-folder-simple-plus" 
-                                title="Simpan Transaksi Sekarang (Hold)" 
+                                title="Simpan Transaksi Saat Ini & Buat Transaksi Baru" 
                                 :disabled="empty($cart)"
                                 class="!w-full !bg-amber-500 hover:!bg-amber-600 dark:!bg-amber-600 dark:hover:!bg-amber-700 !text-white !border-transparent !px-2 sm:!px-2.5 !py-1.5 sm:!py-2 text-[11px] sm:text-xs font-bold !normal-case !tracking-normal !gap-1 sm:!gap-1.5"
                             >
-                                <span>Simpan</span>
+                                <span>Buat Transaksi Baru</span>
                             </x-pos.utility.button>
                         @endif
 
@@ -545,9 +546,10 @@
                                         @foreach ($pricingTiers as $tier)
                                             @php
                                                 $tierPrice = $item['tier_prices'][$tier->id] ?? ($itemVariant ? $itemVariant->priceForTier($tier->id) : ($item['base_price'] ?? $item['price']));
+                                                $hideTierOptionPrice = $censorPrices || ((bool) ($tier->censor_prices ?? false) && !\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.view_censored_prices'));
                                             @endphp
                                             <option value="{{ $tier->id }}" {{ ($item['pricing_tier_id'] ?? '') == $tier->id ? 'selected' : '' }} class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
-                                                {{ $tier->name }} ({{ \App\Helpers\FormatHelper::rupiah($tierPrice) }})
+                                                {{ $hideTierOptionPrice ? $tier->name : $tier->name . ' (' . \App\Helpers\FormatHelper::rupiah($tierPrice) . ')' }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -586,7 +588,7 @@
                                     <i class="ph ph-caret-down text-slate-500 dark:text-slate-400 absolute right-1.5 pointer-events-none text-[8px]"></i>
                                 </div>
                             </td>
-                            <td class="py-2 px-2 text-[11px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/20">{{ \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>
+                            <td class="py-2 px-2 text-[11px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 text-right align-middle whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/20">{{ $censorPrices ? '****' : \App\Helpers\FormatHelper::rupiah($item['price']) }}</td>
                             <td class="py-2 px-2 align-middle">
                                 <div class="flex items-center justify-center gap-0.5 bg-slate-100 dark:bg-slate-900 border border-slate-400 dark:border-slate-600 rounded-md p-0.5 mx-auto w-fit select-none">
                                     <button 
@@ -633,7 +635,7 @@
                                     </div>
                                 @else
                                     <div class="text-right text-xs text-slate-400 dark:text-slate-500 font-semibold">
-                                        {{ intval($item['discount_amount'] ?? 0) > 0 ? 'Rp ' . number_format(intval($item['discount_amount']), 0, ',', '.') : '-' }}
+                                        {{ $censorPrices ? '****' : (intval($item['discount_amount'] ?? 0) > 0 ? 'Rp ' . number_format(intval($item['discount_amount']), 0, ',', '.') : '-') }}
                                     </div>
                                 @endif
                             </td>
@@ -653,7 +655,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-2 px-2 text-xs sm:text-sm font-black text-emerald-500 dark:text-emerald-300 text-right align-middle whitespace-nowrap bg-emerald-50/30 dark:bg-emerald-950/15">{{ \App\Helpers\FormatHelper::rupiah($rowSubtotal) }}</td>
+                            <td class="py-2 px-2 text-xs sm:text-sm font-black text-emerald-500 dark:text-emerald-300 text-right align-middle whitespace-nowrap bg-emerald-50/30 dark:bg-emerald-950/15">{{ $censorPrices ? '****' : \App\Helpers\FormatHelper::rupiah($rowSubtotal) }}</td>
                             <td class="py-2 px-2 text-center align-middle">
                                 <button wire:click="updateQty({{ $id }}, -{{ $item['qty'] }})" wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-wait" class="w-6 h-6 rounded-md bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center justify-center transition-colors cursor-pointer" title="Hapus item">
                                     <i class="ph-bold ph-trash text-[10px]"></i>
@@ -674,7 +676,7 @@
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between text-sm sm:text-base">
                         <span class="text-slate-700 dark:text-slate-200 font-extrabold truncate">Subtotal ({{ collect($cart)->sum('qty') }} item)</span>
-                        <span class="font-black text-slate-950 dark:text-white text-sm sm:text-base whitespace-nowrap ml-1">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                        <span class="font-black text-slate-950 dark:text-white text-sm sm:text-base whitespace-nowrap ml-1">{{ $censorPrices ? '****' : 'Rp ' . number_format($subtotal, 0, ',', '.') }}</span>
                     </div>
 
                     <div class="flex items-center justify-between text-sm sm:text-base gap-1">
@@ -692,7 +694,7 @@
                                 </div>
                             @endif
                         </div>
-                        <span class="font-black text-slate-950 dark:text-white text-sm sm:text-base whitespace-nowrap">Rp {{ number_format($taxAmount, 0, ',', '.') }}</span>
+                        <span class="font-black text-slate-950 dark:text-white text-sm sm:text-base whitespace-nowrap">{{ $censorPrices ? '****' : 'Rp ' . number_format($taxAmount, 0, ',', '.') }}</span>
                     </div>
 
                     @if ($selectedCustomerId && $customerPoints > 0)
@@ -710,7 +712,9 @@
                                 </label>
                             </div>
                             <span class="font-black text-green-600 dark:text-green-400 text-sm sm:text-base whitespace-nowrap">
-                                @if ($usePoints)
+                                @if ($censorPrices)
+                                    ****
+                                @elseif ($usePoints)
                                     - Rp {{ number_format($pointDiscountAmount, 0, ',', '.') }}
                                 @else
                                     Rp 0
@@ -759,7 +763,7 @@
                 <!-- Total Tagihan -->
                 <div class="pt-2 border-t border-slate-300 dark:border-slate-700 flex flex-col items-end mt-1">
                     <span class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none">Total Tagihan</span>
-                    <span class="text-2xl sm:text-3xl font-black text-primary dark:text-blue-400 leading-tight mt-0.5 text-right">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
+                    <span class="text-2xl sm:text-3xl font-black text-primary dark:text-blue-400 leading-tight mt-0.5 text-right">{{ $censorPrices ? '****' : 'Rp ' . number_format($grandTotal, 0, ',', '.') }}</span>
                 </div>
             </div>
 

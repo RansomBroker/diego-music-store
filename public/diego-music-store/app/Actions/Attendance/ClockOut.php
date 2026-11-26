@@ -118,14 +118,11 @@ class ClockOut
 
             $attendance->save();
 
-            // Trigger Automatic Attendance Violation Calculation using branch shift times
-            $shiftStart = $branch && $branch->shift_start_time
-                ? $branch->shift_start_time
-                : '09:00:00';
-            $shiftEnd = $branch && $branch->shift_end_time
-                ? $branch->shift_end_time
-                : '17:00:00';
-            app(ProcessAttendanceViolations::class)->execute($attendance, $shiftStart, $shiftEnd);
+            // Trigger Automatic Attendance Violation Calculation using branch shift times for this day
+            $shiftTimes = $branch
+                ? $branch->getShiftTimesForDate($attendance->date ? \Illuminate\Support\Carbon::parse($attendance->date) : now())
+                : ['start' => '09:00:00', 'end' => '17:00:00'];
+            app(ProcessAttendanceViolations::class)->execute($attendance, $shiftTimes['start'], $shiftTimes['end']);
 
             return $attendance;
         });

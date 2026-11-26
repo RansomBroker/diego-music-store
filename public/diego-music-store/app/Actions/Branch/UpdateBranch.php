@@ -35,6 +35,7 @@ class UpdateBranch
                 'receipt_footer' => $data['receipt_footer'] ?? $branch->receipt_footer,
                 'shift_start_time' => $data['shift_start_time'] ?? $branch->shift_start_time,
                 'shift_end_time'   => $data['shift_end_time'] ?? $branch->shift_end_time,
+                'shift_schedules'  => array_key_exists('shift_schedules', $data) ? $data['shift_schedules'] : $branch->shift_schedules,
                 'manager_id'     => $data['manager_id'] ?? $branch->manager_id,
                 'is_active'      => $data['is_active'] ?? $branch->is_active,
                 'monthly_off_days_quota' => $data['monthly_off_days_quota'] ?? $branch->monthly_off_days_quota,

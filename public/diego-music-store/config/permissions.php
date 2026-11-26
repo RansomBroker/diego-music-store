@@ -45,6 +45,7 @@ return [
                                 'fo.pos.hold' => 'Transaksi Tunda (Hold/Draft)',
                                 'fo.pos.edit_sale' => 'Edit Transaksi POS',
                                 'fo.pos.print' => 'Cetak Struk / Bill / Draft',
+                                'fo.pos.view_censored_prices' => 'Lihat Harga & Subtotal Tersensor',
                             ],
                         ],
                         'fo_cash_session' => [

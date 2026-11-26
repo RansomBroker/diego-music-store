@@ -543,6 +543,66 @@ class POS extends Component
         return $defaultCategory ? $defaultCategory->name : 'Store';
     }
 
+    public function getShouldCensorPricesProperty(): bool
+    {
+        if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.view_censored_prices')) {
+            return false;
+        }
+
+        $tiers = $this->pricingTiers;
+
+        if ($this->selectedPricingTierId && $this->selectedPricingTierId !== 'custom') {
+            $activeTier = $tiers->firstWhere('id', (int) $this->selectedPricingTierId);
+            if ($activeTier && $activeTier->censor_prices) {
+                return true;
+            }
+        }
+
+        if (! empty($this->cart)) {
+            $censoredTierIds = $tiers->where('censor_prices', true)->pluck('id')->map(fn ($id) => (int) $id)->all();
+            if (! empty($censoredTierIds)) {
+                foreach ($this->cart as $item) {
+                    $itemTierId = isset($item['pricing_tier_id']) ? (int) $item['pricing_tier_id'] : null;
+                    if ($itemTierId && in_array($itemTierId, $censoredTierIds, true)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public function shouldCensorHeldTransaction(\App\Models\PosHeldTransaction $held): bool
+    {
+        if (\App\Helpers\PermissionHelper::can(Auth::user(), 'fo.pos.view_censored_prices')) {
+            return false;
+        }
+
+        $censoredTierIds = $this->pricingTiers
+            ->where('censor_prices', true)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (empty($censoredTierIds)) {
+            return false;
+        }
+
+        if ($held->pricing_tier_id && in_array((int) $held->pricing_tier_id, $censoredTierIds, true)) {
+            return true;
+        }
+
+        foreach ((array) ($held->cart_data ?? []) as $item) {
+            $itemTierId = isset($item['pricing_tier_id']) ? (int) $item['pricing_tier_id'] : null;
+            if ($itemTierId && in_array($itemTierId, $censoredTierIds, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function updatePreviewInvoiceNumber(): void
     {
         $this->previewInvoiceNumber = \App\Models\Sale::generateInvoiceNumber($this->saleCategory);

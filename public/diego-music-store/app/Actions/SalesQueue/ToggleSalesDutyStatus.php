@@ -34,10 +34,12 @@ class ToggleSalesDutyStatus
                 $member->update([
                     'status' => 'waiting',
                     'queue_order' => $maxOrder + 1,
+                    'idle_until' => null,
                 ]);
             } else {
                 $member->update([
                     'status' => $newStatus,
+                    'idle_until' => null,
                 ]);
             }
 

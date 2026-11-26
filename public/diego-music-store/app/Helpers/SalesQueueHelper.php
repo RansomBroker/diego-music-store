@@ -14,9 +14,11 @@ class SalesQueueHelper
     public static function getDailyQueueMembers(int $branchId, ?string $date = null): Collection
     {
         $targetDate = $date ?? now()->toDateString();
+        app(\App\Actions\SalesQueue\ReleaseExpiredIdleSales::class)->execute($branchId, $targetDate);
+
         return SalesQueueMember::with(['user.employee', 'currentDutyLog'])
             ->where('branch_id', $branchId)
-            ->where('date', $targetDate)
+            ->whereDate('date', $targetDate)
             ->get();
     }
 
@@ -28,7 +30,7 @@ class SalesQueueHelper
         $targetDate = $date ?? now()->toDateString();
         return SalesQueueMember::with(['user.employee', 'currentDutyLog'])
             ->where('branch_id', $branchId)
-            ->where('date', $targetDate)
+            ->whereDate('date', $targetDate)
             ->where('is_active', true)
             ->orderBy('queue_order', 'asc')
             ->get();
@@ -40,9 +42,11 @@ class SalesQueueHelper
     public static function getNextWaitingSales(int $branchId, ?string $date = null): ?SalesQueueMember
     {
         $targetDate = $date ?? now()->toDateString();
+        app(\App\Actions\SalesQueue\ReleaseExpiredIdleSales::class)->execute($branchId, $targetDate);
+
         return SalesQueueMember::with(['user.employee'])
             ->where('branch_id', $branchId)
-            ->where('date', $targetDate)
+            ->whereDate('date', $targetDate)
             ->where('status', 'waiting')
             ->where('is_active', true)
             ->orderBy('queue_order', 'asc')
@@ -55,9 +59,11 @@ class SalesQueueHelper
     public static function getOnDutyMembers(int $branchId, ?string $date = null): Collection
     {
         $targetDate = $date ?? now()->toDateString();
+        app(\App\Actions\SalesQueue\ReleaseExpiredIdleSales::class)->execute($branchId, $targetDate);
+
         return SalesQueueMember::with(['user.employee', 'currentDutyLog'])
             ->where('branch_id', $branchId)
-            ->where('date', $targetDate)
+            ->whereDate('date', $targetDate)
             ->where('status', 'on_duty')
             ->where('is_active', true)
             ->orderBy('duty_started_at', 'asc')
@@ -70,9 +76,11 @@ class SalesQueueHelper
     public static function getWaitingMembers(int $branchId, ?string $date = null): Collection
     {
         $targetDate = $date ?? now()->toDateString();
+        app(\App\Actions\SalesQueue\ReleaseExpiredIdleSales::class)->execute($branchId, $targetDate);
+
         return SalesQueueMember::with(['user.employee'])
             ->where('branch_id', $branchId)
-            ->where('date', $targetDate)
+            ->whereDate('date', $targetDate)
             ->where('status', 'waiting')
             ->where('is_active', true)
             ->orderBy('queue_order', 'asc')

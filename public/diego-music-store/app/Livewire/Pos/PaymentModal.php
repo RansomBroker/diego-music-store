@@ -19,6 +19,7 @@ class PaymentModal extends Component
     public $pointDiscountAmount = 0;
     public $usePoints = false;
     public $customerPhone = '';
+    public bool $censorPrices = false;
     
     // Modal state
     public $show = true; // Managed by parent's @if, so always true when mounted

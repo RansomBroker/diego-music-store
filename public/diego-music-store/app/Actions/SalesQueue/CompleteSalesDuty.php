@@ -22,13 +22,15 @@ class CompleteSalesDuty
         SalesQueueMember $member,
         ?int $saleId = null,
         $closingAmount = null,
-        ?string $notes = null
+        ?string $notes = null,
+        bool $enterIdle = false,
+        int $idleMinutes = 60
     ): ?SalesDutyLog {
         if ($member->status !== 'on_duty') {
             throw new InvalidArgumentException("Sales {$member->user->name} tidak sedang dalam status melayani.");
         }
 
-        return DB::transaction(function () use ($member, $saleId, $closingAmount, $notes) {
+        return DB::transaction(function () use ($member, $saleId, $closingAmount, $notes, $enterIdle, $idleMinutes) {
             $now = now();
             $dutyLog = $member->currentDutyLog ?: SalesDutyLog::where('queue_member_id', $member->id)
                 ->where('status', 'serving')
@@ -58,19 +60,31 @@ class CompleteSalesDuty
                 $dutyLog->update($updateData);
             }
 
-            // Find current maximum queue_order for this branch and date
-            $maxOrder = SalesQueueMember::where('branch_id', $member->branch_id)
-                ->where('date', $member->date)
-                ->max('queue_order') ?? 0;
+            if ($enterIdle && $idleMinutes > 0) {
+                // Move this member into idle cooldown; they will auto-return to the back of the waiting queue after idleMinutes
+                $member->update([
+                    'status' => 'off_duty',
+                    'duty_started_at' => null,
+                    'idle_until' => $now->copy()->addMinutes($idleMinutes),
+                    'current_duty_log_id' => null,
+                    'turns_count' => $member->turns_count + 1,
+                ]);
+            } else {
+                // Find current maximum queue_order for this branch and date
+                $maxOrder = SalesQueueMember::where('branch_id', $member->branch_id)
+                    ->where('date', $member->date)
+                    ->max('queue_order') ?? 0;
 
-            // Move this member to the end of the line
-            $member->update([
-                'status' => 'waiting',
-                'queue_order' => $maxOrder + 1,
-                'duty_started_at' => null,
-                'current_duty_log_id' => null,
-                'turns_count' => $member->turns_count + 1,
-            ]);
+                // Move this member to the end of the line
+                $member->update([
+                    'status' => 'waiting',
+                    'queue_order' => $maxOrder + 1,
+                    'duty_started_at' => null,
+                    'idle_until' => null,
+                    'current_duty_log_id' => null,
+                    'turns_count' => $member->turns_count + 1,
+                ]);
+            }
 
             // Re-normalize waiting queue numbers for clean display (1, 2, 3...)
             $waitingMembers = SalesQueueMember::where('branch_id', $member->branch_id)

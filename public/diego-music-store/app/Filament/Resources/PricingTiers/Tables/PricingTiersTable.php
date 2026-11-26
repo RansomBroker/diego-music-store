@@ -28,6 +28,9 @@ class PricingTiersTable
                 ToggleColumn::make('price_follows_hpp')
                     ->label('Mengikuti HPP'),
 
+                ToggleColumn::make('censor_prices')
+                    ->label('Sensor Harga'),
+
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -38,7 +41,8 @@ class PricingTiersTable
                 //
             ])
             ->actions([
-                EditAction::make(),
+                EditAction::make()
+                    ->modalWidth('xl'),
                 DeleteAction::make(),
             ])
             ->bulkActions([

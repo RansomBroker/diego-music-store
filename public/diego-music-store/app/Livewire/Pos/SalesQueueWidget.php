@@ -12,6 +12,7 @@ use App\Models\CashSession;
 use App\Models\SalesQueueMember;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class SalesQueueWidget extends Component
@@ -20,6 +21,12 @@ class SalesQueueWidget extends Component
     public bool $isExpanded = false;
     public string $activeTab = 'queue'; // 'queue' or 'on_duty'
     public bool $showManageModal = false;
+
+    #[On('sales-queue-updated')]
+    public function refreshQueue(): void
+    {
+        // Trigger re-render when POS auto-completes an on-duty sales rep
+    }
 
     public function mount(?int $branchId = null): void
     {
@@ -150,7 +157,10 @@ class SalesQueueWidget extends Component
         SalesQueueMember::where('branch_id', $this->branchId)
             ->where('date', now()->toDateString())
             ->where('status', 'off_duty')
-            ->update(['status' => 'waiting']);
+            ->update([
+                'status' => 'waiting',
+                'idle_until' => null,
+            ]);
 
         $this->initializeQueue();
 
@@ -199,14 +209,20 @@ class SalesQueueWidget extends Component
             ->sortBy('queue_order')
             ->values();
 
+        $idleMembers = $allMembers
+            ->filter(fn ($m) => $m->is_active && $m->isIdle())
+            ->sortBy('idle_until')
+            ->values();
+
         $offDutyMembers = $allMembers
-            ->where('status', 'off_duty')
+            ->filter(fn ($m) => $m->status === 'off_duty' && ! $m->isIdle())
             ->values();
 
         return view('livewire.pos.sales-queue-widget', [
             'onDutyMembers' => $onDutyMembers,
             'waitingMembers' => $waitingMembers,
             'nextSales' => $waitingMembers->first(),
+            'idleMembers' => $idleMembers,
             'offDutyMembers' => $offDutyMembers,
         ]);
     }

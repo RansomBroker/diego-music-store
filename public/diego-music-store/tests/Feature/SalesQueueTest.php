@@ -293,4 +293,53 @@ class SalesQueueTest extends TestCase
             'Laporan_Antrian_Sales_' . now()->format('Y-m-d') . '_' . \Illuminate\Support\Str::slug($this->branch->name) . '.xlsx'
         );
     }
+
+    /** @test */
+    public function it_keeps_sales_on_duty_when_selected_completes_on_payment_and_auto_returns_after_one_hour_idle_on_duty()
+    {
+        $ownerRole = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
+        $this->cashierUser->assignRole($ownerRole);
+
+        CashSession::create([
+            'user_id' => $this->cashierUser->id,
+            'branch_id' => $this->branch->id,
+            'opened_at' => now(),
+            'opening_cash' => 500_000,
+            'status' => 'open',
+        ]);
+
+        $queue = app(InitializeDailySalesQueue::class)->execute($this->branch->id);
+        $memberA = $queue->firstWhere('user_id', $this->salesA->id);
+        $memberB = $queue->firstWhere('user_id', $this->salesB->id);
+
+        // 1. Start duty for Sales A & Sales B
+        $dutyLogA = app(StartSalesDuty::class)->execute($memberA);
+        $dutyLogB = app(StartSalesDuty::class)->execute($memberB);
+        $this->assertSame('on_duty', $memberA->fresh()->status);
+        $this->assertSame('on_duty', $memberB->fresh()->status);
+
+        // 2. Selecting Sales A in POS Sales input MUST keep Sales A in on_duty (until payment happens)
+        Livewire::test(\App\Livewire\POS::class)
+            ->call('selectSalesRep', $this->salesA->id)
+            ->assertSet('selectedSalesRepId', $this->salesA->id);
+
+        $this->assertSame('on_duty', $memberA->fresh()->status);
+        $this->assertSame('serving', $dutyLogA->fresh()->status);
+
+        // 3. Before 1 hour, Sales B stays in on_duty
+        $this->travel(45)->minutes();
+        $this->assertTrue(SalesQueueHelper::getOnDutyMembers($this->branch->id)->contains('id', $memberB->id));
+        $this->assertSame('on_duty', $memberB->fresh()->status);
+
+        // 4. After 1 hour idle in on_duty, Sales A & Sales B automatically complete and return to waiting queue
+        $this->travel(20)->minutes();
+        $waitingAfter = SalesQueueHelper::getWaitingMembers($this->branch->id);
+        $this->assertTrue($waitingAfter->contains('id', $memberA->id));
+        $this->assertTrue($waitingAfter->contains('id', $memberB->id));
+
+        $this->assertSame('waiting', $memberA->fresh()->status);
+        $this->assertSame('waiting', $memberB->fresh()->status);
+        $this->assertSame('completed', $dutyLogA->fresh()->status);
+        $this->assertSame('completed', $dutyLogB->fresh()->status);
+    }
 }

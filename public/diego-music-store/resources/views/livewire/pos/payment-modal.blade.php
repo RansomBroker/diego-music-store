@@ -33,13 +33,13 @@
     <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl mb-6 border border-slate-100 dark:border-slate-800">
         <div class="text-center mb-4">
             <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider block mb-1">Total Tagihan</span>
-            <span class="text-3xl font-black text-primary dark:text-blue-400">{{ \App\Helpers\FormatHelper::rupiah($grandTotal) }}</span>
+            <span class="text-3xl font-black text-primary dark:text-blue-400">{{ $censorPrices ? '****' : \App\Helpers\FormatHelper::rupiah($grandTotal) }}</span>
         </div>
         
         <div class="border-t border-slate-200/50 dark:border-slate-700/60 pt-3 space-y-2 text-xs">
             <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 font-medium">
                 <span>Subtotal</span>
-                <span>{{ \App\Helpers\FormatHelper::rupiah($subtotal) }}</span>
+                <span>{{ $censorPrices ? '****' : \App\Helpers\FormatHelper::rupiah($subtotal) }}</span>
             </div>
             
             @if ($discountAmount > 0)
@@ -48,21 +48,21 @@
                         <i class="ph-bold ph-tag"></i> 
                         Diskon Transaksi @if ($discountType === 'percent')({{ $discountValue }}%)@endif
                     </span>
-                    <span>- {{ \App\Helpers\FormatHelper::rupiah($discountAmount) }}</span>
+                    <span>{{ $censorPrices ? '****' : '- ' . \App\Helpers\FormatHelper::rupiah($discountAmount) }}</span>
                 </div>
             @endif
 
             @if ($usePoints && $pointDiscountAmount > 0)
                 <div class="flex items-center justify-between text-green-600 dark:text-green-400 font-semibold">
                     <span class="flex items-center gap-1"><i class="ph-bold ph-coins"></i> Potongan Poin</span>
-                    <span>- {{ \App\Helpers\FormatHelper::rupiah($pointDiscountAmount) }}</span>
+                    <span>{{ $censorPrices ? '****' : '- ' . \App\Helpers\FormatHelper::rupiah($pointDiscountAmount) }}</span>
                 </div>
             @endif
 
             @if ($taxAmount > 0)
                 <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 font-medium">
                     <span>PPN (11%)</span>
-                    <span>{{ \App\Helpers\FormatHelper::rupiah($taxAmount) }}</span>
+                    <span>{{ $censorPrices ? '****' : \App\Helpers\FormatHelper::rupiah($taxAmount) }}</span>
                 </div>
             @endif
         </div>
@@ -447,7 +447,7 @@
             <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Dari seluruh metode</span>
         </div>
         <span class="text-lg font-bold text-slate-850 dark:text-slate-200">
-            Rp {{ number_format($totalPaid, 0, ',', '.') }}
+            {{ $censorPrices ? '****' : 'Rp ' . number_format($totalPaid, 0, ',', '.') }}
         </span>
     </div>
 
@@ -455,21 +455,21 @@
         <div class="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-100/50 dark:border-emerald-955/50 mb-6">
             <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-400">Kembalian</span>
             <span class="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                Rp {{ number_format($change, 0, ',', '.') }}
+                {{ $censorPrices ? '****' : 'Rp ' . number_format($change, 0, ',', '.') }}
             </span>
         </div>
     @elseif (!in_array('cash', $selectedPaymentMethods) && !in_array('credit', $selectedPaymentMethods) && $totalPaid != $grandTotal)
         <div class="flex items-center justify-between p-4 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-100/50 dark:border-red-955/50 mb-6">
             <span class="text-sm font-semibold text-red-800 dark:text-red-400">Status Pembayaran</span>
             <span class="text-xs font-bold text-red-650 dark:text-red-400">
-                Nominal harus pas Rp {{ number_format($grandTotal, 0, ',', '.') }}
+                {{ $censorPrices ? 'Nominal harus pas dengan total tagihan' : 'Nominal harus pas Rp ' . number_format($grandTotal, 0, ',', '.') }}
             </span>
         </div>
     @elseif (in_array('credit', $selectedPaymentMethods) && $totalPaid < $grandTotal)
         <div class="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-100/50 dark:border-amber-955/50 mb-6">
             <span class="text-sm font-semibold text-amber-800 dark:text-amber-400">Sisa Utang / Piutang Pelanggan</span>
             <span class="text-xl font-bold text-amber-600 dark:text-amber-400">
-                Rp {{ number_format($grandTotal - $totalPaid, 0, ',', '.') }}
+                {{ $censorPrices ? '****' : 'Rp ' . number_format($grandTotal - $totalPaid, 0, ',', '.') }}
             </span>
         </div>
     @endif

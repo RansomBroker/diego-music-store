@@ -220,23 +220,41 @@ trait WithPaymentHandling
                 }
             }
 
-            // Link sale transaction to active sales duty log if present
+            // Complete active on-duty sales session & return sales rep to the back of the queue upon payment
             if ($sale && $sale->sales_rep_id) {
                 try {
-                    $activeDutyLog = \App\Models\SalesDutyLog::where('user_id', $sale->sales_rep_id)
+                    $onDutyMember = \App\Models\SalesQueueMember::with(['user', 'currentDutyLog'])
                         ->where('branch_id', $this->selectedBranchId)
-                        ->where('status', 'serving')
-                        ->latest()
+                        ->whereDate('date', now()->toDateString())
+                        ->where('user_id', $sale->sales_rep_id)
+                        ->where('status', 'on_duty')
                         ->first();
 
-                    if ($activeDutyLog) {
-                        $activeDutyLog->update([
-                            'sale_id' => $sale->id,
-                            'closing_amount' => $activeDutyLog->closing_amount + $sale->grand_total,
-                        ]);
+                    if ($onDutyMember) {
+                        $existingClosing = (float) ($onDutyMember->currentDutyLog?->closing_amount ?? 0);
+                        app(\App\Actions\SalesQueue\CompleteSalesDuty::class)->execute(
+                            member: $onDutyMember,
+                            saleId: $sale->id,
+                            closingAmount: $existingClosing + $sale->grand_total,
+                            notes: "Selesai otomatis setelah pembayaran invoice {$sale->invoice_number}"
+                        );
+                        $this->dispatch('sales-queue-updated');
+                    } else {
+                        $activeDutyLog = \App\Models\SalesDutyLog::where('user_id', $sale->sales_rep_id)
+                            ->where('branch_id', $this->selectedBranchId)
+                            ->where('status', 'serving')
+                            ->latest()
+                            ->first();
+
+                        if ($activeDutyLog) {
+                            $activeDutyLog->update([
+                                'sale_id' => $sale->id,
+                                'closing_amount' => $activeDutyLog->closing_amount + $sale->grand_total,
+                            ]);
+                        }
                     }
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning("Could not link sales duty log for sale #{$sale->id}: " . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::warning("Could not complete sales duty log for sale #{$sale->id}: " . $e->getMessage());
                 }
             }
 
