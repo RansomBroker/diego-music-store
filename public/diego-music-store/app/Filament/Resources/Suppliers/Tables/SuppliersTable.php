@@ -65,11 +65,13 @@ class SuppliersTable
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->label('Jenis / Status')
+                    ->label('Tipe (Supplier / Vendor)')
+                    ->placeholder('Semua')
                     ->options([
-                        Supplier::STATUS_SUPPLIER => 'SUPPLIER',
-                        Supplier::STATUS_VENDOR => 'VENDOR',
-                    ]),
+                        Supplier::STATUS_SUPPLIER => 'Supplier',
+                        Supplier::STATUS_VENDOR => 'Vendor',
+                    ])
+                    ->native(false),
             ])
             ->actions([
                 EditAction::make()
