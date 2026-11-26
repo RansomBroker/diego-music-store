@@ -138,12 +138,26 @@ class PurchaseTransaction extends Model
         return $this->hasMany(PurchaseReturn::class);
     }
 
+    public const TYPE_TUNAI = 'Tunai';
+    public const TYPE_KREDIT = 'Kredit';
+    public const TYPE_KONSINYASI = 'Konsinyasi';
+
+    public function isConsignment(): bool
+    {
+        return $this->purchase_type === self::TYPE_KONSINYASI;
+    }
+
+    public function isPayableType(): bool
+    {
+        return in_array($this->purchase_type, [self::TYPE_KREDIT, self::TYPE_KONSINYASI], true);
+    }
+
     /**
-     * Get the remaining unpaid balance for this credit purchase transaction.
+     * Get the remaining unpaid balance for this credit or consignment purchase transaction.
      */
     public function getRemainingUnpaidAmount(): int
     {
-        if ($this->purchase_type !== 'Kredit') {
+        if (! $this->isPayableType()) {
             return 0;
         }
 
@@ -154,10 +168,10 @@ class PurchaseTransaction extends Model
             })
             ->sum('amount_paid');
 
-        // Deduct posted purchase returns with invoice_deduction type
+        // Deduct posted purchase returns that reduce payable (invoice_deduction & consignment)
         $returnedDeductions = $this->purchaseReturns()
             ->where('status', 'posted')
-            ->where('return_type', 'invoice_deduction')
+            ->whereIn('return_type', ['invoice_deduction', 'consignment'])
             ->sum('total_amount');
 
         return max(0, $this->grand_total - ($this->down_payment_amount ?? 0) - $paid - $returnedDeductions);

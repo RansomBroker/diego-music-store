@@ -72,7 +72,7 @@ class SupplierPaymentForm
                                         $unpaidTransactions = PurchaseTransaction::query()
                                             ->where('branch_id', $branchId)
                                             ->where('supplier_id', $state)
-                                            ->where('purchase_type', 'Kredit')
+                                            ->whereIn('purchase_type', [PurchaseTransaction::TYPE_KREDIT, PurchaseTransaction::TYPE_KONSINYASI])
                                             ->where('status', 'posted')
                                             ->get()
                                             ->filter(fn ($pt) => $pt->getRemainingUnpaidAmount() > 0);

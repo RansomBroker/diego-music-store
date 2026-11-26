@@ -26,6 +26,7 @@ no,kode_akun,nama_akun,account_type,account_subtype,normal_balance
 29,128801001,SOFTWARE,asset,intangible_asset,debit
 30,128801002,AKUMULASI PENYUSUTAN ASET TIDAK BERWUJUD,asset,intangible_asset,credit
 30,211101001,HUTANG DAGANG,liability,trade_payable,credit
+30,211101002,HUTANG KONSINYASI,liability,trade_payable,credit
 31,211201001,HUTANG PPN (PPN KELUARAN),liability,tax_payable,credit
 32,211301001,HUTANG PPH PASAL 21,liability,tax_payable,credit
 33,211401001,HUTANG PPH PASAL 25/29,liability,tax_payable,credit

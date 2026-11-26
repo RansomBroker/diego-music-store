@@ -68,7 +68,7 @@ class EditSupplierPayment extends EditRecord
         if ($payment->status === 'draft') {
             $otherUnpaidTransactions = \App\Models\PurchaseTransaction::query()
                 ->where('supplier_id', $payment->supplier_id)
-                ->where('purchase_type', 'Kredit')
+                ->whereIn('purchase_type', [\App\Models\PurchaseTransaction::TYPE_KREDIT, \App\Models\PurchaseTransaction::TYPE_KONSINYASI])
                 ->where('status', 'posted')
                 ->whereNotIn('id', $linkedTransactionIds)
                 ->get()

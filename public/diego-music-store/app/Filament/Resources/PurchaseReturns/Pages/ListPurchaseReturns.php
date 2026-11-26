@@ -26,18 +26,64 @@ class ListPurchaseReturns extends ListRecords
                 ->modalDescription('Pilih transaksi pembelian supplier dan tentukan jumlah unit barang yang dikembalikan. Stok persediaan dan tagihan hutang supplier akan otomatis disesuaikan.')
                 ->modalWidth('3xl')
                 ->form([
+                    Select::make('return_type')
+                        ->label('Metode Penyelesaian Retur')
+                        ->options([
+                            'invoice_deduction' => 'Penyesuaian Faktur (Potong Hutang Tempo)',
+                            'consignment'       => 'Retur Konsinyasi (Penarikan Barang Titipan)',
+                            'refund'            => 'Refund Dana (Pengembalian Kas / Rekening Bank)',
+                            'replacement'       => 'Tukar Guling (Penggantian Barang Baru)',
+                            'supplier_credit'   => 'Saldo Deposit Supplier (Kredit untuk Belanja Nanti)',
+                        ])
+                        ->default('invoice_deduction')
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function ($state, $set, $get) {
+                            $selectedPtId = $get('purchase_transaction_id');
+                            if (! $selectedPtId) {
+                                return;
+                            }
+
+                            $selectedPt = \App\Models\PurchaseTransaction::find($selectedPtId);
+                            if (! $selectedPt) {
+                                return;
+                            }
+
+                            if ($state === 'consignment' && ! $selectedPt->isConsignment()) {
+                                $set('purchase_transaction_id', null);
+                                $set('return_items', []);
+                            } elseif ($state === 'invoice_deduction' && $selectedPt->isConsignment()) {
+                                $set('purchase_transaction_id', null);
+                                $set('return_items', []);
+                            }
+                        })
+                        ->helperText(fn($state) => match ($state) {
+                            'invoice_deduction' => 'Mengurangi sisa tagihan hutang faktur pembelian kredit ini secara otomatis.',
+                            'consignment'       => 'Mengembalikan barang titipan konsinyasi ke supplier. Hanya menampilkan transaksi pembelian berjenis Konsinyasi, serta mengurangi stok & saldo Hutang Konsinyasi.',
+                            'refund'            => 'Supplier mengembalikan dana secara tunai/transfer ke akun kas/bank toko Anda.',
+                            'replacement'       => 'Barang cacat diganti dengan unit baru yang sama (kuantitas dan nilai stok seimbang, tanpa perubahan kas/hutang).',
+                            'supplier_credit'   => 'Nominal retur dicatat sebagai saldo kredit nota / deposit di supplier untuk memotong pesanan berikutnya.',
+                            default             => '',
+                        }),
+
                     Select::make('purchase_transaction_id')
                         ->label('Pilih Transaksi Pembelian Supplier')
-                        ->options(function () {
+                        ->options(function ($get) {
                             $branchId = \App\Helpers\BranchHelper::getActiveBranchId();
+                            $returnType = $get('return_type');
+
                             return \App\Models\PurchaseTransaction::with('supplier')
                                 ->where('status', 'posted')
                                 ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                                ->when(
+                                    $returnType === 'consignment',
+                                    fn($q) => $q->where('purchase_type', \App\Models\PurchaseTransaction::TYPE_KONSINYASI)
+                                )
                                 ->orderBy('id', 'desc')
                                 ->get()
                                 ->mapWithKeys(function ($pt) {
                                     $supplierName = $pt->supplier?->name ?: 'No Supplier';
-                                    return [$pt->id => "{$pt->transaction_no} - {$supplierName} (Tgl: {$pt->transaction_date->format('d/m/Y')})"];
+                                    return [$pt->id => "{$pt->transaction_no} [{$pt->purchase_type}] - {$supplierName} (Tgl: {$pt->transaction_date->format('d/m/Y')})"];
                                 });
                         })
                         ->required()
@@ -49,25 +95,6 @@ class ListPurchaseReturns extends ListRecords
                         ->default([])
                         ->dehydrated(true)
                         ->visible(fn($get) => filled($get('purchase_transaction_id'))),
-
-                    Select::make('return_type')
-                        ->label('Metode Penyelesaian Retur')
-                        ->options([
-                            'invoice_deduction' => 'Penyesuaian Faktur (Potong Hutang Tempo)',
-                            'refund'            => 'Refund Dana (Pengembalian Kas / Rekening Bank)',
-                            'replacement'       => 'Tukar Guling (Penggantian Barang Baru)',
-                            'supplier_credit'   => 'Saldo Deposit Supplier (Kredit untuk Belanja Nanti)',
-                        ])
-                        ->default('invoice_deduction')
-                        ->required()
-                        ->live()
-                        ->helperText(fn($state) => match ($state) {
-                            'invoice_deduction' => 'Mengurangi sisa tagihan hutang faktur pembelian kredit ini secara otomatis.',
-                            'refund'            => 'Supplier mengembalikan dana secara tunai/transfer ke akun kas/bank toko Anda.',
-                            'replacement'       => 'Barang cacat diganti dengan unit baru yang sama (kuantitas dan nilai stok seimbang, tanpa perubahan kas/hutang).',
-                            'supplier_credit'   => 'Nominal retur dicatat sebagai saldo kredit nota / deposit di supplier untuk memotong pesanan berikutnya.',
-                            default             => '',
-                        }),
 
                     Select::make('refund_account_id')
                         ->label('Pilih Akun Kas / Bank Penerima Dana Refund')

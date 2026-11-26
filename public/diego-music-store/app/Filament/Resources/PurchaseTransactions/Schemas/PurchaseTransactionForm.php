@@ -153,12 +153,13 @@ class PurchaseTransactionForm
                                     ->options([
                                         'Tunai' => 'Tunai (Cash)',
                                         'Kredit' => 'Kredit (Tempo)',
+                                        'Konsinyasi' => 'Konsinyasi (Tanpa Jatuh Tempo)',
                                     ])
                                     ->default('Tunai')
                                     ->required()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, $set) {
-                                        if ($state === 'Tunai') {
+                                        if ($state !== 'Kredit') {
                                             $set('tempo_days', null);
                                             $set('due_date', null);
                                         }

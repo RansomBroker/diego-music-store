@@ -39,7 +39,11 @@ class UpdatePurchaseReturn
             }
 
             if ($returnType === 'invoice_deduction' && strtolower($pt->purchase_type) !== 'kredit') {
-                throw new \Exception('Metode Penyesuaian Faktur hanya berlaku untuk transaksi pembelian Kredit (Tempo). Untuk pembelian Tunai, pilih metode Refund Dana atau Tukar Guling.');
+                throw new \Exception('Metode Penyesuaian Faktur hanya berlaku untuk transaksi pembelian Kredit (Tempo). Untuk pembelian Konsinyasi pilih Retur Konsinyasi, atau untuk Tunai pilih Refund Dana / Tukar Guling.');
+            }
+
+            if ($returnType === 'consignment' && strtolower($pt->purchase_type) !== 'konsinyasi') {
+                throw new \Exception('Metode Retur Konsinyasi hanya berlaku untuk transaksi pembelian berjenis Konsinyasi.');
             }
 
             // Parse items if provided
@@ -101,10 +105,11 @@ class UpdatePurchaseReturn
                 }
             }
 
-            if ($returnType === 'invoice_deduction' && $newTotalAmount > $pt->getRemainingUnpaidAmount()) {
+            if (in_array($returnType, ['invoice_deduction', 'consignment'], true) && $newTotalAmount > $pt->getRemainingUnpaidAmount()) {
                 $remaining = number_format($pt->getRemainingUnpaidAmount(), 0, ',', '.');
                 $totalFormatted = number_format($newTotalAmount, 0, ',', '.');
-                throw new \Exception("Nilai retur (Rp {$totalFormatted}) melebihi sisa tagihan hutang faktur ini (Rp {$remaining}). Silakan pilih metode Refund Kas/Bank atau Saldo Deposit Supplier.");
+                $label = $returnType === 'consignment' ? 'kewajiban konsinyasi' : 'tagihan hutang';
+                throw new \Exception("Nilai retur (Rp {$totalFormatted}) melebihi sisa {$label} faktur ini (Rp {$remaining}). Silakan pilih metode Refund Kas/Bank atau Saldo Deposit Supplier.");
             }
 
             $purchaseReturn->update([

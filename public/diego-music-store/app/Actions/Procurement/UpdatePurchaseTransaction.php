@@ -41,7 +41,7 @@ class UpdatePurchaseTransaction
                 'invoice_number' => $data['invoice_number'] ?? null,
                 'delivery_note_number' => $data['delivery_note_number'] ?? null,
                 'invoice_date' => $data['invoice_date'] ?? null,
-                'due_date' => $data['due_date'] ?? null,
+                'due_date' => ($data['purchase_type'] ?? null) === PurchaseTransaction::TYPE_KREDIT ? ($data['due_date'] ?? null) : null,
                 'tax_invoice_no' => $data['tax_invoice_no'] ?? null,
                 'enable_tax' => $enableTax,
                 'enable_item_discount' => $enableItemDisc,

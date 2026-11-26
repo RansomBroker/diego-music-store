@@ -61,6 +61,7 @@ class PurchaseReturnsTable
                     ->badge()
                     ->color(fn (?string $state): string => match ($state) {
                         'invoice_deduction' => 'warning',
+                        'consignment'       => 'info',
                         'refund'            => 'info',
                         'replacement'       => 'success',
                         'supplier_credit'   => 'primary',
@@ -68,6 +69,7 @@ class PurchaseReturnsTable
                     })
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'invoice_deduction' => 'Potong Faktur',
+                        'consignment'       => 'Retur Konsinyasi',
                         'refund'            => 'Refund Kas/Bank',
                         'replacement'       => 'Tukar Guling',
                         'supplier_credit'   => 'Deposit Supplier',
@@ -151,6 +153,7 @@ class PurchaseReturnsTable
                             ->label('Metode Penyelesaian Retur')
                             ->options([
                                 'invoice_deduction' => 'Penyesuaian Faktur (Potong Hutang Tempo)',
+                                'consignment'       => 'Retur Konsinyasi (Penarikan Barang Titipan)',
                                 'refund'            => 'Refund Dana (Pengembalian Kas / Rekening Bank)',
                                 'replacement'       => 'Tukar Guling (Penggantian Barang Baru)',
                                 'supplier_credit'   => 'Saldo Deposit Supplier (Kredit untuk Belanja Nanti)',
@@ -159,6 +162,7 @@ class PurchaseReturnsTable
                             ->live()
                             ->helperText(fn($state) => match ($state) {
                                 'invoice_deduction' => 'Mengurangi sisa tagihan hutang faktur pembelian kredit ini secara otomatis.',
+                                'consignment'       => 'Mengembalikan barang titipan konsinyasi ke supplier, mengurangi stok & saldo Hutang Konsinyasi.',
                                 'refund'            => 'Supplier mengembalikan dana secara tunai/transfer ke akun kas/bank toko Anda.',
                                 'replacement'       => 'Barang cacat diganti dengan unit baru yang sama (kuantitas dan nilai stok seimbang, tanpa perubahan kas/hutang).',
                                 'supplier_credit'   => 'Nominal retur dicatat sebagai saldo kredit nota / deposit di supplier untuk memotong pesanan berikutnya.',

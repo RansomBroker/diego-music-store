@@ -95,6 +95,9 @@ class PostPurchaseReturn
                 if ($purchaseReturn->return_type === 'invoice_deduction') {
                     $debitAccId = $resolveAccount('211101001', 'HUTANG DAGANG', 'liability');
                     $notes = "Penyesuaian Faktur: Pengurangan Hutang Supplier (Retur {$purchaseReturn->return_no})";
+                } elseif ($purchaseReturn->return_type === 'consignment') {
+                    $debitAccId = $resolveAccount('211101002', 'HUTANG KONSINYASI', 'liability');
+                    $notes = "Retur Konsinyasi: Pengurangan Hutang Konsinyasi Supplier (Retur {$purchaseReturn->return_no})";
                 } elseif ($purchaseReturn->return_type === 'refund') {
                     $debitAccId = $purchaseReturn->refund_account_id ?: $resolveAccount('111101001', 'KAS', 'asset');
                     $refundAccName = Account::find($debitAccId)?->name ?? 'Kas/Bank';
@@ -123,6 +126,14 @@ class PostPurchaseReturn
                     'credit'           => $purchaseReturn->total_amount,
                     'notes'            => "Pengurangan Persediaan Barang Retur Supplier",
                 ]);
+
+                if ($purchaseReturn->return_type === 'consignment' && $purchaseReturn->supplier) {
+                    $currentDebt = max(0, (float) $purchaseReturn->supplier->outstanding_debt);
+                    $decrementAmount = min($currentDebt, (float) $purchaseReturn->total_amount);
+                    if ($decrementAmount > 0) {
+                        $purchaseReturn->supplier->decrement('outstanding_debt', $decrementAmount);
+                    }
+                }
             }
 
             $purchaseReturn->update([

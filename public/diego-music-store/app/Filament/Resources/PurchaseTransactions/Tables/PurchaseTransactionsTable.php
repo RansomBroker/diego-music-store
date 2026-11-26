@@ -62,6 +62,7 @@ class PurchaseTransactionsTable
                     ->color(fn (string $state): string => match ($state) {
                         'Tunai' => 'success',
                         'Kredit' => 'warning',
+                        'Konsinyasi' => 'info',
                         default => 'gray',
                     }),
 

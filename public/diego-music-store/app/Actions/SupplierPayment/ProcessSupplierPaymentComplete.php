@@ -69,17 +69,48 @@ class ProcessSupplierPaymentComplete
                 return \App\Helpers\AccountHelper::resolveAccountId($code, $defaultName, $classification);
             };
 
-            $apAccountId = $resolveAccount('211101001', 'HUTANG DAGANG', 'liability'); // Accounts Payable
+            $payment->loadMissing('items.purchaseTransaction');
+            $consignmentPaid = 0;
+            $tradePayablePaid = 0;
+
+            foreach ($payment->items as $item) {
+                $paidAmount = (int) $item->amount_paid;
+                if ($paidAmount <= 0) {
+                    continue;
+                }
+
+                if ($item->purchaseTransaction?->isConsignment()) {
+                    $consignmentPaid += $paidAmount;
+                } else {
+                    $tradePayablePaid += $paidAmount;
+                }
+            }
+
             $cashBankAccountId = $payment->account_id; // Cash/Bank account chosen in the payment form
 
-            // Debit: Hutang Dagang (reducing liability)
-            JournalItem::create([
-                'journal_entry_id' => $journalEntry->id,
-                'account_id' => $apAccountId,
-                'debit' => $totalPaid,
-                'credit' => 0,
-                'notes' => "Pelunasan Hutang Dagang ke {$supplier->name}",
-            ]);
+            // Debit: Hutang Dagang (reducing trade payable)
+            if ($tradePayablePaid > 0) {
+                $apAccountId = $resolveAccount('211101001', 'HUTANG DAGANG', 'liability');
+                JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $apAccountId,
+                    'debit' => $tradePayablePaid,
+                    'credit' => 0,
+                    'notes' => "Pelunasan Hutang Dagang ke {$supplier->name}",
+                ]);
+            }
+
+            // Debit: Hutang Konsinyasi (reducing consignment payable)
+            if ($consignmentPaid > 0) {
+                $consignmentAccountId = $resolveAccount('211101002', 'HUTANG KONSINYASI', 'liability');
+                JournalItem::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $consignmentAccountId,
+                    'debit' => $consignmentPaid,
+                    'credit' => 0,
+                    'notes' => "Pelunasan Hutang Konsinyasi ke {$supplier->name}",
+                ]);
+            }
 
             // Credit: Kas/Bank (reducing asset)
             JournalItem::create([

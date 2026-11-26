@@ -142,8 +142,8 @@ class PostPurchaseTransaction
                 }
             }
 
-            // 3. Handle debt creation (jika Kredit)
-            if ($pt->purchase_type === 'Kredit') {
+            // 3. Handle debt creation (jika Kredit atau Konsinyasi)
+            if ($pt->isPayableType()) {
                 $netDebt = max(0, $pt->grand_total - ($pt->down_payment_amount ?? 0));
                 if ($netDebt > 0) {
                     $pt->supplier->increment('outstanding_debt', $netDebt);
@@ -283,12 +283,17 @@ class PostPurchaseTransaction
                 ]);
             }
 
-            // The remaining amount goes to Hutang Dagang or Kas/Bank
+            // The remaining amount goes to Hutang Konsinyasi, Hutang Dagang, or Kas/Bank
             if ($remainingCredit > 0 || $dpAmount === 0) {
-                if ($pt->purchase_type === 'Kredit') {
+                if ($pt->isConsignment()) {
+                    $payAccId = \App\Helpers\AccountHelper::resolveAccountId('211101002', 'HUTANG KONSINYASI', 'liability');
+                    $payNotes = $dpAmount > 0 ? 'Sisa Hutang Konsinyasi Supplier (Setelah Potong DP)' : 'Hutang Konsinyasi Supplier';
+                } elseif ($pt->purchase_type === PurchaseTransaction::TYPE_KREDIT) {
                     $payAccId = $resolveAccount('211101001', 'HUTANG DAGANG');
+                    $payNotes = 'Sisa Hutang Supplier (Setelah Potong DP)';
                 } else {
                     $payAccId = $resolveAccount('111101001', 'KAS');
+                    $payNotes = 'Kas/Bank Tunai';
                 }
 
                 \App\Models\JournalItem::create([
@@ -296,7 +301,7 @@ class PostPurchaseTransaction
                     'account_id'       => $payAccId,
                     'debit'            => 0,
                     'credit'           => $remainingCredit,
-                    'notes'            => $pt->purchase_type === 'Kredit' ? "Sisa Hutang Supplier (Setelah Potong DP)" : "Kas/Bank Tunai",
+                    'notes'            => $payNotes,
                 ]);
             }
 

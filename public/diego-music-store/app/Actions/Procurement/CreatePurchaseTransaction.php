@@ -41,7 +41,7 @@ class CreatePurchaseTransaction
                 'invoice_number' => $data['invoice_number'] ?? null,
                 'delivery_note_number' => $data['delivery_note_number'] ?? null,
                 'invoice_date' => $data['invoice_date'] ?? null,
-                'due_date' => $data['due_date'] ?? null,
+                'due_date' => ($data['purchase_type'] ?? null) === PurchaseTransaction::TYPE_KREDIT ? ($data['due_date'] ?? null) : null,
                 'status' => 'draft', // always create as draft first
                 'created_by' => Auth::id(),
                 'enable_tax' => $enableTax,

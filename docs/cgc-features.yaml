@@ -234,6 +234,8 @@ features:
       - purchase transaction
       - purchase-transactions
       - reset transaksi pembelian
+      - konsinyasi
+      - hutang konsinyasi
       - retur pembelian
       - hutang supplier
       - supplier payment
