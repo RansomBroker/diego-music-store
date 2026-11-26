@@ -10,7 +10,7 @@ Peta komponen arsitektur Diego Music Store (ERP, POS & Accounting). Jaga file in
 - `PosOtp/`: Generator & verifikasi OTP 6 digit (1 menit) di Backoffice untuk otorisasi edit & hapus transaksi POS non-owner.
 - `SalesQueue/`: Antrian giliran melayani sales (round-robin), on-duty tracking, & laporan performa.
 - `Accounting/`: General ledger, pembuatan journal entry otomatis/terjadwal, COA, & monthly closing.
-- `Product/`: Manajemen master produk, varian, pricing tier, branch stock, barcode, & bundle.
+- `Product/`: Manajemen master produk, varian, pricing tier, branch stock, barcode, penomoran SKU sekuensial per prefix (`sku_sequences`), & bundle.
 - `PurchaseTransaction/` & `PurchaseOrder/`: Siklus pengadaan, PO, penerimaan barang (DO), & hutang supplier.
 - `SalesInvoice/`, `SalesQuotation/`, `SalesReturn/`: Faktur penjualan B2B, penawaran, retur, & piutang.
 - `CashSession/`: Buka/tutup shift kasir, modal awal, & rekonsiliasi kas.
@@ -23,7 +23,7 @@ Peta komponen arsitektur Diego Music Store (ERP, POS & Accounting). Jaga file in
 ## Key Models (`app/Models/`)
 - Sales & POS: `Sale`, `SaleItem`, `PosHeldTransaction`, `PaymentMethod`, `Voucher`, `SalesQueueMember`, `SalesDutyLog`
 - Accounting: `Account`, `AccountClassification`, `JournalEntry`, `JournalItem`, `MonthlyClosing`
-- Inventory: `Product`, `ProductVariant`, `ProductBranchStock`, `StockMovement`, `StockTransfer`
+- Inventory: `Product`, `ProductVariant`, `ProductBranchStock`, `SkuSequence`, `StockMovement`, `StockTransfer`
 - Purchasing: `PurchaseOrder`, `PurchaseTransaction`, `DeliveryOrder`, `SupplierPayment`
 - HR & Org: `Branch`, `Employee`, `Payroll`, `SalesCommissionLog`, `User`
 

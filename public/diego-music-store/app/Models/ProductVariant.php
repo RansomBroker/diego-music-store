@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ProductHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,6 +36,21 @@ class ProductVariant extends Model
         'hpp' => 'integer',
         'is_active' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (ProductVariant $variant): void {
+            if (trim((string) ($variant->sku ?? '')) === '') {
+                $variant->sku = ProductHelper::generateUniqueSku();
+            }
+        });
+
+        static::saved(function (ProductVariant $variant): void {
+            if (! empty($variant->sku)) {
+                ProductHelper::syncSequenceForSku((string) $variant->sku);
+            }
+        });
+    }
 
     /**
      * Get the parent product.

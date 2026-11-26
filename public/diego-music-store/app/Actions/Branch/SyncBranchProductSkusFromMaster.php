@@ -201,6 +201,8 @@ class SyncBranchProductSkusFromMaster
             }
 
             if ($updatesToApply === []) {
+                app(\App\Actions\Product\SyncSkuSequenceFromExisting::class)->execute($normalizedPrefix, branchId: (int) $branch->id);
+
                 return [
                     'updated' => 0,
                     'unchanged' => $unchangedCount,
@@ -272,6 +274,8 @@ class SyncBranchProductSkusFromMaster
                         'updated_at' => $now,
                     ]);
             }
+
+            app(\App\Actions\Product\SyncSkuSequenceFromExisting::class)->execute($normalizedPrefix, branchId: (int) $branch->id);
 
             return [
                 'updated' => count($finalSkuById),

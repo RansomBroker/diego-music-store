@@ -181,7 +181,7 @@ class BranchForm
                         ->label('Prefix Kode Produk / SKU')
                         ->default('DG')
                         ->placeholder('Contoh: DG, DG-SKW, DG-KTP')
-                        ->helperText('Prefix otomatis untuk penomoran SKU saat tambah produk atau import produk di cabang ini (misal: DG -> DG-ABC12345)')
+                        ->helperText('Prefix otomatis untuk penomoran SKU saat tambah produk atau import produk di cabang ini (misal: DMS-P -> DMS-P-0001, DMS-P-0002)')
                         ->required(fn ($get): bool => (bool) $get('regenerate_skus_on_save'))
                         ->maxLength(20)
                         ->suffixAction(
@@ -223,6 +223,31 @@ class BranchForm
                                     }
                                 })
                         ),
+
+                    TextInput::make('sku_last_number')
+                        ->label('Nomor Urut SKU Terakhir')
+                        ->numeric()
+                        ->minValue(0)
+                        ->default(0)
+                        ->helperText('Produk baru berikutnya akan memakai nomor urut setelah angka ini (otomatis diperbarui saat simpan produk, Generate SKU, atau Pulihkan SKU Master).')
+                        ->afterStateHydrated(function (TextInput $component, ?Branch $record): void {
+                            if (! $record || blank($record->sku_prefix)) {
+                                $component->state(0);
+
+                                return;
+                            }
+
+                            $prefix = RegenerateBranchProductSkus::normalizePrefix($record->sku_prefix);
+                            $lastNumber = \App\Models\SkuSequence::query()
+                                ->where('prefix', $prefix)
+                                ->value('last_number');
+
+                            $component->state(
+                                $lastNumber !== null
+                                    ? (int) $lastNumber
+                                    : \App\Helpers\ProductHelper::findMaxNumericSuffix($prefix)
+                            );
+                        }),
 
                     Toggle::make('regenerate_skus_on_save')
                         ->label('Generate ulang SKU barang yang sudah diimport saat simpan cabang')

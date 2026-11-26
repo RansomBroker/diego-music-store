@@ -234,6 +234,7 @@ class RegenerateBranchProductSkusTest extends TestCase
     public function test_keep_suffix_format_is_default_and_preserves_codes_while_shortening_dg_prefix(): void
     {
         $brg = $this->createVariant('Item BRG', 'BRG2122', 'BC-BRG2122', [$this->branchA->id => 4]);
+        $brgZero = $this->createVariant('Item BRG Leading Zero', 'BRG0001', 'BC-BRG0001', [$this->branchA->id => 1]);
         $dg4 = $this->createVariant('Item DG 4 Digit', 'DG0642', 'BC-DG0642', [$this->branchA->id => 2]);
         $dg3 = $this->createVariant('Item DG 3 Digit', 'DG052', 'BC-DG052', [$this->branchA->id => 1]);
         $dgZero = $this->createVariant('Item DG Zero', 'DG0052', 'BC-DG0052', [$this->branchA->id => 1]);
@@ -250,9 +251,10 @@ class RegenerateBranchProductSkusTest extends TestCase
             savePrefixToBranch: true,
         );
 
-        $this->assertSame(9, $result['updated']);
+        $this->assertSame(10, $result['updated']);
         $this->assertSame('DMS-P', $this->branchA->fresh()->sku_prefix);
-        $this->assertSame('DMS-P-BRG2122', $brg->fresh()->sku);
+        $this->assertSame('DMS-P-2122', $brg->fresh()->sku);
+        $this->assertSame('DMS-P-0001', $brgZero->fresh()->sku);
         $this->assertSame('DMS-P-D0642', $dg4->fresh()->sku);
         $this->assertSame('DMS-P-D052', $dg3->fresh()->sku);
         $this->assertSame('DMS-P-D0052', $dgZero->fresh()->sku);
@@ -286,7 +288,7 @@ class RegenerateBranchProductSkusTest extends TestCase
 
         $this->assertSame(4, $result['updated']);
         $this->assertSame('DMS-B', $this->branchA->fresh()->sku_prefix);
-        $this->assertSame('DMS-B-BRG2122', $brg->fresh()->sku);
+        $this->assertSame('DMS-B-2122', $brg->fresh()->sku);
         $this->assertSame('DMS-B-D0642', $dg->fresh()->sku);
         $this->assertSame('DMS-B-FW-1PK-XL', $fw->fresh()->sku);
         $this->assertSame('DMS-B-BMC-01B', $bmc->fresh()->sku);
@@ -301,6 +303,7 @@ class RegenerateBranchProductSkusTest extends TestCase
         );
 
         $this->assertSame(4, $secondRun['updated']);
+        $this->assertSame('DMS-B-2122', $brg->fresh()->sku);
         $this->assertSame('DMS-B-D0642', $dg->fresh()->sku);
         $this->assertSame('DMS-B-FW-1PK-XL', $fw->fresh()->sku);
     }
@@ -367,7 +370,7 @@ class RegenerateBranchProductSkusTest extends TestCase
             $this->assertSame(5, $result['total_rows']);
 
             $freshNut = $nut->fresh();
-            $this->assertSame('DMS-P-BRG2122', $freshNut->sku);
+            $this->assertSame('DMS-P-2122', $freshNut->sku);
             $this->assertSame('200000000001', $freshNut->barcode);
             $this->assertSame(155000, $freshNut->price);
             $this->assertSame(92000, $freshNut->hpp);

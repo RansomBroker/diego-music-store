@@ -2,25 +2,51 @@
 
 namespace App\Helpers;
 
+use App\Actions\Branch\RegenerateBranchProductSkus;
+use App\Actions\Product\ReserveNextSku;
+use App\Actions\Product\SyncSkuSequenceFromExisting;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\SkuSequence;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class ProductHelper
 {
-    public static function generateUniqueSku(?string $prefix = null, ?int $branchId = null): string
+    /**
+     * Resolve the normalized SKU prefix and optional owning branch ID.
+     *
+     * @return array{prefix: string, branch_id: ?int}
+     */
+    public static function resolveSkuContext(?string $prefix = null, ?int $branchId = null): array
     {
+        $resolvedBranchId = null;
         $basePrefix = null;
 
-        if ($prefix) {
-            $basePrefix = trim($prefix);
-        } elseif ($branchId) {
+        if ($branchId) {
             $branch = Branch::find($branchId);
-            if ($branch && !empty($branch->sku_prefix)) {
-                $basePrefix = trim($branch->sku_prefix);
+            if ($branch) {
+                $resolvedBranchId = (int) $branch->id;
+                if (! empty($branch->sku_prefix)) {
+                    $basePrefix = trim($branch->sku_prefix);
+                }
+            }
+            if ($prefix !== null && trim($prefix) !== '') {
+                $basePrefix = trim($prefix);
+            }
+        } elseif ($prefix !== null && trim($prefix) !== '') {
+            $basePrefix = trim($prefix);
+            $normalizedTarget = RegenerateBranchProductSkus::normalizePrefix($basePrefix);
+
+            if ($normalizedTarget !== '') {
+                $matchedBranch = Branch::query()
+                    ->whereNotNull('sku_prefix')
+                    ->orderBy('id')
+                    ->get(['id', 'sku_prefix'])
+                    ->first(static fn (Branch $b): bool => RegenerateBranchProductSkus::normalizePrefix($b->sku_prefix) === $normalizedTarget);
+
+                $resolvedBranchId = $matchedBranch ? (int) $matchedBranch->id : null;
             }
         } else {
             if (Auth::check()) {
@@ -32,21 +58,126 @@ class ProductHelper
             } else {
                 $activeBranchId = Branch::where('is_active', true)->value('id');
             }
+
             if ($activeBranchId) {
                 $branch = Branch::find($activeBranchId);
-                if ($branch && !empty($branch->sku_prefix)) {
-                    $basePrefix = trim($branch->sku_prefix);
+                if ($branch) {
+                    $resolvedBranchId = (int) $branch->id;
+                    if (! empty($branch->sku_prefix)) {
+                        $basePrefix = trim($branch->sku_prefix);
+                    }
                 }
             }
         }
 
-        $cleanPrefix = $basePrefix ? rtrim(strtoupper($basePrefix), '-') . '-' : 'DG-';
+        $normalized = RegenerateBranchProductSkus::normalizePrefix($basePrefix);
+
+        return [
+            'prefix' => $normalized !== '' ? $normalized : 'DG',
+            'branch_id' => $resolvedBranchId,
+        ];
+    }
+
+    public static function resolveSkuPrefix(?string $prefix = null, ?int $branchId = null): string
+    {
+        return self::resolveSkuContext($prefix, $branchId)['prefix'];
+    }
+
+    public static function findMaxNumericSuffix(string $normalizedPrefix): int
+    {
+        $prefix = RegenerateBranchProductSkus::normalizePrefix($normalizedPrefix);
+        if ($prefix === '') {
+            return 0;
+        }
+
+        $pattern = '/^' . preg_quote($prefix, '/') . '-(\d+)$/i';
+        $maxNumber = 0;
+
+        $skus = ProductVariant::query()
+            ->whereNotNull('sku')
+            ->where('sku', 'like', $prefix . '-%')
+            ->pluck('sku');
+
+        foreach ($skus as $sku) {
+            if (preg_match($pattern, trim((string) $sku), $matches) === 1) {
+                $number = (int) $matches[1];
+                if ($number > $maxNumber) {
+                    $maxNumber = $number;
+                }
+            }
+        }
+
+        return $maxNumber;
+    }
+
+    /**
+     * Read-only preview of the next sequential SKU without advancing the counter.
+     */
+    public static function peekNextSku(?string $prefix = null, ?int $branchId = null, int $minDigits = 4): string
+    {
+        $normalizedPrefix = self::resolveSkuPrefix($prefix, $branchId);
+        $sequence = SkuSequence::query()->where('prefix', $normalizedPrefix)->first();
+
+        $nextNumber = $sequence !== null
+            ? (int) $sequence->last_number
+            : self::findMaxNumericSuffix($normalizedPrefix);
+        $effectiveMinDigits = max(1, (int) ($sequence?->min_digits ?: $minDigits));
 
         do {
-            $sku = $cleanPrefix . strtoupper(Str::random(8));
-        } while (ProductVariant::where('sku', $sku)->exists());
-        
-        return $sku;
+            $nextNumber++;
+            $padWidth = max($effectiveMinDigits, strlen((string) $nextNumber));
+            $candidate = $normalizedPrefix . '-' . str_pad((string) $nextNumber, $padWidth, '0', STR_PAD_LEFT);
+        } while (ProductVariant::where('sku', $candidate)->exists());
+
+        return $candidate;
+    }
+
+    /**
+     * Advance sku_sequences when a numeric SKU matching a tracked or branch prefix is saved manually.
+     */
+    public static function syncSequenceForSku(?string $sku): void
+    {
+        $clean = strtoupper(trim((string) $sku));
+        if ($clean === '' || preg_match('/^([A-Z0-9_-]+)-(\d+)$/', $clean, $matches) !== 1) {
+            return;
+        }
+
+        $prefix = RegenerateBranchProductSkus::normalizePrefix($matches[1]);
+        $number = (int) $matches[2];
+        if ($prefix === '' || $number <= 0) {
+            return;
+        }
+
+        $existingSequenceLast = SkuSequence::query()
+            ->where('prefix', $prefix)
+            ->value('last_number');
+
+        if ($existingSequenceLast !== null) {
+            if ($number <= (int) $existingSequenceLast) {
+                return;
+            }
+
+            app(SyncSkuSequenceFromExisting::class)->execute($prefix, floorNumber: $number);
+
+            return;
+        }
+
+        $matchedBranch = Branch::query()
+            ->whereNotNull('sku_prefix')
+            ->orderBy('id')
+            ->get(['id', 'sku_prefix'])
+            ->first(static fn (Branch $b): bool => RegenerateBranchProductSkus::normalizePrefix($b->sku_prefix) === $prefix);
+
+        if (! $matchedBranch) {
+            return;
+        }
+
+        app(SyncSkuSequenceFromExisting::class)->execute($prefix, floorNumber: $number, branchId: (int) $matchedBranch->id);
+    }
+
+    public static function generateUniqueSku(?string $prefix = null, ?int $branchId = null): string
+    {
+        return app(ReserveNextSku::class)->execute($prefix, $branchId);
     }
 
     public static function generateUniqueBarcode(): string

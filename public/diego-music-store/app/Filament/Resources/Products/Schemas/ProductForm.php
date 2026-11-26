@@ -169,9 +169,8 @@ class ProductForm
 
                                                 TextInput::make('sku')
                                                     ->unique(ProductVariant::class, 'sku', ignoreRecord: false, modifyRuleUsing: $skuUniqueRule)
-                                                    ->default(fn () => ProductHelper::generateUniqueSku())
-                                                    ->hiddenLabel()
-                                                    ->placeholder('SKU'),
+                                                    ->placeholder(fn () => 'Auto (' . ProductHelper::peekNextSku() . ')')
+                                                    ->hiddenLabel(),
 
                                                 TextInput::make('barcode')
                                                     ->default(fn () => ProductHelper::generateUniqueBarcode())
@@ -283,7 +282,8 @@ class ProductForm
                                     ->schema([
                                         TextInput::make('sku')
                                             ->unique(ProductVariant::class, 'sku', ignoreRecord: false, modifyRuleUsing: $skuUniqueRule)
-                                            ->default(fn () => ProductHelper::generateUniqueSku())
+                                            ->placeholder(fn () => 'Otomatis (contoh: ' . ProductHelper::peekNextSku() . ')')
+                                            ->helperText('Kosongkan agar SKU diisi otomatis berurutan saat disimpan.')
                                             ->label('SKU (Barcode/Kode Barang)'),
 
                                         TextInput::make('barcode')
@@ -381,7 +381,8 @@ class ProductForm
                                     ->schema([
                                         TextInput::make('sku')
                                             ->unique(ProductVariant::class, 'sku', ignoreRecord: false, modifyRuleUsing: $skuUniqueRule)
-                                            ->default(fn () => ProductHelper::generateUniqueSku())
+                                            ->placeholder(fn () => 'Otomatis (contoh: ' . ProductHelper::peekNextSku() . ')')
+                                            ->helperText('Kosongkan agar SKU diisi otomatis berurutan saat disimpan.')
                                             ->label('SKU (Kode Jasa)'),
 
                                         TextInput::make('barcode')
@@ -453,7 +454,8 @@ class ProductForm
                                     ->schema([
                                         TextInput::make('sku')
                                             ->unique(ProductVariant::class, 'sku', ignoreRecord: false, modifyRuleUsing: $skuUniqueRule)
-                                            ->default(fn () => ProductHelper::generateUniqueSku())
+                                            ->placeholder(fn () => 'Otomatis (contoh: ' . ProductHelper::peekNextSku() . ')')
+                                            ->helperText('Kosongkan agar SKU diisi otomatis berurutan saat disimpan.')
                                             ->label('SKU Paket (Bundling)'),
 
                                         TextInput::make('barcode')

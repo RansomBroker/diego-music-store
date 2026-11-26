@@ -104,15 +104,16 @@ class RegenerateBranchProductSkus
     public static function formatOptions(): array
     {
         return [
-            self::FORMAT_KEEP_SUFFIX => 'Pertahankan kode ujung & tambah/ganti prefix (contoh: DG0642 -> PREFIX-D0642, BRG2122 -> PREFIX-BRG2122)',
+            self::FORMAT_KEEP_SUFFIX => 'Pertahankan kode ujung & tambah/ganti prefix (contoh: DG0642 -> PREFIX-D0642, BRG2122 -> PREFIX-2122)',
             self::FORMAT_RANDOM => 'Acak 8 karakter (contoh: PREFIX-A1B2C3D4)',
             self::FORMAT_SEQUENTIAL => 'Berurutan angka (contoh: PREFIX-0001, PREFIX-0002)',
         ];
     }
 
     /**
-     * Build a branch-prefixed SKU from a raw master/existing code while preserving
-     * product/brand suffixes (e.g. BRG2122, FW-1PK-XL, SUI026) and shortening DG<digits> to D<digits>.
+     * Build a branch-prefixed SKU from a raw master/existing code while stripping
+     * BRG<digits> to <digits>, shortening DG<digits> to D<digits>, and preserving
+     * product/brand suffixes (e.g. FW-1PK-XL, SUI026, BMC-01B).
      *
      * @param  array<int, string>  $knownBranchPrefixes
      */
@@ -159,6 +160,8 @@ class RegenerateBranchProductSkus
 
         if (preg_match('/^DG(\d+)$/', $clean, $matches) === 1) {
             $clean = 'D' . $matches[1];
+        } elseif (preg_match('/^BRG(\d+)$/', $clean, $matches) === 1) {
+            $clean = $matches[1];
         }
 
         return $prefix . '-' . $clean;
@@ -254,6 +257,8 @@ class RegenerateBranchProductSkus
             }
 
             if ($targetsToUpdate === []) {
+                app(\App\Actions\Product\SyncSkuSequenceFromExisting::class)->execute($normalizedPrefix, branchId: (int) $branch->id);
+
                 return [
                     'updated' => 0,
                     'skipped' => $skippedCount,
@@ -318,6 +323,8 @@ class RegenerateBranchProductSkus
                         'updated_at' => $now,
                     ]);
             }
+
+            app(\App\Actions\Product\SyncSkuSequenceFromExisting::class)->execute($normalizedPrefix, branchId: (int) $branch->id);
 
             return [
                 'updated' => count($newSkuById),

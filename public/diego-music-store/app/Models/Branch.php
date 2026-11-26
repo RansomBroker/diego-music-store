@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Branch extends Model
 {
@@ -90,5 +91,13 @@ class Branch extends Model
     public function interbranchPayableAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'interbranch_payable_account_id');
+    }
+
+    /**
+     * Get the SKU sequence counters associated with this branch.
+     */
+    public function skuSequences(): HasMany
+    {
+        return $this->hasMany(SkuSequence::class);
     }
 }

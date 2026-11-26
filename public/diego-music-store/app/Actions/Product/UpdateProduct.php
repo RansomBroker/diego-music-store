@@ -2,6 +2,7 @@
 
 namespace App\Actions\Product;
 
+use App\Helpers\ProductHelper;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductTierPrice;
@@ -59,7 +60,9 @@ class UpdateProduct
                     if (!empty($variantData['id'])) {
                         $variant = ProductVariant::find($variantData['id']);
                         $variantUpdateData = [
-                            'sku' => $variantData['sku'] ?? null,
+                            'sku' => filled($variantData['sku'] ?? null)
+                                ? trim((string) $variantData['sku'])
+                                : ($variant?->sku ?: ProductHelper::generateUniqueSku()),
                             'barcode' => $variantData['barcode'] ?? null,
                             'name' => $variantData['name'],
                             'price' => $variantData['price'] ?? 0,
@@ -79,7 +82,9 @@ class UpdateProduct
                     } else {
                         $variant = ProductVariant::create([
                             'product_id' => $product->id,
-                            'sku' => $variantData['sku'] ?? null,
+                            'sku' => filled($variantData['sku'] ?? null)
+                                ? trim((string) $variantData['sku'])
+                                : ProductHelper::generateUniqueSku(),
                             'barcode' => $variantData['barcode'] ?? null,
                             'name' => $variantData['name'],
                             'price' => $variantData['price'] ?? 0,
@@ -148,7 +153,9 @@ class UpdateProduct
                 if (!$variant) {
                     $variant = ProductVariant::create([
                         'product_id' => $product->id,
-                        'sku' => $data['sku'] ?? null,
+                        'sku' => filled($data['sku'] ?? null)
+                            ? trim((string) $data['sku'])
+                            : ProductHelper::generateUniqueSku(),
                         'barcode' => $data['barcode'] ?? null,
                         'name' => null,
                         'price' => $data['price'] ?? 0,
@@ -162,7 +169,9 @@ class UpdateProduct
                     ]);
                 } else {
                     $singleUpdateData = [
-                        'sku' => $data['sku'] ?? null,
+                        'sku' => filled($data['sku'] ?? null)
+                            ? trim((string) $data['sku'])
+                            : ($variant->sku ?: ProductHelper::generateUniqueSku()),
                         'barcode' => $data['barcode'] ?? null,
                         'name' => null, // ensure it's default
                         'price' => $data['price'] ?? 0,

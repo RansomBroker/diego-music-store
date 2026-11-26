@@ -2,6 +2,7 @@
 
 namespace App\Actions\Product;
 
+use App\Helpers\ProductHelper;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductTierPrice;
@@ -45,7 +46,9 @@ class CreateProduct
                 foreach ($data['variants'] as $variantData) {
                     $variant = ProductVariant::create([
                         'product_id' => $product->id,
-                        'sku' => $variantData['sku'] ?? null,
+                        'sku' => filled($variantData['sku'] ?? null)
+                            ? trim((string) $variantData['sku'])
+                            : ProductHelper::generateUniqueSku(),
                         'barcode' => $variantData['barcode'] ?? null,
                         'name' => $variantData['name'],
                         'price' => $variantData['price'] ?? 0,
@@ -90,7 +93,9 @@ class CreateProduct
                 // 3. Create a single default variant
                 $variant = ProductVariant::create([
                     'product_id' => $product->id,
-                    'sku' => $data['sku'] ?? null,
+                    'sku' => filled($data['sku'] ?? null)
+                        ? trim((string) $data['sku'])
+                        : ProductHelper::generateUniqueSku(),
                     'barcode' => $data['barcode'] ?? null,
                     'name' => null, // Default variant
                     'price' => $data['price'] ?? 0,

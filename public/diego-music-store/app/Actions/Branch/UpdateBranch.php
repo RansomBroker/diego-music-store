@@ -65,6 +65,17 @@ class UpdateBranch
                 );
             }
 
+            $effectivePrefix = $branch->sku_prefix ?: ($data['sku_prefix'] ?? null);
+            if (! empty($effectivePrefix)) {
+                app(\App\Actions\Product\SyncSkuSequenceFromExisting::class)->execute(
+                    prefix: (string) $effectivePrefix,
+                    floorNumber: is_numeric($data['sku_last_number'] ?? null)
+                        ? (int) $data['sku_last_number']
+                        : null,
+                    branchId: (int) $branch->id,
+                );
+            }
+
             return $branch->fresh();
         });
     }

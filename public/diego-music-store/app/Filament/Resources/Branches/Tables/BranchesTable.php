@@ -207,7 +207,7 @@ class BranchesTable
                                 'application/csv',
                                 'text/plain',
                             ])
-                            ->helperText('Kode BRG tetap BRG (contoh: BRG2122 -> PREFIX-BRG2122), sedangkan DG + angka dipendekkan menjadi D + angka (contoh: DG0642 -> PREFIX-D0642).')
+                            ->helperText('Kode BRG + angka dihapus prefiks BRG-nya (contoh: BRG2122 -> PREFIX-2122), sedangkan DG + angka dipendekkan menjadi D + angka (contoh: DG0642 -> PREFIX-D0642).')
                             ->required(),
                     ])
                     ->action(function (Branch $record, array $data): void {
