@@ -77,6 +77,181 @@ class PaymentModal extends Component
         }
     }
 
+    protected function getNonVoucherSelectedMethods(): array
+    {
+        return array_values(array_filter(
+            $this->selectedPaymentMethods,
+            fn ($m) => ! str_contains(strtolower((string) $m), 'voucher')
+        ));
+    }
+
+    protected function clearMethodState(string $method): void
+    {
+        if ($method === 'cash') {
+            $this->amountCash = 0;
+        }
+        if ($method === 'debit') {
+            $this->amountDebit = 0;
+            $this->debitRef = '';
+        }
+        if ($method === 'credit') {
+            $this->amountCredit = 0;
+        }
+
+        $this->paymentAmounts[$method] = 0;
+        $this->paymentRefs[$method] = '';
+        $this->paymentSubMethods[$method] = '';
+    }
+
+    protected function setMethodAmount(string $method, int $amount): void
+    {
+        $this->paymentAmounts[$method] = $amount;
+        if ($method === 'cash') {
+            $this->amountCash = $amount;
+        }
+        if ($method === 'debit') {
+            $this->amountDebit = $amount;
+        }
+        if ($method === 'credit') {
+            $this->amountCredit = $amount;
+        }
+    }
+
+    protected function getMethodAmount(string $method): int
+    {
+        return intval($this->paymentAmounts[$method] ?? ($method === 'cash' ? $this->amountCash : ($method === 'debit' ? $this->amountDebit : ($method === 'credit' ? $this->amountCredit : 0))));
+    }
+
+    protected function rebuildSelectedMethods(array $nonVoucherMethods): void
+    {
+        $voucherMethods = array_values(array_filter(
+            $this->selectedPaymentMethods,
+            fn ($m) => str_contains(strtolower((string) $m), 'voucher')
+        ));
+
+        $this->selectedPaymentMethods = array_values(array_merge($nonVoucherMethods, $voucherMethods));
+    }
+
+    public function selectPrimaryPaymentMethod(string $method): void
+    {
+        $nonVoucher = $this->getNonVoucherSelectedMethods();
+        $currentPrimary = $nonVoucher[0] ?? null;
+        $currentSecondary = $nonVoucher[1] ?? null;
+
+        if ($method === $currentPrimary || $method === $currentSecondary) {
+            return;
+        }
+
+        $carriedAmount = $currentPrimary
+            ? $this->getMethodAmount($currentPrimary)
+            : max(0, (int) $this->grandTotal - (int) ($this->paymentAmounts['voucher'] ?? 0));
+
+        if ($currentPrimary) {
+            $this->clearMethodState($currentPrimary);
+        }
+
+        $nonVoucher[0] = $method;
+        $this->rebuildSelectedMethods($nonVoucher);
+
+        if (count($nonVoucher) === 1) {
+            $carriedAmount = max(0, (int) $this->grandTotal - (int) ($this->paymentAmounts['voucher'] ?? 0));
+        }
+
+        $this->setMethodAmount($method, $carriedAmount);
+        $this->applyDefaultSubMethod($method);
+        $this->distributePaymentAmounts();
+    }
+
+    public function addSecondaryPaymentMethod(?string $method = null): void
+    {
+        $nonVoucher = $this->getNonVoucherSelectedMethods();
+
+        if (count($nonVoucher) >= 2) {
+            Notification::make()
+                ->title('Batas Metode Pembayaran')
+                ->body('Anda hanya dapat memilih maksimal 2 metode pembayaran.')
+                ->warning()
+                ->send();
+            return;
+        }
+
+        if ($method === null) {
+            $parentMethods = $this->paymentMethods->filter(
+                fn ($m) => empty($m->parent_id) && ! str_contains(strtolower((string) $m->code), 'voucher')
+            );
+
+            $candidate = $parentMethods->first(fn ($m) => ! in_array($m->code, $nonVoucher, true));
+            if ($candidate) {
+                $method = $candidate->code;
+            } else {
+                $fallbacks = ['debit', 'cash', 'credit'];
+                $method = collect($fallbacks)->first(fn ($c) => ! in_array($c, $nonVoucher, true));
+            }
+        }
+
+        if (! $method || in_array($method, $nonVoucher, true)) {
+            return;
+        }
+
+        $existingSum = 0;
+        foreach ($this->selectedPaymentMethods as $m) {
+            $existingSum += $this->getMethodAmount($m);
+        }
+
+        $nonVoucher[] = $method;
+        $this->rebuildSelectedMethods($nonVoucher);
+
+        $remaining = max(0, (int) $this->grandTotal - $existingSum);
+        $this->setMethodAmount($method, $remaining);
+        $this->applyDefaultSubMethod($method);
+        $this->distributePaymentAmounts();
+    }
+
+    public function selectSecondaryPaymentMethod(string $method): void
+    {
+        $nonVoucher = $this->getNonVoucherSelectedMethods();
+        if (count($nonVoucher) < 2) {
+            $this->addSecondaryPaymentMethod($method);
+            return;
+        }
+
+        $currentPrimary = $nonVoucher[0];
+        $currentSecondary = $nonVoucher[1];
+
+        if ($method === $currentPrimary || $method === $currentSecondary) {
+            return;
+        }
+
+        $carriedAmount = $this->getMethodAmount($currentSecondary);
+        $this->clearMethodState($currentSecondary);
+
+        $nonVoucher[1] = $method;
+        $this->rebuildSelectedMethods($nonVoucher);
+
+        $this->setMethodAmount($method, $carriedAmount);
+        $this->applyDefaultSubMethod($method);
+        $this->distributePaymentAmounts();
+    }
+
+    public function removeSecondaryPaymentMethod(?string $method = null): void
+    {
+        $nonVoucher = $this->getNonVoucherSelectedMethods();
+        if (count($nonVoucher) < 2) {
+            return;
+        }
+
+        $target = ($method && in_array($method, $nonVoucher, true)) ? $method : $nonVoucher[1];
+        $this->clearMethodState($target);
+
+        $remaining = array_values(array_diff($nonVoucher, [$target]));
+        $primary = $remaining[0] ?? 'cash';
+        $this->rebuildSelectedMethods([$primary]);
+
+        $fullAmount = max(0, (int) $this->grandTotal - (int) ($this->paymentAmounts['voucher'] ?? 0));
+        $this->setMethodAmount($primary, $fullAmount);
+        $this->distributePaymentAmounts();
+    }
+
     public function togglePaymentMethod($method)
     {
         if (in_array($method, $this->selectedPaymentMethods)) {
@@ -280,16 +455,29 @@ class PaymentModal extends Component
             }
         }
 
+        $activeAmounts = [];
+        $activeRefs = [];
+        $activeSubMethods = [];
+        foreach ($this->selectedPaymentMethods as $method) {
+            $activeAmounts[$method] = $this->getMethodAmount($method);
+            if (! empty($this->paymentRefs[$method])) {
+                $activeRefs[$method] = $this->paymentRefs[$method];
+            }
+            if (! empty($this->paymentSubMethods[$method])) {
+                $activeSubMethods[$method] = $this->paymentSubMethods[$method];
+            }
+        }
+
         // Package payment data
         $paymentData = [
             'selectedPaymentMethods' => $this->selectedPaymentMethods,
-            'paymentAmounts' => $this->paymentAmounts,
+            'paymentAmounts' => $activeAmounts,
             'amountCash' => $this->amountCash,
             'amountDebit' => $this->amountDebit,
             'amountCredit' => $this->amountCredit,
             'debitRef' => $this->debitRef,
-            'paymentRefs' => $this->paymentRefs,
-            'paymentSubMethods' => $this->paymentSubMethods,
+            'paymentRefs' => $activeRefs,
+            'paymentSubMethods' => $activeSubMethods,
             'notes' => $this->notes,
             'customerPhone' => $this->customerPhone,
             'appliedVoucherId' => $this->appliedVoucher ? $this->appliedVoucher->id : null,

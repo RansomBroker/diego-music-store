@@ -68,95 +68,201 @@
         </div>
     </div>
 
-    <!-- Payment Method Selection (Multi-select Dropdown) -->
-    <div class="mb-6" x-data="{ open: false }" @click.outside="open = false">
-        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">Pilih Metode Pembayaran (Bisa Multi-Pilih)</label>
-        
-        <div class="relative">
-            <!-- Dropdown Trigger Button -->
-            <div 
-                @click="open = !open" 
-                class="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-slate-200 focus-within:ring-2 focus-within:ring-primary-light dark:focus-within:ring-blue-955 transition-all text-left cursor-pointer select-none"
-            >
-                <div class="flex flex-wrap gap-1.5 items-center">
-                    @if (empty($selectedPaymentMethods))
-                        <span class="text-slate-400 font-medium text-xs">Pilih metode...</span>
-                    @else
-                        @foreach ($selectedPaymentMethods as $method)
-                            @php
-                                $dbMethod = $flatMethods->firstWhere('code', $method);
-                                $methodLabel = $dbMethod ? ($dbMethod->parent ? $dbMethod->parent->name . ' (' . $dbMethod->name . ')' : $dbMethod->name) : ucfirst($method);
-                            @endphp
-                            <span @click.stop class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary dark:bg-blue-950/40 dark:text-blue-400 rounded-full font-bold text-[10px] uppercase tracking-wider cursor-default">
-                                <span>{{ $methodLabel }}</span>
-                                <button type="button" wire:click="togglePaymentMethod('{{ $method }}')" class="hover:text-red-500 transition-colors cursor-pointer">
-                                    <i class="ph-bold ph-x text-[8px]"></i>
-                                </button>
-                            </span>
-                        @endforeach
-                    @endif
+    @php
+        $nonVoucherSelected = array_values(array_filter(
+            $selectedPaymentMethods,
+            fn ($m) => !str_contains(strtolower((string) $m), 'voucher')
+        ));
+        $primaryMethodCode = $nonVoucherSelected[0] ?? 'cash';
+        $secondaryMethodCode = $nonVoucherSelected[1] ?? null;
+
+        $primaryDbMethod = $parentMethods->firstWhere('code', $primaryMethodCode) ?? $flatMethods->firstWhere('code', $primaryMethodCode);
+        $primaryMethodLabel = $primaryDbMethod
+            ? ($primaryDbMethod->parent ? $primaryDbMethod->parent->name . ' (' . $primaryDbMethod->name . ')' : $primaryDbMethod->name)
+            : ucfirst($primaryMethodCode);
+
+        $secondaryDbMethod = $secondaryMethodCode
+            ? ($parentMethods->firstWhere('code', $secondaryMethodCode) ?? $flatMethods->firstWhere('code', $secondaryMethodCode))
+            : null;
+        $secondaryMethodLabel = $secondaryDbMethod
+            ? ($secondaryDbMethod->parent ? $secondaryDbMethod->parent->name . ' (' . $secondaryDbMethod->name . ')' : $secondaryDbMethod->name)
+            : ($secondaryMethodCode ? ucfirst($secondaryMethodCode) : '');
+
+        $primaryOptions = $parentMethods->reject(fn ($pm) => $secondaryMethodCode && $pm->code === $secondaryMethodCode);
+        $secondaryOptions = $parentMethods->reject(fn ($pm) => $pm->code === $primaryMethodCode);
+    @endphp
+
+    <!-- Payment Method Selection (Single-select Primary + Optional 2nd Method Button) -->
+    <div class="mb-6 space-y-3">
+        <!-- Slot 1: Metode Pembayaran Utama -->
+        <div x-data="{ open: false }" @click.outside="open = false">
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                {{ $secondaryMethodCode ? 'Metode Pembayaran 1' : 'Metode Pembayaran' }}
+            </label>
+            
+            <div class="relative">
+                <button
+                    type="button"
+                    @click="open = !open"
+                    class="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 transition-all text-left cursor-pointer select-none"
+                >
+                    <span class="inline-flex items-center gap-2 font-bold text-sm text-slate-800 dark:text-slate-100">
+                        <span class="w-2 h-2 rounded-full bg-primary dark:bg-blue-400"></span>
+                        <span>{{ $primaryMethodLabel }}</span>
+                    </span>
+                    <i class="ph-bold ph-caret-down text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                </button>
+
+                <div
+                    x-show="open"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                    x-transition:leave-end="opacity-0 -translate-y-1 scale-95"
+                    class="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-slate-950/80 max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800"
+                    style="display: none;"
+                >
+                    @foreach ($primaryOptions as $pm)
+                        @php
+                            $iconClass = 'ph-credit-card';
+                            $bgClass = 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-455';
+                            if ($pm->code === 'cash') {
+                                $iconClass = 'ph-money';
+                                $bgClass = 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450';
+                            } elseif ($pm->code === 'credit') {
+                                $iconClass = 'ph-hand-coins';
+                                $bgClass = 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-455';
+                            }
+                        @endphp
+
+                        <button
+                            type="button"
+                            wire:key="primary-pm-{{ $pm->code }}"
+                            wire:click="selectPrimaryPaymentMethod('{{ $pm->code }}')"
+                            @click="open = false"
+                            class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                        >
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 {{ $bgClass }} rounded-lg flex items-center justify-center">
+                                    <i class="ph-bold {{ $iconClass }} text-base"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">{{ $pm->name }}</span>
+                                    @if (isset($pm->children) && count($pm->children) > 0)
+                                        <span class="text-[10px] text-slate-400 font-medium">Sub-metode: {{ $pm->children->pluck('name')->implode(', ') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            @if ($pm->code === $primaryMethodCode)
+                                <i class="ph-bold ph-check text-primary dark:text-blue-400 text-sm"></i>
+                            @endif
+                        </button>
+                    @endforeach
                 </div>
-                <i class="ph-bold ph-caret-down text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
-            </div>
-
-            <!-- Dropdown Options List (Only Parent Payment Methods) -->
-            <div 
-                x-show="open" 
-                x-transition:enter="transition ease-out duration-150"
-                x-transition:enter-start="opacity-0 -translate-y-1 scale-95"
-                x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                x-transition:leave="transition ease-in duration-100"
-                x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                x-transition:leave-end="opacity-0 -translate-y-1 scale-95"
-                class="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-slate-950/80 max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800"
-                style="display: none;"
-            >
-                @foreach ($parentMethods as $pm)
-                    @php
-                        $iconClass = 'ph-credit-card';
-                        $bgClass = 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-455';
-                        if ($pm->code === 'cash') {
-                            $iconClass = 'ph-money';
-                            $bgClass = 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450';
-                        } elseif ($pm->code === 'credit') {
-                            $iconClass = 'ph-hand-coins';
-                            $bgClass = 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-455';
-                        }
-                    @endphp
-
-                    <button 
-                        type="button" 
-                        wire:key="dropdown-pm-{{ $pm->code }}"
-                        wire:click="togglePaymentMethod('{{ $pm->code }}')" 
-                        class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
-                    >
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 {{ $bgClass }} rounded-lg flex items-center justify-center">
-                                <i class="ph-bold {{ $iconClass }} text-base"></i>
-                            </div>
-                            <div class="flex flex-col">
-                                <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">{{ $pm->name }}</span>
-                                @if (isset($pm->children) && count($pm->children) > 0)
-                                    <span class="text-[10px] text-slate-400 font-medium">Sub-metode: {{ $pm->children->pluck('name')->implode(', ') }}</span>
-                                @endif
-                            </div>
-                        </div>
-                        @if (in_array($pm->code, $selectedPaymentMethods))
-                            <i class="ph-bold ph-check text-primary dark:text-blue-400 text-sm"></i>
-                        @endif
-                    </button>
-                @endforeach
             </div>
         </div>
+
+        <!-- Slot 2: Metode Pembayaran Kedua (atau Tombol Tambah) -->
+        @if ($secondaryMethodCode)
+            <div wire:key="secondary-payment-slot-{{ $secondaryMethodCode }}">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Metode Pembayaran 2
+                    </label>
+                    <button
+                        type="button"
+                        wire:key="btn-remove-secondary-{{ $secondaryMethodCode }}"
+                        wire:click="removeSecondaryPaymentMethod('{{ $secondaryMethodCode }}')"
+                        class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors cursor-pointer"
+                    >
+                        <i class="ph-bold ph-trash text-xs"></i>
+                        <span>Hapus Metode 2</span>
+                    </button>
+                </div>
+
+                <div class="relative" x-data="{ open2: false }" @click.outside="open2 = false">
+                    <button
+                        type="button"
+                        @click="open2 = !open2"
+                        class="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 transition-all text-left cursor-pointer select-none"
+                    >
+                        <span class="inline-flex items-center gap-2 font-bold text-sm text-slate-800 dark:text-slate-100">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>{{ $secondaryMethodLabel }}</span>
+                        </span>
+                        <i class="ph-bold ph-caret-down text-slate-400 transition-transform duration-200" :class="open2 ? 'rotate-180' : ''"></i>
+                    </button>
+
+                    <div
+                        x-show="open2"
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 -translate-y-1 scale-95"
+                        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                        x-transition:leave="transition ease-in duration-100"
+                        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                        x-transition:leave-end="opacity-0 -translate-y-1 scale-95"
+                        class="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-slate-950/80 max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800"
+                        style="display: none;"
+                    >
+                        @foreach ($secondaryOptions as $pm)
+                            @php
+                                $iconClass = 'ph-credit-card';
+                                $bgClass = 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-455';
+                                if ($pm->code === 'cash') {
+                                    $iconClass = 'ph-money';
+                                    $bgClass = 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450';
+                                } elseif ($pm->code === 'credit') {
+                                    $iconClass = 'ph-hand-coins';
+                                    $bgClass = 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-455';
+                                }
+                            @endphp
+
+                            <button
+                                type="button"
+                                wire:key="secondary-pm-{{ $pm->code }}"
+                                wire:click="selectSecondaryPaymentMethod('{{ $pm->code }}')"
+                                @click="open2 = false"
+                                class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                            >
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 {{ $bgClass }} rounded-lg flex items-center justify-center">
+                                        <i class="ph-bold {{ $iconClass }} text-base"></i>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-semibold text-slate-750 dark:text-slate-300">{{ $pm->name }}</span>
+                                        @if (isset($pm->children) && count($pm->children) > 0)
+                                            <span class="text-[10px] text-slate-400 font-medium">Sub-metode: {{ $pm->children->pluck('name')->implode(', ') }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @if ($pm->code === $secondaryMethodCode)
+                                    <i class="ph-bold ph-check text-primary dark:text-blue-400 text-sm"></i>
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @elseif ($parentMethods->count() > 1)
+            <div wire:key="add-secondary-payment-wrapper">
+                <button
+                    type="button"
+                    wire:key="btn-add-secondary-payment"
+                    wire:click="addSecondaryPaymentMethod"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-xs font-bold text-primary dark:text-blue-400 hover:bg-primary/5 dark:hover:bg-blue-950/30 hover:border-primary/50 transition-all cursor-pointer"
+                >
+                    <i class="ph-bold ph-plus-circle text-sm"></i>
+                    <span>Tambah Pembayaran Lainnya</span>
+                </button>
+            </div>
+        @endif
     </div>
 
     <!-- Payment Inputs -->
     <div class="space-y-4 mb-6">
-        @foreach ($selectedPaymentMethods as $method)
-            @if (str_contains(strtolower($method), 'voucher'))
-                @continue
-            @endif
-            
+        @foreach ($nonVoucherSelected as $method)
             @php
                 $dbMethod = $parentMethods->firstWhere('code', $method) ?? $flatMethods->firstWhere('code', $method);
                 $methodName = $dbMethod ? $dbMethod->name : ucfirst($method);
@@ -190,14 +296,7 @@
                             }
                             $remaining = max(0, (int)$grandTotal - $otherSum);
                         @endphp
-                        <button type="button" 
-                                @if ($method === 'cash')
-                                    onclick="@this.set('amountCash', {{ $remaining }})"
-                                @elseif ($method === 'debit')
-                                    onclick="@this.set('amountDebit', {{ $remaining }})"
-                                @elseif ($method === 'credit')
-                                    onclick="@this.set('amountCredit', {{ $remaining }})"
-                                @endif
+                        <button type="button"
                                 wire:click="$set('paymentAmounts.{{ $method }}', {{ $remaining }})"
                                 class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors uppercase tracking-wider cursor-pointer"
                         >
@@ -258,7 +357,6 @@
                             wire:keyup="distributePaymentAmounts" 
                             class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-base focus:ring-2 focus:ring-primary-light dark:focus:ring-blue-955 text-slate-850 dark:text-slate-100" 
                             placeholder="0" />
-                    </div>
                     </div>
                 @else
                     @php
