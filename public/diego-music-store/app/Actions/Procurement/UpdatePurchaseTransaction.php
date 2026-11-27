@@ -2,15 +2,17 @@
 
 namespace App\Actions\Procurement;
 
+use App\Helpers\PermissionHelper;
 use App\Models\PurchaseTransaction;
 use App\Models\PurchaseTransactionDetail;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class UpdatePurchaseTransaction
 {
     /**
-     * Execute the action to update a Purchase Transaction.
+     * Execute the action to update a Purchase Transaction (draft or posted).
      *
      * @param  PurchaseTransaction  $pt
      * @param  array<string, mixed>  $data
@@ -24,9 +26,21 @@ class UpdatePurchaseTransaction
             $itemDiscTypeGlobal = $data['item_discount_type'] ?? 'fixed';
             $globalTaxRate = $enableTax ? intval($data['tax_rate'] ?? 0) : 0;
 
-            // Guard clause to prevent editing posted/cancelled transactions
-            if ($pt->status !== 'draft') {
-                throw new InvalidArgumentException('Transaksi Pembelian yang sudah diposting atau dibatalkan tidak dapat diubah.');
+            if ($pt->status === 'cancelled') {
+                throw new InvalidArgumentException('Transaksi Pembelian yang sudah dibatalkan tidak dapat diubah.');
+            }
+
+            $wasPosted = $pt->status === 'posted';
+            $oldPoId = $pt->po_id;
+
+            if ($wasPosted) {
+                if (Auth::check()) {
+                    PermissionHelper::enforceActionPermission(Auth::user(), 'bo.purchase_transactions.edit_posted');
+                }
+
+                app(RevertPurchaseTransactionPosting::class)->execute($pt);
+            } elseif (Auth::check()) {
+                PermissionHelper::enforceActionPermission(Auth::user(), 'bo.purchase_transactions.edit');
             }
 
             // 1. Update header details
@@ -123,12 +137,19 @@ class UpdatePurchaseTransaction
                 'grand_total' => $grandTotal,
             ]);
 
-            // 4. Trigger posting if status transitioned to posted
-            if (($data['status'] ?? 'draft') === 'posted') {
+            // 4. Trigger posting if transaction was posted or status transitioned to posted
+            $shouldPost = $wasPosted || (($data['status'] ?? 'draft') === 'posted');
+            if ($shouldPost) {
+                $pt->refresh();
+                $pt->load(['details.unit', 'details.productVariant.product', 'supplier', 'purchaseOrder.items.unit']);
                 app(PostPurchaseTransaction::class)->execute($pt);
             }
 
-            return $pt;
+            if ($wasPosted && $oldPoId) {
+                app(RevertPurchaseTransactionPosting::class)->syncPurchaseOrderStatus($oldPoId);
+            }
+
+            return $pt->fresh();
         });
     }
 }

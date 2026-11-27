@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PurchaseTransactions\Pages;
 
 use App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource;
+use App\Actions\Procurement\DeletePurchaseTransaction;
 use App\Actions\Procurement\UpdatePurchaseTransaction as UpdateAction;
 use App\Actions\Procurement\PostPurchaseTransaction;
 use Filament\Resources\Pages\EditRecord;
@@ -31,7 +32,26 @@ class EditPurchaseTransaction extends EditRecord
                     $this->redirect($this->getResource()::getUrl('index'));
                 }),
             DeleteAction::make()
-                ->visible(fn () => $this->record->status === 'draft' && PurchaseTransactionResource::canDelete($this->record)),
+                ->visible(fn () => in_array($this->record->status, ['draft', 'posted'], true) && PurchaseTransactionResource::canDelete($this->record))
+                ->modalDescription(fn () => $this->record->status === 'posted'
+                    ? 'Transaksi ini sudah berstatus Posted. Menghapusnya akan otomatis membatalkan (rollback) stok masuk, jurnal akuntansi, dan hutang supplier terkait. Lanjutkan?'
+                    : null)
+                ->using(function (Model $record): bool {
+                    abort_unless(PurchaseTransactionResource::canDelete($record), 403);
+                    try {
+                        app(DeletePurchaseTransaction::class)->execute($record);
+
+                        return true;
+                    } catch (\InvalidArgumentException|\RuntimeException $e) {
+                        Notification::make()
+                            ->title('Tidak dapat menghapus transaksi')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+
+                        throw new Halt();
+                    }
+                }),
         ];
     }
 
@@ -78,7 +98,7 @@ class EditPurchaseTransaction extends EditRecord
      */
     protected function getFormActions(): array
     {
-        if ($this->record->status !== 'draft') {
+        if (! in_array($this->record->status, ['draft', 'posted'], true) || ! PurchaseTransactionResource::canEdit($this->record)) {
             return [];
         }
 

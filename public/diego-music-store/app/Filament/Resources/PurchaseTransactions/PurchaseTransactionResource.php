@@ -10,10 +10,12 @@ use App\Filament\Resources\PurchaseTransactions\Tables\PurchaseTransactionsTable
 use App\Models\PurchaseTransaction;
 use BackedEnum;
 use App\Filament\Concerns\HasResourcePermissions;
+use App\Helpers\PermissionHelper;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class PurchaseTransactionResource extends Resource
 {
@@ -70,5 +72,47 @@ class PurchaseTransactionResource extends Resource
     {
         return parent::getEloquentQuery()
             ->where('branch_id', \App\Helpers\BranchHelper::getActiveBranchId());
+    }
+
+    public static function canEditPosted(): bool
+    {
+        return PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.purchase_transactions.edit_posted');
+    }
+
+    public static function canDeletePosted(): bool
+    {
+        return PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.purchase_transactions.delete_posted');
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        if ($record->status === 'posted') {
+            return static::canEditPosted();
+        }
+
+        if ($record->status === 'draft') {
+            return PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.purchase_transactions.edit');
+        }
+
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if ($record->status === 'posted') {
+            return static::canDeletePosted();
+        }
+
+        if ($record->status === 'draft') {
+            return PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.purchase_transactions.delete');
+        }
+
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return PermissionHelper::canAccessBackofficeFeature(auth()->user(), 'bo.purchase_transactions.delete')
+            || static::canDeletePosted();
     }
 }

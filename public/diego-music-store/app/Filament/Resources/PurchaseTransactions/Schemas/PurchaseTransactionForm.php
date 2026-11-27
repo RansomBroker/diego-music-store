@@ -577,14 +577,92 @@ class PurchaseTransactionForm
                                                 \Filament\Actions\Action::make('view_pricing_tiers')
                                                     ->icon('heroicon-m-information-circle')
                                                     ->color('info')
-                                                    ->tooltip('Lihat Perbandingan Tiers Harga')
-                                                    ->modalHeading('Detail Perbandingan & Pricing Tiers')
-                                                    ->modalSubmitAction(false)
+                                                    ->tooltip('Lihat & Update Harga Pricing Tiers')
+                                                    ->modalHeading('Detail Perbandingan & Update Pricing Tiers')
+                                                    ->modalWidth('3xl')
+                                                    ->modalSubmitActionLabel('Simpan Harga Tier')
                                                     ->modalCancelActionLabel('Tutup')
+                                                    ->modalSubmitAction(fn ($get) => empty($get('product_variant_id')) ? false : null)
                                                     ->modalContent(fn ($get) => view('backoffice.purchase-transactions.pricing-tiers-comparison', [
                                                         'variantId' => $get('product_variant_id'),
                                                         'newPrice' => intval($get('price') ?? 0),
                                                     ]))
+                                                    ->fillForm(function ($get): array {
+                                                        $variantId = $get('product_variant_id');
+                                                        if (empty($variantId)) {
+                                                            return ['tier_prices' => []];
+                                                        }
+
+                                                        $variant = ProductVariant::find($variantId);
+                                                        if (! $variant) {
+                                                            return ['tier_prices' => []];
+                                                        }
+
+                                                        $newBuyPrice = intval($get('price') ?? 0);
+                                                        $tiers = \App\Models\PricingTier::query()
+                                                            ->where('censor_prices', false)
+                                                            ->orderBy('id')
+                                                            ->get();
+
+                                                        $rows = [];
+                                                        foreach ($tiers as $tier) {
+                                                            $currentTierPrice = (int) $variant->priceForTier($tier->id);
+                                                            $suggestedPrice = ($tier->price_follows_hpp && $newBuyPrice > 0)
+                                                                ? $newBuyPrice
+                                                                : $currentTierPrice;
+
+                                                            $rows[] = [
+                                                                'pricing_tier_id' => $tier->id,
+                                                                'tier_name' => $tier->name . ($tier->price_follows_hpp ? ' (Ikut HPP)' : ''),
+                                                                'previous_price_formatted' => FormatHelper::rupiah($currentTierPrice),
+                                                                'new_price' => $suggestedPrice,
+                                                            ];
+                                                        }
+
+                                                        return ['tier_prices' => $rows];
+                                                    })
+                                                    ->form(fn ($get): array => empty($get('product_variant_id')) ? [] : [
+                                                        Repeater::make('tier_prices')
+                                                            ->label('Daftar Harga Pricing Tiers')
+                                                            ->helperText('Pricing tier dengan status sensor harga tidak ditampilkan. Perubahan akan langsung memperbarui master harga tier varian ini.')
+                                                            ->addable(false)
+                                                            ->deletable(false)
+                                                            ->reorderable(false)
+                                                            ->schema([
+                                                                Hidden::make('pricing_tier_id'),
+                                                                Grid::make(3)
+                                                                    ->schema([
+                                                                        TextInput::make('tier_name')
+                                                                            ->label('Pricing Tier')
+                                                                            ->disabled()
+                                                                            ->dehydrated(false),
+                                                                        TextInput::make('previous_price_formatted')
+                                                                            ->label('Harga Sebelumnya')
+                                                                            ->disabled()
+                                                                            ->dehydrated(false),
+                                                                        TextInput::make('new_price')
+                                                                            ->label('Harga Baru')
+                                                                            ->numeric()
+                                                                            ->prefix('Rp')
+                                                                            ->minValue(0)
+                                                                            ->required(),
+                                                                    ]),
+                                                            ]),
+                                                    ])
+                                                    ->action(function (array $data, $get): void {
+                                                        $variantId = $get('product_variant_id');
+                                                        if (empty($variantId)) {
+                                                            return;
+                                                        }
+
+                                                        app(\App\Actions\Product\UpdateProductVariantTierPrices::class)
+                                                            ->execute((int) $variantId, $data['tier_prices'] ?? []);
+
+                                                        \Filament\Notifications\Notification::make()
+                                                            ->title('Harga Pricing Tiers berhasil diperbarui')
+                                                            ->success()
+                                                            ->send();
+                                                    })
                                             ),
 
                                         Toggle::make('update_cost_price')

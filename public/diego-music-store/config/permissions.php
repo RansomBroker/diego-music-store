@@ -549,8 +549,10 @@ return [
                             'permissions' => [
                                 'bo.purchase_transactions.view' => 'Tampil & Lihat',
                                 'bo.purchase_transactions.create' => 'Tambah',
-                                'bo.purchase_transactions.edit' => 'Ubah',
-                                'bo.purchase_transactions.delete' => 'Hapus',
+                                'bo.purchase_transactions.edit' => 'Ubah (Draft)',
+                                'bo.purchase_transactions.delete' => 'Hapus (Draft)',
+                                'bo.purchase_transactions.edit_posted' => 'Ubah Transaksi Posted',
+                                'bo.purchase_transactions.delete_posted' => 'Hapus Transaksi Posted',
                             ],
                         ],
                         'bo_purchase_returns' => [

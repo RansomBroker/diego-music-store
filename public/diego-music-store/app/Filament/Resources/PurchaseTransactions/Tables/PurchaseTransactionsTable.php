@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\PurchaseTransactions\Tables;
 
+use App\Actions\Procurement\DeletePurchaseTransaction;
 use App\Actions\Procurement\PostPurchaseTransaction;
 use App\Actions\Procurement\UpdatePurchaseTransaction as UpdateAction;
+use App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Actions\EditAction;
@@ -15,6 +17,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Notifications\Notification;
 use Filament\Support\Exceptions\Halt;
 use Filament\Support\Enums\Width;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class PurchaseTransactionsTable
@@ -85,7 +88,7 @@ class PurchaseTransactionsTable
             ->actions([
                 EditAction::make()
                     ->modalWidth('7xl')
-                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource::canEdit($record))
+                    ->visible(fn ($record) => in_array($record->status, ['draft', 'posted'], true) && PurchaseTransactionResource::canEdit($record))
                     ->mutateRecordDataUsing(function (Model $record, array $data): array {
                         $data['discount_type'] = $record->discount_type ?? 'fixed';
                         $data['discount_value'] = $record->discount_value ?? 0;
@@ -107,9 +110,10 @@ class PurchaseTransactionsTable
                         return $data;
                     })
                     ->using(function (Model $record, array $data): Model {
+                        abort_unless(PurchaseTransactionResource::canEdit($record), 403);
                         try {
                             return app(UpdateAction::class)->execute($record, $data);
-                        } catch (\InvalidArgumentException $e) {
+                        } catch (\InvalidArgumentException|\RuntimeException $e) {
                             Notification::make()
                                 ->title('Tidak dapat menyimpan perubahan')
                                 ->body($e->getMessage())
@@ -145,16 +149,35 @@ class PurchaseTransactionsTable
                     }),
 
                 DeleteAction::make()
-                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource::canDelete($record)),
+                    ->visible(fn ($record) => in_array($record->status, ['draft', 'posted'], true) && PurchaseTransactionResource::canDelete($record))
+                    ->modalDescription(fn ($record) => $record->status === 'posted'
+                        ? 'Transaksi ini sudah berstatus Posted. Menghapusnya akan otomatis membatalkan (rollback) stok masuk, jurnal akuntansi, dan hutang supplier terkait. Lanjutkan?'
+                        : null)
+                    ->using(function (Model $record): bool {
+                        abort_unless(PurchaseTransactionResource::canDelete($record), 403);
+                        try {
+                            app(DeletePurchaseTransaction::class)->execute($record);
+
+                            return true;
+                        } catch (\InvalidArgumentException|\RuntimeException $e) {
+                            Notification::make()
+                                ->title('Tidak dapat menghapus transaksi')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+
+                            throw new Halt();
+                        }
+                    }),
 
                 Action::make('post')
                     ->label('Post')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->status === 'draft' && \App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource::canEdit($record))
+                    ->visible(fn ($record) => $record->status === 'draft' && PurchaseTransactionResource::canEdit($record))
                     ->action(function ($record) {
-                        abort_unless(\App\Filament\Resources\PurchaseTransactions\PurchaseTransactionResource::canEdit($record), 403);
+                        abort_unless(PurchaseTransactionResource::canEdit($record), 403);
                         app(PostPurchaseTransaction::class)->execute($record);
                     }),
 
@@ -167,7 +190,32 @@ class PurchaseTransactionsTable
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->action(function (Collection $records): void {
+                            $deleteAction = app(DeletePurchaseTransaction::class);
+                            $failedMessages = [];
+
+                            foreach ($records as $record) {
+                                if (! PurchaseTransactionResource::canDelete($record)) {
+                                    $failedMessages[] = "{$record->transaction_no}: tidak memiliki izin hapus.";
+                                    continue;
+                                }
+
+                                try {
+                                    $deleteAction->execute($record);
+                                } catch (\InvalidArgumentException|\RuntimeException $e) {
+                                    $failedMessages[] = "{$record->transaction_no}: {$e->getMessage()}";
+                                }
+                            }
+
+                            if (! empty($failedMessages)) {
+                                Notification::make()
+                                    ->title('Sebagian transaksi gagal dihapus')
+                                    ->body(implode(' ', $failedMessages))
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
                 ]),
             ]);
     }
