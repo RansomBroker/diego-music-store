@@ -189,9 +189,9 @@ class GetOwnerDashboardData
             $saldoKasLaci += ((float) $session->opening_cash + (float) $cashSales + (float) $cashTotals['cash_in'] - (float) $cashTotals['total_out']);
         }
 
-        // Accounts Payable (Unpaid credit purchases)
+        // Accounts Payable (Unpaid credit & consignment purchases)
         $purchaseQuery = PurchaseTransaction::query()
-            ->where('purchase_type', 'Kredit')
+            ->whereIn('purchase_type', [PurchaseTransaction::TYPE_KREDIT, PurchaseTransaction::TYPE_KONSINYASI])
             ->whereIn('status', ['posted', 'completed', 'approved']);
         if ($branchId) {
             $purchaseQuery->where('branch_id', $branchId);

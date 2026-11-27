@@ -32,9 +32,9 @@ class GenerateAccountsPayableReport
         $branch   = $branchId ? Branch::find($branchId) : null;
         $supplier = $supplierId ? Supplier::find($supplierId) : null;
 
-        $query = PurchaseTransaction::with(['supplier', 'branch', 'supplierPaymentItems.supplierPayment'])
+        $query = PurchaseTransaction::with(['supplier', 'branch', 'supplierPaymentItems.supplierPayment', 'purchaseReturns'])
             ->where('status', 'posted')
-            ->where('purchase_type', 'Kredit')
+            ->whereIn('purchase_type', [PurchaseTransaction::TYPE_KREDIT, PurchaseTransaction::TYPE_KONSINYASI])
             ->whereDate('transaction_date', '<=', $asOfDate);
 
         if ($branchId) {
@@ -81,15 +81,30 @@ class GenerateAccountsPayableReport
 
         foreach ($creditPurchases as $pt) {
             $grand = (float) $pt->grand_total;
+            $downPayment = (float) ($pt->down_payment_amount ?? 0);
 
             // Sum payments made on or before $asOfDate
-            $paid = (float) $pt->supplierPaymentItems
+            $paidPayments = (float) $pt->supplierPaymentItems
                 ->filter(function ($item) use ($asOfDate) {
                     $pay = $item->supplierPayment;
-                    return $pay && $pay->status === 'posted' && $pay->payment_date <= $asOfDate;
+
+                    return $pay
+                        && $pay->status === 'posted'
+                        && $pay->payment_date
+                        && Carbon::parse($pay->payment_date)->format('Y-m-d') <= $asOfDate;
                 })
                 ->sum('amount_paid');
 
+            // Deduct posted purchase returns that reduce payable (invoice_deduction & consignment) on or before $asOfDate
+            $returnedDeductions = (float) $pt->purchaseReturns
+                ->filter(function ($ret) use ($asOfDate) {
+                    return $ret->status === 'posted'
+                        && in_array($ret->return_type, ['invoice_deduction', 'consignment'], true)
+                        && (! $ret->return_date || Carbon::parse($ret->return_date)->format('Y-m-d') <= $asOfDate);
+                })
+                ->sum('total_amount');
+
+            $paid = min($grand, $downPayment + $paidPayments + $returnedDeductions);
             $unpaid = max(0, $grand - $paid);
 
             // Skip if fully paid on or before $asOfDate
@@ -97,10 +112,17 @@ class GenerateAccountsPayableReport
                 continue;
             }
 
-            // Calculate overdue days
-            $dueDate = $pt->due_date ? Carbon::parse($pt->due_date)->startOfDay() : Carbon::parse($pt->transaction_date)->startOfDay();
-            $isOverdue = $asOfCarbon->greaterThan($dueDate);
-            $overdueDays = $isOverdue ? (int) $dueDate->diffInDays($asOfCarbon) : 0;
+            // Calculate overdue days (Konsinyasi tanpa jatuh tempo tidak dihitung overdue)
+            if ($pt->isConsignment() && ! $pt->due_date) {
+                $dueDateFormatted = '-';
+                $isOverdue = false;
+                $overdueDays = 0;
+            } else {
+                $dueDate = $pt->due_date ? Carbon::parse($pt->due_date)->startOfDay() : Carbon::parse($pt->transaction_date)->startOfDay();
+                $dueDateFormatted = $dueDate->format('Y-m-d');
+                $isOverdue = $asOfCarbon->greaterThan($dueDate);
+                $overdueDays = $isOverdue ? (int) $dueDate->diffInDays($asOfCarbon) : 0;
+            }
 
             // Apply overdue filter
             if ($overdueFilter === 'current' && $isOverdue) {
@@ -141,8 +163,9 @@ class GenerateAccountsPayableReport
                 'id'             => $pt->id,
                 'transaction_no' => $pt->transaction_no,
                 'invoice_number' => $pt->invoice_number ?: '-',
+                'purchase_type'  => $pt->purchase_type,
                 'date'           => Carbon::parse($pt->transaction_date)->format('Y-m-d'),
-                'due_date'       => $dueDate->format('Y-m-d'),
+                'due_date'       => $dueDateFormatted,
                 'supplier_id'    => $pt->supplier_id,
                 'supplier_name'  => $pt->supplier?->name ?? 'Umum',
                 'supplier_phone' => $pt->supplier?->phone ?? '-',
