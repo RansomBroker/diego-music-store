@@ -97,12 +97,20 @@
         </thead>
         <tbody>
             @forelse ($reportData['transactions'] ?? [] as $idx => $tx)
+                @php
+                    $isInflow = in_array($tx->type, ['in', 'inflow', 'cash_in'], true);
+                    $isTransfer = $tx->type === 'transfer';
+                    $typeLabel = $isInflow ? 'KAS MASUK' : ($isTransfer ? 'SETOR KAS' : 'KAS KELUAR');
+                    $categoryLabel = $isInflow
+                        ? ($tx->sourceAccount?->name ?? $tx->transaction_no ?? '-')
+                        : ($tx->destinationAccount?->name ?? $tx->transaction_no ?? '-');
+                @endphp
                 <tr>
                     <td class="text-center">{{ $idx + 1 }}</td>
-                    <td class="">{{ $tx->created_at->format('d/m/Y H:i') }}</td>
+                    <td class="">{{ ($tx->transaction_date ?? $tx->created_at)?->format('d/m/Y') }} {{ $tx->created_at?->format('H:i') }}</td>
                     <td>{{ $tx->creator?->name ?? $tx->user?->name ?? '-' }}</td>
-                    <td style="font-weight: bold;">{{ $tx->category }}</td>
-                    <td class="text-center font-bold">{{ strtoupper($tx->type) }}</td>
+                    <td style="font-weight: bold;">{{ $categoryLabel }}</td>
+                    <td class="text-center font-bold">{{ $typeLabel }}</td>
                     <td class="text-right  font-bold">Rp {{ number_format($tx->amount, 0, ',', '.') }}</td>
                     <td>{{ $tx->notes ?: '-' }}</td>
                 </tr>

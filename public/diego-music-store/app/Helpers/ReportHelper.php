@@ -301,22 +301,46 @@ class ReportHelper
      */
     public static function getDailyCashReport(?string $dateFrom, ?string $dateTo, ?int $branchId = null): array
     {
-        $query = CashTransaction::with(['creator', 'user', 'cashSession.branch']);
+        $query = CashTransaction::with(['creator', 'user', 'cashSession.branch', 'sourceAccount', 'destinationAccount'])
+            ->where(function ($q) {
+                $q->where('status', 'posted')->orWhereNull('status');
+            });
 
         if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
+            $query->where(function ($q) use ($dateFrom) {
+                $q->whereDate('transaction_date', '>=', $dateFrom)
+                    ->orWhere(function ($sub) use ($dateFrom) {
+                        $sub->whereNull('transaction_date')
+                            ->whereDate('created_at', '>=', $dateFrom);
+                    });
+            });
         }
         if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->where(function ($q) use ($dateTo) {
+                $q->whereDate('transaction_date', '<=', $dateTo)
+                    ->orWhere(function ($sub) use ($dateTo) {
+                        $sub->whereNull('transaction_date')
+                            ->whereDate('created_at', '<=', $dateTo);
+                    });
+            });
         }
         if ($branchId) {
-            $query->whereHas('cashSession', fn($sq) => $sq->where('branch_id', $branchId));
+            $query->where(function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId)
+                    ->orWhereHas('cashSession', fn ($sq) => $sq->where('branch_id', $branchId));
+            });
         }
 
-        $transactions = $query->latest('created_at')->get();
+        $transactions = $query
+            ->orderByDesc('transaction_date')
+            ->orderByDesc('created_at')
+            ->get();
 
-        $totalInflow = $transactions->where('type', 'inflow')->sum('amount');
-        $totalOutflow = $transactions->where('type', 'outflow')->sum('amount');
+        $inTypes = ['in', 'inflow', 'cash_in'];
+        $outTypes = ['out', 'outflow', 'cash_out', 'expense', 'transfer'];
+
+        $totalInflow = (float) $transactions->whereIn('type', $inTypes)->sum('amount');
+        $totalOutflow = (float) $transactions->whereIn('type', $outTypes)->sum('amount');
         $netCashFlow = $totalInflow - $totalOutflow;
 
         return [

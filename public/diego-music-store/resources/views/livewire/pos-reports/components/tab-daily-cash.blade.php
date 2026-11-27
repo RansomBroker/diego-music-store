@@ -39,16 +39,34 @@
                         $displayTx = $reportData['paginated_transactions'] ?? ($reportData['transactions'] ?? []);
                     @endphp
                     @forelse ($displayTx as $tx)
+                        @php
+                            $isInflow = in_array($tx->type, ['in', 'inflow', 'cash_in'], true);
+                            $isTransfer = $tx->type === 'transfer';
+                            $typeLabel = $isInflow ? 'Kas Masuk' : ($isTransfer ? 'Setor Kas' : 'Kas Keluar');
+                            $badgeClass = $isInflow
+                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                                : ($isTransfer
+                                    ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
+                                    : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400');
+                            $amountClass = $isInflow
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : ($isTransfer
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : 'text-rose-600 dark:text-rose-400');
+                            $categoryLabel = $isInflow
+                                ? ($tx->sourceAccount?->name ?? $tx->transaction_no ?? '-')
+                                : ($tx->destinationAccount?->name ?? $tx->transaction_no ?? '-');
+                        @endphp
                         <x-pos.table.tr>
-                            <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300 ">{{ $tx->created_at->format('d/m/Y H:i') }}</x-pos.table.td>
+                            <x-pos.table.td class="text-xs text-slate-600 dark:text-slate-300 ">{{ ($tx->transaction_date ?? $tx->created_at)?->format('d/m/Y') }} {{ $tx->created_at?->format('H:i') }}</x-pos.table.td>
                             <x-pos.table.td class="text-xs font-bold text-slate-900 dark:text-white">{{ $tx->creator?->name ?? $tx->user?->name ?? '-' }}</x-pos.table.td>
-                            <x-pos.table.td class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ $tx->category }}</x-pos.table.td>
+                            <x-pos.table.td class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ $categoryLabel }}</x-pos.table.td>
                             <x-pos.table.td class="text-center">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {{ $tx->type === 'inflow' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40' }}">
-                                    {{ $tx->type }}
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {{ $badgeClass }}">
+                                    {{ $typeLabel }}
                                 </span>
                             </x-pos.table.td>
-                            <x-pos.table.td class="text-right font-bold text-xs {{ $tx->type === 'inflow' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                            <x-pos.table.td class="text-right font-bold text-xs {{ $amountClass }}">
                                 Rp {{ number_format($tx->amount, 0, ',', '.') }}
                             </x-pos.table.td>
                             <x-pos.table.td class="text-xs text-slate-500 italic">{{ $tx->notes ?: '-' }}</x-pos.table.td>

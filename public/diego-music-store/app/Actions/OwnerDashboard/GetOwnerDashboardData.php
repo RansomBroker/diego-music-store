@@ -133,25 +133,46 @@ class GetOwnerDashboardData
 
         // Total Expenses (Periode Filter)
         $expenseQuery = CashTransaction::query()
-            ->whereIn('type', ['out', 'cash_out', 'expense'])
+            ->whereIn('type', ['out', 'outflow', 'cash_out', 'expense'])
             ->where(function ($q) {
                 $q->where('status', 'posted')->orWhereNull('status');
             })
-            ->whereBetween('transaction_date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')]);
+            ->where(function ($q) use ($dateFrom, $dateTo) {
+                $q->where(function ($sub) use ($dateFrom, $dateTo) {
+                    $sub->whereDate('transaction_date', '>=', $dateFrom->format('Y-m-d'))
+                        ->whereDate('transaction_date', '<=', $dateTo->format('Y-m-d'));
+                })->orWhere(function ($sub) use ($dateFrom, $dateTo) {
+                    $sub->whereNull('transaction_date')
+                        ->whereDate('created_at', '>=', $dateFrom->format('Y-m-d'))
+                        ->whereDate('created_at', '<=', $dateTo->format('Y-m-d'));
+                });
+            });
         if ($branchId) {
-            $expenseQuery->where('branch_id', $branchId);
+            $expenseQuery->where(function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId)
+                    ->orWhereHas('cashSession', fn ($sq) => $sq->where('branch_id', $branchId));
+            });
         }
         $totalExpenses = (float) $expenseQuery->sum('amount');
 
         // Total Pengeluaran Harian (Hari Ini)
         $dailyExpenseQuery = CashTransaction::query()
-            ->whereIn('type', ['out', 'cash_out', 'expense'])
+            ->whereIn('type', ['out', 'outflow', 'cash_out', 'expense'])
             ->where(function ($q) {
                 $q->where('status', 'posted')->orWhereNull('status');
             })
-            ->whereDate('transaction_date', $today);
+            ->where(function ($q) use ($today) {
+                $q->whereDate('transaction_date', $today)
+                    ->orWhere(function ($sub) use ($today) {
+                        $sub->whereNull('transaction_date')
+                            ->whereDate('created_at', $today);
+                    });
+            });
         if ($branchId) {
-            $dailyExpenseQuery->where('branch_id', $branchId);
+            $dailyExpenseQuery->where(function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId)
+                    ->orWhereHas('cashSession', fn ($sq) => $sq->where('branch_id', $branchId));
+            });
         }
         $totalPengeluaranHarian = (float) $dailyExpenseQuery->sum('amount');
 
