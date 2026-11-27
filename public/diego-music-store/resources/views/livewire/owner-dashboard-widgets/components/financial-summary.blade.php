@@ -64,3 +64,58 @@
         </div>
     </div>
 </div>
+
+<!-- 1B. RINGKASAN HARIAN & SALDO KAS LACI TERKINI -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <!-- Total Penjualan Harian -->
+    <div class="bg-slate-50 dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 hover:border-emerald-500/50 transition">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-bold">
+            <span>Total Penjualan Harian</span>
+            <div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <i class="ph-bold ph-calendar-check text-lg"></i>
+            </div>
+        </div>
+        <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
+            Rp {{ number_format($financialSummary['total_penjualan_harian'] ?? 0, 0, ',', '.') }}
+        </div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            Penjualan selesai hari ini ({{ now()->format('d M Y') }})
+        </div>
+    </div>
+
+    <!-- Total Pengeluaran Harian -->
+    <div class="bg-slate-50 dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 hover:border-rose-500/50 transition">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-bold">
+            <span>Total Pengeluaran Harian</span>
+            <div class="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                <i class="ph-bold ph-arrow-circle-up-right text-lg"></i>
+            </div>
+        </div>
+        <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-2">
+            Rp {{ number_format($financialSummary['total_pengeluaran_harian'] ?? 0, 0, ',', '.') }}
+        </div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            Kas keluar &amp; beban hari ini ({{ now()->format('d M Y') }})
+        </div>
+    </div>
+
+    <!-- Saldo Kas Laci Terkini -->
+    <div class="bg-slate-50 dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 hover:border-indigo-500/50 transition">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-bold">
+            <span>Saldo Kas Laci Terkini</span>
+            <div class="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                <i class="ph-bold ph-cash-register text-lg"></i>
+            </div>
+        </div>
+        <div class="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-2">
+            Rp {{ number_format($financialSummary['saldo_kas_laci'] ?? 0, 0, ',', '.') }}
+        </div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            @if (($financialSummary['active_cash_sessions_count'] ?? 0) > 0)
+                Dari {{ $financialSummary['active_cash_sessions_count'] }} sesi kasir aktif
+            @else
+                Belum ada sesi kasir aktif
+            @endif
+        </div>
+    </div>
+</div>

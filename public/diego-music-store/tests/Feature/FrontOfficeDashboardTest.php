@@ -189,7 +189,7 @@ class FrontOfficeDashboardTest extends TestCase
         $staffResponse = $this->actingAs($staff)->get(route('pos.front-office'));
         $staffResponse->assertStatus(200);
         $staffResponse->assertSee('Clock In (Masuk)');
-        $staffResponse->assertDontSee('Analisis Performansi &amp; Keuangan Bisnis', false);
+        $staffResponse->assertDontSee('Analisis Performa &amp; Keuangan Bisnis', false);
         $staffResponse->assertDontSee('Performa Sales & Indikator Target', false);
 
         $owner = User::factory()->create(['is_active' => true]);
@@ -198,7 +198,7 @@ class FrontOfficeDashboardTest extends TestCase
 
         $ownerResponse = $this->actingAs($owner)->get(route('pos.front-office'));
         $ownerResponse->assertStatus(200);
-        $ownerResponse->assertSee('Analisis Performansi &amp; Keuangan Bisnis', false);
+        $ownerResponse->assertSee('Analisis Performa &amp; Keuangan Bisnis', false);
         $ownerResponse->assertSee('Performa Sales & Indikator Target', false);
     }
 }

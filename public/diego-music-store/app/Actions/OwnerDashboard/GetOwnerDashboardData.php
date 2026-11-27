@@ -2,9 +2,12 @@
 
 namespace App\Actions\OwnerDashboard;
 
+use App\Helpers\CashSessionHelper;
 use App\Helpers\OwnerDashboardHelper;
+use App\Helpers\SaleHelper;
 use App\Models\Account;
 use App\Models\Branch;
+use App\Models\CashSession;
 use App\Models\CashTransaction;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
@@ -49,7 +52,7 @@ class GetOwnerDashboardData
         $sales = $salesQuery->with(['items.variant.product', 'customer', 'branch', 'salesRep'])->get();
 
         // 1. Ringkasan Keuangan
-        $financialSummary = $this->getFinancialSummary($sales, $dateFrom, $dateTo, $branchId);
+        $financialSummary = $this->getFinancialSummary($sales, $dateFrom, $dateTo, $branchId, $productCategory, $saleCategory);
 
         // 2. Grafik Penjualan dan Pembelian
         $salesVsPurchasesChart = $this->getSalesVsPurchasesChart($dateFrom, $dateTo, $branchId);
@@ -102,18 +105,68 @@ class GetOwnerDashboardData
     /**
      * 1. Calculate Financial Summary totals.
      */
-    private function getFinancialSummary($sales, Carbon $dateFrom, Carbon $dateTo, ?int $branchId): array
-    {
+    private function getFinancialSummary(
+        $sales,
+        Carbon $dateFrom,
+        Carbon $dateTo,
+        ?int $branchId,
+        ?string $productCategory = null,
+        ?string $saleCategory = null
+    ): array {
         $totalSales = (float) $sales->sum('grand_total');
+        $today = now()->toDateString();
 
-        // Total Expenses
+        // Total Penjualan Harian (Hari Ini)
+        $dailySalesQuery = Sale::query()
+            ->where('status', 'completed')
+            ->whereDate('invoice_date', $today);
+        if ($branchId) {
+            $dailySalesQuery->where('branch_id', $branchId);
+        }
+        if ($saleCategory) {
+            $dailySalesQuery->where('sale_category', $saleCategory);
+        }
+        if ($productCategory) {
+            $dailySalesQuery->whereHas('items.variant.product', fn ($q) => $q->where('category', $productCategory));
+        }
+        $totalPenjualanHarian = (float) $dailySalesQuery->sum('grand_total');
+
+        // Total Expenses (Periode Filter)
         $expenseQuery = CashTransaction::query()
-            ->whereIn('type', ['cash_out', 'expense'])
+            ->whereIn('type', ['out', 'cash_out', 'expense'])
+            ->where(function ($q) {
+                $q->where('status', 'posted')->orWhereNull('status');
+            })
             ->whereBetween('transaction_date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')]);
         if ($branchId) {
             $expenseQuery->where('branch_id', $branchId);
         }
         $totalExpenses = (float) $expenseQuery->sum('amount');
+
+        // Total Pengeluaran Harian (Hari Ini)
+        $dailyExpenseQuery = CashTransaction::query()
+            ->whereIn('type', ['out', 'cash_out', 'expense'])
+            ->where(function ($q) {
+                $q->where('status', 'posted')->orWhereNull('status');
+            })
+            ->whereDate('transaction_date', $today);
+        if ($branchId) {
+            $dailyExpenseQuery->where('branch_id', $branchId);
+        }
+        $totalPengeluaranHarian = (float) $dailyExpenseQuery->sum('amount');
+
+        // Saldo Kas Laci Terkini (Sesi Kasir Aktif)
+        $openSessionsQuery = CashSession::query()->where('status', 'open');
+        if ($branchId) {
+            $openSessionsQuery->where('branch_id', $branchId);
+        }
+        $openSessions = $openSessionsQuery->get();
+        $saldoKasLaci = 0.0;
+        foreach ($openSessions as $session) {
+            $cashSales = SaleHelper::getSessionCashSalesSum($session);
+            $cashTotals = CashSessionHelper::getSessionCashTotals($session);
+            $saldoKasLaci += ((float) $session->opening_cash + (float) $cashSales + (float) $cashTotals['cash_in'] - (float) $cashTotals['total_out']);
+        }
 
         // Accounts Payable (Unpaid credit purchases)
         $purchaseQuery = PurchaseTransaction::query()
@@ -137,11 +190,15 @@ class GetOwnerDashboardData
         }
 
         return [
-            'total_penjualan'   => $totalSales,
-            'total_pengeluaran' => $totalExpenses,
-            'total_hutang'      => $totalHutang,
-            'saldo_kas_bank'    => $saldoKasBank,
-            'laba_kotor_est'    => $this->calculateGrossProfit($sales),
+            'total_penjualan'            => $totalSales,
+            'total_pengeluaran'          => $totalExpenses,
+            'total_hutang'               => $totalHutang,
+            'saldo_kas_bank'             => $saldoKasBank,
+            'laba_kotor_est'             => $this->calculateGrossProfit($sales),
+            'total_penjualan_harian'     => $totalPenjualanHarian,
+            'total_pengeluaran_harian'   => $totalPengeluaranHarian,
+            'saldo_kas_laci'             => $saldoKasLaci,
+            'active_cash_sessions_count' => $openSessions->count(),
         ];
     }
 

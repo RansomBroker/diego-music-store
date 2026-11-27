@@ -2,7 +2,7 @@
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800 pb-6">
     <div>
         <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-            Analisis Performansi &amp; Keuangan Bisnis
+            Analisis Performa &amp; Keuangan Bisnis
         </h2>
         <div class="flex flex-wrap items-center gap-2 mt-2">
             <a href="{{ route('pos.branch-performance') }}" class="px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 text-xs font-bold rounded-xl transition inline-flex items-center gap-1.5 shadow-sm">

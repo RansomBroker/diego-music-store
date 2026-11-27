@@ -24,7 +24,7 @@ class OwnerDashboardWidgetsTest extends TestCase
         $this->actingAs($user);
 
         Livewire::test(OwnerDashboardWidgets::class)
-            ->assertDontSee('Analisis Performansi & Keuangan Bisnis');
+            ->assertDontSee('Analisis Performa & Keuangan Bisnis');
     }
 
     public function test_owner_role_can_view_and_filter_owner_executive_dashboard()
@@ -37,7 +37,10 @@ class OwnerDashboardWidgetsTest extends TestCase
         $this->actingAs($owner);
 
         Livewire::test(OwnerDashboardWidgets::class)
-            ->assertSee('Analisis Performansi & Keuangan Bisnis')
+            ->assertSee('Analisis Performa & Keuangan Bisnis')
+            ->assertSee('Total Penjualan Harian')
+            ->assertSee('Total Pengeluaran Harian')
+            ->assertSee('Saldo Kas Laci Terkini')
             ->set('productCategory', 'Gitar')
             ->assertSet('productCategory', 'Gitar');
     }
