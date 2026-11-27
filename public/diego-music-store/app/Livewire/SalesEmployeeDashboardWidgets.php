@@ -18,6 +18,9 @@ class SalesEmployeeDashboardWidgets extends Component
         $isOwner = PermissionHelper::isOwner($user);
 
         if (! $isOwner) {
+            $this->selectedEmployeeId = $user?->employee?->id
+                ?? ($user ? Employee::where('user_id', $user->id)->value('id') : null);
+
             return;
         }
 
@@ -36,9 +39,22 @@ class SalesEmployeeDashboardWidgets extends Component
         $isOwner = PermissionHelper::isOwner($currentUser);
 
         if (! $isOwner) {
-            return view('livewire.sales-employee-dashboard-widgets', [
-                'isOwner' => false,
-            ]);
+            $ownEmployee = $currentUser?->employee
+                ?: ($currentUser ? Employee::with('user')->where('user_id', $currentUser->id)->first() : null);
+
+            // Kunci ketat ke data karyawan yang sedang login agar tidak bisa melihat performa staf lain
+            $this->selectedEmployeeId = $ownEmployee?->id;
+
+            $dashboardData = $action->execute($currentUser, $ownEmployee?->id);
+
+            return view('livewire.sales-employee-dashboard-widgets', array_merge($dashboardData, [
+                'currentUser'        => $currentUser,
+                'user'               => $currentUser,
+                'isOwner'            => false,
+                'employeesList'      => collect(),
+                'selectedEmployee'   => $ownEmployee,
+                'selectedEmployeeId' => $ownEmployee?->id,
+            ]));
         }
 
         $activeBranchId = \App\Helpers\BranchHelper::getActiveBranchId();

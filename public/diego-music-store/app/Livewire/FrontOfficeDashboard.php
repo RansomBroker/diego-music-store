@@ -41,13 +41,13 @@ class FrontOfficeDashboard extends Component
             ? Storage::url($branch->logo_path)
             : null;
 
-        $isOwner = PermissionHelper::can(Auth::user(), 'fo.dashboard.owner_widgets');
+        $isOwner = PermissionHelper::isOwner(Auth::user());
         $currentUserEmployee = Auth::user()?->employee;
 
         // Load presensi cabang hari ini (khusus karyawan operasional dengan akun user aktif, kecualikan Owner)
         $todayDate = now()->format('Y-m-d');
         $branchEmployees = Employee::with(['user.roles', 'attendances' => function ($q) use ($todayDate) {
-            $q->where('date', $todayDate);
+            $q->whereDate('date', $todayDate);
         }])
         ->where('is_active', true)
         ->withActiveUser(excludeOwners: true)
@@ -94,7 +94,7 @@ class FrontOfficeDashboard extends Component
 
         if ($currentUserEmployee) {
             $currentUserTodayAttendance = EmployeeAttendance::where('employee_id', $currentUserEmployee->id)
-                ->where('date', $todayDate)
+                ->whereDate('date', $todayDate)
                 ->first();
 
             $currentUserMonthlyCommission = (float) \App\Models\SalesCommissionLog::where('employee_id', $currentUserEmployee->id)

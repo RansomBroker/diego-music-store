@@ -190,7 +190,9 @@ class FrontOfficeDashboardTest extends TestCase
         $staffResponse->assertStatus(200);
         $staffResponse->assertSee('Clock In (Masuk)');
         $staffResponse->assertDontSee('Analisis Performa &amp; Keuangan Bisnis', false);
-        $staffResponse->assertDontSee('Performa Sales & Indikator Target', false);
+        $staffResponse->assertSee('Performa Sales & Indikator Target', false);
+        $staffResponse->assertDontSee('Pilih Staf:');
+        $staffResponse->assertSee('Presensi Karyawan Cabang Hari Ini');
 
         $owner = User::factory()->create(['is_active' => true]);
         $owner->assignRole('owner');
@@ -200,5 +202,32 @@ class FrontOfficeDashboardTest extends TestCase
         $ownerResponse->assertStatus(200);
         $ownerResponse->assertSee('Analisis Performa &amp; Keuangan Bisnis', false);
         $ownerResponse->assertSee('Performa Sales & Indikator Target', false);
+    }
+
+    public function test_regular_employee_only_sees_own_attendance_row_in_today_branch_attendances(): void
+    {
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+
+        $ownStaff = User::factory()->create(['name' => 'Karyawan Sendiri', 'is_active' => true]);
+        $ownStaff->assignRole('karyawan');
+        $ownStaff->branches()->attach($this->branch->id);
+        $ownStaff->employee->update(['branch_id' => $this->branch->id, 'is_active' => true]);
+
+        $otherStaff = User::factory()->create(['name' => 'Karyawan Rekan Lain', 'is_active' => true]);
+        $otherStaff->assignRole('karyawan');
+        $otherStaff->branches()->attach($this->branch->id);
+        $otherStaff->employee->update(['branch_id' => $this->branch->id, 'is_active' => true]);
+
+        $response = $this->actingAs($ownStaff)->get(route('pos.front-office'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Presensi Karyawan Cabang Hari Ini');
+        $response->assertSee('Karyawan Sendiri');
+        $response->assertSee('Total: 1 Staf');
+
+        $html = $response->getContent();
+        $attendanceSection = substr($html, strpos($html, 'Presensi Karyawan Cabang Hari Ini'));
+        $this->assertStringContainsString('Karyawan Sendiri', $attendanceSection);
+        $this->assertStringNotContainsString('Karyawan Rekan Lain', $attendanceSection);
     }
 }

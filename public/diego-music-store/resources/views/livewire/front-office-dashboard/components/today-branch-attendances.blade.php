@@ -1,4 +1,4 @@
-<!-- Dashboard Section: Presensi Karyawan Cabang Hari Ini (Owner Only) -->
+<!-- Dashboard Section: Presensi Karyawan Cabang Hari Ini -->
 <div class="space-y-3">
     <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden transition-colors">
         

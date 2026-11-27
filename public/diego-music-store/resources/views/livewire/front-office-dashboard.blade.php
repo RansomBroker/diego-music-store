@@ -21,7 +21,6 @@
 
                 @php
                     $isOwnerRole = \App\Helpers\PermissionHelper::isOwner(auth()->user());
-                    $canViewOwnerWidgets = \App\Helpers\PermissionHelper::can(auth()->user(), 'fo.dashboard.owner_widgets');
                 @endphp
 
                 <!-- 1. Card Status User Login & Presensi -->
@@ -33,15 +32,13 @@
                 @if ($isOwnerRole)
                     <!-- 3. Executive Owner Dashboard Widgets Section -->
                     <livewire:owner-dashboard-widgets />
-
-                    <!-- 4. Sales & Employee Performance Dashboard Widgets Section -->
-                    <livewire:sales-employee-dashboard-widgets />
                 @endif
+
+                <!-- 4. Sales & Employee Performance Dashboard Widgets Section -->
+                <livewire:sales-employee-dashboard-widgets />
 
                 <!-- 5. Presensi Karyawan Cabang Hari Ini -->
-                @if ($canViewOwnerWidgets)
-                    @include('livewire.front-office-dashboard.components.today-branch-attendances')
-                @endif
+                @include('livewire.front-office-dashboard.components.today-branch-attendances')
 
             </div>
         </div>

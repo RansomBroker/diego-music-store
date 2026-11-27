@@ -35,22 +35,61 @@ class SalesEmployeeDashboardWidgetsTest extends TestCase
             ->assertSee('Absensi Staf');
     }
 
-    public function test_non_owner_cannot_view_sales_employee_performance_widgets()
+    public function test_non_owner_can_view_own_sales_employee_performance_widgets_and_cannot_switch_to_others()
     {
         $branch = \App\Models\Branch::create(['name' => 'Cabang Test', 'is_active' => true]);
-        $perm = \Spatie\Permission\Models\Permission::findOrCreate('fo.dashboard.owner_widgets', 'web');
-        $managerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'MANAGER TOKO', 'guard_name' => 'web']);
-        $managerRole->givePermissionTo($perm);
+        $staffRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
 
-        $user = User::factory()->create();
-        $user->assignRole($managerRole);
-        $user->branches()->attach($branch->id);
-        $this->actingAs($user);
+        $staffA = User::factory()->create(['name' => 'Sales Pertama', 'is_active' => true]);
+        $staffA->assignRole($staffRole);
+        $staffA->branches()->attach($branch->id);
+        $empA = $staffA->employee ?: \App\Models\Employee::create([
+            'user_id' => $staffA->id,
+            'branch_id' => $branch->id,
+            'name' => $staffA->name,
+            'nik' => 'EMP-A01',
+            'is_active' => true,
+        ]);
+        $empA->update(['branch_id' => $branch->id, 'is_active' => true]);
+
+        $staffB = User::factory()->create(['name' => 'Sales Kedua', 'is_active' => true]);
+        $staffB->assignRole($staffRole);
+        $staffB->branches()->attach($branch->id);
+        $empB = $staffB->employee ?: \App\Models\Employee::create([
+            'user_id' => $staffB->id,
+            'branch_id' => $branch->id,
+            'name' => $staffB->name,
+            'nik' => 'EMP-B01',
+            'is_active' => true,
+        ]);
+        $empB->update(['branch_id' => $branch->id, 'is_active' => true]);
+
+        \App\Models\SalesCommissionLog::create([
+            'employee_id' => $empA->id,
+            'date' => now()->format('Y-m-d'),
+            'sale_amount' => 4500000,
+            'commission_amount' => 250000,
+        ]);
+
+        \App\Models\SalesCommissionLog::create([
+            'employee_id' => $empB->id,
+            'date' => now()->format('Y-m-d'),
+            'sale_amount' => 9800000,
+            'commission_amount' => 999000,
+        ]);
+
+        $this->actingAs($staffA);
 
         Livewire::test(SalesEmployeeDashboardWidgets::class)
-            ->assertDontSee('Performa Sales & Indikator Target')
-            ->assertDontSee('Leaderboard Top 3 Sales')
-            ->assertDontSee('Grafik Performa Penjualan Sales (1 Tahun)');
+            ->assertSee('Performa Sales & Indikator Target', false)
+            ->assertDontSee('Pilih Staf:')
+            ->assertDontSee('Monitoring:')
+            ->assertSee('250.000')
+            ->assertDontSee('999.000')
+            ->set('selectedEmployeeId', $empB->id)
+            ->assertSet('selectedEmployeeId', $empA->id)
+            ->assertSee('250.000')
+            ->assertDontSee('999.000');
     }
 
     public function test_it_displays_active_backoffice_focus_products()
