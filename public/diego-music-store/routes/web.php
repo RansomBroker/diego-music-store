@@ -33,6 +33,9 @@ Route::middleware('auth.pos')->group(function () {
     Route::get('/pos', App\Livewire\POS::class)
         ->middleware('feature.permission:fo.pos.view')
         ->name('pos');
+    Route::get('/pos/receipt/{sale}/raw-text', [App\Http\Controllers\POS\POSReceiptController::class, 'rawText'])
+        ->middleware('feature.permission:fo.pos.print|fo.transactions.view')
+        ->name('pos.receipt.raw-text');
     Route::get('/pos/receipt/{sale}', [App\Http\Controllers\POS\POSReceiptController::class, 'show'])
         ->middleware('feature.permission:fo.pos.print|fo.transactions.view')
         ->name('pos.receipt');

@@ -150,21 +150,9 @@ class BranchForm
                         ->default(true),
                 ]),
 
-            Step::make('Struk POS & Alokasi Staf')
-                ->description('Pengaturan cetak nota struk POS dan alokasi pengguna/staf')
+            Step::make('Alokasi Staf')
+                ->description('Alokasi pengguna/staf yang memiliki akses operasional ke cabang ini')
                 ->schema([
-                    Textarea::make('receipt_header')
-                        ->rows(2)
-                        ->maxLength(500)
-                        ->label('Header Struk POS (Catatan Atas)')
-                        ->placeholder('Contoh: Pusat Penjualan Alat Musik & Sound System Terlengkap'),
-
-                    Textarea::make('receipt_footer')
-                        ->rows(2)
-                        ->maxLength(500)
-                        ->label('Footer Struk POS (Pesan Terima Kasih)')
-                        ->placeholder('Contoh: Barang yang sudah dibeli tidak dapat ditukar. Terima Kasih!'),
-
                     Select::make('users')
                         ->relationship('users', 'name')
                         ->multiple()

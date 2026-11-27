@@ -10,7 +10,7 @@
 
         <!-- Navbar -->
         <x-pos.navbar
-            pageTitle="Setting Struk & Invoice"
+            pageTitle="Setting Struk, Tagihan & Printer"
             backLabel="Dashboard"
         />
 
@@ -22,7 +22,7 @@
                 @include('livewire.pos-receipt-settings.components.header-bar')
 
                 <!-- Tab Navigation Buttons -->
-                <div class="flex items-center gap-3 p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm w-fit">
+                <div class="flex flex-wrap items-center gap-3 p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm w-fit">
                     <x-pos.utility.button
                         type="button"
                         wire:click="setTab('hardware')"
@@ -40,7 +40,7 @@
                         size="md"
                         icon="ph-receipt"
                     >
-                        Desain & Format Teks Struk
+                        Desain & Format Struk / Tagihan
                     </x-pos.utility.button>
                 </div>
 
@@ -50,13 +50,28 @@
                         @include('livewire.pos-receipt-settings.components.hardware-settings')
                     </div>
                 @else
-                    <!-- Tab 2: Form & Live Thermal Receipt Preview Grid -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <!-- Left 2 Cols: Setting Form -->
-                        @include('livewire.pos-receipt-settings.components.settings-form')
+                    <!-- Tab 2: Form & Live Preview Struk / Tagihan / Invoice / Penawaran -->
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        <!-- Left 3 Cols: Setting Form -->
+                        <div class="lg:col-span-3">
+                            @include('livewire.pos-receipt-settings.components.settings-form')
+                        </div>
 
-                        <!-- Right Column: Live Thermal Receipt Simulator -->
-                        @include('livewire.pos-receipt-settings.components.receipt-preview')
+                        <!-- Right 2 Cols: Unified Live Preview (Struk, Tagihan, Invoice, Penawaran) -->
+                        <div class="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl p-5">
+                            @include('backoffice.receipt-settings.live-preview', [
+                                'branchId' => $branchId,
+                                'store_display_name' => $store_display_name,
+                                'header_text' => $header_text,
+                                'footer_text' => $footer_text,
+                                'invoice_footer_notes' => $invoice_footer_notes,
+                                'paper_width' => $paper_width,
+                                'show_logo' => $show_logo,
+                                'show_customer' => $show_customer,
+                                'show_cashier' => $show_cashier,
+                                'show_tax_details' => $show_tax_details,
+                            ])
+                        </div>
                     </div>
                 @endif
 

@@ -113,14 +113,18 @@
             <td class="text-left" style="color: #64748b;">Tanggal</td>
             <td class="text-right">{{ $sale->created_at ? $sale->created_at->format('d/m/Y H:i') : now()->format('d/m/Y H:i') }}</td>
         </tr>
-        <tr>
-            <td class="text-left" style="color: #64748b;">Kasir</td>
-            <td class="text-right">{{ $sale->receipt_cashier_name }}</td>
-        </tr>
-        <tr>
-            <td class="text-left" style="color: #64748b;">Pelanggan</td>
-            <td class="text-right font-bold">{{ $sale->customer?->name ?? 'Umum / Walk-in' }}</td>
-        </tr>
+        @if ($setting?->show_cashier ?? true)
+            <tr>
+                <td class="text-left" style="color: #64748b;">Kasir</td>
+                <td class="text-right">{{ $sale->receipt_cashier_name }}</td>
+            </tr>
+        @endif
+        @if ($setting?->show_customer ?? true)
+            <tr>
+                <td class="text-left" style="color: #64748b;">Pelanggan</td>
+                <td class="text-right font-bold">{{ $sale->customer?->name ?? 'Umum / Walk-in' }}</td>
+            </tr>
+        @endif
     </table>
 
     <div class="divider-dashed"></div>
@@ -172,7 +176,7 @@
                 <td class="text-right" style="color: #16a34a;">-Rp {{ number_format($sale->discount_amount, 0, ',', '.') }}</td>
             </tr>
         @endif
-        @if ($sale->tax_amount > 0)
+        @if (($setting?->show_tax_details ?? true) && $sale->tax_amount > 0)
             <tr>
                 <td class="text-left" style="color: #64748b;">PPN (11%)</td>
                 <td class="text-right">+Rp {{ number_format($sale->tax_amount, 0, ',', '.') }}</td>

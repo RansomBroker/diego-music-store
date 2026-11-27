@@ -15,10 +15,10 @@
             <li>
                 <div class="flex items-center">
                     <i class="ph ph-caret-right text-[10px] text-slate-350 dark:text-slate-650 mx-1"></i>
-                    <span class="text-slate-650 dark:text-slate-300 font-bold">Setting Struk & Invoice</span>
+                    <span class="text-slate-650 dark:text-slate-300 font-bold">Setting Struk, Tagihan &amp; Printer</span>
                 </div>
             </li>
         </ol>
     </nav>
-    <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Setting Struk & Invoice</h1>
+    <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Setting Struk, Tagihan &amp; Printer</h1>
 </div>

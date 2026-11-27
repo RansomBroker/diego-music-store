@@ -1,9 +1,25 @@
 @php
     $setting = \App\Models\ReceiptSetting::where('branch_id', $sale->branch_id)->first();
-    $maxWidth = match ($setting?->paper_width) {
-        '58mm' => '220px',
-        'A4' => '750px',
-        default => '300px',
+    $paperWidth = $setting?->paper_width ?: '80mm';
+    $maxWidth = match ($paperWidth) {
+        '58mm' => '54mm',
+        'A4' => '186mm',
+        default => '74mm',
+    };
+    $pageSize = match ($paperWidth) {
+        '58mm' => '58mm auto',
+        'A4' => 'A4 portrait',
+        default => '80mm auto',
+    };
+    $pageMargin = match ($paperWidth) {
+        '58mm' => '2mm',
+        'A4' => '12mm',
+        default => '3mm',
+    };
+    $fontSize = match ($paperWidth) {
+        '58mm' => '10.5px',
+        'A4' => '13px',
+        default => '12px',
     };
 @endphp
 <!DOCTYPE html>
@@ -13,14 +29,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Struk Pembayaran #{{ $sale->invoice_number }}</title>
     <style>
+        @page {
+            size: {{ $pageSize }};
+            margin: {{ $pageMargin }};
+        }
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
+            font-size: {{ $fontSize }};
             line-height: 1.4;
             color: #000;
             background: #fff;
-            margin: 0;
-            padding: 20px;
+            padding: 16px;
+            width: 100%;
             max-width: {{ $maxWidth }};
             margin: 0 auto;
         }
@@ -64,10 +87,12 @@
         @media print {
             body {
                 padding: 0;
-                max-width: 100%;
+                margin: 0 auto;
+                width: {{ $maxWidth }};
+                max-width: {{ $maxWidth }};
             }
             .no-print {
-                display: none;
+                display: none !important;
             }
         }
     </style>

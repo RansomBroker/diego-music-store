@@ -420,6 +420,15 @@ return [
                                 'bo.pricing_tiers.delete' => 'Hapus',
                             ],
                         ],
+                        'bo_receipt_settings' => [
+                            'label' => 'Struk & Tagihan',
+                            'permissions' => [
+                                'bo.receipt_settings.view' => 'Tampil & Lihat',
+                                'bo.receipt_settings.create' => 'Tambah',
+                                'bo.receipt_settings.edit' => 'Ubah',
+                                'bo.receipt_settings.delete' => 'Hapus',
+                            ],
+                        ],
                         'bo_products' => [
                             'label' => 'Produk',
                             'permissions' => [

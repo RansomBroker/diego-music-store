@@ -1,3 +1,35 @@
+@php
+    $setting = \App\Models\ReceiptSetting::where('branch_id', $draft->branch?->id)->first();
+    $paperWidth = $setting?->paper_width ?: '80mm';
+    $billMaxWidth = match ($paperWidth) {
+        '58mm' => '54mm',
+        'A4' => '186mm',
+        default => '74mm',
+    };
+    $billPageSize = match ($paperWidth) {
+        '58mm' => '58mm auto',
+        'A4' => 'A4 portrait',
+        default => '80mm auto',
+    };
+    $billPageMargin = match ($paperWidth) {
+        '58mm' => '2mm',
+        'A4' => '12mm',
+        default => '3mm',
+    };
+    $billFontSize = match ($paperWidth) {
+        '58mm' => '10.5px',
+        'A4' => '13px',
+        default => '12px',
+    };
+    $storeDisplayName = $setting?->store_display_name ?: ($draft->branch?->store_name ?: 'Diego Music Store');
+    $headerNote = filled($setting?->header_text) ? $setting->header_text : ($draft->branch?->receipt_header ?: null);
+    $footerNote = filled($setting?->footer_text) ? $setting->footer_text : ($draft->branch?->receipt_footer ?: 'Harap simpan lembar tagihan ini untuk kasir.');
+    $invoiceFooterNotes = filled($setting?->invoice_footer_notes) ? $setting->invoice_footer_notes : null;
+    $showLogo = ($setting->show_logo ?? true) && ! empty($draft->branch?->logo_path);
+    $showCashier = $setting->show_cashier ?? true;
+    $showCustomer = $setting->show_customer ?? true;
+    $showTaxDetails = $setting->show_tax_details ?? true;
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -13,15 +45,20 @@
     <style>
         /* Shared and Bill Styles */
         @if ($format === 'bill')
+            @page {
+                size: {{ $billPageSize }};
+                margin: {{ $billPageMargin }};
+            }
+            * { box-sizing: border-box; }
             body {
                 font-family: 'Courier New', Courier, monospace;
-                font-size: 12px;
+                font-size: {{ $billFontSize }};
                 line-height: 1.4;
                 color: #000;
                 background: #fff;
-                margin: 0;
-                padding: 20px;
-                max-width: 300px;
+                padding: 16px;
+                width: 100%;
+                max-width: {{ $billMaxWidth }};
                 margin: 0 auto;
             }
             .text-center { text-align: center; }
@@ -217,10 +254,17 @@
         @media print {
             @if ($format === 'invoice')
                 @page { size: landscape; margin: 10mm; }
+            @elseif ($format !== 'bill')
+                @page { size: A4 portrait; margin: 10mm; }
             @endif
             body {
                 background: #ffffff;
                 padding: 0;
+                @if ($format === 'bill')
+                    width: {{ $billMaxWidth }};
+                    max-width: {{ $billMaxWidth }};
+                    margin: 0 auto;
+                @endif
             }
             .page-container {
                 border: none;
@@ -229,7 +273,7 @@
                 max-width: 100%;
             }
             .no-print {
-                display: none;
+                display: none !important;
             }
         }
     </style>
@@ -248,7 +292,13 @@
         </div>
 
         <div class="header text-center">
-            <span class="store-name">{{ $draft->branch->store_name ?: 'Diego Music Store' }}</span><br>
+            @if ($showLogo)
+                <img src="{{ \Illuminate\Support\Facades\Storage::url($draft->branch->logo_path) }}" alt="Logo" style="max-height: 50px; margin-bottom: 8px;"><br>
+            @endif
+            <span class="store-name">{{ $storeDisplayName }}</span><br>
+            @if (! empty($headerNote))
+                <div style="font-size: 11px; font-style: italic; margin-bottom: 4px;">{!! nl2br(e($headerNote)) !!}</div>
+            @endif
             <span>{{ $draft->branch->name }}</span><br>
             <span>Telp: {{ $draft->branch->phone }}</span>
         </div>
@@ -263,14 +313,18 @@
             <span>Tanggal:</span>
             <span>{{ $draft->created_at->format('d/m/Y H:i') }}</span>
         </div>
-        <div class="grid">
-            <span>Kasir:</span>
-            <span>{{ $draft->salesRep->name }}</span>
-        </div>
-        <div class="grid">
-            <span>Pelanggan:</span>
-            <span>{{ $draft->customer_name }}</span>
-        </div>
+        @if ($showCashier)
+            <div class="grid">
+                <span>Kasir:</span>
+                <span>{{ $draft->cashier_name ?? $draft->salesRep->name }}</span>
+            </div>
+        @endif
+        @if ($showCustomer)
+            <div class="grid">
+                <span>Pelanggan:</span>
+                <span>{{ $draft->customer_name }}</span>
+            </div>
+        @endif
 
         <div class="divider"></div>
 
@@ -305,7 +359,7 @@
                 <span>-Rp {{ number_format($draft->discount_amount, 0, ',', '.') }}</span>
             </div>
         @endif
-        @if ($draft->tax_amount > 0)
+        @if ($showTaxDetails && $draft->tax_amount > 0)
         <div class="grid">
             <span>PPN (11%):</span>
             <span>Rp {{ number_format($draft->tax_amount, 0, ',', '.') }}</span>
@@ -328,12 +382,23 @@
         </div>
 
         <div class="footer">
-            Harap simpan lembar tagihan ini untuk kasir.<br><br>
+            {!! nl2br(e($footerNote)) !!}<br>
+            @if (! empty($invoiceFooterNotes))
+                <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #000;">
+                    {!! nl2br(e($invoiceFooterNotes)) !!}
+                </div>
+            @endif
         </div>
     @elseif ($format === 'invoice')
         <div class="large-container">
             <div class="large-header">
-                <div class="bold" style="font-size:20px;">{{ $draft->branch->store_name ?: 'Diego Music Store' }}</div>
+                @if ($showLogo)
+                    <img src="{{ \Illuminate\Support\Facades\Storage::url($draft->branch->logo_path) }}" alt="Logo" style="max-height: 55px; margin-bottom: 6px;"><br>
+                @endif
+                <div class="bold" style="font-size:20px;">{{ $storeDisplayName }}</div>
+                @if (! empty($headerNote))
+                    <div style="font-size: 12px; font-style: italic; margin-top: 2px;">{!! nl2br(e($headerNote)) !!}</div>
+                @endif
                 <div>{{ $draft->branch->name }} | Telp: {{ $draft->branch->phone }}</div>
                 <h2 style="margin: 10px 0 0 0; text-transform: uppercase;">INVOICE</h2>
                 <div style="display: inline-block; padding: 4px 12px; border: 2px solid #000; font-weight: bold; font-size: 18px; margin-top: 10px; border-radius: 4px;">
@@ -347,8 +412,12 @@
                     <div><span class="bold">Tanggal:</span> {{ $draft->created_at->format('d/m/Y H:i') }}</div>
                 </div>
                 <div class="text-right">
-                    <div><span class="bold">Kasir:</span> {{ $draft->cashier_name ?? $draft->salesRep->name }}</div>
-                    <div><span class="bold">Pelanggan:</span> {{ $draft->customer_name }}</div>
+                    @if ($showCashier)
+                        <div><span class="bold">Kasir:</span> {{ $draft->cashier_name ?? $draft->salesRep->name }}</div>
+                    @endif
+                    @if ($showCustomer)
+                        <div><span class="bold">Pelanggan:</span> {{ $draft->customer_name }}</div>
+                    @endif
                 </div>
             </div>
 
@@ -407,7 +476,7 @@
                             <td class="text-right bold" style="padding: 4px; color: #000;">-Rp {{ number_format($draft->discount_amount, 0, ',', '.') }}</td>
                         </tr>
                     @endif
-                    @if ($draft->tax_amount > 0)
+                    @if ($showTaxDetails && $draft->tax_amount > 0)
                         <tr>
                             <td style="padding: 4px;">PPN (11%)</td>
                             <td class="text-right bold" style="padding: 4px;">Rp {{ number_format($draft->tax_amount, 0, ',', '.') }}</td>
@@ -420,7 +489,19 @@
                 </table>
             </div>
 
-            <div style="display: flex; justify-content: space-between; margin-top: 50px; padding: 0 50px;">
+            @if (! empty($invoiceFooterNotes) || ! empty($footerNote))
+                <div style="margin-top: 16px; padding: 10px; border: 1px dashed #000; font-size: 12px;">
+                    @if (! empty($invoiceFooterNotes))
+                        <div class="bold" style="margin-bottom: 4px;">Catatan Pembayaran / Invoice:</div>
+                        <div>{!! nl2br(e($invoiceFooterNotes)) !!}</div>
+                    @endif
+                    @if (! empty($footerNote))
+                        <div style="margin-top: 6px; font-style: italic;">{!! nl2br(e($footerNote)) !!}</div>
+                    @endif
+                </div>
+            @endif
+
+            <div style="display: flex; justify-content: space-between; margin-top: 40px; padding: 0 50px;">
                 <div class="text-center">
                     <div style="margin-bottom: 70px;">Penerima</div>
                     <div style="border-bottom: 1px solid #000; width: 150px;"></div>
@@ -443,7 +524,13 @@
 
             <div class="header-container">
                 <div class="store-info">
-                    <h1>{{ $draft->branch->store_name ?: 'Diego Music Store' }}</h1>
+                    @if ($showLogo)
+                        <img src="{{ \Illuminate\Support\Facades\Storage::url($draft->branch->logo_path) }}" alt="Logo" style="max-height: 52px; margin-bottom: 8px;">
+                    @endif
+                    <h1>{{ $storeDisplayName }}</h1>
+                    @if (! empty($headerNote))
+                        <p style="font-style: italic;">{!! nl2br(e($headerNote)) !!}</p>
+                    @endif
                     <p class="bold">{{ $draft->branch->name }}</p>
                     <p>Telepon: {{ $draft->branch->phone }}</p>
                 </div>
@@ -533,7 +620,7 @@
                                 <td style="text-align: right; font-weight: 600; color: #dc2626;">-Rp {{ number_format($draft->discount_amount, 0, ',', '.') }}</td>
                             </tr>
                         @endif
-                        @if ($draft->tax_amount > 0)
+                        @if ($showTaxDetails && $draft->tax_amount > 0)
                         <tr>
                             <td style="color: #64748b;">PPN (11%)</td>
                             <td style="text-align: right; font-weight: 600;">Rp {{ number_format($draft->tax_amount, 0, ',', '.') }}</td>
@@ -547,7 +634,17 @@
                 </table>
             </div>
 
-
+            @if (! empty($invoiceFooterNotes) || ! empty($footerNote))
+                <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 12px; color: #475569;">
+                    @if (! empty($invoiceFooterNotes))
+                        <div style="font-weight: 700; color: #1e293b; margin-bottom: 4px;">Catatan Pembayaran / Tagihan</div>
+                        <div>{!! nl2br(e($invoiceFooterNotes)) !!}</div>
+                    @endif
+                    @if (! empty($footerNote))
+                        <div style="margin-top: 8px; font-style: italic; color: #64748b;">{!! nl2br(e($footerNote)) !!}</div>
+                    @endif
+                </div>
+            @endif
 
         </div>
     @endif

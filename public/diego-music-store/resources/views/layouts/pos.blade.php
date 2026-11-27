@@ -99,14 +99,9 @@
                         }
 
                         if (targetPrinter) {
-                            // Fetch the receipt text representation
-                            const receiptRes = await fetch(url);
-                            const htmlContent = await receiptRes.text();
-
-                            // Extract text lines from DOM
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(htmlContent, 'text/html');
-                            const bodyText = doc.body.innerText || '';
+                            // Fetch clean thermal plain-text representation formatted from Master Data Struk & Tagihan
+                            const receiptRes = await fetch(`${url}/raw-text`);
+                            const bodyText = receiptRes.ok ? await receiptRes.text() : '';
 
                             const printRes = await fetch(`${agentUrl}/api/print/receipt`, {
                                 method: 'POST',

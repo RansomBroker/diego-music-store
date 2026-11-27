@@ -96,25 +96,26 @@ class PostPurchaseTransaction
                     'hpp' => $newHpp,
                 ]);
 
-                // Update master cost price & pricing tiers if update_cost_price checkbox is checked
+                // Sync HPP (after shipping & weighted average) to product variant master and HPP-following tiers
+                $variantUpdates = [
+                    'hpp' => $newHpp,
+                ];
                 if ($detail->update_cost_price) {
-                    $detail->productVariant->update([
-                        'cost_price' => $detail->price,
-                        'hpp' => $detail->price,
-                    ]);
+                    $variantUpdates['cost_price'] = $detail->price;
+                }
+                $detail->productVariant->update($variantUpdates);
 
-                    $followingTiers = \App\Models\PricingTier::where('price_follows_hpp', true)->get();
-                    foreach ($followingTiers as $tier) {
-                        $tierPrice = \App\Models\ProductTierPrice::firstOrCreate([
-                            'product_variant_id' => $detail->product_variant_id,
-                            'pricing_tier_id' => $tier->id,
-                        ], [
-                            'price' => 0
-                        ]);
-                        $tierPrice->update([
-                            'price' => $detail->price,
-                        ]);
-                    }
+                $followingTiers = \App\Models\PricingTier::where('price_follows_hpp', true)->get();
+                foreach ($followingTiers as $tier) {
+                    $tierPrice = \App\Models\ProductTierPrice::firstOrCreate([
+                        'product_variant_id' => $detail->product_variant_id,
+                        'pricing_tier_id' => $tier->id,
+                    ], [
+                        'price' => 0,
+                    ]);
+                    $tierPrice->update([
+                        'price' => $newHpp,
+                    ]);
                 }
 
                 // Create StockMovement IN record
@@ -130,16 +131,6 @@ class PostPurchaseTransaction
                     'reference_type' => 'Purchase',
                     'reference_id' => $pt->id,
                 ]);
-
-                // Also sync HPP back to product variant master if destination is Central/Backoffice branch
-                $centralBranch = \App\Models\Branch::where('name', 'like', '%Pusat%')
-                    ->orWhere('name', 'like', '%Back Office%')
-                    ->first();
-                if ($centralBranch && $destinationBranchId == $centralBranch->id) {
-                    $detail->productVariant->update([
-                        'hpp' => $newHpp,
-                    ]);
-                }
             }
 
             // 3. Handle debt creation (jika Kredit atau Konsinyasi)

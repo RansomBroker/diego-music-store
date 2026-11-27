@@ -55,6 +55,29 @@ class POSReceiptController extends Controller
     }
 
     /**
+     * Return clean thermal plain-text receipt formatted according to branch ReceiptSetting
+     * for Direct Print Agent (ESC/POS).
+     */
+    public function rawText(Sale $sale)
+    {
+        if (! Auth::check()) {
+            abort(403, 'Unauthorized.');
+        }
+
+        abort_unless(\App\Helpers\PermissionHelper::canAccessFrontofficeFeature(Auth::user(), ['fo.pos.print', 'fo.transactions.view']), 403);
+        abort_unless((int) $sale->branch_id === (int) \App\Helpers\BranchHelper::getActiveBranchId(), 403);
+
+        $sale->load(['branch', 'customer', 'salesRep', 'creator', 'cashSession.user', 'payments.paymentMethod.parent', 'items.variant.product', 'items.salesRep']);
+
+        $setting = \App\Models\ReceiptSetting::where('branch_id', $sale->branch_id)->first();
+        $rawText = \App\Helpers\ReceiptFormatterHelper::formatThermalText($sale, $setting);
+
+        return response($rawText, 200, [
+            'Content-Type' => 'text/plain; charset=UTF-8',
+        ]);
+    }
+
+    /**
      * Show the printable draft thermal receipt.
      */
     public function showDraft(Request $request)
